@@ -1,0 +1,48 @@
+/* ==========================================================================
+   DATA GRID
+   ========================================================================== */
+
+.data-grid {
+    .sortable {
+        color: @link-color;
+        cursor: pointer;
+
+        &:hover {
+            text-decoration: underline;
+        }
+
+        &:after {
+            &:extend(.glyphicon);
+
+            font-size: @font-size-small;
+            font-weight: normal;
+            color: @gray-light;
+            padding-left: 0.5em;
+        }
+
+        &.asc:after {
+            content: "\e094";
+        }
+
+        &.desc:after {
+            content: "\e093";
+        }
+    }
+
+    th {
+        text-transform: capitalize;
+    }
+
+    .item {
+        cursor: pointer;
+    }
+
+    .col-primary, .col-bool {
+        width: 70px;
+    }
+
+    .no-items {
+        text-align: center;
+        font-style: italic;
+    }
+}

@@ -1,0 +1,33 @@
+@import "../bootstrap/bootstrap.less";
+
+/* ==========================================================================
+   APPLICATION STYLES
+   ========================================================================== */
+
+.main-container {
+    .container-fixed();
+
+    min-width: @container-md;
+}
+
+.entity-page {
+    .page-header {
+        text-transform: capitalize;
+    }
+}
+
+.form-group>label {
+    text-transform: capitalize;
+}
+
+.input-group p.form-control {
+    white-space: nowrap;
+    overflow: hidden;
+    -ms-text-overflow: ellipsis;
+    text-overflow: ellipsis;
+}
+
+@import "inputs.less";
+@import "form.less";
+@import "datagrid.less";
+@import "filters.less";

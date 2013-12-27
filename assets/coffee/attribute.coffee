@@ -1,0 +1,1 @@
+class Attribute extends Backbone.Model

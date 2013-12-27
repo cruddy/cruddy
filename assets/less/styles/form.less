@@ -1,0 +1,118 @@
+/* ==========================================================================
+   ENTITY FORM
+   ========================================================================== */
+
+.entity-form {
+    @width: 400px;
+    @padding: 10px;
+    @header-height: (@padding + @padding-small-vertical) * 2 + @line-height-computed + 1;
+    @footer-height: (@padding + @padding-small-vertical) * 2 + @line-height-computed;
+
+    position: fixed;
+    z-index: @zindex-navbar - 1;
+    top: 0;
+    right: -@width;
+
+    .size(@width, 100%);
+
+    background: #fff;
+
+    .transition(right 100ms ease-in-out);
+    .box-shadow(-3px 0 0 rgba(0, 0, 0, 0.2));
+
+    .flash {
+        display: block;
+        float: left;
+        .button-size(@padding-small-vertical; @padding-small-horizontal; @font-size-small; @line-height-small; 0);
+
+        &-success {
+            color: @alert-success-text;
+        }
+
+        &-danger {
+            color: @alert-danger-text;
+        }
+
+        &-warning {
+            color: @alert-warning-text;
+        }
+    }
+
+    &.opened {
+        right: 0px;
+    }
+
+    header, footer {
+        position: absolute;
+        left: 0;
+        width: 100%;
+    }
+
+    header {
+        &:extend(.modal-header);
+
+        padding: @padding;
+        top: 0;
+        height: @header-height;
+
+        .nav {
+            >li>a {
+                padding: @padding-small-vertical @padding-small-horizontal;
+                font-size: @font-size-small;
+            }
+        }
+    }
+
+    &-title {
+        &:extend(.modal-title);
+    }
+
+    footer {
+        &:extend(.modal-footer);
+        bottom: 0;
+        height: @footer-height;
+        padding: @padding;
+    }
+
+    .wrap {
+        padding-top: @header-height;
+        padding-bottom: @footer-height;
+        height: 100%;
+        display: none;
+
+        &.active {
+            display: block;
+        }
+    }
+
+    .field-list {
+        padding: @modal-inner-padding;
+        padding-left: @modal-inner-padding * 1.5;
+        height: 100%;
+        overflow-y: auto;
+    }
+
+    .field {
+        position: relative;
+
+        &.required .form-group > label:after {
+            content: 'обязательно';
+            position: relative;
+            margin-left: 0.5em;
+            color: @gray-light;
+            font-weight: normal;
+            font-size: @font-size-small;
+        }
+
+        &-help {
+            position: absolute;
+            left: -@font-size-base * 1.5;
+            top: @font-size-base * 0.3;
+            font-size: @font-size-small;
+            color: @gray-light;
+            cursor: pointer;
+        }
+    }
+}
+
+@import "fields.less";

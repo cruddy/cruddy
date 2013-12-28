@@ -4,7 +4,7 @@ module.exports = function(grunt) {
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
 
-        bootstrap: '../../twbs/bootstrap',
+        bootstrap: 'vendor/twbs/bootstrap',
         vendor: 'assets/vendor',
         less_src: 'assets/less',
         app: 'assets/coffee',
@@ -152,6 +152,16 @@ module.exports = function(grunt) {
                 ],
 
                 tasks: ['app-dev'],
+            },
+
+            reload: {
+                files: [
+                    'public/css/*.min.css',
+                    'public/js/*.js',
+                    'app/views/**/*.php',
+                ],
+
+                options: { livereload: true },
             },
         },
     });

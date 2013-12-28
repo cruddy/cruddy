@@ -7,3 +7,11 @@ if (!function_exists('humanize'))
         return str_replace("_", " ", $value);
     }
 }
+
+if (!function_exists('try_trans'))
+{
+    function try_trans($key)
+    {
+        return strpos($key, '.') !== false ? trans($key) : $key;
+    }
+}

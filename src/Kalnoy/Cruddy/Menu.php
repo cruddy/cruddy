@@ -54,6 +54,8 @@ class Menu {
 
         if (empty($inner)) return "";
 
+        $label = try_trans($label);
+
         return $this->wrap('<a href="#" class="dropdown-toggle" data-toggle="dropdown">'.e($label).' <span class="caret"></span></a>'.$inner);
     }
 
@@ -65,6 +67,8 @@ class Menu {
         }
 
         $class = isset($data["class"]) ? ' class="'.$data["class"].'"' : "";
+
+        $data['label'] = try_trans($data['label']);
 
         return $this->wrap('<a href="'.$data['url'].'"'.$class.'>'.e($data['label']).'</a>');
     }

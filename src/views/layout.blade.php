@@ -2,12 +2,12 @@
 <html>
 <head>
     <title>{{ $title }}</title>
-    <link rel="stylesheet" href="{{ asset('packages/kalnoy/cruddy/css/styles.min.css') }}">
+    <link rel="stylesheet" href="{{ asset("{$assets}/css/styles.min.css") }}">
 </head>
 <body>
     <nav class="navbar navbar-default" role="navigation">
         <div class="navbar-header">
-            <a href="{{ url("/") }}" class="navbar-brand">{{ $cruddy->config("title") }}</a>
+            <a href="{{ url("/") }}" class="navbar-brand">{{ $brand }}</a>
         </div>
 
         <div class="navbar-collapse">
@@ -26,11 +26,11 @@
     </script>
 
 @if (Config::get("app.debug"))
-    {{ HTML::script("packages/kalnoy/cruddy/js/vendor.js") }}
-    {{ HTML::script("packages/kalnoy/cruddy/js/app.js") }}
+    {{ HTML::script("{$assets}/js/vendor.js") }}
+    {{ HTML::script("{$assets}/js/app.js") }}
 @else
-    {{ HTML::script("packages/kalnoy/cruddy/js/vendor.min.js") }}
-    {{ HTML::script("packages/kalnoy/cruddy/js/app.min.js") }}
+    {{ HTML::script("{$assets}/js/vendor.min.js") }}
+    {{ HTML::script("{$assets}/js/app.min.js") }}
 @endif
 </body>
 </html>

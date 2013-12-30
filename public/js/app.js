@@ -1,5 +1,5 @@
 (function() {
-  var API_URL, AdvFormData, Alert, App, Attribute, BaseInput, BooleanInput, Checkbox, Column, Cruddy, DataGrid, DataSource, Entity, EntityDropdown, EntityForm, EntityInstance, EntityPage, EntitySelector, Factory, Field, FieldList, FieldView, FilterList, Related, Router, StaticInput, TRANSITIONEND, TextInput, Textarea, entity_url, humanize, _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref18, _ref19, _ref2, _ref20, _ref21, _ref22, _ref23, _ref24, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9,
+  var API_URL, AdvFormData, Alert, App, Attribute, BaseInput, BooleanInput, Checkbox, Column, Cruddy, DataGrid, DataSource, Entity, EntityDropdown, EntityForm, EntityInstance, EntityPage, EntitySelector, Factory, Field, FieldList, FieldView, FilterList, Pagination, Related, Router, StaticInput, TRANSITIONEND, TextInput, Textarea, entity_url, humanize, _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref18, _ref19, _ref2, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9,
     _this = this,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -257,6 +257,88 @@
 
   })(Backbone.Model);
 
+  Pagination = (function(_super) {
+    __extends(Pagination, _super);
+
+    function Pagination() {
+      _ref4 = Pagination.__super__.constructor.apply(this, arguments);
+      return _ref4;
+    }
+
+    Pagination.prototype.tagName = "ul";
+
+    Pagination.prototype.className = "pager";
+
+    Pagination.prototype.events = {
+      "click a": "navigate"
+    };
+
+    Pagination.prototype.initialize = function(options) {
+      this.listenTo(this.model, "change:last_page change:current_page", this.render);
+      $(document).on("keydown.pagination", $.proxy(this, "hotkeys"));
+      return this;
+    };
+
+    Pagination.prototype.hotkeys = function(e) {
+      if (e.ctrlKey && e.keyCode === 37) {
+        this.previous();
+        return false;
+      }
+      if (e.ctrlKey && e.keyCode === 39) {
+        this.next();
+        return false;
+      }
+      return this;
+    };
+
+    Pagination.prototype.page = function(n) {
+      if (n > 0 && n <= this.model.get("last_page")) {
+        this.model.set("current_page", n);
+      }
+      return this;
+    };
+
+    Pagination.prototype.previous = function() {
+      return this.page(this.model.get("current_page") - 1);
+    };
+
+    Pagination.prototype.next = function() {
+      return this.page(this.model.get("current_page") + 1);
+    };
+
+    Pagination.prototype.navigate = function(e) {
+      e.preventDefault();
+      return this.page($(e.target).data("page"));
+    };
+
+    Pagination.prototype.render = function() {
+      this.$el.html(this.template(this.model.get("current_page"), this.model.get("last_page")));
+      return this;
+    };
+
+    Pagination.prototype.template = function(current, last) {
+      var html;
+      html = "";
+      if (current > 1) {
+        html += this.link(current - 1, "&larr; Назад", "previous");
+      }
+      if (current < last) {
+        html += this.link(current + 1, "Вперед &rarr;", "next");
+      }
+      return html;
+    };
+
+    Pagination.prototype.link = function(page, label, className) {
+      if (className == null) {
+        className = "";
+      }
+      return "<li class=\"" + className + "\"><a href=\"#\" data-page=\"" + page + "\">" + label + "</a></li>";
+    };
+
+    return Pagination;
+
+  })(Backbone.View);
+
   DataGrid = (function(_super) {
     __extends(DataGrid, _super);
 
@@ -399,8 +481,8 @@
     __extends(FieldList, _super);
 
     function FieldList() {
-      _ref4 = FieldList.__super__.constructor.apply(this, arguments);
-      return _ref4;
+      _ref5 = FieldList.__super__.constructor.apply(this, arguments);
+      return _ref5;
     }
 
     FieldList.prototype.className = "field-list";
@@ -411,41 +493,41 @@
     };
 
     FieldList.prototype.focus = function() {
-      var _ref5;
-      if ((_ref5 = this.primary) != null) {
-        _ref5.focus();
+      var _ref6;
+      if ((_ref6 = this.primary) != null) {
+        _ref6.focus();
       }
       return this;
     };
 
     FieldList.prototype.render = function() {
-      var field, _i, _len, _ref5;
+      var field, _i, _len, _ref6;
       this.$el.empty();
-      _ref5 = this.createFields();
-      for (_i = 0, _len = _ref5.length; _i < _len; _i++) {
-        field = _ref5[_i];
+      _ref6 = this.createFields();
+      for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
+        field = _ref6[_i];
         this.$el.append(field.el);
       }
       return this;
     };
 
     FieldList.prototype.createFields = function() {
-      var field, view, _i, _len, _ref5;
+      var field, view, _i, _len, _ref6;
       this.dispose();
       this.fields = (function() {
-        var _i, _len, _ref5, _results;
-        _ref5 = this.model.entity.fields.models;
+        var _i, _len, _ref6, _results;
+        _ref6 = this.model.entity.fields.models;
         _results = [];
-        for (_i = 0, _len = _ref5.length; _i < _len; _i++) {
-          field = _ref5[_i];
+        for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
+          field = _ref6[_i];
           _results.push(field.createView(this.model).render());
         }
         return _results;
       }).call(this);
       this.primary = null;
-      _ref5 = this.fields;
-      for (_i = 0, _len = _ref5.length; _i < _len; _i++) {
-        view = _ref5[_i];
+      _ref6 = this.fields;
+      for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
+        view = _ref6[_i];
         if (!(view.field.isEditable(this.model))) {
           continue;
         }
@@ -456,11 +538,11 @@
     };
 
     FieldList.prototype.dispose = function() {
-      var field, _i, _len, _ref5;
+      var field, _i, _len, _ref6;
       if (this.fields != null) {
-        _ref5 = this.fields;
-        for (_i = 0, _len = _ref5.length; _i < _len; _i++) {
-          field = _ref5[_i];
+        _ref6 = this.fields;
+        for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
+          field = _ref6[_i];
           field.remove();
         }
       }
@@ -480,8 +562,8 @@
     __extends(FilterList, _super);
 
     function FilterList() {
-      _ref5 = FilterList.__super__.constructor.apply(this, arguments);
-      return _ref5;
+      _ref6 = FilterList.__super__.constructor.apply(this, arguments);
+      return _ref6;
     }
 
     FilterList.prototype.className = "filter-list";
@@ -494,14 +576,14 @@
     };
 
     FilterList.prototype.render = function() {
-      var col, input, _i, _len, _ref6;
+      var col, input, _i, _len, _ref7;
       this.dispose();
       this.$el.html(this.template());
       this.items = this.$(".filter-list-container");
       this.filters = [];
-      _ref6 = this.entity.columns.models;
-      for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
-        col = _ref6[_i];
+      _ref7 = this.entity.columns.models;
+      for (_i = 0, _len = _ref7.length; _i < _len; _i++) {
+        col = _ref7[_i];
         if (col.get("filterable")) {
           if (input = col.createFilterInput(this.model)) {
             this.filters.push(input);
@@ -518,11 +600,11 @@
     };
 
     FilterList.prototype.dispose = function() {
-      var filter, _i, _len, _ref6;
+      var filter, _i, _len, _ref7;
       if (this.filters != null) {
-        _ref6 = this.filters;
-        for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
-          filter = _ref6[_i];
+        _ref7 = this.filters;
+        for (_i = 0, _len = _ref7.length; _i < _len; _i++) {
+          filter = _ref7[_i];
           filter.remove();
         }
       }
@@ -571,8 +653,8 @@
     __extends(StaticInput, _super);
 
     function StaticInput() {
-      _ref6 = StaticInput.__super__.constructor.apply(this, arguments);
-      return _ref6;
+      _ref7 = StaticInput.__super__.constructor.apply(this, arguments);
+      return _ref7;
     }
 
     StaticInput.prototype.tagName = "p";
@@ -671,8 +753,8 @@
     __extends(Textarea, _super);
 
     function Textarea() {
-      _ref7 = Textarea.__super__.constructor.apply(this, arguments);
-      return _ref7;
+      _ref8 = Textarea.__super__.constructor.apply(this, arguments);
+      return _ref8;
     }
 
     Textarea.prototype.tagName = "textarea";
@@ -685,8 +767,8 @@
     __extends(Checkbox, _super);
 
     function Checkbox() {
-      _ref8 = Checkbox.__super__.constructor.apply(this, arguments);
-      return _ref8;
+      _ref9 = Checkbox.__super__.constructor.apply(this, arguments);
+      return _ref9;
     }
 
     Checkbox.prototype.tagName = "label";
@@ -734,8 +816,8 @@
     __extends(BooleanInput, _super);
 
     function BooleanInput() {
-      _ref9 = BooleanInput.__super__.constructor.apply(this, arguments);
-      return _ref9;
+      _ref10 = BooleanInput.__super__.constructor.apply(this, arguments);
+      return _ref10;
     }
 
     BooleanInput.prototype.tripleState = false;
@@ -801,8 +883,8 @@
     __extends(EntityDropdown, _super);
 
     function EntityDropdown() {
-      _ref10 = EntityDropdown.__super__.constructor.apply(this, arguments);
-      return _ref10;
+      _ref11 = EntityDropdown.__super__.constructor.apply(this, arguments);
+      return _ref11;
     }
 
     EntityDropdown.prototype.className = "entity-dropdown";
@@ -887,11 +969,11 @@
     };
 
     EntityDropdown.prototype.renderItems = function() {
-      var html, key, value, _i, _len, _ref11;
+      var html, key, value, _i, _len, _ref12;
       html = "";
-      _ref11 = this.model.get(this.key);
-      for (key = _i = 0, _len = _ref11.length; _i < _len; key = ++_i) {
-        value = _ref11[key];
+      _ref12 = this.model.get(this.key);
+      for (key = _i = 0, _len = _ref12.length; _i < _len; key = ++_i) {
+        value = _ref12[key];
         html += this.itemTemplate(value.title, key);
       }
       this.items.html(html);
@@ -950,8 +1032,8 @@
     __extends(EntitySelector, _super);
 
     function EntitySelector() {
-      _ref11 = EntitySelector.__super__.constructor.apply(this, arguments);
-      return _ref11;
+      _ref12 = EntitySelector.__super__.constructor.apply(this, arguments);
+      return _ref12;
     }
 
     EntitySelector.prototype.className = "entity-selector";
@@ -961,11 +1043,11 @@
     };
 
     EntitySelector.prototype.initialize = function(options) {
-      var _ref12, _ref13,
+      var _ref13, _ref14,
         _this = this;
       EntitySelector.__super__.initialize.apply(this, arguments);
-      this.filter = (_ref12 = options.filter) != null ? _ref12 : false;
-      this.multiple = (_ref13 = options.multiple) != null ? _ref13 : false;
+      this.filter = (_ref13 = options.filter) != null ? _ref13 : false;
+      this.multiple = (_ref14 = options.multiple) != null ? _ref14 : false;
       this.data = [];
       this.buildSelected(this.model.get(this.key));
       Cruddy.app.entity(options.reference).then(function(entity) {
@@ -1044,11 +1126,11 @@
     };
 
     EntitySelector.prototype.renderItems = function() {
-      var html, item, _i, _len, _ref12;
+      var html, item, _i, _len, _ref13;
       html = "";
-      _ref12 = this.data;
-      for (_i = 0, _len = _ref12.length; _i < _len; _i++) {
-        item = _ref12[_i];
+      _ref13 = this.data;
+      for (_i = 0, _len = _ref13.length; _i < _len; _i++) {
+        item = _ref13[_i];
         html += this.renderItem(item);
       }
       this.items.html(html);
@@ -1201,8 +1283,8 @@
     __extends(Field, _super);
 
     function Field() {
-      _ref12 = Field.__super__.constructor.apply(this, arguments);
-      return _ref12;
+      _ref13 = Field.__super__.constructor.apply(this, arguments);
+      return _ref13;
     }
 
     Field.prototype.viewConstructor = FieldView;
@@ -1254,8 +1336,8 @@
     __extends(Input, _super);
 
     function Input() {
-      _ref13 = Input.__super__.constructor.apply(this, arguments);
-      return _ref13;
+      _ref14 = Input.__super__.constructor.apply(this, arguments);
+      return _ref14;
     }
 
     Input.prototype.createEditableInput = function(model) {
@@ -1316,8 +1398,8 @@
     __extends(DateTime, _super);
 
     function DateTime() {
-      _ref14 = DateTime.__super__.constructor.apply(this, arguments);
-      return _ref14;
+      _ref15 = DateTime.__super__.constructor.apply(this, arguments);
+      return _ref15;
     }
 
     DateTime.prototype.format = function(value) {
@@ -1338,8 +1420,8 @@
     __extends(Boolean, _super);
 
     function Boolean() {
-      _ref15 = Boolean.__super__.constructor.apply(this, arguments);
-      return _ref15;
+      _ref16 = Boolean.__super__.constructor.apply(this, arguments);
+      return _ref16;
     }
 
     Boolean.prototype.createEditableInput = function(model) {
@@ -1375,8 +1457,8 @@
     __extends(Relation, _super);
 
     function Relation() {
-      _ref16 = Relation.__super__.constructor.apply(this, arguments);
-      return _ref16;
+      _ref17 = Relation.__super__.constructor.apply(this, arguments);
+      return _ref17;
     }
 
     Relation.prototype.createEditableInput = function(model) {
@@ -1415,8 +1497,8 @@
     __extends(Column, _super);
 
     function Column() {
-      _ref17 = Column.__super__.constructor.apply(this, arguments);
-      return _ref17;
+      _ref18 = Column.__super__.constructor.apply(this, arguments);
+      return _ref18;
     }
 
     Column.prototype.renderHeadCell = function() {
@@ -1453,13 +1535,13 @@
     __extends(Field, _super);
 
     function Field() {
-      _ref18 = Field.__super__.constructor.apply(this, arguments);
-      return _ref18;
+      _ref19 = Field.__super__.constructor.apply(this, arguments);
+      return _ref19;
     }
 
     Field.prototype.initialize = function(attributes) {
-      var field, _ref19;
-      field = (_ref19 = attributes.field) != null ? _ref19 : attributes.id;
+      var field, _ref20;
+      field = (_ref20 = attributes.field) != null ? _ref20 : attributes.id;
       this.field = attributes.entity.fields.get(field);
       if (attributes.title === null) {
         this.set("title", this.field.get("label"));
@@ -1489,8 +1571,8 @@
     __extends(Computed, _super);
 
     function Computed() {
-      _ref19 = Computed.__super__.constructor.apply(this, arguments);
-      return _ref19;
+      _ref20 = Computed.__super__.constructor.apply(this, arguments);
+      return _ref20;
     }
 
     Computed.prototype.createFilterInput = function(model) {
@@ -1517,18 +1599,18 @@
     __extends(Entity, _super);
 
     function Entity() {
-      _ref20 = Entity.__super__.constructor.apply(this, arguments);
-      return _ref20;
+      _ref21 = Entity.__super__.constructor.apply(this, arguments);
+      return _ref21;
     }
 
     Entity.prototype.initialize = function(attributes, options) {
-      var item, _i, _len, _ref21;
+      var item, _i, _len, _ref22;
       this.fields = this.createCollection(Cruddy.fields, attributes.fields);
       this.columns = this.createCollection(Cruddy.columns, attributes.columns);
       this.related = {};
-      _ref21 = attributes.related;
-      for (_i = 0, _len = _ref21.length; _i < _len; _i++) {
-        item = _ref21[_i];
+      _ref22 = attributes.related;
+      for (_i = 0, _len = _ref22.length; _i < _len; _i++) {
+        item = _ref22[_i];
         this.related[item.related] = new Related(item);
       }
       if (this.get("label") === null) {
@@ -1572,11 +1654,11 @@
         columns = this.columns;
       }
       filters = (function() {
-        var _i, _len, _ref21, _results;
-        _ref21 = columns.models;
+        var _i, _len, _ref22, _results;
+        _ref22 = columns.models;
         _results = [];
-        for (_i = 0, _len = _ref21.length; _i < _len; _i++) {
-          col = _ref21[_i];
+        for (_i = 0, _len = _ref22.length; _i < _len; _i++) {
+          col = _ref22[_i];
           if (col.get("filterable")) {
             _results.push(col.createFilter());
           }
@@ -1596,11 +1678,11 @@
       }
       if (related === null) {
         related = (function() {
-          var _ref21, _results;
-          _ref21 = this.related;
+          var _ref22, _results;
+          _ref22 = this.related;
           _results = [];
-          for (key in _ref21) {
-            item = _ref21[key];
+          for (key in _ref22) {
+            item = _ref22[key];
             _results.push(item.related.createInstance());
           }
           return _results;
@@ -1626,11 +1708,11 @@
         var item, key;
         resp = resp.data;
         return _this.createInstance(resp.model, (function() {
-          var _ref21, _results;
-          _ref21 = this.related;
+          var _ref22, _results;
+          _ref22 = this.related;
           _results = [];
-          for (key in _ref21) {
-            item = _ref21[key];
+          for (key in _ref22) {
+            item = _ref22[key];
             _results.push(item.related.createInstance(resp.related[item.id]));
           }
           return _results;
@@ -1663,8 +1745,8 @@
     __extends(EntityInstance, _super);
 
     function EntityInstance() {
-      _ref21 = EntityInstance.__super__.constructor.apply(this, arguments);
-      return _ref21;
+      _ref22 = EntityInstance.__super__.constructor.apply(this, arguments);
+      return _ref22;
     }
 
     EntityInstance.prototype.initialize = function(attributes, options) {
@@ -1703,9 +1785,9 @@
     };
 
     EntityInstance.prototype.sync = function(method, model, options) {
-      var _ref22;
+      var _ref23;
       if (method === "update" || method === "create") {
-        options.data = new AdvFormData((_ref22 = options.attrs) != null ? _ref22 : this.attributes).original;
+        options.data = new AdvFormData((_ref23 = options.attrs) != null ? _ref23 : this.attributes).original;
         options.contentType = false;
         options.processData = false;
       }
@@ -1720,14 +1802,14 @@
         return xhr;
       }
       queue = function(xhr) {
-        var related, save, _i, _len, _ref22;
+        var related, save, _i, _len, _ref23;
         save = [];
         if (xhr != null) {
           save.push(xhr);
         }
-        _ref22 = _this.related;
-        for (_i = 0, _len = _ref22.length; _i < _len; _i++) {
-          related = _ref22[_i];
+        _ref23 = _this.related;
+        for (_i = 0, _len = _ref23.length; _i < _len; _i++) {
+          related = _ref23[_i];
           if (related.isNew()) {
             _this.entity.related[related.entity.id].associate(_this, related);
           }
@@ -1749,18 +1831,18 @@
     };
 
     EntityInstance.prototype.hasChangedSinceSync = function() {
-      var key, related, value, _i, _len, _ref22, _ref23;
-      _ref22 = this.attributes;
-      for (key in _ref22) {
-        value = _ref22[key];
+      var key, related, value, _i, _len, _ref23, _ref24;
+      _ref23 = this.attributes;
+      for (key in _ref23) {
+        value = _ref23[key];
         if (!_.isEqual(value, this.original[key])) {
           return true;
         }
       }
       if (!this.isNew()) {
-        _ref23 = this.related;
-        for (_i = 0, _len = _ref23.length; _i < _len; _i++) {
-          related = _ref23[_i];
+        _ref24 = this.related;
+        for (_i = 0, _len = _ref24.length; _i < _len; _i++) {
+          related = _ref24[_i];
           if (related.hasChangedSinceSync()) {
             return true;
           }
@@ -1828,6 +1910,9 @@
       this.dataGrid = new DataGrid({
         model: this.dataSource
       });
+      this.pagination = new Pagination({
+        model: this.dataSource
+      });
       this.filterList = new FilterList({
         model: this.dataSource.filter,
         entity: this.dataSource.entity
@@ -1835,6 +1920,7 @@
       this.dataSource.fetch();
       this.$el.append(this.filterList.render().el);
       this.$el.append(this.dataGrid.render().el);
+      this.$el.append(this.pagination.render().el);
       return this;
     };
 
@@ -1856,6 +1942,9 @@
       }
       if (this.dataGrid != null) {
         this.dataGrid.remove();
+      }
+      if (this.pagination != null) {
+        this.pagination.remove();
       }
       if (this.dataSource != null) {
         this.dataSource.stopListening();
@@ -1889,12 +1978,12 @@
     }
 
     EntityForm.prototype.initialize = function() {
-      var related, _i, _len, _ref22;
+      var related, _i, _len, _ref23;
       this.listenTo(this.model, "destroy", this.handleDestroy);
       this.signOn(this.model);
-      _ref22 = this.model.related;
-      for (_i = 0, _len = _ref22.length; _i < _len; _i++) {
-        related = _ref22[_i];
+      _ref23 = this.model.related;
+      for (_i = 0, _len = _ref23.length; _i < _len; _i++) {
+        related = _ref23[_i];
         this.signOn(related);
       }
       this.hotkeys = $(document).on("keydown." + this.cid, "body", $.proxy(this, "hotkeys"));
@@ -2021,7 +2110,7 @@
     };
 
     EntityForm.prototype.render = function() {
-      var related, _i, _len, _ref22;
+      var related, _i, _len, _ref23;
       this.dispose();
       this.$el.html(this.template());
       this.nav = this.$(".nav");
@@ -2030,9 +2119,9 @@
       this.destroy = this.$(".btn-destroy");
       this.tabs = [];
       this.renderTab(this.model, true);
-      _ref22 = this.model.related;
-      for (_i = 0, _len = _ref22.length; _i < _len; _i++) {
-        related = _ref22[_i];
+      _ref23 = this.model.related;
+      for (_i = 0, _len = _ref23.length; _i < _len; _i++) {
+        related = _ref23[_i];
         this.renderTab(related);
       }
       return this.update();
@@ -2083,11 +2172,11 @@
     };
 
     EntityForm.prototype.dispose = function() {
-      var fieldList, _i, _len, _ref22;
+      var fieldList, _i, _len, _ref23;
       if (this.tabs != null) {
-        _ref22 = this.tabs;
-        for (_i = 0, _len = _ref22.length; _i < _len; _i++) {
-          fieldList = _ref22[_i];
+        _ref23 = this.tabs;
+        for (_i = 0, _len = _ref23.length; _i < _len; _i++) {
+          fieldList = _ref23[_i];
           fieldList.remove();
         }
       }
@@ -2102,8 +2191,8 @@
     __extends(Related, _super);
 
     function Related() {
-      _ref22 = Related.__super__.constructor.apply(this, arguments);
-      return _ref22;
+      _ref23 = Related.__super__.constructor.apply(this, arguments);
+      return _ref23;
     }
 
     Related.prototype.resolve = function() {
@@ -2135,8 +2224,8 @@
     __extends(App, _super);
 
     function App() {
-      _ref23 = App.__super__.constructor.apply(this, arguments);
-      return _ref23;
+      _ref24 = App.__super__.constructor.apply(this, arguments);
+      return _ref24;
     }
 
     App.prototype.entities = {};
@@ -2170,11 +2259,11 @@
             return entity;
           }
           wait = (function() {
-            var _ref24, _results;
-            _ref24 = entity.related;
+            var _ref25, _results;
+            _ref25 = entity.related;
             _results = [];
-            for (key in _ref24) {
-              related = _ref24[key];
+            for (key in _ref25) {
+              related = _ref25[key];
               _results.push(related.resolve());
             }
             return _results;
@@ -2197,8 +2286,8 @@
     __extends(Router, _super);
 
     function Router() {
-      _ref24 = Router.__super__.constructor.apply(this, arguments);
-      return _ref24;
+      _ref25 = Router.__super__.constructor.apply(this, arguments);
+      return _ref25;
     }
 
     Router.prototype.routes = {

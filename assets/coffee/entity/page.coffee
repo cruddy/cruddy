@@ -44,6 +44,9 @@ class EntityPage extends Backbone.View
         @dataGrid = new DataGrid
             model: @dataSource
 
+        @pagination = new Pagination
+            model: @dataSource
+
         @filterList = new FilterList
             model: @dataSource.filter
             entity: @dataSource.entity
@@ -52,6 +55,7 @@ class EntityPage extends Backbone.View
 
         @$el.append @filterList.render().el
         @$el.append @dataGrid.render().el
+        @$el.append @pagination.render().el
 
         this
 
@@ -75,6 +79,7 @@ class EntityPage extends Backbone.View
         @form.remove() if @form?
         @filterList.remove() if @filterList?
         @dataGrid.remove() if @dataGrid?
+        @pagination.remove() if @pagination?
         @dataSource.stopListening() if @dataSource?
 
         this

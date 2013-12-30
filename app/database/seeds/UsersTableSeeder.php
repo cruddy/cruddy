@@ -8,6 +8,8 @@ class UsersTableSeeder extends Seeder {
         DB::table('groups')->truncate();
         DB::table('users')->truncate();
 
+        $faker = Faker\Factory::create();
+
 		$group = Sentry::createGroup(array(
 
             'name' => 'administrator',
@@ -31,21 +33,33 @@ class UsersTableSeeder extends Seeder {
             ),
         ));
 
-        $user = Sentry::createUser(array(
+        $user = Sentry::createUser([
 
-            'email' => 'admin@localhost',
+            'email' => 'admin@mail.com',
             'password' => 'admin',
 
             'first_name' => 'Admin',
 
             'activated' => true,
 
-            'permissions' => array(
+            'permissions' => [
                 'superuser' => 1,
-            ),
-        ));
+            ],
+        ]);
 
         $user->groups()->attach($group);
-	}
+
+        foreach (range(1, 20) as $index)
+        {
+            Sentry::createUser([
+               'email' => $faker->email,
+               'password' => $faker->word,
+               'first_name' => $faker->firstName,
+               'last_name' => $faker->lastName,
+               'activated' => $faker->boolean(),
+            ]);
+        }
+
+    }
 
 }

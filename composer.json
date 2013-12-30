@@ -11,7 +11,6 @@
     "require": {
         "php": ">=5.3.0",
         "laravel/framework": "4.1.*",
-        "twbs/bootstrap": "3.*",
         "cartalyst/sentry": "2.0.*"
     },
 
@@ -27,5 +26,8 @@
         }
     },
 
-    "minimum-stability": "dev"
+    "minimum-stability": "dev",
+    "require-dev": {
+        "fzaninotto/faker": "dev-master"
+    }
 }

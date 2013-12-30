@@ -4,7 +4,7 @@ module.exports = function(grunt) {
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
 
-        bootstrap: 'vendor/twbs/bootstrap',
+        bootstrap: 'assets/vendor/bootstrap',
         vendor: 'assets/vendor',
         less_src: 'assets/less',
         app: 'assets/coffee',
@@ -24,6 +24,7 @@ module.exports = function(grunt) {
                     '<%= app %>/factory.coffee',
                     '<%= app %>/attribute.coffee',
                     '<%= app %>/datasource.coffee',
+                    '<%= app %>/pagination.coffee',
                     '<%= app %>/datagrid.coffee',
                     '<%= app %>/fieldList.coffee',
                     '<%= app %>/filterList.coffee',
@@ -64,11 +65,11 @@ module.exports = function(grunt) {
         concat: {
             vendor: {
                 src: [
-                    '<%= vendor %>/jquery-2.0.3.js',
-                    '<%= vendor %>/underscore-1.5.2.js',
-                    '<%= vendor %>/backbone-1.1.0.js',
-                    '<%= vendor %>/moment.js',
-                    '<%= vendor %>/moment-ru.js',
+                    '<%= vendor %>/jquery/jquery.js',
+                    '<%= vendor %>/underscore/underscore.js',
+                    '<%= vendor %>/backbone/backbone.js',
+                    '<%= vendor %>/moment/moment.js',
+                    '<%= vendor %>/moment/lang/ru.js',
 
                     '<%= bootstrap %>/js/tab.js',
                     '<%= bootstrap %>/js/dropdown.js',

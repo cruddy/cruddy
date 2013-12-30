@@ -1,5 +1,5 @@
 (function() {
-  var API_URL, Alert, App, Attribute, BaseInput, BooleanInput, Checkbox, Column, Cruddy, DataGrid, DataSource, Entity, EntityDropdown, EntityForm, EntityInstance, EntityPage, EntitySelector, Factory, Field, FieldList, FieldView, FilterList, Related, Router, StaticInput, TRANSITIONEND, TextInput, Textarea, humanize, _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref18, _ref19, _ref2, _ref20, _ref21, _ref22, _ref23, _ref24, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9,
+  var API_URL, AdvFormData, Alert, App, Attribute, BaseInput, BooleanInput, Checkbox, Column, Cruddy, DataGrid, DataSource, Entity, EntityDropdown, EntityForm, EntityInstance, EntityPage, EntitySelector, Factory, Field, FieldList, FieldView, FilterList, Related, Router, StaticInput, TRANSITIONEND, TextInput, Textarea, entity_url, humanize, _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref18, _ref19, _ref2, _ref20, _ref21, _ref22, _ref23, _ref24, _ref3, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9,
     _this = this,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -24,6 +24,15 @@
 
   humanize = function(id) {
     return id.replace(/_-/, " ");
+  };
+
+  entity_url = function(id, extra) {
+    var url;
+    url = Cruddy.root + "/" + Cruddy.uri + "/api/v1/entity/" + id;
+    if (extra) {
+      url += "/" + extra;
+    }
+    return url;
   };
 
   Alert = (function(_super) {
@@ -54,6 +63,68 @@
     return Alert;
 
   })(Backbone.View);
+
+  AdvFormData = (function() {
+    function AdvFormData(data) {
+      this.original = new FormData;
+      if (data != null) {
+        this.append(data);
+      }
+    }
+
+    AdvFormData.prototype.append = function(name, value) {
+      var key, _i, _len, _value;
+      if (value === void 0) {
+        value = name;
+        name = null;
+      }
+      if (value instanceof File || value instanceof Blob) {
+        return this.original.append(name, value);
+      }
+      if (_.isArray(value)) {
+        if (_.isEmpty(value)) {
+          return AdvFormData.__super__.append.call(this, name, "");
+        }
+        for (key = _i = 0, _len = value.length; _i < _len; key = ++_i) {
+          _value = value[key];
+          this.append(this.key(name, key), _value);
+        }
+        return;
+      }
+      if (_.isObject(value)) {
+        for (key in value) {
+          _value = value[key];
+          this.append(this.key(name, key), _value);
+        }
+        return;
+      }
+      return this.original.append(name, this.process(value));
+    };
+
+    AdvFormData.prototype.process = function(value) {
+      if (value === null) {
+        return "";
+      }
+      if (value === true) {
+        return 1;
+      }
+      if (value === false) {
+        return 0;
+      }
+      return value;
+    };
+
+    AdvFormData.prototype.key = function(outer, inner) {
+      if (outer) {
+        return "" + outer + "[" + inner + "]";
+      } else {
+        return inner;
+      }
+    };
+
+    return AdvFormData;
+
+  })();
 
   Factory = (function() {
     function Factory() {}
@@ -132,7 +203,7 @@
       if (this.request != null) {
         this.request.abort();
       }
-      this.request = $.getJSON("" + API_URL + "/" + this.entity.id, this.data(), function(resp) {
+      this.request = $.getJSON(this.entity.url(), this.data(), function(resp) {
         _this._fetching = true;
         _this.set(resp.data);
         _this._fetching = false;
@@ -569,7 +640,7 @@
     TextInput.prototype.keydown = function(e) {
       if (e.ctrlKey && e.keyCode === 13) {
         this.change();
-        return false;
+        return;
       }
       if (e.keyCode === 27) {
         this.model.set(this.key, "");
@@ -1549,23 +1620,35 @@
       return this.searchInstance;
     };
 
-    Entity.prototype.update = function(id) {
+    Entity.prototype.load = function(id) {
       var _this = this;
-      return $.getJSON("" + API_URL + "/" + this.id + "/" + id).then(function(resp) {
-        var instance, item, key, related;
-        related = (function() {
+      return $.getJSON(this.url(id)).then(function(resp) {
+        var item, key;
+        resp = resp.data;
+        return _this.createInstance(resp.model, (function() {
           var _ref21, _results;
           _ref21 = this.related;
           _results = [];
           for (key in _ref21) {
             item = _ref21[key];
-            _results.push(item.related.createInstance(resp.data.related[item.id]));
+            _results.push(item.related.createInstance(resp.related[item.id]));
           }
           return _results;
-        }).call(_this);
-        _this.set("instance", instance = _this.createInstance(resp.data.instanceData, related));
+        }).call(_this));
+      });
+    };
+
+    Entity.prototype.update = function(id) {
+      var _this = this;
+      return this.load(id).then(function(instance) {
+        console.log(instance);
+        _this.set("instance", instance);
         return instance;
       });
+    };
+
+    Entity.prototype.url = function(id) {
+      return entity_url(this.id, id);
     };
 
     Entity.prototype.link = function(id) {
@@ -1616,20 +1699,13 @@
     };
 
     EntityInstance.prototype.url = function() {
-      var url;
-      url = "" + API_URL + "/" + this.entity.id;
-      if (this.isNew()) {
-        return url;
-      } else {
-        return url + "/" + this.id;
-      }
+      return this.entity.url(this.id);
     };
 
     EntityInstance.prototype.sync = function(method, model, options) {
       var _ref22;
       if (method === "update" || method === "create") {
-        options.data = new FormData;
-        this.append(options.data, this.entity.id, (_ref22 = options.attrs) != null ? _ref22 : this.attributes);
+        options.data = new AdvFormData((_ref22 = options.attrs) != null ? _ref22 : this.attributes).original;
         options.contentType = false;
         options.processData = false;
       }
@@ -1666,46 +1742,6 @@
       } else {
         return queue(xhr);
       }
-    };
-
-    EntityInstance.prototype.append = function(data, key, value) {
-      var i, _i, _key, _len, _value;
-      if (value instanceof File) {
-        data.append(key, value);
-        return;
-      }
-      if (_.isArray(value)) {
-        if (value.length === 0) {
-          return this.append(data, key, "");
-        }
-        for (i = _i = 0, _len = value.length; _i < _len; i = ++_i) {
-          _value = value[i];
-          this.append(data, key + "[" + i + "]", _value);
-        }
-        return;
-      }
-      if (_.isObject(value)) {
-        for (_key in value) {
-          _value = value[_key];
-          this.append(data, key + "[" + _key + "]", _value);
-        }
-        return;
-      }
-      data.append(key, this.convertValue(value));
-      return this;
-    };
-
-    EntityInstance.prototype.convertValue = function(value) {
-      if (value === null) {
-        return "";
-      }
-      if (value === true) {
-        return 1;
-      }
-      if (value === false) {
-        return 0;
-      }
-      return value;
     };
 
     EntityInstance.prototype.parse = function(resp) {
@@ -2127,7 +2163,7 @@
       if (id in this.entities) {
         promise = $.Deferred().resolve(this.entities[id]).promise();
       } else {
-        promise = this.fields(id).then(function(resp) {
+        promise = $.getJSON(entity_url(id, "schema")).then(function(resp) {
           var entity, key, related, wait;
           _this.entities[id] = entity = new Entity(resp.data);
           if (_.isEmpty(entity.related)) {
@@ -2149,10 +2185,6 @@
         });
       }
       return promise;
-    };
-
-    App.prototype.fields = function(id) {
-      return $.getJSON("" + API_URL + "/" + id + "/entity");
     };
 
     return App;

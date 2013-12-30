@@ -44,15 +44,21 @@ class Entity extends Backbone.Model
 
         @searchInstance
 
-    # Load an instance and set it as currently active.
+    # Load a model
+    load: (id) ->
+        $.getJSON(@url(id)).then (resp) =>
+            resp = resp.data
+
+            @createInstance resp.model, (item.related.createInstance resp.related[item.id] for key, item of @related)
+
+    # Load a model and set it as current
     update: (id) ->
-        $.getJSON("#{ API_URL }/#{ @id }/#{ id }").then (resp) =>
-            #@fields.set resp.data.runtime, add: false
-
-            related = (item.related.createInstance resp.data.related[item.id] for key, item of @related)
-
-            @set "instance", instance = @createInstance resp.data.instanceData, related
+        @load(id).then (instance) =>
+            console.log instance
+            @set "instance", instance
 
             instance
+
+    url: (id) -> entity_url @id, id
 
     link: (id) -> "#{ @id}" + if id? then "/#{ id }" else ""

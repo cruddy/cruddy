@@ -33,9 +33,6 @@ class CruddyServiceProvider extends ServiceProvider {
 	public function register()
     {
         $this->registerPermissions();
-        $this->registerFieldFactory();
-        $this->registerColumnFactory();
-        $this->registerRelatedFactory();
         $this->registerEntityFactory();
         $this->registerMenu();
         $this->registerCruddy();
@@ -43,49 +40,39 @@ class CruddyServiceProvider extends ServiceProvider {
 
     public function registerPermissions()
     {
-        $this->app['cruddy.permissions'] = $this->app->share(function ($app) {
+        $this->app['Kalnoy\Cruddy\PermissionsInterface'] = $this->app->share(function ($app) {
 
             return new SentryPermissions($app['sentry']);
         });
     }
 
-    public function registerFieldFactory()
-    {
-        $this->app->bind('cruddy.factory.field', 'Kalnoy\Cruddy\Fields\Factory', true);
-    }
-
-    public function registerColumnFactory()
-    {
-        $this->app->bind('cruddy.factory.column', 'Kalnoy\Cruddy\Columns\Factory', true);
-    }
-
-    public function registerRelatedFactory()
-    {
-        $this->app->bind('cruddy.factory.related', 'Kalnoy\Cruddy\Related\Factory', true);
-    }
-
     public function registerEntityFactory()
     {
-        $this->app['cruddy.factory'] = $this->app->share(function ($app) {
+        $this->app['cruddy.entity.factory'] = $this->app->share(function ($app) {
 
             $config = $app['config'];
-            $fields = $app['cruddy.factory.field'];
-            $columns = $app['cruddy.factory.column'];
-            $related = $app['cruddy.factory.related'];
             $validator = $app['validator'];
             $translator = $app['translator'];
+            $permissions = $app['Kalnoy\Cruddy\PermissionsInterface'];
+
+            $fields = new Entity\Fields\Factory();
+            $columns = new Entity\Columns\Factory();
+            $related = new Entity\Related\Factory();
 
             $config->addNamespace('entities', app_path('config/entities'));
 
-            return new Factory($app, $translator, $config, $validator, $fields, $columns, $related);
+            return new Entity\Factory($app, $translator, $config, $validator, $permissions, $fields, $columns, $related);
         });
     }
 
     protected function registerMenu()
     {
-        $this->app["cruddy.menu"] = $this->app->share(function ($app) {
+        $this->app['cruddy.menu'] = $this->app->share(function ($app) {
 
-            return new Menu($app["cruddy.factory"], $app["cruddy.permissions"]);
+            $factory = $app['cruddy.entity.factory'];
+            $permissions = $app['Kalnoy\Cruddy\PermissionsInterface'];
+
+            return new Menu($factory, $permissions);
         });
     }
 
@@ -94,23 +81,12 @@ class CruddyServiceProvider extends ServiceProvider {
         $this->app['Kalnoy\Cruddy\Environment'] = $this->app->share(function ($app) {
 
             $config = $app['config'];
-            $factory = $app['cruddy.factory'];
-            $permissions = $app['cruddy.permissions'];
-            $menu = $app["cruddy.menu"];
-            $request = $app["request"];
+            $factory = $app['cruddy.entity.factory'];
+            $permissions = $app['Kalnoy\Cruddy\PermissionsInterface'];
+            $menu = $app['cruddy.menu'];
+            $request = $app['request'];
 
             return new Environment($config, $factory, $permissions, $menu, $request);
         });
     }
-
-	/**
-	 * Get the services provided by the provider.
-	 *
-	 * @return array
-	 */
-	public function provides()
-	{
-		return array();
-	}
-
 }

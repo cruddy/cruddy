@@ -26,7 +26,7 @@ class TextInput extends BaseInput
         # Ctrl + Enter
         if e.ctrlKey and e.keyCode is 13
             @change()
-            return false
+            return
 
         # Escape
         if e.keyCode is 27

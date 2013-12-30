@@ -24,7 +24,7 @@ class App extends Backbone.Model
         if id of @entities
             promise = $.Deferred().resolve(@entities[id]).promise()
         else
-            promise = @fields(id).then (resp) =>
+            promise = $.getJSON(entity_url id, "schema").then (resp) =>
                 @entities[id] = entity = new Entity resp.data
 
                 return entity if _.isEmpty entity.related
@@ -35,8 +35,6 @@ class App extends Backbone.Model
                 $.when.apply($, wait).then -> entity
 
         promise
-
-    fields: (id) -> $.getJSON "#{ API_URL }/#{ id }/entity"
 
 Cruddy.app = new App
 

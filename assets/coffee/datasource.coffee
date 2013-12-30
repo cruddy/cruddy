@@ -18,7 +18,7 @@ class DataSource extends Backbone.Model
     fetch: ->
         @request.abort() if @request?
 
-        @request = $.getJSON "#{ API_URL }/#{ @entity.id }", @data(), (resp) =>
+        @request = $.getJSON @entity.url(), @data(), (resp) =>
             @_fetching = true
             @set resp.data
             @_fetching = false

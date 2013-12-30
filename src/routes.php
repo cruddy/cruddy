@@ -1,52 +1,49 @@
 <?php
 
-Route::group(array('prefix' => Config::get("cruddy::uri"), 'before' => 'auth.backend'), function () {
+Route::group(array('prefix' => Config::get('cruddy::uri'), 'before' => 'auth.backend'), function () {
 
-    $index = "Kalnoy\\Cruddy\\CruddyController@index";
+    $index = 'Kalnoy\Cruddy\CruddyController@index';
 
-    Route::get("/", $index);
-    Route::get("{model}", array("as" => "cruddy.index", "uses" => $index));
-    Route::get("{model}/{id}", array("as" => "cruddy.show", "uses" => $index));
+    Route::get('/', $index);
+    Route::get('{model}', array('as' => 'cruddy.index', 'uses' => $index));
+    Route::get('{model}/{id}', array('as' => 'cruddy.show', 'uses' => $index));
 
     Route::group(array('prefix' => 'api/v1'), function () {
 
-        // Get a model definition.
-        Route::get('{model}/entity', array(
-            'as' => 'cruddy.api.entity',
-            'uses' => 'Kalnoy\Cruddy\CruddyApiController@entity',
-        ));
+        Route::group(array('prefix' => 'entity'), function () {
 
-        // Index models.
-        Route::get('{model}', array(
-            'as' => 'cruddy.api.index',
-            'uses' => 'Kalnoy\Cruddy\CruddyApiController@index',
-        ));
+            Route::get('{model}/schema', array(
+                'as' => 'cruddy.api.entity.schema',
+                'uses' => 'Kalnoy\Cruddy\EntityApiController@schema',
+            ));
 
-        // Create a model instance.
-        Route::post('{model}', array(
-            'as' => 'cruddy.api.create',
-            'uses' => 'Kalnoy\Cruddy\CruddyApiController@create',
-        ));
+            Route::get('{model}', array(
+                'as' => 'cruddy.api.entity.index',
+                'uses' => 'Kalnoy\Cruddy\EntityApiController@index',
+            ));
 
-        // View a model instance.
-        Route::get('{model}/{id}', array(
-            'as' => 'cruddy.api.show',
-            'uses' => 'Kalnoy\Cruddy\CruddyApiController@show',
-        ))
-        ->where('id', '[0-9]+');
+            Route::post('{model}', array(
+                'as' => 'cruddy.api.entity.create',
+                'uses' => 'Kalnoy\Cruddy\EntityApiController@create',
+            ));
 
-        // Update a model instance.
-        Route::put('{model}/{id}', array(
-            'as' => 'cruddy.api.update',
-            'uses' => 'Kalnoy\Cruddy\CruddyApiController@update',
-        ))
-        ->where('id', '[0-9]+');
+            Route::get('{model}/{id}', array(
+                'as' => 'cruddy.api.entity.show',
+                'uses' => 'Kalnoy\Cruddy\EntityApiController@show',
+            ))
+            ->where('id', '[0-9]+');
 
-        // Destroy a model instance.
-        Route::delete('{model}/{id}', array(
-            'as' => 'cruddy.api.destroy',
-            'uses' => 'Kalnoy\Cruddy\CruddyApiController@destroy',
-        ))
-        ->where('id', '[0-9]+');
+            Route::put('{model}/{id}', array(
+                'as' => 'cruddy.api.entity.update',
+                'uses' => 'Kalnoy\Cruddy\EntityApiController@update',
+            ))
+            ->where('id', '[0-9]+');
+
+            Route::delete('{model}/{id}', array(
+                'as' => 'cruddy.api.entity.destroy',
+                'uses' => 'Kalnoy\Cruddy\EntityApiController@destroy',
+            ))
+            ->where('id', '[0-9]+');
+        });
     });
 });

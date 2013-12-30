@@ -3,21 +3,22 @@
 use Illuminate\Support\Contracts\JsonableInterface;
 use Illuminate\Http\Request;
 use Illuminate\Config\Repository as Config;
+use Kalnoy\Cruddy\Entity\Factory as EntityFactory;
 
 class Environment implements JsonableInterface {
 
     protected $config;
 
-    protected $factory;
+    protected $entities;
 
     protected $permissions;
 
     protected $menu;
 
-    public function __construct(Config $config, FactoryInterface $factory, PermissionsInterface $permissions, Menu $menu, Request $request)
+    public function __construct(Config $config, EntityFactory $entities, PermissionsInterface $permissions, Menu $menu, Request $request)
     {
         $this->config = $config;
-        $this->factory = $factory;
+        $this->entities = $entities;
         $this->permissions = $permissions;
         $this->menu = $menu;
         $this->request = $request;
@@ -25,7 +26,7 @@ class Environment implements JsonableInterface {
 
     public function entity($id)
     {
-        return $this->factory->resolve($id);
+        return $this->entities->resolve($id);
     }
 
     public function menu()

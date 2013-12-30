@@ -1,6 +1,7 @@
 <?php namespace Kalnoy\Cruddy;
 
 use Cartalyst\Sentry\Sentry;
+use Kalnoy\Cruddy\Entity\Entity;
 
 class SentryPermissions implements PermissionsInterface {
 
@@ -27,21 +28,21 @@ class SentryPermissions implements PermissionsInterface {
 
     public function canView(Entity $entity)
     {
-        return $this->check($entity, "view");
+        return $this->check($entity, 'view');
     }
 
     public function canCreate(Entity $entity)
     {
-        return $this->check($entity, "create");
+        return $this->check($entity, 'create');
     }
 
     public function canUpdate(Entity $entity)
     {
-        return $this->check($entity, "update");
+        return $this->check($entity, 'update');
     }
 
     public function canDelete(Entity $entity)
     {
-        return $this->check($entity, "delete");
+        return $this->check($entity, 'delete');
     }
 }

@@ -17,6 +17,8 @@ class ApiController extends Controller {
 
     const E_FORBIDDEN = 'FORBIDDEN';
 
+    const E_EXCEPTION = 'EXCEPTION';
+
     /**
      * Get success response.
      *
@@ -79,16 +81,22 @@ class ApiController extends Controller {
         return $this->failure(404, self::E_NOT_FOUND);
     }
 
+    /**
+     * Return 403 status.
+     *
+     * @param string $message
+     *
+     * @return Response
+     */
     protected function forbidden($message = null)
     {
-        return $this->failure(404, self::E_FORBIDDEN, $message);
+        return $this->failure(403, self::E_FORBIDDEN, $message);
     }
 
     /**
      * Handle missing method.
      *
-     * @param  string $method
-     * @param  array  $parameters
+     * @param  array $parameters
      *
      * @return Response
      */

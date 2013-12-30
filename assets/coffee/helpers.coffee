@@ -1,5 +1,11 @@
 humanize = (id) => id.replace(/_-/, " ")
 
+entity_url = (id, extra) ->
+    url = Cruddy.root + "/" + Cruddy.uri + "/api/v1/entity/" + id;
+    url += "/" + extra if extra
+
+    url
+
 class Alert extends Backbone.View
     tagName: "span"
     className: "alert"

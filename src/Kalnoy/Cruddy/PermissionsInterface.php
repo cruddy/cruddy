@@ -1,5 +1,7 @@
 <?php namespace Kalnoy\Cruddy;
 
+use Kalnoy\Cruddy\Entity\Entity;
+
 interface PermissionsInterface {
 
     /**

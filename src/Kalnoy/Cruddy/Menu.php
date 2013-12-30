@@ -1,14 +1,16 @@
 <?php namespace Kalnoy\Cruddy;
 
+use Kalnoy\Cruddy\Entity\Factory as EntityFactory;
+
 class Menu {
 
-    protected $factory;
+    protected $entities;
 
     protected $permissions;
 
-    public function __construct(FactoryInterface $factory, PermissionsInterface $permissions)
+    public function __construct(EntityFactory $entities, PermissionsInterface $permissions)
     {
-        $this->factory = $factory;
+        $this->entities = $entities;
         $this->permissions = $permissions;
     }
 
@@ -75,9 +77,9 @@ class Menu {
 
     protected function entity($id)
     {
-        $entity = $this->factory->resolve($id);
+        $entity = $this->entities->resolve($id);
 
-        if (!$entity->canView()) return "";
+        if (!$this->permissions->canView($entity)) return "";
 
         return $this->custom(array(
             "label" => $entity->getTitle(),

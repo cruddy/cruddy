@@ -11,6 +11,12 @@ $(document).ajaxError (e, xhr) =>
     location.href = "login" if xhr.status == 403
 humanize = (id) => id.replace(/_-/, " ")
 
+entity_url = (id, extra) ->
+    url = Cruddy.root + "/" + Cruddy.uri + "/api/v1/entity/" + id;
+    url += "/" + extra if extra
+
+    url
+
 class Alert extends Backbone.View
     tagName: "span"
     className: "alert"
@@ -22,6 +28,40 @@ class Alert extends Backbone.View
         setTimeout (=> @remove()), options.timeout if options.timeout?
 
         this
+class AdvFormData
+    constructor: (data) ->
+        @original = new FormData
+        @append data if data?
+
+    append: (name, value) ->
+        if value is undefined
+            value = name
+            name = null
+
+        return @original.append name, value if value instanceof File or value instanceof Blob
+
+        if _.isArray value
+            return super name, "" if _.isEmpty value
+
+            @append @key(name, key), _value for _value, key in value
+
+            return
+
+        if _.isObject value
+            @append @key(name, key), _value for key, _value of value
+
+            return
+
+        @original.append name, @process value
+
+    process: (value) ->
+        return "" if value is null
+        return 1 if value is yes
+        return 0 if value is no
+
+        value
+
+    key: (outer, inner) -> if outer then "#{ outer }[#{ inner }]" else inner
 class Factory
     types: {}
 
@@ -51,7 +91,7 @@ class DataSource extends Backbone.Model
     fetch: ->
         @request.abort() if @request?
 
-        @request = $.getJSON "#{ API_URL }/#{ @entity.id }", @data(), (resp) =>
+        @request = $.getJSON @entity.url(), @data(), (resp) =>
             @_fetching = true
             @set resp.data
             @_fetching = false
@@ -339,7 +379,7 @@ class TextInput extends BaseInput
         # Ctrl + Enter
         if e.ctrlKey and e.keyCode is 13
             @change()
-            return false
+            return
 
         # Escape
         if e.keyCode is 27
@@ -931,16 +971,22 @@ class Entity extends Backbone.Model
 
         @searchInstance
 
-    # Load an instance and set it as currently active.
+    # Load a model
+    load: (id) ->
+        $.getJSON(@url(id)).then (resp) =>
+            resp = resp.data
+
+            @createInstance resp.model, (item.related.createInstance resp.related[item.id] for key, item of @related)
+
+    # Load a model and set it as current
     update: (id) ->
-        $.getJSON("#{ API_URL }/#{ @id }/#{ id }").then (resp) =>
-            #@fields.set resp.data.runtime, add: false
-
-            related = (item.related.createInstance resp.data.related[item.id] for key, item of @related)
-
-            @set "instance", instance = @createInstance resp.data.instanceData, related
+        @load(id).then (instance) =>
+            console.log instance
+            @set "instance", instance
 
             instance
+
+    url: (id) -> entity_url @id, id
 
     link: (id) -> "#{ @id}" + if id? then "/#{ id }" else ""
 class EntityInstance extends Backbone.Model
@@ -962,15 +1008,12 @@ class EntityInstance extends Backbone.Model
 
     link: -> @entity.link @id
 
-    url: ->
-        url = "#{ API_URL }/#{ @entity.id }"
-        if @isNew() then url else url + "/" + @id
+    url: -> @entity.url @id
 
     sync: (method, model, options) ->
         if method in ["update", "create"]
             # Form data will allow us to upload files via AJAX request
-            options.data = new FormData
-            @append options.data, @entity.id, options.attrs ? @attributes
+            options.data = new AdvFormData(options.attrs ? @attributes).original
 
             # Set the content type to false to let browser handle it
             options.contentType = false
@@ -997,34 +1040,6 @@ class EntityInstance extends Backbone.Model
 
         # Create related models after the main model is saved
         if @isNew() then xhr.then (resp) -> queue() else queue xhr
-
-    append: (data, key, value) ->
-        if value instanceof File
-            data.append key, value
-            return
-
-        if _.isArray value
-            return @append data, key, "" if value.length == 0
-
-            @append data, key + "[" + i + "]", _value for _value, i in value
-
-            return
-
-        if _.isObject value
-            @append data, key + "[" + _key + "]", _value for _key, _value of value
-
-            return
-
-        data.append key, @convertValue value
-
-        this
-
-    convertValue: (value) ->
-        return "" if value is null
-        return 1 if value is yes
-        return 0 if value is no
-
-        value
 
     parse: (resp) -> resp.data
 
@@ -1348,7 +1363,7 @@ class App extends Backbone.Model
         if id of @entities
             promise = $.Deferred().resolve(@entities[id]).promise()
         else
-            promise = @fields(id).then (resp) =>
+            promise = $.getJSON(entity_url id, "schema").then (resp) =>
                 @entities[id] = entity = new Entity resp.data
 
                 return entity if _.isEmpty entity.related
@@ -1359,8 +1374,6 @@ class App extends Backbone.Model
                 $.when.apply($, wait).then -> entity
 
         promise
-
-    fields: (id) -> $.getJSON "#{ API_URL }/#{ id }/entity"
 
 Cruddy.app = new App
 

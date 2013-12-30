@@ -20,6 +20,7 @@ module.exports = function(grunt) {
                     '<%= app %>/init.coffee',
 
                     '<%= app %>/helpers.coffee',
+                    '<%= app %>/formData.coffee',
                     '<%= app %>/factory.coffee',
                     '<%= app %>/attribute.coffee',
                     '<%= app %>/datasource.coffee',

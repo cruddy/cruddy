@@ -1,6 +1,7 @@
 <?php namespace Kalnoy\Cruddy\Entity\Attribute;
 
 use Kalnoy\Cruddy\Entity\Entity;
+use RuntimeException;
 
 class Factory {
 
@@ -18,14 +19,14 @@ class Factory {
      * @param  string $id
      * @param  array  $config
      *
-     * @throws \RuntimeException
+     * @throws RuntimeException
      * @return Attribute
      */
     public function create(Entity $entity, $type, $id, array $config = array())
     {
         if (!isset($this->types[$type]))
         {
-            throw new \RuntimeException("The attribute of type {$type} is not registered.");
+            throw new RuntimeException("The attribute of type {$type} is not registered.");
         }
 
         $className = $this->types[$type];
@@ -47,7 +48,7 @@ class Factory {
      * @param  string $id
      * @param  array  $config
      *
-     * @throws \RuntimeException
+     * @throws RuntimeException
      * @return Attribute
      */
     public function createFromConfig(Entity $entity, $id, array $config)
@@ -56,7 +57,7 @@ class Factory {
         {
             if ($this->defaultType === null)
             {
-                throw new \RuntimeException("Attribute config must contain type key.");
+                throw new RuntimeException("Attribute config must contain type key.");
             }
 
             $type = $this->defaultType;
@@ -129,7 +130,7 @@ class Factory {
     {
         if (isset($this->types[$type]))
         {
-            throw new \RuntimeException("The attribute type {$type} is already registered.");
+            throw new RuntimeException("The attribute type {$type} is already registered.");
         }
 
         $this->types[$type] = $className;

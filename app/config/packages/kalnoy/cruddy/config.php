@@ -9,6 +9,11 @@
     'assets' => 'public',
 
     'menu' => array(
+        'Store' => array(
+            '@products',
+            '@categories',
+        ),
+
         'backend.auth' => array(
             '@users',
             '@groups',

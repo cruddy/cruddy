@@ -14,6 +14,7 @@ class DataGrid extends Backbone.View
 
     initialize: (options) ->
         @entity = @model.entity
+        @columns = @entity.columns.models.filter (col) -> col.get "visible"
 
         @listenTo @model, "change:data", @updateData
         @listenTo @model, "change:order_by change:order_dir", @onOrderChange
@@ -64,15 +65,14 @@ class DataGrid extends Backbone.View
         this
 
     updateData: (datasource, data) ->
-        @$(".items").replaceWith @renderBody @entity.columns.models, data
+        @$(".items").replaceWith @renderBody @columns, data
 
         this
 
     render: ->
-        columns = @entity.columns.models
         data = @model.get "data"
 
-        @$el.html @renderHead(columns) + @renderBody(columns, data)
+        @$el.html @renderHead(@columns) + @renderBody(@columns, data)
 
         @onOrderChange @model
 

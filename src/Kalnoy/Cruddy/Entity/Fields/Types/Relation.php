@@ -1,11 +1,12 @@
 <?php namespace Kalnoy\Cruddy\Entity\Fields\Types;
 
+use Kalnoy\Cruddy\Entity\Columns\ColumnInterface;
 use Kalnoy\Cruddy\Entity\Fields\AbstractField;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Support\Collection;
 
-class Relation extends AbstractField {
+class Relation extends AbstractField implements ColumnInterface {
 
     protected $entityInstance;
 
@@ -98,4 +99,44 @@ class Relation extends AbstractField {
         return "Relation";
     }
 
+    /**
+     * Get whether the column can be sorted.
+     *
+     * @return bool
+     */
+    function isSortable()
+    {
+        return false;
+    }
+
+    function isFilterable()
+    {
+        return false;
+    }
+
+    /**
+     * Apply an order to the query builder.
+     *
+     * @param  Builder $builder
+     * @param          $direction
+     *
+     * @return void
+     */
+    function applyOrder(Builder $builder, $direction)
+    {
+        // TODO: Implement applyOrder() method.
+    }
+
+    /**
+     * Apply constraints to the query builder.
+     *
+     * @param  Builder $query
+     * @param  mixed   $data
+     *
+     * @return void
+     */
+    function applyConstraints(Builder $query, $data)
+    {
+        // TODO: Implement applyConstraints() method.
+    }
 }

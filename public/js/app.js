@@ -358,6 +358,9 @@
 
     DataGrid.prototype.initialize = function(options) {
       this.entity = this.model.entity;
+      this.columns = this.entity.columns.models.filter(function(col) {
+        return col.get("visible");
+      });
       this.listenTo(this.model, "change:data", this.updateData);
       this.listenTo(this.model, "change:order_by change:order_dir", this.onOrderChange);
       return this.listenTo(this.entity, "change:instance", this.onInstanceChange);
@@ -416,15 +419,14 @@
     };
 
     DataGrid.prototype.updateData = function(datasource, data) {
-      this.$(".items").replaceWith(this.renderBody(this.entity.columns.models, data));
+      this.$(".items").replaceWith(this.renderBody(this.columns, data));
       return this;
     };
 
     DataGrid.prototype.render = function() {
-      var columns, data;
-      columns = this.entity.columns.models;
+      var data;
       data = this.model.get("data");
-      this.$el.html(this.renderHead(columns) + this.renderBody(columns, data));
+      this.$el.html(this.renderHead(this.columns) + this.renderBody(this.columns, data));
       this.onOrderChange(this.model);
       return this;
     };

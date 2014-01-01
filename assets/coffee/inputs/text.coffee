@@ -2,15 +2,14 @@
 class TextInput extends BaseInput
     tagName: "input"
 
-    className: "form-control"
-    size: "sm"
-
     events:
         "change": "change"
         "keydown": "keydown"
 
     constructor: (options) ->
-        @size = options.size if options.size?
+        @size = options.size ? "sm"
+        @className = options.className ? "form-control"
+        @continous = options.continous ? false
 
         @className += " input-#{ @size }"
 
@@ -32,6 +31,10 @@ class TextInput extends BaseInput
         if e.keyCode is 27
             @model.set @key, ""
             return false
+
+        @scheduleChange() if @continous
+
+        this
 
     change: ->
         @model.set @key, @el.value

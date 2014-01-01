@@ -1,5 +1,6 @@
 <?php namespace Kalnoy\Cruddy\Entity;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Kalnoy\Cruddy\ComponentInterface;
@@ -193,22 +194,51 @@ class Entity implements FormInterface, ComponentInterface {
     /**
      * List all items.
      *
-     * @param  array  $filters
-     * @param  array  $order
-     * @param  int    $page
+     * @param  array $filters
+     * @param  array $order
      *
      * @return array
      */
-    public function search(array $filters = array(), array $order = array())
+    public function all($search = null, array $filters = array(), array $order = array(), array $columns = array('*'))
     {
         $builder = $this->form()->instance()->newQuery();
+        $query = $builder->getQuery();
 
-        $this->columns()
+        $allColumns = $this->columns()
             ->modifyQuery($builder)
-            ->applyOrder($builder, $order)
-            ->applyConstraints($builder, $filters);
+            ->applyOrder($query, $order)
+            ->applyConstraints($query, $filters);
 
-        return $builder->paginate();
+        if ($search)
+        {
+            $query->whereNested(function ($nested) use ($allColumns, $search) {
+                $allColumns->search($nested, $search);
+            });
+        }
+
+        return $this->paginate($builder, $columns);
+    }
+
+    /**
+     * Search items using "search anything" feature.
+     *
+     * @param       $query
+     * @param array $columns
+     * @return array
+     */
+    public function search($query, array $columns = array('*'))
+    {
+        return $this->all($query, array(), $this->getDefaultOrder(), $columns);
+    }
+
+    protected function paginate(Builder $builder, $columns = array('*'))
+    {
+        $columns = $this->columns($columns);
+
+        $paginated = $builder->paginate();
+        $paginated->setItems($columns->collectionData($paginated->getItems()));
+
+        return $paginated;
     }
 
     /**
@@ -305,43 +335,52 @@ class Entity implements FormInterface, ComponentInterface {
     }
 
     /**
-     * Get a list of model's fields.
+     * Get a collection of entity's fields.
      *
-     * @return array
+     * @return Fields\Collection
      */
-    public function fields()
+    public function fields(array $items = array('*'))
     {
         if ($this->fields === null)
         {
-            return $this->fields = $this->factory->createFields($this);
+            $this->fields = $this->factory->createFields($this);
         }
 
-        return $this->fields;
+        return $this->fields->only($items);
     }
 
     /**
-     * Get a list of model's columns.
+     * Get a list of entity's columns.
      *
-     * @return array
+     * @param array $items
+     *
+     * @return Columns\Collection
      */
-    public function columns()
+    public function columns(array $items = array('*'))
     {
         if ($this->columns === null)
         {
-            return $this->columns = $this->factory->createColumns($this);
+            $this->columns = $this->factory->createColumns($this);
         }
 
-        return $this->columns;
+        return $this->columns->only($items);
     }
 
-    public function related()
+    /**
+     * Get a collection of entity's related entities.
+     *
+     * @param array $items
+     *
+     * @return Related\Collection
+     */
+    public function related(array $items = array('*'))
     {
         if ($this->related === null)
         {
-            return $this->related = $this->factory->createRelated($this);
+            $this->related = $this->factory->createRelated($this);
         }
 
-        return $this->related;
+        return $this->related->only($items);
     }
 
     public function getFactory()
@@ -374,6 +413,13 @@ class Entity implements FormInterface, ComponentInterface {
     public function getSingular()
     {
         return $this->translate("singular") ?: ucfirst(str_singular(humanize($this->id)));
+    }
+
+    public function getDefaultOrder()
+    {
+        if (!$this->order_by) return array();
+
+        return [ $this->order_by => $this->columns()->get($this->order_by)->order_dir ];
     }
 
     /**

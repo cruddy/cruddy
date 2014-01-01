@@ -1,7 +1,7 @@
 <?php namespace Kalnoy\Cruddy\Entity\Columns;
 
 use Kalnoy\Cruddy\Entity\Attribute\Collection as BaseCollection;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder;
 
 class Collection extends BaseCollection {
 
@@ -43,6 +43,28 @@ class Collection extends BaseCollection {
             }
 
         });
+
+        return $this;
+    }
+
+    /**
+     * Search items by a string query.
+     *
+     * @param Builder $builder
+     * @param string  $query
+     * @return $this
+     */
+    public function search(Builder $builder, $query)
+    {
+        if (empty($query)) return $this;
+
+        foreach ($this->items as $item)
+        {
+            if ($item->isFilterable() && $item->isSearchable())
+            {
+                $item->applyConstraints($builder, $query, 'or');
+            }
+        }
 
         return $this;
     }

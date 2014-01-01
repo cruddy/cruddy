@@ -1,9 +1,12 @@
 <?php namespace Kalnoy\Cruddy\Entity\Columns\Types;
 
+use Illuminate\Database\Query\Builder;
 use Kalnoy\Cruddy\Entity\Columns\AbstractColumn;
 use Kalnoy\Cruddy\Entity\Columns\ColumnInterface;
 use Illuminate\Database\Eloquent\Model as Eloquent;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use LogicException;
+use RuntimeException;
 
 /**
  * The Field column depends on an entity's field.
@@ -39,7 +42,7 @@ class Field extends AbstractColumn {
      *
      * @return Field
      */
-    public function modifyQuery(Builder $builder)
+    public function modifyQuery(EloquentBuilder $builder)
     {
         $this->field()->modifyQuery($builder);
 
@@ -61,17 +64,12 @@ class Field extends AbstractColumn {
         return $this;
     }
 
-    public function applyConstraints(Builder $builder, $data)
-    {
-        $this->field()->applyConstraints($builder, $data);
-
-        return $this;
-    }
-
     /**
      * Get a field instance.
      *
-     * @return \Kalnoy\Cruddy\Entity\Attribute\Interface
+     * @throws RuntimeException
+     * @throws LogicException
+     * @return \Kalnoy\Cruddy\Entity\Attribute\AttributeInterface
      */
     public function field()
     {
@@ -83,16 +81,23 @@ class Field extends AbstractColumn {
 
             if (null === $this->fieldInstance)
             {
-                throw new \RuntimeException("The field {$field} is not found in {$this->entity->getId()} entity.");
+                throw new RuntimeException("The field {$field} is not found in {$this->entity->getId()} entity.");
             }
 
             if ( ! $this->fieldInstance instanceof ColumnInterface)
             {
-                throw new \LogicException("In order to use {$field} as a column it must implement SortableInterface.");
+                throw new LogicException("In order to use {$field} as a column it must implement SortableInterface.");
             }
         }
 
         return $this->fieldInstance;
+    }
+
+    public function applyConstraints(Builder $builder, $data, $boolean = 'and')
+    {
+        $this->field()->applyConstraints($builder, $data, $boolean);
+
+        return $this;
     }
 
     /**
@@ -108,6 +113,11 @@ class Field extends AbstractColumn {
     public function isFilterable()
     {
         return $this->field()->isFilterable();
+    }
+
+    public function isSearchable()
+    {
+        return $this->field()->isSearchable();
     }
 
     public function getTitle()

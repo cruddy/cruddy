@@ -51,9 +51,18 @@ class EntityPage extends Backbone.View
             model: @dataSource.filter
             entity: @dataSource.entity
 
+        @search = new TextInput
+            model: @dataSource
+            key: "search"
+            continous: yes
+            attributes:
+                type: "search"
+                placeholder: "поиск"
+
         @dataSource.fetch()
 
-        @$el.append @filterList.render().el
+        @$(".col-search").append @search.render().el
+        @$(".col-filters").append @filterList.render().el
         @$el.append @dataGrid.render().el
         @$el.append @pagination.render().el
 
@@ -75,11 +84,14 @@ class EntityPage extends Backbone.View
 
         html += "</h1>"
 
+        html += """<div class="row row-search"><div class="col-xs-2 col-search"></div><div class="col-xs-10 col-filters"></div></div>"""
+
     dispose: ->
         @form.remove() if @form?
         @filterList.remove() if @filterList?
         @dataGrid.remove() if @dataGrid?
         @pagination.remove() if @pagination?
+        @search.remove() if @search?
         @dataSource.stopListening() if @dataSource?
 
         this

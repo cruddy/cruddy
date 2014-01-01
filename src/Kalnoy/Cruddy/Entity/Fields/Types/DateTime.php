@@ -36,6 +36,11 @@ class DateTime extends Input {
         return false;
     }
 
+    public function isSearchable()
+    {
+        return false;
+    }
+
     /**
      * Get the java script class name.
      *

@@ -2,14 +2,14 @@
 
 use Kalnoy\Cruddy\Entity\Columns\AbstractColumn;
 use Illuminate\Database\Eloquent\Model as Eloquent;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder;
 
 class Computed extends AbstractColumn {
 
     /**
      * The Closure that will receive a model to resolve a value.
      *
-     * @var Closure
+     * @var \Closure
      */
     public $value;
 
@@ -39,13 +39,13 @@ class Computed extends AbstractColumn {
         return $this;
     }
 
-    public function applyConstraints(Builder $builder, $data)
+    public function applyConstraints(Builder $builder, $data, $boolean = 'and')
     {
         if ($this->filter instanceof \Closure)
         {
             $closure = $this->filter->bindTo($this);
 
-            $closure($builder, $data);
+            $closure($builder, $data, $boolean);
         }
 
         return $this;
@@ -59,6 +59,11 @@ class Computed extends AbstractColumn {
     public function isFilterable()
     {
         return $this->filter !== null;
+    }
+
+    public function isSearchable()
+    {
+        return $this->isFilterable();
     }
 
     public function getJavaScriptClass()

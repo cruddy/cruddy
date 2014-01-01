@@ -1,6 +1,8 @@
 class DataSource extends Backbone.Model
     defaults:
         data: []
+        current_page: 1
+        search: ""
 
     initialize: (attributes, options) ->
         @entity = options.entity
@@ -37,6 +39,7 @@ class DataSource extends Backbone.Model
             order_dir: @get "order_dir"
             page: @get "current_page"
             per_page: @get "per_page"
+            q: @get "search"
         }
 
         filters = @filterData()

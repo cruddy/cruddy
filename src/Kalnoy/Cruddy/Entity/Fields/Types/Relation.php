@@ -1,8 +1,9 @@
 <?php namespace Kalnoy\Cruddy\Entity\Fields\Types;
 
+use Illuminate\Database\Query\Builder;
 use Kalnoy\Cruddy\Entity\Columns\ColumnInterface;
 use Kalnoy\Cruddy\Entity\Fields\AbstractField;
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Support\Collection;
 
@@ -48,7 +49,7 @@ class Relation extends AbstractField implements ColumnInterface {
         return array_pluck($data, 'id');
     }
 
-    public function modifyQuery(Builder $builder)
+    public function modifyQuery(EloquentBuilder $builder)
     {
         $builder->with($this->id);
 
@@ -114,6 +115,11 @@ class Relation extends AbstractField implements ColumnInterface {
         return false;
     }
 
+    public function isSearchable()
+    {
+        return false;
+    }
+
     /**
      * Apply an order to the query builder.
      *
@@ -135,7 +141,7 @@ class Relation extends AbstractField implements ColumnInterface {
      *
      * @return void
      */
-    function applyConstraints(Builder $query, $data)
+    function applyConstraints(Builder $query, $data, $boolean = 'and')
     {
         // TODO: Implement applyConstraints() method.
     }

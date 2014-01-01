@@ -26,6 +26,7 @@ abstract class AbstractColumn extends Attribute implements ColumnInterface {
             'title' => $this->getTitle(),
             'sortable' => $this->isSortable(),
             'filterable' => $this->isFilterable(),
+            'searchable' => $this->isSearchable(),
             'order_dir' => $this->order_dir,
         );
     }

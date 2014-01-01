@@ -74,6 +74,8 @@ class Attribute extends Backbone.Model
 class DataSource extends Backbone.Model
     defaults:
         data: []
+        current_page: 1
+        search: ""
 
     initialize: (attributes, options) ->
         @entity = options.entity
@@ -110,6 +112,7 @@ class DataSource extends Backbone.Model
             order_dir: @get "order_dir"
             page: @get "current_page"
             per_page: @get "per_page"
+            q: @get "search"
         }
 
         filters = @filterData()
@@ -350,7 +353,7 @@ class FilterList extends Backbone.View
         @items = @$ ".filter-list-container"
 
         @filters = []
-        for col in @entity.columns.models when col.get "filterable"
+        for col in @entity.columns.models when not col.get("searchable") and col.get("filterable")
             if input = col.createFilterInput @model
                 @filters.push input
                 @items.append input.render().el
@@ -410,15 +413,14 @@ class StaticInput extends BaseInput
 class TextInput extends BaseInput
     tagName: "input"
 
-    className: "form-control"
-    size: "sm"
-
     events:
         "change": "change"
         "keydown": "keydown"
 
     constructor: (options) ->
-        @size = options.size if options.size?
+        @size = options.size ? "sm"
+        @className = options.className ? "form-control"
+        @continous = options.continous ? false
 
         @className += " input-#{ @size }"
 
@@ -440,6 +442,10 @@ class TextInput extends BaseInput
         if e.keyCode is 27
             @model.set @key, ""
             return false
+
+        @scheduleChange() if @continous
+
+        this
 
     change: ->
         @model.set @key, @el.value
@@ -1160,9 +1166,18 @@ class EntityPage extends Backbone.View
             model: @dataSource.filter
             entity: @dataSource.entity
 
+        @search = new TextInput
+            model: @dataSource
+            key: "search"
+            continous: yes
+            attributes:
+                type: "search"
+                placeholder: "поиск"
+
         @dataSource.fetch()
 
-        @$el.append @filterList.render().el
+        @$(".col-search").append @search.render().el
+        @$(".col-filters").append @filterList.render().el
         @$el.append @dataGrid.render().el
         @$el.append @pagination.render().el
 
@@ -1184,11 +1199,14 @@ class EntityPage extends Backbone.View
 
         html += "</h1>"
 
+        html += """<div class="row row-search"><div class="col-xs-2 col-search"></div><div class="col-xs-10 col-filters"></div></div>"""
+
     dispose: ->
         @form.remove() if @form?
         @filterList.remove() if @filterList?
         @dataGrid.remove() if @dataGrid?
         @pagination.remove() if @pagination?
+        @search.remove() if @search?
         @dataSource.stopListening() if @dataSource?
 
         this

@@ -74,12 +74,28 @@ class Collection extends BaseCollection {
      *
      * @param  Builder $builder
      *
-     * @return AttributeCollection
+     * @return $this
      */
     public function modifyQuery(Builder $builder)
     {
         foreach ($this->items as $item) $item->modifyQuery($builder);
 
         return $this;
+    }
+
+
+    /**
+     * Get new collection that contains only items specified in an array.
+     *
+     * @param array $columns
+     * @return $this|static
+     */
+    public function only(array $columns)
+    {
+        if ($columns == array('*')) return $this;
+
+        $columns = array_combine($columns, $columns);
+
+        return new static(array_intersect_key($this->items, $columns));
     }
 }

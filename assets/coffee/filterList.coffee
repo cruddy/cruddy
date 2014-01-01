@@ -15,7 +15,7 @@ class FilterList extends Backbone.View
         @items = @$ ".filter-list-container"
 
         @filters = []
-        for col in @entity.columns.models when col.get "filterable"
+        for col in @entity.columns.models when not col.get("searchable") and col.get("filterable")
             if input = col.createFilterInput @model
                 @filters.push input
                 @items.append input.render().el

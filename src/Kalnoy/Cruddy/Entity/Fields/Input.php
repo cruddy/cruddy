@@ -1,6 +1,6 @@
 <?php namespace Kalnoy\Cruddy\Entity\Fields;
 
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder;
 use Kalnoy\Cruddy\Entity\Columns\ColumnInterface;
 
 abstract class Input extends AbstractField implements ColumnInterface {
@@ -34,9 +34,9 @@ abstract class Input extends AbstractField implements ColumnInterface {
      *
      * @return Input
      */
-    public function applyConstraints(Builder $query, $data)
+    public function applyConstraints(Builder $query, $data, $boolean = 'and')
     {
-        $query->where($this->id, 'like', '%'.$data.'%');
+        $query->where($this->id, 'like', '%'.$data.'%', $boolean);
 
         return $this;
     }
@@ -67,6 +67,11 @@ abstract class Input extends AbstractField implements ColumnInterface {
     }
 
     public function isFilterable()
+    {
+        return true;
+    }
+
+    public function isSearchable()
     {
         return true;
     }

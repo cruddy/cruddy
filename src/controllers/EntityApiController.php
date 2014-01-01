@@ -69,28 +69,23 @@ class EntityApiController extends ApiController {
             }
 
             $filters = Input::get('filters') ?: array();
+            $search = Input::get('q');
+            $columns = extract_list(Input::get('columns'));
 
-            $paginated = $entity->search($filters, $order);
-
-            // Filter columns down to only those that are required
-            $columns = $entity->columns();
-            $onlyColumns = Input::get('columns');
-
-            if (!empty($onlyColumns))
-            {
-                $onlyColumns = explode(',', $onlyColumns);
-                $onlyColumns = array_combine($onlyColumns, $onlyColumns);
-
-                $columns = $columns->filter(function ($col) use ($onlyColumns) {
-
-                    return isset($onlyColumns[$col->getId()]);
-                });
-            }
-
-            $items = $columns->collectionData($paginated->getItems());
-            $paginated->setItems($items);
+            $paginated = $entity->all($search, $filters, $order, $columns);
 
             return $this->success($paginated);
+        });
+    }
+
+    public function search($type)
+    {
+        return $this->resolve($type, 'view', function ($entity) {
+
+            $query = Input::get('q');
+            $columns = extract_list(Input::get('columns'));
+
+            return $this->success($entity->search($query, $columns));
         });
     }
 
@@ -242,6 +237,13 @@ class EntityApiController extends ApiController {
         return $this->failure(400, self::E_VALIDATION, $entity->errors());
     }
 
+    /**
+     * Get whether authenticated user can't access given action.
+     *
+     * @param        $method
+     * @param Entity $entity
+     * @return bool
+     */
     protected function cant($method, Entity $entity)
     {
         $method = 'can'.ucfirst($method);

@@ -26,10 +26,10 @@
                 return $model->last_name.' '.$model->first_name;
             },
 
-            'order_clause' => DB::raw('concat(last_name, first_name)'),
+            'order_clause' => DB::raw('concat(ifnull(last_name, ""), ifnull(first_name, ""))'),
 
-            'filter' => function ($builder, $data) {
-                $builder->where($this->order_clause, 'like', "%{$data}%");
+            'filter' => function ($builder, $data, $boolean) {
+                $builder->where($this->order_clause, 'like', "%{$data}%", $boolean);
             },
         ),
 

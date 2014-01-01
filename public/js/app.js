@@ -168,7 +168,9 @@
     }
 
     DataSource.prototype.defaults = {
-      data: []
+      data: [],
+      current_page: 1,
+      search: ""
     };
 
     DataSource.prototype.initialize = function(attributes, options) {
@@ -225,7 +227,8 @@
         order_by: this.get("order_by"),
         order_dir: this.get("order_dir"),
         page: this.get("current_page"),
-        per_page: this.get("per_page")
+        per_page: this.get("per_page"),
+        q: this.get("search")
       };
       filters = this.filterData();
       if (!_.isEmpty(filters)) {
@@ -586,7 +589,7 @@
       _ref7 = this.entity.columns.models;
       for (_i = 0, _len = _ref7.length; _i < _len; _i++) {
         col = _ref7[_i];
-        if (col.get("filterable")) {
+        if (!col.get("searchable") && col.get("filterable")) {
           if (input = col.createFilterInput(this.model)) {
             this.filters.push(input);
             this.items.append(input.render().el);
@@ -693,19 +696,16 @@
 
     TextInput.prototype.tagName = "input";
 
-    TextInput.prototype.className = "form-control";
-
-    TextInput.prototype.size = "sm";
-
     TextInput.prototype.events = {
       "change": "change",
       "keydown": "keydown"
     };
 
     function TextInput(options) {
-      if (options.size != null) {
-        this.size = options.size;
-      }
+      var _ref10, _ref8, _ref9;
+      this.size = (_ref8 = options.size) != null ? _ref8 : "sm";
+      this.className = (_ref9 = options.className) != null ? _ref9 : "form-control";
+      this.continous = (_ref10 = options.continous) != null ? _ref10 : false;
       this.className += " input-" + this.size;
       TextInput.__super__.constructor.apply(this, arguments);
     }
@@ -730,6 +730,10 @@
         this.model.set(this.key, "");
         return false;
       }
+      if (this.continous) {
+        this.scheduleChange();
+      }
+      return this;
     };
 
     TextInput.prototype.change = function() {
@@ -1919,8 +1923,18 @@
         model: this.dataSource.filter,
         entity: this.dataSource.entity
       });
+      this.search = new TextInput({
+        model: this.dataSource,
+        key: "search",
+        continous: true,
+        attributes: {
+          type: "search",
+          placeholder: "поиск"
+        }
+      });
       this.dataSource.fetch();
-      this.$el.append(this.filterList.render().el);
+      this.$(".col-search").append(this.search.render().el);
+      this.$(".col-filters").append(this.filterList.render().el);
       this.$el.append(this.dataGrid.render().el);
       this.$el.append(this.pagination.render().el);
       return this;
@@ -1932,7 +1946,8 @@
       if (this.model.get("can_create")) {
         html += "<button class=\"btn btn-default btn-create\" type=\"button\">\n    <span class=\"glyphicon glyphicon-plus\"</span>\n</button>";
       }
-      return html += "</h1>";
+      html += "</h1>";
+      return html += "<div class=\"row row-search\"><div class=\"col-xs-2 col-search\"></div><div class=\"col-xs-10 col-filters\"></div></div>";
     };
 
     EntityPage.prototype.dispose = function() {
@@ -1947,6 +1962,9 @@
       }
       if (this.pagination != null) {
         this.pagination.remove();
+      }
+      if (this.search != null) {
+        this.search.remove();
       }
       if (this.dataSource != null) {
         this.dataSource.stopListening();

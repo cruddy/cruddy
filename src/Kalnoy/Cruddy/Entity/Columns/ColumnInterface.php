@@ -1,6 +1,6 @@
 <?php namespace Kalnoy\Cruddy\Entity\Columns;
 
-use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Query\Builder;
 use Kalnoy\Cruddy\Entity\Attribute\AttributeInterface;
 
 interface ColumnInterface extends AttributeInterface {
@@ -10,9 +10,11 @@ interface ColumnInterface extends AttributeInterface {
      *
      * @return bool
      */
-    function isSortable();
+    public function isSortable();
 
-    function isFilterable();
+    public function isFilterable();
+
+    public function isSearchable();
 
     /**
      * Apply an order to the query builder.
@@ -22,15 +24,16 @@ interface ColumnInterface extends AttributeInterface {
      *
      * @return void
      */
-    function applyOrder(Builder $builder, $direction);
+    public function applyOrder(Builder $builder, $direction);
 
     /**
      * Apply constraints to the query builder.
      *
      * @param  Builder $query
      * @param  mixed   $data
+     * @param string   $boolean
      *
      * @return void
      */
-    function applyConstraints(Builder $query, $data);
+    public function applyConstraints(Builder $query, $data, $boolean = 'and');
 }

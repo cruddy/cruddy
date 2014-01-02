@@ -11,7 +11,7 @@ class AdvFormData
         return @original.append name, value if value instanceof File or value instanceof Blob
 
         if _.isArray value
-            return super name, "" if _.isEmpty value
+            return @append name, "" if _.isEmpty value
 
             @append @key(name, key), _value for _value, key in value
 

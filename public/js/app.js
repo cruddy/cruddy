@@ -83,7 +83,7 @@
       }
       if (_.isArray(value)) {
         if (_.isEmpty(value)) {
-          return AdvFormData.__super__.append.call(this, name, "");
+          return this.append(name, "");
         }
         for (key = _i = 0, _len = value.length; _i < _len; key = ++_i) {
           _value = value[key];

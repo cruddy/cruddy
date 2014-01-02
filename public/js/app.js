@@ -169,7 +169,6 @@
 
     DataSource.prototype.defaults = {
       data: [],
-      current_page: 1,
       search: ""
     };
 

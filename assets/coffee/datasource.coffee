@@ -1,7 +1,6 @@
 class DataSource extends Backbone.Model
     defaults:
         data: []
-        current_page: 1
         search: ""
 
     initialize: (attributes, options) ->

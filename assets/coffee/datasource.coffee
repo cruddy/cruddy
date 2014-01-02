@@ -10,7 +10,8 @@ class DataSource extends Backbone.Model
 
         @listenTo @filter, "change", @fetch if @filter?
 
-        @on "change", => @fetch() unless @_fetching
+        @on "change", => @fetch() unless @_hold
+        @on "change:search", => @set current_page: 1, silent: yes
 
     hasData: -> not _.isEmpty @get "data"
 
@@ -20,9 +21,9 @@ class DataSource extends Backbone.Model
         @request.abort() if @request?
 
         @request = $.getJSON @entity.url(), @data(), (resp) =>
-            @_fetching = true
+            @_hold = true
             @set resp.data
-            @_fetching = false
+            @_hold = false
             @trigger "data", this, resp.data.data
 
         @request.fail (xhr) => @trigger "error", this, xhr

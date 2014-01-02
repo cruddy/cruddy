@@ -184,10 +184,16 @@
       if (this.filter != null) {
         this.listenTo(this.filter, "change", this.fetch);
       }
-      return this.on("change", function() {
-        if (!_this._fetching) {
+      this.on("change", function() {
+        if (!_this._hold) {
           return _this.fetch();
         }
+      });
+      return this.on("change:search", function() {
+        return _this.set({
+          current_page: 1,
+          silent: true
+        });
       });
     };
 
@@ -205,9 +211,9 @@
         this.request.abort();
       }
       this.request = $.getJSON(this.entity.url(), this.data(), function(resp) {
-        _this._fetching = true;
+        _this._hold = true;
         _this.set(resp.data);
-        _this._fetching = false;
+        _this._hold = false;
         return _this.trigger("data", _this, resp.data.data);
       });
       this.request.fail(function(xhr) {

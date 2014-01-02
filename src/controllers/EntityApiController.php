@@ -189,8 +189,8 @@ class EntityApiController extends ApiController {
             {
                 $conn = $entity->form()->instance()->getConnection();
 
-                return $conn->transaction(function ($conn) use ($entity, $callback) {
-
+                return $conn->transaction(function ($conn) use ($entity, $callback)
+                {
                     return $callback($entity, $conn);
                 });
             }
@@ -222,7 +222,7 @@ class EntityApiController extends ApiController {
      */
     protected function resolveSafe($id, $method, Callable $callback)
     {
-        return $this->resolve($id, $method, $callback);
+        return $this->resolve($id, $method, $callback, true);
     }
 
     /**

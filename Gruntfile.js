@@ -86,6 +86,10 @@ module.exports = function(grunt) {
                         return name + '.map';
                     },
 
+                    sourceMappingURL: function (name) {
+                        return name.replace("public/js/", "") + '.map';
+                    },
+
                     sourceMapIn: function (name) {
                         name += '.map';
                         return grunt.file.exists(name) && name || undefined;

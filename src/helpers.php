@@ -22,6 +22,6 @@ if (!function_exists('extract_list'))
     {
         if (empty($value)) return $default;
 
-        return extract(',', $value);
+        return explode(',', $value);
     }
 }

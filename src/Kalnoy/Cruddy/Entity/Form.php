@@ -121,7 +121,7 @@ class Form implements FormInterface {
 
         if ($instance->getAttribute($foreignKey) == $data) return;
 
-        $parent = $relation->find($data);
+        $parent = $relation->getRelated()->findOrFail($data);
 
         $relation->associate($parent);
         $instance->save();

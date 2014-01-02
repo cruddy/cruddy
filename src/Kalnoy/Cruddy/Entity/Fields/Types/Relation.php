@@ -21,10 +21,10 @@ class Relation extends AbstractField implements ColumnInterface {
 
         if ($data instanceof Collection)
         {
-            return $this->convertMany($data->all());
+            return $model->exists ? $this->convertMany($data->all()) : array();
         }
 
-        return $data === null ? null : $this->convert($data);
+        return $data === null || !$model->exists ? null : $this->convert($data);
     }
 
     protected function convert(Eloquent $model)

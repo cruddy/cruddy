@@ -1,5 +1,7 @@
 <?php namespace Kalnoy\Cruddy\Entity\Fields\Types;
 
+use Illuminate\Database\Query\Builder;
+
 class Primary extends Text {
 
     /**
@@ -10,4 +12,19 @@ class Primary extends Text {
      * @var bool
      */
     public $visible = false;
+
+    /**
+     * @inheritdoc
+     *
+     * @param Builder $builder
+     * @param mixed   $data
+     * @param string  $boolean
+     * @return $this
+     */
+    public function applyConstraints(Builder $builder, $data, $boolean = 'and')
+    {
+        $builder->where($this->id, '=', $data, $boolean);
+
+        return $this;
+    }
 }

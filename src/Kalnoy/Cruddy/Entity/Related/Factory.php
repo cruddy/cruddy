@@ -11,6 +11,7 @@ class Factory extends AttributeFactory {
      */
     protected $types = array(
         'one' => 'Kalnoy\Cruddy\Entity\Related\Types\One',
+        'morphOne' => 'Kalnoy\Cruddy\Entity\Related\Types\MorphOne',
     );
 
     /**

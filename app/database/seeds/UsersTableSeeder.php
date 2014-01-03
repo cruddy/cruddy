@@ -7,6 +7,7 @@ class UsersTableSeeder extends Seeder {
         DB::table('users_groups')->truncate();
         DB::table('groups')->truncate();
         DB::table('users')->truncate();
+        DB::table('addresses')->truncate();
 
         $faker = Faker\Factory::create();
 
@@ -28,6 +29,7 @@ class UsersTableSeeder extends Seeder {
                 'groups.create' => 1,
 
                 // Throttle permissions
+                'throttles.view' => 1,
                 'throttles.update' => 1,
                 'throttles.create' => 1,
             ),
@@ -51,12 +53,16 @@ class UsersTableSeeder extends Seeder {
 
         foreach (range(1, 20) as $index)
         {
-            Sentry::createUser([
+            $user = Sentry::createUser([
                'email' => $faker->email,
                'password' => $faker->word,
                'first_name' => $faker->firstName,
                'last_name' => $faker->lastName,
                'activated' => $faker->boolean(),
+            ]);
+
+            $user->address()->create([
+                'address' => $faker->address,
             ]);
         }
 

@@ -12,7 +12,7 @@ class User extends SentryUser {
 
 	protected $fillable = array(
 		'first_name', 'last_name',
-		'email', 'password', 'permissions_string', 'activated',
+		'email', 'password', 'permissions_string', 'activated', 'permissions',
 	);
 
 	/**

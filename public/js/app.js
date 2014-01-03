@@ -18,7 +18,7 @@
 
   $(document).ajaxError(function(e, xhr) {
     if (xhr.status === 403) {
-      return location.href = "login";
+      return location.href = "/login";
     }
   });
 
@@ -1840,7 +1840,9 @@
           if (model.isNew()) {
             _this.entity.related.get(key).associate(_this, model);
           }
-          save.push(model.save());
+          if (model.hasChangedSinceSync()) {
+            save.push(model.save());
+          }
         }
         return $.when.apply(save);
       };

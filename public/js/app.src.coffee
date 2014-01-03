@@ -8,7 +8,7 @@ Backbone.emulateHTTP = true
 Backbone.emulateJSON = true
 
 $(document).ajaxError (e, xhr) =>
-    location.href = "login" if xhr.status == 403
+    location.href = "/login" if xhr.status == 403
 humanize = (id) => id.replace(/_-/, " ")
 
 entity_url = (id, extra) ->
@@ -1096,7 +1096,7 @@ class EntityInstance extends Backbone.Model
             for key, model of @related
                 @entity.related.get(key).associate @, model if model.isNew()
 
-                save.push model.save()
+                save.push model.save() if model.hasChangedSinceSync()
 
             $.when.apply save
 

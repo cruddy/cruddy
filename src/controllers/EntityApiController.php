@@ -198,6 +198,11 @@ class EntityApiController extends ApiController {
             return $callback($entity);
         }
 
+        catch (EntityNotFoundException $e)
+        {
+            return $this->notFound();
+        }
+
         catch (ModelNotFoundException $e)
         {
             return $this->notFound();

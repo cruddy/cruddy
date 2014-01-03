@@ -8,4 +8,4 @@ Backbone.emulateHTTP = true
 Backbone.emulateJSON = true
 
 $(document).ajaxError (e, xhr) =>
-    location.href = "login" if xhr.status == 403
+    location.href = "/login" if xhr.status == 403

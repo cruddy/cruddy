@@ -29,4 +29,9 @@ class User extends SentryUser {
 	{
 		return $this->hasOne(static::$throttleModel, 'user_id');
 	}
+
+    public function address()
+    {
+        return $this->morphOne('Address', 'addressable');
+    }
 }

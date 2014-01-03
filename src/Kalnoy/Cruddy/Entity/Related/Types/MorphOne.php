@@ -7,7 +7,7 @@ class MorphOne extends One {
         $rel = $this->relation();
 
         return parent::toArray() + [
-            'morph_type' => $rel->getMorphType(),
+            'morph_type' => $rel->getPlainMorphType(),
             'morph_class' => $rel->getMorphClass(),
         ];
     }

@@ -58,6 +58,9 @@
         'last_login' => 'datetime',
     ),
 
-    'related' => array('throttle'),
+    'related' => array(
+        'throttle' => 'one',
+        'address' => 'morphOne',
+    ),
 
 );

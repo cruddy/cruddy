@@ -15,13 +15,6 @@ class Factory extends AttributeFactory {
     );
 
     /**
-     * This type will be used if user haven't specified any.
-     *
-     * @var string
-     */
-    protected $defaultType = 'one';
-
-    /**
      * Create a new collection.
      *
      * @param  array  $items

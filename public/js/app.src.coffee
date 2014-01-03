@@ -63,12 +63,8 @@ class AdvFormData
 
     key: (outer, inner) -> if outer then "#{ outer }[#{ inner }]" else inner
 class Factory
-    types: {}
-
-    register: (name, constructor) -> @types[name] = constructor
-
     create: (name, options) ->
-        constructor = @types[name]
+        constructor = @[name]
         new constructor options if constructor?
 class Attribute extends Backbone.Model
 class DataSource extends Backbone.Model
@@ -903,8 +899,6 @@ class Cruddy.fields.Input extends Field
                 key: @id
                 attributes:
                     placeholder: @get "label"
-
-Cruddy.fields.register "Input", Cruddy.fields.Input
 # DATE AND TIME FIELD TYPE
 
 ###
@@ -917,16 +911,12 @@ class Cruddy.fields.DateTime extends Cruddy.fields.Input
     #viewConstructor: Cruddy.fields.DateTimeView
 
     format: (value) -> if value is null then "никогда" else moment.unix(value).calendar()
-
-Cruddy.fields.register "DateTime", Cruddy.fields.DateTime
 class Cruddy.fields.Boolean extends Field
     createEditableInput: (model) -> new BooleanInput { model: model, key: @id }
 
     createFilterInput: (model) -> new BooleanInput { model: model, key: @id, tripleState: yes }
 
     format: (value) -> if value then "да" else "нет"
-
-Cruddy.fields.register "Boolean", Cruddy.fields.Boolean
 class Cruddy.fields.Relation extends Field
     createEditableInput: (model) ->
         new EntityDropdown
@@ -940,8 +930,6 @@ class Cruddy.fields.Relation extends Field
     format: (value) ->
         return "не указано" if _.isEmpty value
         if @attributes.multiple then _.pluck(value, "title").join ", " else value.title
-
-Cruddy.fields.register "Relation", Cruddy.fields.Relation
 Cruddy.columns = new Factory
 
 class Column extends Attribute
@@ -973,8 +961,6 @@ class Cruddy.columns.Field extends Column
 
     getClass: -> super + " col-" + @field.get "type"
 
-Cruddy.columns.register "Field", Cruddy.columns.Field
-
 class Cruddy.columns.Computed extends Column
     createFilterInput: (model) ->
         new TextInput
@@ -984,16 +970,28 @@ class Cruddy.columns.Computed extends Column
                 placeholder: @get "title"
 
     getClass: -> super + " col-computed"
+Cruddy.related = new Factory
 
-Cruddy.columns.register "Computed", Cruddy.columns.Computed
+class Related extends Backbone.Model
+    resolve: -> Cruddy.app.entity(@get "related").then (entity) => @related = entity
+
+class Cruddy.related.One extends Related
+    associate: (parent, child) ->
+        child.set @get("foreign_key"), parent.id
+
+        this
+
+class Cruddy.related.MorphOne extends Cruddy.related.One
+    associate: (parent, child) ->
+        child.set @get("morph_type"), @get("morph_class")
+
+        super
 class Entity extends Backbone.Model
 
     initialize: (attributes, options) ->
         @fields = @createCollection Cruddy.fields, attributes.fields
         @columns = @createCollection Cruddy.columns, attributes.columns
-
-        @related = {}
-        @related[item.related] = new Related item for item in attributes.related
+        @related = @createCollection Cruddy.related, attributes.related
 
         @set "label", humanize @id if @get("label") is null
 
@@ -1021,8 +1019,11 @@ class Entity extends Backbone.Model
         new Backbone.Collection filters
 
     # Create an instance for this entity
-    createInstance: (attributes = {}, related = null) ->
-        related = (item.related.createInstance() for key, item of @related) if related is null
+    createInstance: (attributes = {}, relatedData = {}) ->
+        related = {}
+        related[item.id] = item.related.createInstance(relatedData[item.id]) for item in @related.models
+
+        console.log @related
 
         new EntityInstance _.extend({}, @get("defaults"), attributes), { entity: this, related: related }
 
@@ -1037,7 +1038,7 @@ class Entity extends Backbone.Model
         $.getJSON(@url(id)).then (resp) =>
             resp = resp.data
 
-            @createInstance resp.model, (item.related.createInstance resp.related[item.id] for key, item of @related)
+            @createInstance resp.model, resp.related
 
     # Load a model and set it as current
     update: (id) ->
@@ -1092,10 +1093,10 @@ class EntityInstance extends Backbone.Model
 
             save.push xhr if xhr?
 
-            for related in @related
-                @entity.related[related.entity.id].associate @, related if related.isNew()
+            for key, model of @related
+                @entity.related.get(key).associate @, model if model.isNew()
 
-                save.push related.save()
+                save.push model.save()
 
             $.when.apply save
 
@@ -1108,7 +1109,7 @@ class EntityInstance extends Backbone.Model
         return yes for key, value of @attributes when not _.isEqual value, @original[key]
 
         # Related models do not affect the result unless model is created
-        return yes for related in @related when related.hasChangedSinceSync() unless @isNew()
+        return yes for key, related of @related when related.hasChangedSinceSync() unless @isNew()
 
         no
 
@@ -1233,7 +1234,7 @@ class EntityForm extends Backbone.View
         @listenTo @model, "destroy", @handleDestroy
 
         @signOn @model
-        @signOn related for related in @model.related
+        @signOn related for key, related of @model.related
 
         @hotkeys = $(document).on "keydown." + @cid, "body", $.proxy this, "hotkeys"
 
@@ -1350,7 +1351,7 @@ class EntityForm extends Backbone.View
         @tabs = []
         @renderTab @model, yes
 
-        @renderTab related for related in @model.related
+        @renderTab related for key, related of @model.related
 
         @update()
 
@@ -1411,10 +1412,6 @@ class EntityForm extends Backbone.View
         fieldList.remove() for fieldList in @tabs if @tabs?
 
         this
-class Related extends Backbone.Model
-    resolve: -> Cruddy.app.entity(@get "related").then (entity) => @related = entity
-
-    associate: (parent, child) -> child.set @get("foreign_key"), parent.id
 # Backend application file
 
 $(".navbar").on "click", ".entity", (e) =>
@@ -1444,10 +1441,10 @@ class App extends Backbone.Model
             promise = $.getJSON(entity_url id, "schema").then (resp) =>
                 @entities[id] = entity = new Entity resp.data
 
-                return entity if _.isEmpty entity.related
+                return entity if _.isEmpty entity.related.models
 
                 # Resolve all related entites
-                wait = (related.resolve() for key, related of entity.related)
+                wait = (related.resolve() for related in entity.related.models)
 
                 $.when.apply($, wait).then -> entity
 

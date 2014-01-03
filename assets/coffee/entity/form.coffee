@@ -16,7 +16,7 @@ class EntityForm extends Backbone.View
         @listenTo @model, "destroy", @handleDestroy
 
         @signOn @model
-        @signOn related for related in @model.related
+        @signOn related for key, related of @model.related
 
         @hotkeys = $(document).on "keydown." + @cid, "body", $.proxy this, "hotkeys"
 
@@ -133,7 +133,7 @@ class EntityForm extends Backbone.View
         @tabs = []
         @renderTab @model, yes
 
-        @renderTab related for related in @model.related
+        @renderTab related for key, related of @model.related
 
         @update()
 

@@ -3,9 +3,7 @@ class Entity extends Backbone.Model
     initialize: (attributes, options) ->
         @fields = @createCollection Cruddy.fields, attributes.fields
         @columns = @createCollection Cruddy.columns, attributes.columns
-
-        @related = {}
-        @related[item.related] = new Related item for item in attributes.related
+        @related = @createCollection Cruddy.related, attributes.related
 
         @set "label", humanize @id if @get("label") is null
 
@@ -33,8 +31,11 @@ class Entity extends Backbone.Model
         new Backbone.Collection filters
 
     # Create an instance for this entity
-    createInstance: (attributes = {}, related = null) ->
-        related = (item.related.createInstance() for key, item of @related) if related is null
+    createInstance: (attributes = {}, relatedData = {}) ->
+        related = {}
+        related[item.id] = item.related.createInstance(relatedData[item.id]) for item in @related.models
+
+        console.log @related
 
         new EntityInstance _.extend({}, @get("defaults"), attributes), { entity: this, related: related }
 
@@ -49,7 +50,7 @@ class Entity extends Backbone.Model
         $.getJSON(@url(id)).then (resp) =>
             resp = resp.data
 
-            @createInstance resp.model, (item.related.createInstance resp.related[item.id] for key, item of @related)
+            @createInstance resp.model, resp.related
 
     # Load a model and set it as current
     update: (id) ->

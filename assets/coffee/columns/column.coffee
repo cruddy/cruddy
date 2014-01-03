@@ -29,8 +29,6 @@ class Cruddy.columns.Field extends Column
 
     getClass: -> super + " col-" + @field.get "type"
 
-Cruddy.columns.register "Field", Cruddy.columns.Field
-
 class Cruddy.columns.Computed extends Column
     createFilterInput: (model) ->
         new TextInput
@@ -40,5 +38,3 @@ class Cruddy.columns.Computed extends Column
                 placeholder: @get "title"
 
     getClass: -> super + " col-computed"
-
-Cruddy.columns.register "Computed", Cruddy.columns.Computed

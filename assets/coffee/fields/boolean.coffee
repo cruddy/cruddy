@@ -4,5 +4,3 @@ class Cruddy.fields.Boolean extends Field
     createFilterInput: (model) -> new BooleanInput { model: model, key: @id, tripleState: yes }
 
     format: (value) -> if value then "да" else "нет"
-
-Cruddy.fields.register "Boolean", Cruddy.fields.Boolean

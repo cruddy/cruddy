@@ -89,12 +89,4 @@ abstract class AbstractRelated extends Attribute {
             'foreign_key' => $this->getForeignKey(),
         );
     }
-
-    /**
-     * @return string
-     */
-    public function getJavaScriptClass()
-    {
-        return "Related";
-    }
 }

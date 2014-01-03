@@ -27,10 +27,10 @@ class App extends Backbone.Model
             promise = $.getJSON(entity_url id, "schema").then (resp) =>
                 @entities[id] = entity = new Entity resp.data
 
-                return entity if _.isEmpty entity.related
+                return entity if _.isEmpty entity.related.models
 
                 # Resolve all related entites
-                wait = (related.resolve() for key, related of entity.related)
+                wait = (related.resolve() for related in entity.related.models)
 
                 $.when.apply($, wait).then -> entity
 

@@ -10,5 +10,3 @@ class Cruddy.fields.DateTime extends Cruddy.fields.Input
     #viewConstructor: Cruddy.fields.DateTimeView
 
     format: (value) -> if value is null then "никогда" else moment.unix(value).calendar()
-
-Cruddy.fields.register "DateTime", Cruddy.fields.DateTime

@@ -22,4 +22,12 @@ class One extends AbstractRelated {
 
         return $this->resolveEntity($reference);
     }
+
+    /**
+     * @return string
+     */
+    public function getJavaScriptClass()
+    {
+        return "One";
+    }
 }

@@ -48,12 +48,14 @@ module.exports = function(grunt) {
                     // Columns
                     '<%= app %>/columns/column.coffee',
 
+                    // Related
+                    '<%= app %>/related/related.coffee',
+
                     // Entity
                     '<%= app %>/entity/entity.coffee',
                     '<%= app %>/entity/instance.coffee',
                     '<%= app %>/entity/page.coffee',
                     '<%= app %>/entity/form.coffee',
-                    '<%= app %>/entity/related.coffee',
 
                     '<%= app %>/app.coffee',
                 ],

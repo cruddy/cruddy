@@ -40,10 +40,10 @@ class EntityInstance extends Backbone.Model
 
             save.push xhr if xhr?
 
-            for related in @related
-                @entity.related[related.entity.id].associate @, related if related.isNew()
+            for key, model of @related
+                @entity.related.get(key).associate @, model if model.isNew()
 
-                save.push related.save()
+                save.push model.save()
 
             $.when.apply save
 
@@ -56,7 +56,7 @@ class EntityInstance extends Backbone.Model
         return yes for key, value of @attributes when not _.isEqual value, @original[key]
 
         # Related models do not affect the result unless model is created
-        return yes for related in @related when related.hasChangedSinceSync() unless @isNew()
+        return yes for key, related of @related when related.hasChangedSinceSync() unless @isNew()
 
         no
 

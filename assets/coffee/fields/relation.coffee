@@ -11,5 +11,3 @@ class Cruddy.fields.Relation extends Field
     format: (value) ->
         return "не указано" if _.isEmpty value
         if @attributes.multiple then _.pluck(value, "title").join ", " else value.title
-
-Cruddy.fields.register "Relation", Cruddy.fields.Relation

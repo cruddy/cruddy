@@ -26,5 +26,3 @@ class Cruddy.fields.Input extends Field
                 key: @id
                 attributes:
                     placeholder: @get "label"
-
-Cruddy.fields.register "Input", Cruddy.fields.Input

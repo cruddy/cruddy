@@ -57,8 +57,9 @@ class ApiController extends Controller {
     /**
      * Get failed response.
      *
-     * @param  int $code
+     * @param  int    $code
      * @param  string $error
+     * @param  mixed  $data
      *
      * @return Response
      */

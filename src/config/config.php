@@ -1,16 +1,19 @@
 <?php return array(
 
-    // The title of the application.
+    // The title of the application. It can be a translation key.
     'brand' => 'app.title',
 
+    // The URI that is prefixed to all routes of Cruddy.
     'uri' => 'backend',
 
-    // The main layout
+    // The main layout view.
     'layout' => 'cruddy::layout',
 
-    // The path to the assets
+    // The path to the assets.
     'assets' => 'packages/kalnoy/cruddy',
 
-    // The menu
-    'menu' => array(),
+    // The menu entries.
+    'menu' => [
+        'Auth' => ['@users', '@groups'],
+    ],
 );

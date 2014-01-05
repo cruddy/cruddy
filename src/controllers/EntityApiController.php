@@ -38,6 +38,8 @@ class EntityApiController extends ApiController {
     }
 
     /**
+     * Get a schema of the specified entity.
+     *
      * @param string $type
      *
      * @return Response
@@ -51,6 +53,8 @@ class EntityApiController extends ApiController {
     }
 
     /**
+     * Get a list of models of specified entity.
+     *
      * @param string $type
      *
      * @return Response
@@ -78,6 +82,13 @@ class EntityApiController extends ApiController {
         });
     }
 
+    /**
+     * Search models of specified entity.
+     *
+     * @param $type
+     *
+     * @return Response
+     */
     public function search($type)
     {
         return $this->resolve($type, 'view', function ($entity) {
@@ -148,7 +159,7 @@ class EntityApiController extends ApiController {
     }
 
     /**
-     * Destroy a model or a set of models.
+     * Destroy a model.
      *
      * @param $type
      * @param $id

@@ -6,6 +6,9 @@ use Illuminate\Support\Facades\Config;
 
 class CruddyController extends Controller {
 
+    /**
+     * @var Environment
+     */
     protected $cruddy;
 
     /**
@@ -18,26 +21,29 @@ class CruddyController extends Controller {
         $this->cruddy = $cruddy;
     }
 
+    /**
+     * @inheritdoc
+     */
     protected function setupLayout()
     {
         if ($this->layout === null)
         {
-            $this->layout = Config::get('cruddy::layout');
+            $this->layout = $this->cruddy->config('layout');
         }
 
         if ($this->layout !== null)
         {
             $this->layout = View::make($this->layout);
 
-            $brand = try_trans(Config::get('cruddy::brand'));
-
-            $this->layout->title = $brand;
-            $this->layout->brand = $brand;
+            $this->layout->brand = $this->layout->title = try_trans($this->cruddy->config('brand'));
             $this->layout->cruddy = $this->cruddy;
-            $this->layout->assets = Config::get('cruddy::assets');
+            $this->layout->assets = $this->cruddy->config('assets');
         }
     }
 
+    /**
+     * Initial page.
+     */
     public function index()
     {
         $this->layout->content = "";

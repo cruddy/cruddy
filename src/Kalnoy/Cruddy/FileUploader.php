@@ -1,5 +1,6 @@
 <?php  namespace Kalnoy\Cruddy;
 
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\File\UploadedFile;
 
@@ -12,6 +13,11 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
  * @package Kalnoy\Cruddy
  */
 class FileUploader {
+
+    /**
+     * @var \Illuminate\Filesystem\Filesystem
+     */
+    protected $file;
 
     /**
      * The root path that will be stripped off the full filename.
@@ -51,8 +57,9 @@ class FileUploader {
      * @param $keepNames
      * @param $multiple
      */
-    function __construct($root, $path, $keepNames, $multiple)
+    function __construct(Filesystem $file, $root, $path, $keepNames, $multiple)
     {
+        $this->file = $file;
         $this->root = $root;
         $this->keepNames = $keepNames;
         $this->multiple = $multiple;
@@ -108,7 +115,7 @@ class FileUploader {
         $name = $this->getName($file).'.'.$file->getClientOriginalExtension();
 
         // If file already exists, we force random name.
-        if (File::exists($path.'/'.$name)) $name = $this->getName();
+        if ($this->file->exists($path.'/'.$name)) $name = $this->getName();
 
         $target = $file->move($path, $name);
 

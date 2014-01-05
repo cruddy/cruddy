@@ -53,13 +53,15 @@ class CruddyServiceProvider extends ServiceProvider {
 
             $validator = $app['validator'];
             $translator = $app['translator'];
+            $files = $app['files'];
             $permissions = $app['Kalnoy\Cruddy\PermissionsInterface'];
 
             $fields = new Entity\Fields\Factory();
             $columns = new Entity\Columns\Factory();
             $related = new Entity\Related\Factory();
 
-            $factory = new Entity\Factory($app, $translator, $config, $validator, $permissions, $fields, $columns,
+            $factory = new Entity\Factory($app, $files, $translator, $config, $validator, $permissions, $fields,
+            $columns,
                 $related);
 
             $permissions = $app['Kalnoy\Cruddy\PermissionsInterface'];

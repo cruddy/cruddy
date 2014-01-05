@@ -1,5 +1,6 @@
 <?php namespace Kalnoy\Cruddy\Entity;
 
+use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
 use Kalnoy\Cruddy\EntityNotFoundException;
 use Kalnoy\Cruddy\FileUploader;
@@ -16,6 +17,8 @@ use Kalnoy\Cruddy\Entity\Related\Factory as RelatedFactory;
 class Factory {
 
     protected $container;
+
+    protected $files;
 
     protected $config;
 
@@ -37,6 +40,7 @@ class Factory {
      * Initialize the factory.
      *
      * @param Container                           $container
+     * @param \Illuminate\Filesystem\Filesystem   $files
      * @param TranslatorInterface                 $translator
      * @param ConfigRepository                    $config
      * @param ValidationFactory                   $validator
@@ -47,9 +51,10 @@ class Factory {
      *
      * @internal param \Illuminate\Support\Str $str
      */
-    public function __construct(Container $container, TranslatorInterface $translator, ConfigRepository $config,
-                                ValidationFactory $validator, PermissionsInterface $permissions,
-                                FieldFactory $fields, ColumnFactory $columns, RelatedFactory $related)
+    public function __construct(Container $container, Filesystem $files, TranslatorInterface $translator,
+                                ConfigRepository $config, ValidationFactory $validator,
+                                PermissionsInterface $permissions, FieldFactory $fields, ColumnFactory $columns,
+                                RelatedFactory $related)
     {
         $this->translator = $translator;
         $this->config = $config;
@@ -59,6 +64,7 @@ class Factory {
         $this->validator = $validator;
         $this->permissions = $permissions;
         $this->container = $container;
+        $this->files = $files;
     }
 
     /**
@@ -219,7 +225,7 @@ class Factory {
         $root = array_get($config, 'root') ?: public_path();
         $path = array_get($config, 'path', 'files');
 
-        return new FileUploader($root, $path, $keepNames, $multiple);
+        return new FileUploader($this->files, $root, $path, $keepNames, $multiple);
     }
 
     protected function config($key)

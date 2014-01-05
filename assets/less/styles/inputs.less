@@ -95,3 +95,42 @@
         }
     }
 }
+
+.file-list {
+    .list-group-item {
+        font-size: @font-size-small;
+        padding: @padding-small-vertical @padding-small-horizontal;
+    }
+
+    &-input-wrap {
+        position: relative;
+        overflow: hidden;
+
+        input {
+            position: absolute;
+            right: 0;
+            top: 0;
+            font-size: 1.3em;
+            .opacity(0);
+            cursor: pointer;
+        }
+    }
+}
+
+.image-list {
+    .list-group-item, .image-thumbnail, a {
+        vertical-align: middle;
+    }
+
+    .fancybox {
+        text-decoration: none;
+    }
+}
+
+.image-thumbnail {
+    display: inline-block;
+    -webkit-background-size: cover;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+}

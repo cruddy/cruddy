@@ -9,3 +9,6 @@ Backbone.emulateJSON = true
 
 $(document).ajaxError (e, xhr) =>
     location.href = "/login" if xhr.status == 403
+
+$.extend $.fancybox.defaults,
+    openEffect: "elastic"

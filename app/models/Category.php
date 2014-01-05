@@ -2,7 +2,33 @@
 
 class Category extends Eloquent {
 
-    protected $fillable = array('title');
+    protected $fillable = array('title', 'images');
+
+    public function getImagesAttribute($value)
+    {
+        return empty($value) ? [] : json_decode($value);
+    }
+
+    public function setImagesAttribute($value)
+    {
+        $images = $this->images;
+
+        $delete = array_diff($images, $value);
+
+        if (!empty($delete))
+        {
+            $root = public_path();
+
+            foreach ($delete as $i => $file)
+            {
+                $delete[$i] = $root.$file;
+            }
+
+            File::delete($delete);
+        }
+
+        $this->attributes['images'] = json_encode($value);
+    }
 
     public function parent()
     {

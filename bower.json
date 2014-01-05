@@ -20,6 +20,7 @@
     "jquery": "~2.0.3",
     "moment": "~2.5.0",
     "underscore": "~1.5.2",
-    "bootstrap": "~3.0.3"
+    "bootstrap": "~3.0.3",
+    "fancybox": "~2.1.5"
   }
 }

@@ -1,4 +1,8 @@
 class Factory
     create: (name, options) ->
         constructor = @[name]
-        new constructor options if constructor?
+        return new constructor options if constructor?
+
+        console.error "Failed to resolve #{ name }."
+
+        null

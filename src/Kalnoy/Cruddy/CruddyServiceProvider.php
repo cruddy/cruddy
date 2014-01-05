@@ -33,8 +33,6 @@ class CruddyServiceProvider extends ServiceProvider {
 	public function register()
     {
         $this->registerPermissions();
-        $this->registerEntityFactory();
-        $this->registerMenu();
         $this->registerCruddy();
     }
 
@@ -46,11 +44,13 @@ class CruddyServiceProvider extends ServiceProvider {
         });
     }
 
-    public function registerEntityFactory()
+    protected function registerCruddy()
     {
-        $this->app['cruddy.entity.factory'] = $this->app->share(function ($app) {
+        $this->app['Kalnoy\Cruddy\Environment'] = $this->app->share(function ($app) {
 
             $config = $app['config'];
+            $config->addNamespace('entities', app_path('config/entities'));
+
             $validator = $app['validator'];
             $translator = $app['translator'];
             $permissions = $app['Kalnoy\Cruddy\PermissionsInterface'];
@@ -59,34 +59,13 @@ class CruddyServiceProvider extends ServiceProvider {
             $columns = new Entity\Columns\Factory();
             $related = new Entity\Related\Factory();
 
-            $config->addNamespace('entities', app_path('config/entities'));
+            $factory = new Entity\Factory($app, $translator, $config, $validator, $permissions, $fields, $columns,
+                $related);
 
-            return new Entity\Factory($app, $translator, $config, $validator, $permissions, $fields, $columns, $related);
-        });
-    }
-
-    protected function registerMenu()
-    {
-        $this->app['cruddy.menu'] = $this->app->share(function ($app) {
-
-            $factory = $app['cruddy.entity.factory'];
             $permissions = $app['Kalnoy\Cruddy\PermissionsInterface'];
+            $menu = new Menu($factory, $permissions);
 
-            return new Menu($factory, $permissions);
-        });
-    }
-
-    protected function registerCruddy()
-    {
-        $this->app['Kalnoy\Cruddy\Environment'] = $this->app->share(function ($app) {
-
-            $config = $app['config'];
-            $factory = $app['cruddy.entity.factory'];
-            $permissions = $app['Kalnoy\Cruddy\PermissionsInterface'];
-            $menu = $app['cruddy.menu'];
-            $request = $app['request'];
-
-            return new Environment($config, $factory, $permissions, $menu, $request);
+            return new Environment($config, $factory, $permissions, $menu, $app['request']);
         });
     }
 }

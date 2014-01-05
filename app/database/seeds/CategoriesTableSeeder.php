@@ -12,6 +12,7 @@ class CategoriesTableSeeder extends Seeder {
         {
             $category = Category::create([
                 'title' => $faker->sentence(rand(1, 3)),
+                'images' => [],
             ]);
 
             $children = rand(0, 3);
@@ -21,6 +22,7 @@ class CategoriesTableSeeder extends Seeder {
                 Category::create([
                     'title' => $faker->sentence(rand(1, 3)),
                     'parent_id' => $category->id,
+                    'images' => [],
                 ]);
             }
         }

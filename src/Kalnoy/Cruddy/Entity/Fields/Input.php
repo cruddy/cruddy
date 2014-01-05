@@ -20,13 +20,6 @@ abstract class Input extends AbstractField implements ColumnInterface {
     public $placeholder;
 
     /**
-     * Whether the value is required.
-     *
-     * @var bool
-     */
-    public $required = false;
-
-    /**
      * Apply constraints to the query builder.
      *
      * @param  Builder $query
@@ -86,7 +79,6 @@ abstract class Input extends AbstractField implements ColumnInterface {
         return parent::toArray() + array(
             'input_type' => $this->inputType,
             'placeholder' => $this->placeholder,
-            'required' => $this->required,
         );
     }
 

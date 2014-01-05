@@ -1,6 +1,8 @@
 <?php namespace Kalnoy\Cruddy\Entity;
 
+use Illuminate\Support\Str;
 use Kalnoy\Cruddy\EntityNotFoundException;
+use Kalnoy\Cruddy\FileUploader;
 use Kalnoy\Cruddy\PermissionsInterface;
 use RuntimeException;
 use Symfony\Component\Translation\TranslatorInterface;
@@ -34,14 +36,20 @@ class Factory {
     /**
      * Initialize the factory.
      *
-     * @param Container           $container
-     * @param TranslatorInterface $translator
-     * @param ConfigRepository    $config
-     * @param ValidationFactory   $validator
-     * @param FieldFactory        $fields
-     * @param ColumnFactory       $columns
+     * @param Container                           $container
+     * @param TranslatorInterface                 $translator
+     * @param ConfigRepository                    $config
+     * @param ValidationFactory                   $validator
+     * @param \Kalnoy\Cruddy\PermissionsInterface $permissions
+     * @param FieldFactory                        $fields
+     * @param ColumnFactory                       $columns
+     * @param Related\Factory                     $related
+     *
+     * @internal param \Illuminate\Support\Str $str
      */
-    public function __construct(Container $container, TranslatorInterface $translator, ConfigRepository $config, ValidationFactory $validator, PermissionsInterface $permissions, FieldFactory $fields, ColumnFactory $columns, RelatedFactory $related)
+    public function __construct(Container $container, TranslatorInterface $translator, ConfigRepository $config,
+                                ValidationFactory $validator, PermissionsInterface $permissions,
+                                FieldFactory $fields, ColumnFactory $columns, RelatedFactory $related)
     {
         $this->translator = $translator;
         $this->config = $config;
@@ -60,6 +68,7 @@ class Factory {
      *
      * @param  string $id
      *
+     * @throws \Kalnoy\Cruddy\EntityNotFoundException
      * @return Entity
      */
     public function resolve($id)
@@ -107,7 +116,7 @@ class Factory {
         $model = $this->container->make(array_get($config, 'model'));
         $validator = $this->createValidator($config);
 
-        return new Form($model, $validator);
+        return new Form($model, $validator, $this->createFiles($config));
     }
 
     /**
@@ -144,11 +153,11 @@ class Factory {
      *
      * @param  Entity           $entity
      * @param  string           $key
-     * @param  AttributeFactory $factory
+     * @param  Attribute\Factory $factory
      *
      * @param bool              $required
      * @throws \RuntimeException
-     * @return AttributeCollection
+     * @return Attribute\Collection
      */
     protected function createCollection(Entity $entity, $key, $factory, $required = false)
     {
@@ -181,6 +190,36 @@ class Factory {
         $customAttributes = array_get($config, 'customAttributes', array());
 
         return $this->validator->make(array(), $rules, $messages, $customAttributes);
+    }
+
+    protected function createFiles(array $config)
+    {
+        $files = array_get($config, 'files');
+
+        if (empty($files)) return [];
+
+        foreach ($files as $i => $uploader)
+        {
+            if (is_string($uploader))
+            {
+                $i = $uploader;
+                $uploader = [];
+            }
+
+            $files[$i] = $this->createUploader($uploader);
+        }
+
+        return $files;
+    }
+
+    protected function createUploader(array $config)
+    {
+        $multiple = array_get($config, 'multiple', false);
+        $keepNames = array_get($config, 'keepNames', false);
+        $root = array_get($config, 'root') ?: public_path();
+        $path = array_get($config, 'path', 'files');
+
+        return new FileUploader($root, $path, $keepNames, $multiple);
     }
 
     protected function config($key)

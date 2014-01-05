@@ -14,6 +14,7 @@ class ProductsTableSeeder extends Seeder {
             $product = Product::create([
                 'title' => $faker->sentence(rand(1, 3)),
                 'description' => $faker->paragraph(rand(1, 3)),
+                'image' => '',
             ]);
 
             $totalParents = rand(1, 3);

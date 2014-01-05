@@ -3,14 +3,21 @@
 
     'form' => [
         'model' => 'Product',
+
         'rules' => [
             'title' => 'required',
+            'image' => 'required|image',
+        ],
+
+        'files' => [
+            'image' => ['path' => 'images/products'],
         ],
     ],
 
     'fields' => [
-        'title',
+        'title' => ['required' => true],
         'description' => 'text',
+        'image' => ['type' => 'image', 'required' => true],
         'categories' => 'relation',
     ],
 

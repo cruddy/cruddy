@@ -9,6 +9,9 @@ Backbone.emulateJSON = true
 
 $(document).ajaxError (e, xhr) =>
     location.href = "/login" if xhr.status == 403
+
+$.extend $.fancybox.defaults,
+    openEffect: "elastic"
 humanize = (id) => id.replace(/_-/, " ")
 
 entity_url = (id, extra) ->
@@ -65,7 +68,11 @@ class AdvFormData
 class Factory
     create: (name, options) ->
         constructor = @[name]
-        new constructor options if constructor?
+        return new constructor options if constructor?
+
+        console.error "Failed to resolve #{ name }."
+
+        null
 class Attribute extends Backbone.Model
 class DataSource extends Backbone.Model
     defaults:
@@ -766,6 +773,140 @@ class EntitySelector extends BaseInput
 
         super
 
+class FileList extends BaseInput
+    className: "file-list"
+
+    events:
+        "change [type=file]": "appendFiles"
+        "click .action-delete": "deleteFile"
+
+    initialize: (options) ->
+        @multiple = options.multiple ? false
+        @formatter = options.formatter ? format: (value) -> if value instanceof File then value.name else value
+
+        super
+
+    deleteFile: (e) ->
+        if @multiple
+            value = _.clone @model.get @key
+            value.splice $(e.currentTarget).data("index"), 1
+        else
+            value = ''
+
+        @model.set @key, value
+
+        this
+
+    appendFiles: (e) ->
+        return if _.isEmpty e.target.files
+
+        if @multiple
+            value = _.clone @model.get @key
+            value.push file for file in e.target.files
+        else
+            value = e.target.files[0]
+
+        @model.set @key, value
+
+        this
+
+    applyChanges: -> @render()
+
+    render: ->
+        value = @model.get @key
+        html = ""
+
+        if @multiple then html += @renderItem item, i for item, i in value else html += @renderItem value if value
+
+        html = @wrapItems html if html
+
+        html += @renderInput if @multiple then "Добавить" else "Выбрать"
+
+        @$el.html html
+
+        this
+
+    wrapItems: (html) -> """<ul class="list-group">#{ html }</ul>"""
+
+    renderInput: (label) ->
+        """
+        <div class="btn btn-sm btn-default file-list-input-wrap">
+            <input type="file" #{ "multiple" if @multiple }>
+            #{ label }
+        </div>
+        """
+
+    renderItem: (item, i = 0) ->
+        label = @formatter.format item
+
+        """
+        <li class="list-group-item">
+            <a href="#" class="action-delete pull-right" data-index="#{ i }"><span class="glyphicon glyphicon-remove"></span></a>
+
+            #{ label }
+        </li>
+        """
+
+class ImageList extends FileList
+
+
+    constructor: ->
+        @className += " image-list"
+        @readers = []
+
+        super
+
+    initialize: (options) ->
+        @width = options.width ? 40
+        @height = options.height ? 40
+
+        super
+
+    render: ->
+        super
+
+        reader.readAsDataURL reader.item for reader in @readers
+        @readers = []
+
+        @$(".fancybox").fancybox();
+
+        this
+
+    renderItem: (item, i = 0) ->
+        label = @formatter.format item
+
+        """
+        <li class="list-group-item">
+            #{ @renderImage item, i }
+            <a href="#" class="action-delete pull-right" data-index="#{ i }"><span class="glyphicon glyphicon-remove"></span></a>
+
+            #{ label }
+        </li>
+        """
+
+    renderImage: (item, i = 0) ->
+        id = @key + i
+
+        if item instanceof File
+            image = if item.data then "background-image:url(#{ item.data }" else ""
+            @readers.push @createPreviewLoader item, id if not item.data?
+        else
+            image = "background-image:url('#{ item }')"
+
+        """
+        <a href="#{ if item instanceof File then item.data or "#" else item }" class="fancybox">
+            <span class="image-thumbnail" id="#{ id }" style="width:#{ @width }px;height:#{ @height }px;#{ image }"></span>
+        </a>
+        """
+
+    createPreviewLoader: (item, id) ->
+        reader = new FileReader
+        reader.item = item
+        reader.onload = (e) ->
+            e.target.item.data = e.target.result
+            $("#" + id).css("background-image", "url(#{ e.target.result })").parent().attr "href", e.target.result
+
+        reader
 Cruddy.fields = new Factory
 
 class FieldView extends Backbone.View
@@ -930,6 +1071,26 @@ class Cruddy.fields.Relation extends Field
     format: (value) ->
         return "не указано" if _.isEmpty value
         if @attributes.multiple then _.pluck(value, "title").join ", " else value.title
+class Cruddy.fields.File extends Field
+    createEditableInput: (model) -> new FileList
+        model: model
+        key: @id
+        multiple: @get "multiple"
+        attributes:
+            accepts: @get "accepts"
+
+    format: (value) -> if value instanceof File then value.name else value
+class Cruddy.fields.Image extends Cruddy.fields.File
+    createEditableInput: (model) -> new ImageList
+        model: model
+        key: @id
+        width: @get "width"
+        height: @get "height"
+        multiple: @get "multiple"
+        attributes:
+            accepts: @get "accepts"
+
+    format: (value) -> if value instanceof File then value.name else value
 Cruddy.columns = new Factory
 
 class Column extends Attribute

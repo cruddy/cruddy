@@ -37,8 +37,11 @@ abstract class Attribute implements AttributeInterface {
     /**
      * Initialize the field.
      *
-     * @param string $id
-     * @param mixed $model
+     * @param \Kalnoy\Cruddy\Entity\Entity $entity
+     * @param string                       $type
+     * @param string                       $id
+     *
+     * @internal param mixed $model
      */
     public function __construct(Entity $entity, $type, $id)
     {
@@ -48,7 +51,7 @@ abstract class Attribute implements AttributeInterface {
     }
 
     /**
-     * Modify a query builder.
+     * @inheritdoc
      *
      * Default is no-op.
      *
@@ -84,7 +87,7 @@ abstract class Attribute implements AttributeInterface {
     }
 
     /**
-     * Get the entity that owns a field.
+     * @inheritdoc
      *
      * @return Entity
      */
@@ -94,7 +97,7 @@ abstract class Attribute implements AttributeInterface {
     }
 
     /**
-     * Get the column id.
+     * @inheritdoc
      *
      * @return string
      */
@@ -103,11 +106,25 @@ abstract class Attribute implements AttributeInterface {
         return $this->id;
     }
 
+    /**
+     * Get help for an attribute.
+     *
+     * @return string
+     */
     public function getHelp()
     {
         return $this->translate('help');
     }
 
+    /**
+     * Translate given key.
+     *
+     * It will first look for `<entity>.<group>.<id>`, then in `entities.<group>.<id>`.
+     *
+     * @param string|null $group
+     *
+     * @return string
+     */
     protected function translate($group = null)
     {
         $key = $this->id;
@@ -123,7 +140,7 @@ abstract class Attribute implements AttributeInterface {
     }
 
     /**
-     * Get the field configuration.
+     * Convert field to an array.
      *
      * @return array
      */
@@ -142,7 +159,7 @@ abstract class Attribute implements AttributeInterface {
     }
 
     /**
-     * Convert the field into a json string.
+     * Convert the attribute into a json string.
      *
      * @param  int    $options
      *

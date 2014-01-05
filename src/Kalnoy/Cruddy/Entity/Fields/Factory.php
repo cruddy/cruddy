@@ -16,6 +16,8 @@ class Factory extends AttributeFactory {
         'date' => 'Kalnoy\Cruddy\Entity\Fields\Types\Date',
         'bool' => 'Kalnoy\Cruddy\Entity\Fields\Types\Boolean',
         'relation' => 'Kalnoy\Cruddy\Entity\Fields\Types\Relation',
+        'file' => 'Kalnoy\Cruddy\Entity\Fields\Types\File',
+        'image' => 'Kalnoy\Cruddy\Entity\Fields\Types\Image',
     );
 
     protected $defaultType = 'string';

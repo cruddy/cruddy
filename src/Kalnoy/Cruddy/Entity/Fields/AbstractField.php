@@ -13,7 +13,16 @@ abstract class AbstractField extends Attribute implements EditableInterface {
     public $updatable = true;
 
     /**
-     * Get the value of model's respective attribute.
+     * Whether the value is required.
+     *
+     * @var bool
+     */
+    public $required = false;
+
+    /**
+     * @inheritdoc
+     *
+     * @param \Illuminate\Database\Eloquent\Model $model
      *
      * @return mixed
      */
@@ -23,9 +32,11 @@ abstract class AbstractField extends Attribute implements EditableInterface {
     }
 
     /**
-     * Process the input value before sending it to the repository.
+     * @inheritdoc
      *
      * @param mixed $value
+     *
+     * @return mixed
      */
     public function process($value)
     {
@@ -56,6 +67,14 @@ abstract class AbstractField extends Attribute implements EditableInterface {
         return $model->isFillable($this->id);
     }
 
+    /**
+     * Get a field label.
+     *
+     * It will first look for a label in translated validation attributes.
+     * If nothing is found, prettified id is used.
+     *
+     * @return string
+     */
     public function getLabel()
     {
         $translator = $this->entity->getTranslator();
@@ -68,7 +87,7 @@ abstract class AbstractField extends Attribute implements EditableInterface {
     }
 
     /**
-     * Get the field configuration as an array.
+     * @inheritdoc
      *
      * @return array
      */
@@ -77,6 +96,7 @@ abstract class AbstractField extends Attribute implements EditableInterface {
         return parent::toArray() + array(
             'updatable' => $this->updatable,
             'label' => $this->getLabel(),
+            'required' => $this->required,
         );
     }
 }

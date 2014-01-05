@@ -3,6 +3,7 @@
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Validation\Validator;
+use Kalnoy\Cruddy\FileUploader;
 
 class Form implements FormInterface {
 
@@ -21,14 +22,22 @@ class Form implements FormInterface {
     protected $validator;
 
     /**
+     * @var FileUploader[]
+     */
+    protected $files;
+
+    /**
      * Init a model form.
      *
-     * @param Model $model
+     * @param Eloquent  $model
+     * @param Validator $validator
+     * @param array     $files
      */
-    public function __construct(Eloquent $model, $validator)
+    public function __construct(Eloquent $model, Validator $validator, array $files)
     {
         $this->model = $model;
         $this->validator = $validator;
+        $this->files = $files;
     }
 
     /**
@@ -52,6 +61,8 @@ class Form implements FormInterface {
     {
         if (!$this->validate($data)) return false;
 
+        $this->upload($data);
+
         $instance = $this->model->newInstance($data);
 
         if (!$instance->save()) return false;
@@ -64,14 +75,16 @@ class Form implements FormInterface {
     /**
      * Update an existing model.
      *
-     * @param  int $id
-     * @param  array $data
+     * @param \Illuminate\Database\Eloquent\Model $instance
+     * @param  array                              $data
      *
      * @return bool
      */
     public function update(Eloquent $instance, array $data)
     {
         if (!$this->validate($data)) return false;
+
+        $this->upload($data);
 
         if ($instance->fill($data)->save() === false) return false;
 
@@ -80,6 +93,12 @@ class Form implements FormInterface {
         return $instance;
     }
 
+    /**
+     * Sync relationships.
+     *
+     * @param Eloquent $instance
+     * @param array    $data
+     */
     protected function sync(Eloquent $instance, array $data)
     {
         foreach ($data as $key => $value)
@@ -95,6 +114,14 @@ class Form implements FormInterface {
         }
     }
 
+    /**
+     * Sync one given relationship.
+     *
+     * @param Eloquent $instance
+     * @param Relation $relation
+     * @param          $key
+     * @param          $data
+     */
     protected function syncRelation(Eloquent $instance, Relation $relation, $key, $data)
     {
         $method = "sync".class_basename($relation);
@@ -105,6 +132,13 @@ class Form implements FormInterface {
         }
     }
 
+    /**
+     * Sync BelongsToMany relationship.
+     *
+     * @param Eloquent $instance
+     * @param          $key
+     * @param          $data
+     */
     protected function syncBelongsToMany(Eloquent $instance, $key, $data)
     {
         $data = $data === false ? array() : $data;
@@ -114,6 +148,13 @@ class Form implements FormInterface {
         unset($instance->$key);
     }
 
+    /**
+     * Sync BelongsTo relationship.
+     *
+     * @param Eloquent $instance
+     * @param          $key
+     * @param          $data
+     */
     protected function syncBelongsTo(Eloquent $instance, $key, $data)
     {
         $relation = $instance->$key();
@@ -127,16 +168,39 @@ class Form implements FormInterface {
         $instance->save();
     }
 
+    /**
+     * Sync HasOne relationship.
+     *
+     * @param Eloquent $instance
+     * @param          $key
+     * @param          $data
+     */
     protected function syncHasOne(Eloquent $instance, $key, $data)
     {
         $this->syncHasOneOrMany($instance, $key, $data);
     }
 
+    /**
+     * Sync HasMany relationship.
+     *
+     * @param Eloquent $instance
+     * @param          $key
+     * @param          $data
+     */
     protected function syncHasMany(Eloquent $instance, $key, $data)
     {
         $this->syncHasOneOrMany($instance, $key, $data);
     }
 
+    /**
+     * Sync HasOneOrMany relationship.
+     *
+     * TODO: Consider removing this entirely since HasOne and HasMany are supported by related properties.
+     *
+     * @param Eloquent $instance
+     * @param          $key
+     * @param          $ids
+     */
     protected function syncHasOneOrMany(Eloquent $instance, $key, $ids)
     {
         $relation = $instance->$key();
@@ -163,6 +227,19 @@ class Form implements FormInterface {
         }
 
         unset($instance->$key);
+    }
+
+    /**
+     * Upload files if any.
+     *
+     * @param array $input
+     */
+    protected function upload(array &$input)
+    {
+        foreach ($this->files as $attr => $file)
+        {
+            if (isset($input[$attr])) $input[$attr] = $file->upload($input[$attr]);
+        }
     }
 
     /**

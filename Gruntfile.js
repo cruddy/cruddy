@@ -37,6 +37,8 @@ module.exports = function(grunt) {
                     '<%= app %>/inputs/boolean.coffee',
                     '<%= app %>/inputs/entityDropdown.coffee',
                     '<%= app %>/inputs/entitySelector.coffee',
+                    '<%= app %>/inputs/fileList.coffee',
+                    '<%= app %>/inputs/imageList.coffee',
 
                     // Fields
                     '<%= app %>/fields/field.coffee',
@@ -44,6 +46,8 @@ module.exports = function(grunt) {
                     '<%= app %>/fields/datetime.coffee',
                     '<%= app %>/fields/boolean.coffee',
                     '<%= app %>/fields/relation.coffee',
+                    '<%= app %>/fields/file.coffee',
+                    '<%= app %>/fields/image.coffee',
 
                     // Columns
                     '<%= app %>/columns/column.coffee',
@@ -75,6 +79,8 @@ module.exports = function(grunt) {
 
                     '<%= bootstrap %>/js/tab.js',
                     '<%= bootstrap %>/js/dropdown.js',
+
+                    '<%= vendor %>/fancybox/source/jquery.fancybox.js',
                 ],
 
                 dest: 'public/js/vendor.js',
@@ -122,18 +128,10 @@ module.exports = function(grunt) {
                 },
 
                 files: {
-                    'public/css/styles.min.css': '<%= less_src %>/styles/styles.less',
-                }
-            },
-        },
-
-        cssmin: {
-            styles: {
-                files: {
                     'public/css/styles.min.css': [
-                        'public/css/bootstrap.css',
-                        'public/css/styles.css',
-                    ],
+                        '<%= vendor %>/fancybox/source/jquery.fancybox.css',
+                        '<%= less_src %>/styles/styles.less',
+                    ]
                 }
             },
         },
@@ -145,6 +143,13 @@ module.exports = function(grunt) {
                 src: '*',
                 dest: 'public/fonts/',
             },
+
+            fancybox: {
+                expand: true,
+                cwd: '<%= vendor %>/fancybox/source',
+                src: ['*.png', '*.gif'],
+                dest: 'public/css',
+            }
         },
 
         watch: {
@@ -175,7 +180,6 @@ module.exports = function(grunt) {
     });
 
     grunt.loadNpmTasks('grunt-contrib-coffee');
-    grunt.loadNpmTasks('grunt-contrib-cssmin');
     grunt.loadNpmTasks('grunt-contrib-less');
     grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-contrib-uglify');
@@ -183,7 +187,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-copy');
 
     // Concat all needed vendor files
-    grunt.registerTask('vendor', ['concat:vendor']);
+    grunt.registerTask('vendor', ['concat:vendor', 'copy:fancybox']);
 
     // Backend scripts
     grunt.registerTask('app-dev', ['coffee:app']);

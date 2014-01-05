@@ -12,8 +12,18 @@ interface ColumnInterface extends AttributeInterface {
      */
     public function isSortable();
 
+    /**
+     * Get whether column can filter data.
+     *
+     * @return bool
+     */
     public function isFilterable();
 
+    /**
+     * Get whether column can search using "search everything" feature.
+     *
+     * @return bool
+     */
     public function isSearchable();
 
     /**
@@ -22,7 +32,7 @@ interface ColumnInterface extends AttributeInterface {
      * @param  Builder $builder
      * @param          $direction
      *
-     * @return void
+     * @return $this
      */
     public function applyOrder(Builder $builder, $direction);
 
@@ -33,7 +43,7 @@ interface ColumnInterface extends AttributeInterface {
      * @param  mixed   $data
      * @param string   $boolean
      *
-     * @return void
+     * @return $this
      */
     public function applyConstraints(Builder $query, $data, $boolean = 'and');
 }

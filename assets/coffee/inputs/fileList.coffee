@@ -23,7 +23,7 @@ class FileList extends BaseInput
         this
 
     appendFiles: (e) ->
-        return if _.isEmpty e.target.files
+        return if e.target.files.length is 0
 
         if @multiple
             value = _.clone @model.get @key

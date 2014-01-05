@@ -1225,7 +1225,7 @@
 
     FileList.prototype.appendFiles = function(e) {
       var file, value, _i, _len, _ref14;
-      if (_.isEmpty(e.target.files)) {
+      if (e.target.files.length === 0) {
         return;
       }
       if (this.multiple) {

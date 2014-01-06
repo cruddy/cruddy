@@ -5,6 +5,7 @@ use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Validator;
 use Kalnoy\Cruddy\FileUploader;
+use Exception;
 
 class Form implements FormInterface {
 
@@ -93,13 +94,29 @@ class Form implements FormInterface {
      * @param Eloquent $instance
      * @param array    $input
      *
+     * @throws \Exception
      * @return bool|Eloquent
      */
     protected function save(Eloquent $instance, array $input)
     {
         $this->sync($instance, $input)->upload($input);
 
-        if (false === $instance->fill($input)->save()) return false;
+        try
+        {
+            if (false === $instance->fill($input)->save())
+            {
+                $this->cancelUploads();
+
+                return false;
+            }
+        }
+
+        catch (Exception $e)
+        {
+            $this->cancelUploads();
+
+            throw $e;
+        }
 
         return $this->fireAfterSave($instance);
     }
@@ -316,6 +333,8 @@ class Form implements FormInterface {
      * Upload files if any.
      *
      * @param array $input
+     *
+     * @return $this
      */
     protected function upload(array &$input)
     {
@@ -323,6 +342,23 @@ class Form implements FormInterface {
         {
             if (isset($input[$attr])) $input[$attr] = $file->upload($input[$attr]);
         }
+
+        return $this;
+    }
+
+    /**
+     * Cancel all uploads.
+     *
+     * @return $this
+     */
+    protected function cancelUploads()
+    {
+        foreach ($this->files as $uploader)
+        {
+            $uploader->cancel();
+        }
+
+        return $this;
     }
 
     /**

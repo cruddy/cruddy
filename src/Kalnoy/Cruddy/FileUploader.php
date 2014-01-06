@@ -52,10 +52,18 @@ class FileUploader {
     protected $keepNames = false;
 
     /**
-     * @param $root
-     * @param $path
-     * @param $keepNames
-     * @param $multiple
+     * The list of uploaded files.
+     *
+     * @var array
+     */
+    protected $uploaded = [];
+
+    /**
+     * @param \Illuminate\Filesystem\Filesystem $file
+     * @param                                   $root
+     * @param                                   $path
+     * @param                                   $keepNames
+     * @param                                   $multiple
      */
     function __construct(Filesystem $file, $root, $path, $keepNames, $multiple)
     {
@@ -117,13 +125,25 @@ class FileUploader {
         // If file already exists, we force random name.
         if ($this->file->exists($path.'/'.$name)) $name = $this->getName();
 
-        $target = $file->move($path, $name);
+        $this->uploaded[] = $target = $file->move($path, $name);
 
         return strtr($target,
         [
             $this->root => '',
             '\\' => '/',
         ]);
+    }
+
+    /**
+     * Remove all uploaded files.
+     *
+     * @return $this
+     */
+    public function cancel()
+    {
+        $this->file->delete($this->uploaded);
+
+        return $this;
     }
 
     /**

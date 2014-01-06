@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Kalnoy\Cruddy\ComponentInterface;
 use Kalnoy\Cruddy\PermissionsInterface;
 use Symfony\Component\Translation\TranslatorInterface;
+use Kalnoy\Cruddy;
 
 class Entity implements FormInterface, ComponentInterface {
 
@@ -407,12 +408,12 @@ class Entity implements FormInterface, ComponentInterface {
 
     public function getTitle()
     {
-        return $this->translate("title") ?: ucfirst(humanize($this->id));
+        return $this->translate("title") ?: ucfirst(Cruddy\prettify_string($this->id));
     }
 
     public function getSingular()
     {
-        return $this->translate("singular") ?: ucfirst(str_singular(humanize($this->id)));
+        return $this->translate("singular") ?: ucfirst(str_singular(Cruddy\prettify_string($this->id)));
     }
 
     public function getDefaultOrder()

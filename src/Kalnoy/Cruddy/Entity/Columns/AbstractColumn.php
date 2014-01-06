@@ -3,23 +3,60 @@
 use Kalnoy\Cruddy\Entity\Attribute\Attribute;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Builder;
+use Kalnoy\Cruddy;
 
 abstract class AbstractColumn extends Attribute implements ColumnInterface {
 
+    /**
+     * The default order direction.
+     *
+     * @var string
+     */
     public $order_dir = 'asc';
 
+    /**
+     * The formatter class.
+     *
+     * @var
+     */
+    public $formatter;
+
+    /**
+     * The array of formatter options.
+     *
+     * @var
+     */
+    public $formatterOptions;
+
+    /**
+     * @inheritdoc
+     *
+     * @param Builder $builder
+     *
+     * @return $this
+     */
     public function modifyQuery(Builder $builder)
     {
         return $this;
     }
 
+    /**
+     * Get the column title.
+     *
+     * @return mixed
+     */
     public function getTitle()
     {
-        $title = $this->translate("columns");
+        $title = $this->translate('columns');
 
-        return $title ?: humanize($this->id);
+        return $title ?: Cruddy\prettify_string($this->id);
     }
 
+    /**
+     * @inheritdoc
+     *
+     * @return array
+     */
     public function toArray()
     {
         return parent::toArray() + array(
@@ -28,6 +65,8 @@ abstract class AbstractColumn extends Attribute implements ColumnInterface {
             'filterable' => $this->isFilterable(),
             'searchable' => $this->isSearchable(),
             'order_dir' => $this->order_dir,
+            'formatter' => $this->formatter,
+            'formatterOptions' => $this->formatterOptions,
         );
     }
 }

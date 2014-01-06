@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use LogicException;
 use RuntimeException;
+use Kalnoy\Cruddy;
 
 /**
  * The Field column depends on an entity's field.
@@ -129,7 +130,7 @@ class Field extends AbstractColumn {
             $title = $this->field()->getLabel();
         }
 
-        return $title ?: humanize($this->id);
+        return $title ?: Cruddy\prettify_string($this->id);
     }
 
     /**

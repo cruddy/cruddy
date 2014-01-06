@@ -22,6 +22,7 @@
     ],
 
     'columns' => [
+        'images' => ['formatter' => 'Image', 'formatterOptions' => ['width' => 60]],
         'title',
         'parent',
         'updated_at',

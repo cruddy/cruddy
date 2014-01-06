@@ -1,27 +1,18 @@
-<?php
+<?php namespace Kalnoy\Cruddy;
 
-if (!function_exists('humanize'))
-{
-    function humanize($value) {
+function prettify_string($value) {
 
-        return str_replace("_", " ", $value);
-    }
+    return str_replace("_", " ", $value);
 }
 
-if (!function_exists('try_trans'))
+function try_trans($key)
 {
-    function try_trans($key)
-    {
-        return strpos($key, '.') !== false ? trans($key) : $key;
-    }
+    return strpos($key, '.') !== false ? trans($key) : $key;
 }
 
-if (!function_exists('extract_list'))
+function extract_list($value, $default = array('*'))
 {
-    function extract_list($value, $default = array('*'))
-    {
-        if (empty($value)) return $default;
+    if (empty($value)) return $default;
 
-        return explode(',', $value);
-    }
+    return explode(',', $value);
 }

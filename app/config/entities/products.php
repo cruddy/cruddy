@@ -22,7 +22,7 @@
     ],
 
     'columns' => [
-//        'id',
+        'image' => ['formatter' => 'Image'],
         'title',
         'categories',
         'updated_at',

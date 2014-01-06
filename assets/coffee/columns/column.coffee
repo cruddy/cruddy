@@ -1,13 +1,18 @@
 Cruddy.columns = new Factory
 
 class Column extends Attribute
+    initialize: (options) ->
+        @formatter = Cruddy.formatters.create options.formatter, options.formatterOptions if options.formatter?
+
+        super
+
     renderHeadCell: ->
         title = @get "title"
         help = @get "help"
         title = "<span class=\"sortable\" data-id=\"#{ @id }\">#{ title }</span>" if @get "sortable"
         if help then "<span class=\"glyphicon glyphicon-question-sign\" title=\"#{ help }\"></span> #{ title }" else title
 
-    renderCell: (value) -> value
+    renderCell: (value) -> if @formatter? then @formatter.format value else value
 
     createFilterInput: (model) -> null
 
@@ -23,7 +28,7 @@ class Cruddy.columns.Field extends Column
 
         super
 
-    renderCell: (value) -> @field.format value
+    renderCell: (value) -> if @formatter? then @formatter.format value else @field.format value
 
     createFilterInput: (model) -> @field.createFilterInput model, this
 

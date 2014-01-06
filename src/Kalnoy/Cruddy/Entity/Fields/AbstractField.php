@@ -2,6 +2,7 @@
 
 use Kalnoy\Cruddy\Entity\Attribute\Attribute;
 use Illuminate\Database\Eloquent\Model as Eloquent;
+use Kalnoy\Cruddy;
 
 abstract class AbstractField extends Attribute implements EditableInterface {
 
@@ -83,7 +84,7 @@ abstract class AbstractField extends Attribute implements EditableInterface {
 
         if (($label = $translator->trans($key)) !== $key) return $label;
 
-        return humanize($this->id);
+        return Cruddy\prettify_string($this->id);
     }
 
     /**

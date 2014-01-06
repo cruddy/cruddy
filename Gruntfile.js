@@ -52,6 +52,10 @@ module.exports = function(grunt) {
                     // Columns
                     '<%= app %>/columns/column.coffee',
 
+                    // Formatters
+                    '<%= app %>/formatters/base.coffee',
+                    '<%= app %>/formatters/image.coffee',
+
                     // Related
                     '<%= app %>/related/related.coffee',
 

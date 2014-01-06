@@ -2388,15 +2388,21 @@
     };
 
     EntityForm.prototype.destroy = function() {
-      var confirmed, softDeleting;
+      var confirmed, softDeleting,
+        _this = this;
       if (this.request || this.model.isNew()) {
         return;
       }
       softDeleting = this.model.entity.get("soft_deleting");
       confirmed = !softDeleting ? confirm("Точно удалить? Восстановить не получится!") : true;
-      this.request = this.softDeleting && this.model.get("deleted_at") ? this.model.restore : confirmed ? this.model.destroy({
-        wait: true
-      }) : void 0;
+      if (confirmed) {
+        this.request = this.softDeleting && this.model.get("deleted_at") ? this.model.restore : this.model.destroy({
+          wait: true
+        });
+        this.request.always(function() {
+          return _this.request = null;
+        });
+      }
       return this;
     };
 

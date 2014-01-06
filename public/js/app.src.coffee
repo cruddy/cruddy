@@ -1495,7 +1495,10 @@ class EntityForm extends Backbone.View
 
         confirmed = if not softDeleting then confirm("Точно удалить? Восстановить не получится!") else yes
 
-        @request = if @softDeleting and @model.get "deleted_at" then @model.restore else @model.destroy wait: true if confirmed
+        if confirmed
+            @request = if @softDeleting and @model.get "deleted_at" then @model.restore else @model.destroy wait: true
+
+            @request.always => @request = null
 
         this
 

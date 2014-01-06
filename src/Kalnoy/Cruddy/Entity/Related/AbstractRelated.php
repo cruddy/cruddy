@@ -1,11 +1,17 @@
 <?php namespace Kalnoy\Cruddy\Entity\Related;
 
+use Illuminate\Support\Str;
 use Kalnoy\Cruddy\Entity\Attribute\Attribute;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Builder;
 
 abstract class AbstractRelated extends Attribute {
 
+    /**
+     * Resolved entity instance.
+     *
+     * @var \Kalnoy\Cruddy\Entity\Entity
+     */
     protected $related;
 
     /**
@@ -23,7 +29,7 @@ abstract class AbstractRelated extends Attribute {
      */
     public function modifyQuery(Builder $builder)
     {
-        $builder->with($this->id);
+        $builder->with($this->getRelationId());
 
         return $this;
     }
@@ -61,7 +67,17 @@ abstract class AbstractRelated extends Attribute {
     {
         $model = $model ?: $this->entity->form()->instance();
 
-        return $model->{$this->id}();
+        return $model->{$this->getRelationId()}();
+    }
+
+    /**
+     * Get the id of the relation.
+     *
+     * @return string
+     */
+    public function getRelationId()
+    {
+        return Str::camel($this->id);
     }
 
     /**

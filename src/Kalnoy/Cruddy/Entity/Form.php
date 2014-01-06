@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Validator;
 use Kalnoy\Cruddy\FileUploader;
 
@@ -115,13 +116,15 @@ class Form implements FormInterface {
     {
         foreach ($input as $key => $value)
         {
-            if (!method_exists($instance, $key)) continue;
+            $relationId = Str::camel($key);
 
-            $relation = $instance->$key();
+            if (!method_exists($instance, $relationId)) continue;
+
+            $relation = $instance->$relationId();
 
             if ($relation instanceof Relation)
             {
-                $this->syncRelation($instance, $relation, $key, $value);
+                $this->syncRelation($instance, $relation, $relationId, $key, $value);
 
                 // Unset this attribute to prevent sending non-attribute values to the database
                 // when user did not set $fillable attribute on a model.
@@ -137,16 +140,17 @@ class Form implements FormInterface {
      *
      * @param Eloquent $instance
      * @param Relation $relation
-     * @param          $key
-     * @param          $data
+     * @param string   $relationId
+     * @param string   $key
+     * @param array    $data
      */
-    protected function syncRelation(Eloquent $instance, Relation $relation, $key, $data)
+    protected function syncRelation(Eloquent $instance, Relation $relation, $relationId, $key, $data)
     {
         $method = "sync".class_basename($relation);
 
         if (method_exists($this, $method))
         {
-            $this->$method($instance, $key, $data);
+            $this->$method($instance, $relationId, $key, $data);
         }
     }
 
@@ -154,18 +158,19 @@ class Form implements FormInterface {
      * Sync BelongsToMany relationship.
      *
      * @param Eloquent $instance
-     * @param          $key
-     * @param          $data
+     * @param string   $relationId
+     * @param string   $key
+     * @param array    $data
      *
      * @return $this
      */
-    protected function syncBelongsToMany(Eloquent $instance, $key, $data)
+    protected function syncBelongsToMany(Eloquent $instance, $relationId, $key, $data)
     {
         $data = $data === false ? [] : $data;
 
-        return $this->afterSave(function ($instance) use ($key, $data)
+        return $this->afterSave(function ($instance) use ($relationId, $key, $data)
         {
-            $instance->$key()->sync($data);
+            $instance->$relationId()->sync($data);
 
             unset($instance->$key);
         });
@@ -175,19 +180,18 @@ class Form implements FormInterface {
      * Sync BelongsTo relationship.
      *
      * @param Eloquent $instance
-     * @param          $key
-     * @param          $data
+     * @param string   $relationId
+     * @param string   $key
+     * @param int      $data
      *
      * @return $this
      */
-    protected function syncBelongsTo(Eloquent $instance, $key, $data)
+    protected function syncBelongsTo(Eloquent $instance, $relationId, $key, $data)
     {
-        $relation = $instance->$key();
-        $foreignKey = $relation->getForeignKey();
+        $foreignKey = $instance->$relationId()->getForeignKey();
 
         $instance->setAttribute($foreignKey, $data ?: null);
 
-        // Unset currently loaded relation
         unset($instance->$key);
 
         return $this;
@@ -197,28 +201,30 @@ class Form implements FormInterface {
      * Sync HasOne relationship.
      *
      * @param Eloquent $instance
-     * @param          $key
-     * @param          $data
+     * @param string   $relationId
+     * @param string   $key
+     * @param int      $data
      *
      * @return $this
      */
-    protected function syncHasOne(Eloquent $instance, $key, $data)
+    protected function syncHasOne(Eloquent $instance, $relationId, $key, $data)
     {
-        return $this->syncHasOneOrMany($instance, $key, $data);
+        return $this->syncHasOneOrMany($instance, $relationId, $key, $data);
     }
 
     /**
      * Sync HasMany relationship.
      *
      * @param Eloquent $instance
-     * @param          $key
-     * @param          $data
+     * @param string   $relationId
+     * @param string   $key
+     * @param array    $data
      *
      * @return $this
      */
-    protected function syncHasMany(Eloquent $instance, $key, $data)
+    protected function syncHasMany(Eloquent $instance, $relationId, $key, $data)
     {
-        return $this->syncHasOneOrMany($instance, $key, $data);
+        return $this->syncHasOneOrMany($instance, $relationId, $key, $data);
     }
 
     /**
@@ -227,18 +233,19 @@ class Form implements FormInterface {
      * TODO: Consider removing this entirely since HasOne and HasMany are supported by related properties.
      *
      * @param Eloquent $instance
-     * @param          $key
-     * @param          $ids
+     * @param string   $relationId
+     * @param string   $key
+     * @param mixed    $ids
      *
      * @return $this
      */
-    protected function syncHasOneOrMany(Eloquent $instance, $key, $ids)
+    protected function syncHasOneOrMany(Eloquent $instance, $relationId, $key, $ids)
     {
         $exists = $instance->exists;
 
-        return $this->afterSave(function ($instance) use ($key, $ids, $exists)
+        return $this->afterSave(function ($instance) use ($relationId, $key, $ids, $exists)
         {
-            $relation = $instance->$key();
+            $relation = $instance->$relationId();
             $related = $relation->getRelated();
             $foreignKey = $relation->getPlainForeignKey();
             $relatedKey = $related->getKeyName();

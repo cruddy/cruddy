@@ -27,6 +27,11 @@ class Form implements FormInterface {
     protected $files;
 
     /**
+     * @var Callable[]
+     */
+    protected $postSave = [];
+
+    /**
      * Init a model form.
      *
      * @param Eloquent  $model
@@ -55,21 +60,13 @@ class Form implements FormInterface {
      *
      * @param  array  $data
      *
-     * @return bool
+     * @return false|Eloquent
      */
     public function create(array $data)
     {
         if (!$this->validate($data)) return false;
 
-        $this->upload($data);
-
-        $instance = $this->model->newInstance($data);
-
-        if (!$instance->save()) return false;
-
-        $this->sync($instance, $data);
-
-        return $instance;
+        return $this->save($this->model->newInstance(), $data);
     }
 
     /**
@@ -78,30 +75,45 @@ class Form implements FormInterface {
      * @param \Illuminate\Database\Eloquent\Model $instance
      * @param  array                              $data
      *
-     * @return bool
+     * @return false|Eloquent
      */
     public function update(Eloquent $instance, array $data)
     {
         if (!$this->validate($data)) return false;
 
-        $this->upload($data);
+        return $this->save($instance, $data);
+    }
 
-        if ($instance->fill($data)->save() === false) return false;
+    /**
+     * Save a model.
+     *
+     * TODO: Move this out to repository.
+     *
+     * @param Eloquent $instance
+     * @param array    $input
+     *
+     * @return bool|Eloquent
+     */
+    protected function save(Eloquent $instance, array $input)
+    {
+        $this->sync($instance, $input)->upload($input);
 
-        $this->sync($instance, $data);
+        if (false === $instance->fill($input)->save()) return false;
 
-        return $instance;
+        return $this->fireAfterSave($instance);
     }
 
     /**
      * Sync relationships.
      *
      * @param Eloquent $instance
-     * @param array    $data
+     * @param array    $input
+     *
+     * @return $this
      */
-    protected function sync(Eloquent $instance, array $data)
+    protected function sync(Eloquent $instance, array &$input)
     {
-        foreach ($data as $key => $value)
+        foreach ($input as $key => $value)
         {
             if (!method_exists($instance, $key)) continue;
 
@@ -110,8 +122,14 @@ class Form implements FormInterface {
             if ($relation instanceof Relation)
             {
                 $this->syncRelation($instance, $relation, $key, $value);
+
+                // Unset this attribute to prevent sending non-attribute values to the database
+                // when user did not set $fillable attribute on a model.
+                unset($input[$key]);
             }
         }
+
+        return $this;
     }
 
     /**
@@ -138,14 +156,19 @@ class Form implements FormInterface {
      * @param Eloquent $instance
      * @param          $key
      * @param          $data
+     *
+     * @return $this
      */
     protected function syncBelongsToMany(Eloquent $instance, $key, $data)
     {
-        $data = $data === false ? array() : $data;
+        $data = $data === false ? [] : $data;
 
-        $instance->$key()->sync($data);
+        return $this->afterSave(function ($instance) use ($key, $data)
+        {
+            $instance->$key()->sync($data);
 
-        unset($instance->$key);
+            unset($instance->$key);
+        });
     }
 
     /**
@@ -154,18 +177,20 @@ class Form implements FormInterface {
      * @param Eloquent $instance
      * @param          $key
      * @param          $data
+     *
+     * @return $this
      */
     protected function syncBelongsTo(Eloquent $instance, $key, $data)
     {
         $relation = $instance->$key();
         $foreignKey = $relation->getForeignKey();
 
-        if ($instance->getAttribute($foreignKey) == $data) return;
+        $instance->setAttribute($foreignKey, $data ?: null);
 
-        $parent = $relation->getRelated()->findOrFail($data);
+        // Unset currently loaded relation
+        unset($instance->$key);
 
-        $relation->associate($parent);
-        $instance->save();
+        return $this;
     }
 
     /**
@@ -174,10 +199,12 @@ class Form implements FormInterface {
      * @param Eloquent $instance
      * @param          $key
      * @param          $data
+     *
+     * @return $this
      */
     protected function syncHasOne(Eloquent $instance, $key, $data)
     {
-        $this->syncHasOneOrMany($instance, $key, $data);
+        return $this->syncHasOneOrMany($instance, $key, $data);
     }
 
     /**
@@ -186,10 +213,12 @@ class Form implements FormInterface {
      * @param Eloquent $instance
      * @param          $key
      * @param          $data
+     *
+     * @return $this
      */
     protected function syncHasMany(Eloquent $instance, $key, $data)
     {
-        $this->syncHasOneOrMany($instance, $key, $data);
+        return $this->syncHasOneOrMany($instance, $key, $data);
     }
 
     /**
@@ -200,33 +229,80 @@ class Form implements FormInterface {
      * @param Eloquent $instance
      * @param          $key
      * @param          $ids
+     *
+     * @return $this
      */
     protected function syncHasOneOrMany(Eloquent $instance, $key, $ids)
     {
-        $relation = $instance->$key();
-        $foreignKey = $relation->getPlainForeignKey();
-        $relatedKey = $relation->getRelated()->getKeyName();
+        $exists = $instance->exists;
 
-        $oldIds = $relation->lists($relatedKey);
-        $ids = (array)$ids;
-
-        $attach = array_diff($ids, $oldIds);
-        if (count($attach) > 0)
+        return $this->afterSave(function ($instance) use ($key, $ids, $exists)
         {
-            $instance->$key()
-                ->whereIn($relatedKey, $attach)
-                ->update(array($foreignKey => $relation->getParentKey()));
+            $relation = $instance->$key();
+            $related = $relation->getRelated();
+            $foreignKey = $relation->getPlainForeignKey();
+            $relatedKey = $related->getKeyName();
+
+            $ids = (array)$ids;
+
+            if ($exists)
+            {
+                $attached = $relation->lists($relatedKey);
+
+                $attach = array_diff($ids, $attached);
+                $detach = array_diff($attached, $ids);
+
+                if (count($detach) > 0)
+                {
+                    $relation->whereIn($relatedKey, $detach)->update([ $foreignKey => null ]);
+                }
+            }
+            else
+            {
+                $attach = $ids;
+            }
+
+            if (count($attach) > 0)
+            {
+                $related->newQuery()->whereIn($relatedKey, $attach)
+                                    ->update([ $foreignKey => $relation->getParentKey() ]);
+            }
+
+            unset($instance->$key);
+        });
+    }
+
+    /**
+     * Add a callback that will be fired after model is saved.
+     *
+     * @param callable $callback
+     *
+     * @return $this
+     */
+    protected function afterSave(Callable $callback)
+    {
+        $this->postSave[] = $callback;
+
+        return $this;
+    }
+
+    /**
+     * Fire post save callbacks.
+     *
+     * @param Eloquent $instance
+     *
+     * @return Eloquent
+     */
+    protected function fireAfterSave(Eloquent $instance)
+    {
+        foreach ($this->postSave as $callback)
+        {
+            $callback($instance);
         }
 
-        $detach = array_diff($oldIds, $ids);
-        if (count($detach) > 0)
-        {
-            $instance->$key()
-                ->whereIn($relatedKey, $detach)
-                ->update(array($foreignKey => null));
-        }
+        $this->postSave = [];
 
-        unset($instance->$key);
+        return $instance;
     }
 
     /**

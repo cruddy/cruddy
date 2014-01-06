@@ -45,7 +45,7 @@ class EntityForm extends Backbone.View
         this
 
     enableSubmit: ->
-        @submit.attr "disabled", @model.hasChangedSinceSync() is no
+        @submit.attr "disabled", @model.hasChangedSinceSync() is no if not @request
 
         this
 
@@ -62,11 +62,11 @@ class EntityForm extends Backbone.View
 
         this
 
-    displaySuccess: (resp) -> @displayAlert "Получилось!", "success"
+    displaySuccess: -> @displayAlert "Получилось!", "success"
 
     displayInvalid: -> @displayAlert "Не получилось...", "warning"
 
-    displayError: (xhr) -> @displayAlert "Ошибка", "danger" unless xhr.responseJSON? and xhr.responseJSON.error is "VALIDATION"
+    displayError: (xhr) -> @displayAlert "Ошибка", "danger" unless xhr.responseJSON?.error is "VALIDATION"
 
     handleDestroy: ->
         if @model.entity.get "soft_deleting"
@@ -87,7 +87,7 @@ class EntityForm extends Backbone.View
     save: ->
         return if @request? or not @model.hasChangedSinceSync()
 
-        @request = @model.save().then $.proxy(this, "displaySuccess"), $.proxy(this, "displayError")
+        @request = @model.save().done($.proxy this, "displaySuccess").fail($.proxy this, "displayError")
 
         @request.always =>
             @request = null
@@ -153,7 +153,7 @@ class EntityForm extends Backbone.View
         @$el.toggleClass "loading", @request?
 
         @submit.text if @model.isNew() then "Создать" else "Сохранить"
-        @submit.attr "disabled", @model.hasChangedSinceSync() is no or @request is on
+        @submit.attr "disabled", not @request or not @model.hasChangedSinceSync()
         @submit.toggle @model.entity.get if @model.isNew() then "can_create" else "can_update"
 
         @destroy.attr "disabled", @request is on

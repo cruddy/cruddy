@@ -2092,7 +2092,7 @@
             save.push(model.save());
           }
         }
-        return $.when.apply(save);
+        return $.when.apply($, save);
       };
       if (this.isNew()) {
         return xhr.then(function(resp) {
@@ -2303,7 +2303,9 @@
     };
 
     EntityForm.prototype.enableSubmit = function() {
-      this.submit.attr("disabled", this.model.hasChangedSinceSync() === false);
+      if (!this.request) {
+        this.submit.attr("disabled", this.model.hasChangedSinceSync() === false);
+      }
       return this;
     };
 
@@ -2321,7 +2323,7 @@
       return this;
     };
 
-    EntityForm.prototype.displaySuccess = function(resp) {
+    EntityForm.prototype.displaySuccess = function() {
       return this.displayAlert("Получилось!", "success");
     };
 
@@ -2330,7 +2332,8 @@
     };
 
     EntityForm.prototype.displayError = function(xhr) {
-      if (!((xhr.responseJSON != null) && xhr.responseJSON.error === "VALIDATION")) {
+      var _ref29;
+      if (((_ref29 = xhr.responseJSON) != null ? _ref29.error : void 0) !== "VALIDATION") {
         return this.displayAlert("Ошибка", "danger");
       }
     };
@@ -2360,7 +2363,7 @@
       if ((this.request != null) || !this.model.hasChangedSinceSync()) {
         return;
       }
-      this.request = this.model.save().then($.proxy(this, "displaySuccess"), $.proxy(this, "displayError"));
+      this.request = this.model.save().done($.proxy(this, "displaySuccess")).fail($.proxy(this, "displayError"));
       this.request.always(function() {
         _this.request = null;
         return _this.update();
@@ -2441,7 +2444,7 @@
     EntityForm.prototype.update = function() {
       this.$el.toggleClass("loading", this.request != null);
       this.submit.text(this.model.isNew() ? "Создать" : "Сохранить");
-      this.submit.attr("disabled", this.model.hasChangedSinceSync() === false || this.request === true);
+      this.submit.attr("disabled", !this.request || !this.model.hasChangedSinceSync());
       this.submit.toggle(this.model.entity.get(this.model.isNew() ? "can_create" : "can_update"));
       this.destroy.attr("disabled", this.request === true);
       this.destroy.text(this.model.entity.get("soft_deleting" && this.model.get("deleted_at")) ? "Восстановить" : "Удалить");

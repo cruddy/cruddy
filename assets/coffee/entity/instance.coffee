@@ -45,7 +45,7 @@ class EntityInstance extends Backbone.Model
 
                 save.push model.save() if model.hasChangedSinceSync()
 
-            $.when.apply save
+            $.when.apply $, save
 
         # Create related models after the main model is saved
         if @isNew() then xhr.then (resp) -> queue() else queue xhr

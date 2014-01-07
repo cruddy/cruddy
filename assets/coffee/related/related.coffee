@@ -1,7 +1,11 @@
 Cruddy.related = new Factory
 
 class Related extends Backbone.Model
-    resolve: -> Cruddy.app.entity(@get "related").then (entity) => @related = entity
+    resolve: ->
+        return @resolver if @resolver?
+
+        @resolver = Cruddy.app.entity @get "related"
+        @resolver.done (entity) => @related = entity
 
 class Cruddy.related.One extends Related
     associate: (parent, child) ->

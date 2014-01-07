@@ -4,6 +4,19 @@
    APPLICATION STYLES
    ========================================================================== */
 
+body.loading:before {
+    content: '';
+    position: absolute;
+
+    .size(100%, 50px);
+    top: 0;
+    left: 0;
+
+    z-index: @zindex-navbar-fixed + 1;
+
+    background: url("../img/loader-bars.gif") center center no-repeat rgba(255, 255, 255, 0.3);
+}
+
 .main-container {
     .container-fixed();
 

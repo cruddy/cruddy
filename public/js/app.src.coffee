@@ -288,7 +288,8 @@ class DataGrid extends Backbone.View
         @entity = @model.entity
         @columns = @entity.columns.models.filter (col) -> col.get "visible"
 
-        @listenTo @model, "change:data", @updateData
+        @listenTo @model, "request", @loading
+        @listenTo @model, "data", @updateData
         @listenTo @model, "change:order_by change:order_dir", @onOrderChange
 
         @listenTo @entity, "change:instance", @onInstanceChange
@@ -336,8 +337,12 @@ class DataGrid extends Backbone.View
 
         this
 
+    loading: -> Cruddy.app.startLoading()
+
     updateData: (datasource, data) ->
         @$(".items").replaceWith @renderBody @columns, data
+
+        Cruddy.app.doneLoading()
 
         this
 
@@ -1311,7 +1316,11 @@ class Cruddy.formatters.Image extends BaseFormatter
 Cruddy.related = new Factory
 
 class Related extends Backbone.Model
-    resolve: -> Cruddy.app.entity(@get "related").then (entity) => @related = entity
+    resolve: ->
+        return @resolver if @resolver?
+
+        @resolver = Cruddy.app.entity @get "related"
+        @resolver.done (entity) => @related = entity
 
 class Cruddy.related.One extends Related
     associate: (parent, child) ->
@@ -1361,8 +1370,6 @@ class Entity extends Backbone.Model
         related = {}
         related[item.id] = item.related.createInstance(relatedData[item.id]) for item in @related.models
 
-        console.log @related
-
         new EntityInstance _.extend({}, @get("defaults"), attributes), { entity: this, related: related }
 
     search: ->
@@ -1371,8 +1378,6 @@ class Entity extends Backbone.Model
         @searchDataSource = new SearchDataSource {},
             url: @url "search"
             primaryColumn: @get "primary_column"
-            ajaxOptions:
-                dontRedirect: yes
 
         @searchDataSource.next()
 
@@ -1386,7 +1391,6 @@ class Entity extends Backbone.Model
     # Load a model and set it as current
     update: (id) ->
         @load(id).then (instance) =>
-            console.log instance
             @set "instance", instance
 
             instance
@@ -1777,24 +1781,41 @@ class App extends Backbone.Model
         @on "change:entity", @displayEntity, this
 
     displayEntity: (model, entity) ->
-        @page.remove() if @page?
-        @container.append (@page = new EntityPage model: entity).render().el if entity?
+        @dispose()
+
+        @container.html (@page = new EntityPage model: entity).render().el if entity
+
+    displayError: (xhr) ->
+        error = if not xhr? or xhr.status is 403 then "Ошибка доступа" else "Ошибка"
+
+        @dispose()
+        @container.html "<p class='alert alert-danger'>#{ error }</p>"
+
+        console.log @entities
+
+        this
+
+    startLoading: -> $(document.body).addClass "loading"
+
+    doneLoading: -> $(document.body).removeClass "loading"
 
     entity: (id) ->
-        if id of @entities
-            promise = $.Deferred().resolve(@entities[id]).promise()
-        else
-            promise = $.getJSON(entity_url id, "schema").then (resp) =>
-                @entities[id] = entity = new Entity resp.data
+        return @entities[id] if id of @entities
 
-                return entity if _.isEmpty entity.related.models
+        @entities[id] = $.getJSON(entity_url id, "schema").then (resp) =>
+            entity = new Entity resp.data
 
-                # Resolve all related entites
-                wait = (related.resolve() for related in entity.related.models)
+            return entity if _.isEmpty entity.related.models
 
-                $.when.apply($, wait).then -> entity
+            # Resolve all related entites
+            wait = (related.resolve() for related in entity.related.models)
 
-        promise
+            $.when.apply($, wait).then -> entity
+
+    dispose: ->
+        @page?.remove()
+
+        this
 
 Cruddy.app = new App
 
@@ -1806,15 +1827,22 @@ class Router extends Backbone.Router
         ":page/:id": "update"
     }
 
-    page: (page) -> Cruddy.app.entity(page).then (entity) ->
-        entity.set "instance", null
-        Cruddy.app.set "entity", entity
-        entity
+    loading: (promise) ->
+        Cruddy.app.startLoading()
+        promise.always -> Cruddy.app.doneLoading()
 
-    create: (page) -> @page(page).then (entity) ->
-        entity.set "instance", entity.createInstance()
+    entity: (id) ->
+        promise = Cruddy.app.entity(id).done (entity) ->
+            entity.set "instance", null
+            Cruddy.app.set "entity", entity
 
-    update: (page, id) -> @page(page).then (entity) -> entity.update(id)
+        promise.fail -> Cruddy.app.displayError.apply(Cruddy.app, arguments).set "entity", false
+
+    page: (page) -> @loading @entity page
+
+    create: (page) -> @loading @entity(page).done (entity) -> entity.set "instance", entity.createInstance()
+
+    update: (page, id) -> @loading @entity(page).then (entity) -> entity.update(id)
 
 Cruddy.router = new Router
 

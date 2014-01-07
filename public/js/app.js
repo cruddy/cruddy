@@ -477,7 +477,8 @@
       this.columns = this.entity.columns.models.filter(function(col) {
         return col.get("visible");
       });
-      this.listenTo(this.model, "change:data", this.updateData);
+      this.listenTo(this.model, "request", this.loading);
+      this.listenTo(this.model, "data", this.updateData);
       this.listenTo(this.model, "change:order_by change:order_dir", this.onOrderChange);
       return this.listenTo(this.entity, "change:instance", this.onInstanceChange);
     };
@@ -534,8 +535,13 @@
       return this;
     };
 
+    DataGrid.prototype.loading = function() {
+      return Cruddy.app.startLoading();
+    };
+
     DataGrid.prototype.updateData = function(datasource, data) {
       this.$(".items").replaceWith(this.renderBody(this.columns, data));
+      Cruddy.app.doneLoading();
       return this;
     };
 
@@ -2087,7 +2093,11 @@
 
     Related.prototype.resolve = function() {
       var _this = this;
-      return Cruddy.app.entity(this.get("related")).then(function(entity) {
+      if (this.resolver != null) {
+        return this.resolver;
+      }
+      this.resolver = Cruddy.app.entity(this.get("related"));
+      return this.resolver.done(function(entity) {
         return _this.related = entity;
       });
     };
@@ -2211,7 +2221,6 @@
         item = _ref30[_i];
         related[item.id] = item.related.createInstance(relatedData[item.id]);
       }
-      console.log(this.related);
       return new EntityInstance(_.extend({}, this.get("defaults"), attributes), {
         entity: this,
         related: related
@@ -2224,10 +2233,7 @@
       }
       this.searchDataSource = new SearchDataSource({}, {
         url: this.url("search"),
-        primaryColumn: this.get("primary_column"),
-        ajaxOptions: {
-          dontRedirect: true
-        }
+        primaryColumn: this.get("primary_column")
       });
       return this.searchDataSource.next();
     };
@@ -2243,7 +2249,6 @@
     Entity.prototype.update = function(id) {
       var _this = this;
       return this.load(id).then(function(instance) {
-        console.log(instance);
         _this.set("instance", instance);
         return instance;
       });
@@ -2758,44 +2763,64 @@
     };
 
     App.prototype.displayEntity = function(model, entity) {
-      if (this.page != null) {
-        this.page.remove();
-      }
-      if (entity != null) {
-        return this.container.append((this.page = new EntityPage({
+      this.dispose();
+      if (entity) {
+        return this.container.html((this.page = new EntityPage({
           model: entity
         })).render().el);
       }
     };
 
+    App.prototype.displayError = function(xhr) {
+      var error;
+      error = (xhr == null) || xhr.status === 403 ? "Ошибка доступа" : "Ошибка";
+      this.dispose();
+      this.container.html("<p class='alert alert-danger'>" + error + "</p>");
+      console.log(this.entities);
+      return this;
+    };
+
+    App.prototype.startLoading = function() {
+      return $(document.body).addClass("loading");
+    };
+
+    App.prototype.doneLoading = function() {
+      return $(document.body).removeClass("loading");
+    };
+
     App.prototype.entity = function(id) {
-      var promise,
-        _this = this;
+      var _this = this;
       if (id in this.entities) {
-        promise = $.Deferred().resolve(this.entities[id]).promise();
-      } else {
-        promise = $.getJSON(entity_url(id, "schema")).then(function(resp) {
-          var entity, related, wait;
-          _this.entities[id] = entity = new Entity(resp.data);
-          if (_.isEmpty(entity.related.models)) {
-            return entity;
-          }
-          wait = (function() {
-            var _i, _len, _ref32, _results;
-            _ref32 = entity.related.models;
-            _results = [];
-            for (_i = 0, _len = _ref32.length; _i < _len; _i++) {
-              related = _ref32[_i];
-              _results.push(related.resolve());
-            }
-            return _results;
-          })();
-          return $.when.apply($, wait).then(function() {
-            return entity;
-          });
-        });
+        return this.entities[id];
       }
-      return promise;
+      return this.entities[id] = $.getJSON(entity_url(id, "schema")).then(function(resp) {
+        var entity, related, wait;
+        entity = new Entity(resp.data);
+        if (_.isEmpty(entity.related.models)) {
+          return entity;
+        }
+        wait = (function() {
+          var _i, _len, _ref32, _results;
+          _ref32 = entity.related.models;
+          _results = [];
+          for (_i = 0, _len = _ref32.length; _i < _len; _i++) {
+            related = _ref32[_i];
+            _results.push(related.resolve());
+          }
+          return _results;
+        })();
+        return $.when.apply($, wait).then(function() {
+          return entity;
+        });
+      });
+    };
+
+    App.prototype.dispose = function() {
+      var _ref32;
+      if ((_ref32 = this.page) != null) {
+        _ref32.remove();
+      }
+      return this;
     };
 
     return App;
@@ -2818,24 +2843,38 @@
       ":page/:id": "update"
     };
 
-    Router.prototype.page = function(page) {
-      return Cruddy.app.entity(page).then(function(entity) {
-        entity.set("instance", null);
-        Cruddy.app.set("entity", entity);
-        return entity;
+    Router.prototype.loading = function(promise) {
+      Cruddy.app.startLoading();
+      return promise.always(function() {
+        return Cruddy.app.doneLoading();
       });
+    };
+
+    Router.prototype.entity = function(id) {
+      var promise;
+      promise = Cruddy.app.entity(id).done(function(entity) {
+        entity.set("instance", null);
+        return Cruddy.app.set("entity", entity);
+      });
+      return promise.fail(function() {
+        return Cruddy.app.displayError.apply(Cruddy.app, arguments).set("entity", false);
+      });
+    };
+
+    Router.prototype.page = function(page) {
+      return this.loading(this.entity(page));
     };
 
     Router.prototype.create = function(page) {
-      return this.page(page).then(function(entity) {
+      return this.loading(this.entity(page).done(function(entity) {
         return entity.set("instance", entity.createInstance());
-      });
+      }));
     };
 
     Router.prototype.update = function(page, id) {
-      return this.page(page).then(function(entity) {
+      return this.loading(this.entity(page).then(function(entity) {
         return entity.update(id);
-      });
+      }));
     };
 
     return Router;

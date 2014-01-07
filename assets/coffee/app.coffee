@@ -17,24 +17,41 @@ class App extends Backbone.Model
         @on "change:entity", @displayEntity, this
 
     displayEntity: (model, entity) ->
-        @page.remove() if @page?
-        @container.append (@page = new EntityPage model: entity).render().el if entity?
+        @dispose()
+
+        @container.html (@page = new EntityPage model: entity).render().el if entity
+
+    displayError: (xhr) ->
+        error = if not xhr? or xhr.status is 403 then "Ошибка доступа" else "Ошибка"
+
+        @dispose()
+        @container.html "<p class='alert alert-danger'>#{ error }</p>"
+
+        console.log @entities
+
+        this
+
+    startLoading: -> $(document.body).addClass "loading"
+
+    doneLoading: -> $(document.body).removeClass "loading"
 
     entity: (id) ->
-        if id of @entities
-            promise = $.Deferred().resolve(@entities[id]).promise()
-        else
-            promise = $.getJSON(entity_url id, "schema").then (resp) =>
-                @entities[id] = entity = new Entity resp.data
+        return @entities[id] if id of @entities
 
-                return entity if _.isEmpty entity.related.models
+        @entities[id] = $.getJSON(entity_url id, "schema").then (resp) =>
+            entity = new Entity resp.data
 
-                # Resolve all related entites
-                wait = (related.resolve() for related in entity.related.models)
+            return entity if _.isEmpty entity.related.models
 
-                $.when.apply($, wait).then -> entity
+            # Resolve all related entites
+            wait = (related.resolve() for related in entity.related.models)
 
-        promise
+            $.when.apply($, wait).then -> entity
+
+    dispose: ->
+        @page?.remove()
+
+        this
 
 Cruddy.app = new App
 
@@ -46,15 +63,22 @@ class Router extends Backbone.Router
         ":page/:id": "update"
     }
 
-    page: (page) -> Cruddy.app.entity(page).then (entity) ->
-        entity.set "instance", null
-        Cruddy.app.set "entity", entity
-        entity
+    loading: (promise) ->
+        Cruddy.app.startLoading()
+        promise.always -> Cruddy.app.doneLoading()
 
-    create: (page) -> @page(page).then (entity) ->
-        entity.set "instance", entity.createInstance()
+    entity: (id) ->
+        promise = Cruddy.app.entity(id).done (entity) ->
+            entity.set "instance", null
+            Cruddy.app.set "entity", entity
 
-    update: (page, id) -> @page(page).then (entity) -> entity.update(id)
+        promise.fail -> Cruddy.app.displayError.apply(Cruddy.app, arguments).set "entity", false
+
+    page: (page) -> @loading @entity page
+
+    create: (page) -> @loading @entity(page).done (entity) -> entity.set "instance", entity.createInstance()
+
+    update: (page, id) -> @loading @entity(page).then (entity) -> entity.update(id)
 
 Cruddy.router = new Router
 

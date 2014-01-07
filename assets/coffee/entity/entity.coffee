@@ -35,8 +35,6 @@ class Entity extends Backbone.Model
         related = {}
         related[item.id] = item.related.createInstance(relatedData[item.id]) for item in @related.models
 
-        console.log @related
-
         new EntityInstance _.extend({}, @get("defaults"), attributes), { entity: this, related: related }
 
     search: ->
@@ -45,8 +43,6 @@ class Entity extends Backbone.Model
         @searchDataSource = new SearchDataSource {},
             url: @url "search"
             primaryColumn: @get "primary_column"
-            ajaxOptions:
-                dontRedirect: yes
 
         @searchDataSource.next()
 
@@ -60,7 +56,6 @@ class Entity extends Backbone.Model
     # Load a model and set it as current
     update: (id) ->
         @load(id).then (instance) =>
-            console.log instance
             @set "instance", instance
 
             instance

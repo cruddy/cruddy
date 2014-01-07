@@ -7,8 +7,8 @@ moment.lang Cruddy.locale ? "en"
 Backbone.emulateHTTP = true
 Backbone.emulateJSON = true
 
-$(document).ajaxError (e, xhr) =>
-    location.href = "/login" if xhr.status == 403
+#$(document).ajaxError (e, xhr, options) =>
+#    location.href = "/login" if xhr.status is 403 and not options.dontRedirect
 
 $.extend $.fancybox.defaults,
     openEffect: "elastic"

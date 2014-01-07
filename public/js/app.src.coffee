@@ -7,8 +7,8 @@ moment.lang Cruddy.locale ? "en"
 Backbone.emulateHTTP = true
 Backbone.emulateJSON = true
 
-$(document).ajaxError (e, xhr) =>
-    location.href = "/login" if xhr.status == 403
+#$(document).ajaxError (e, xhr, options) =>
+#    location.href = "/login" if xhr.status is 403 and not options.dontRedirect
 
 $.extend $.fancybox.defaults,
     openEffect: "elastic"
@@ -91,7 +91,11 @@ class DataSource extends Backbone.Model
 
     hasData: -> not _.isEmpty @get "data"
 
-    isFull: -> @get("current_page") == @get("last_page")
+    hasMore: -> @get("current_page") < @get("last_page")
+
+    isFull: -> !@hasMore()
+
+    inProgress: -> @request?
 
     fetch: ->
         @request.abort() if @request?
@@ -108,6 +112,13 @@ class DataSource extends Backbone.Model
         @trigger "request", this, @request
 
         @request
+
+    more: ->
+        return if @isFull()
+
+        @set current_page: @get("current_page") + 1, silent: yes
+
+        @fetch()
 
     data: ->
         data = {
@@ -134,6 +145,76 @@ class DataSource extends Backbone.Model
             data[key] = value unless value is null or value is ""
 
         data
+class SearchDataSource extends Backbone.Model
+    defaults:
+        search: ""
+
+    initialize: (attributes, options) ->
+        keyName = options.primaryKey ? "id"
+        valueName = options.primaryColumn
+
+        @options =
+            url: options.url
+            type: "get"
+            dataType: "json"
+
+            data:
+                page: null
+                q: ""
+                columns: keyName + "," + valueName
+
+            success: (resp) =>
+                resp = resp.data
+
+                @data.push { id: item[keyName], title: item[valueName] } for item in resp.data
+
+                @page = resp.current_page
+                @more = resp.current_page < resp.last_page
+                @request = null
+
+                @trigger "data", this, @data
+
+                this
+
+            error: (xhr) =>
+                @request = null
+                @trigger "error", this, xhr
+
+                this
+
+        $.extend @options, options.ajaxOptions if options.ajaxOptions?
+
+        @reset()
+
+        @on "change:search", => @reset().next()
+
+        this
+
+    reset: ->
+        @data = []
+        @page = null
+        @more = yes
+
+        this
+
+    fetch: (q, page) ->
+        @request.abort() if @request?
+
+        $.extend @options.data, { page: page, q: q }
+
+        @trigger "request", this, @request = $.ajax @options
+
+        @request
+
+    next: ->
+        if @more
+            page = if @page? then @page + 1 else 1
+
+            @fetch @get("search"), page
+
+        this
+
+    inProgress: -> @request?
 class Pagination extends Backbone.View
     tagName: "ul"
     className: "pager"
@@ -421,11 +502,10 @@ class TextInput extends BaseInput
         "keydown": "keydown"
 
     constructor: (options) ->
-        @size = options.size ? "sm"
-        @className = options.className ? "form-control"
         @continous = options.continous ? false
 
-        @className += " input-#{ @size }"
+        options.className ?= "form-control"
+        options.className += " input-#{ options.size ? "sm" }"
 
         super
 
@@ -576,9 +656,10 @@ class EntityDropdown extends BaseInput
             multiple: @multiple
             reference: @reference
 
-        @dropdown = $ "<div></div>", class: "selector-wrap"
+        @$el.append @selector.render().el
 
-        @$el.append @dropdown.append @selector.render().el
+        # TODO: figure out how to overcome this
+        setTimeout (=> @selector.focus()), 1
 
         this
 
@@ -622,8 +703,7 @@ class EntityDropdown extends BaseInput
         this
 
     renderSingle: ->
-
-        @$el.html @itemTemplate "", ""
+        @$el.html @itemTemplate "", "0"
 
         @itemTitle = @$ ".form-control"
         @itemDelete = @$ ".btn-remove"
@@ -632,15 +712,15 @@ class EntityDropdown extends BaseInput
 
     updateItem: ->
         value = @model.get @key
-        @itemTitle.text if value then value.title else "Не выбрано"
+        @itemTitle.val if value then value.title else "Не выбрано"
         @itemDelete.toggle !!value
 
         this
 
     itemTemplate: (value, key = null) ->
         html = """
-        <div class="input-group input-group-sm item">
-            <p class="form-control">#{ _.escape value }</p>
+        <div class="input-group input-group-sm ed-item">
+            <input type="text" class="form-control" #{ if not @multiple or key is null then "data-toggle=dropdown data-target=##{ @cid }" else ""} value="#{ _.escape value }" readonly>
             <div class="input-group-btn">
         """
 
@@ -654,19 +734,18 @@ class EntityDropdown extends BaseInput
         if not @multiple or key is null
             html += """
                 <button type="button" class="btn btn-default btn-dropdown dropdown-toggle" data-toggle="dropdown" data-target="##{ @cid }">
-                    <span class="caret"></span>
+                    <span class="glyphicon glyphicon-search"></span>
                 </button>
                 """
 
         html += "</div></div>"
 
     dispose: ->
-        @selector.stopListening() if @selector
-        @selector = null
+        @selector?.remove()
 
         this
 
-    stopListening: ->
+    remove: ->
         @dispose()
 
         super
@@ -674,33 +753,48 @@ class EntitySelector extends BaseInput
     className: "entity-selector"
 
     events:
-        "click li": "check"
+        "click .item": "check"
+        "click .more": "more"
+        "click .search-input": -> false
 
     initialize: (options) ->
         super
 
         @filter = options.filter ? false
         @multiple = options.multiple ? false
+        @search = options.search ? true
 
         @data = []
         @buildSelected @model.get @key
 
-        Cruddy.app.entity(options.reference).then (entity) =>
+        entity = Cruddy.app.entity(options.reference)
+
+        entity.done (entity) =>
             @entity = entity
             @primaryKey = "id"
             @primaryColumn = entity.get "primary_column"
 
             @dataSource = entity.search()
 
-            @listenTo @dataSource, "request",   @loading
-            @listenTo @dataSource, "data",      @appendItems
+            @listenTo @dataSource, "request", @loading
+            @listenTo @dataSource, "data",    @renderItems
+            @listenTo @dataSource, "error",   @displayError
+
+            @renderSearch() if @items?
+
+        entity.fail $.proxy this, "displayError"
+
+        this
+
+    checkForMore: ->
+        @more() if @items.parent().height() + 50 > @moreElement?.position().top
 
         this
 
     check: (e) ->
         id = parseInt $(e.target).data "id"
         uncheck = id of @selected
-        item = _.find @data, (item) -> item.id == id
+        item = _.find @dataSource.data, (item) -> item.id == id
 
         if @multiple
             if uncheck
@@ -712,6 +806,13 @@ class EntitySelector extends BaseInput
             value = item
 
         @model.set @key, value
+
+        false
+
+    more: ->
+        return if not @dataSource or @dataSource.inProgress()
+
+        @dataSource.next()
 
         false
 
@@ -729,28 +830,42 @@ class EntitySelector extends BaseInput
 
         this
 
-    loading: -> this
+    displayError: (xhr) ->
+        xhr.handled = yes
 
-    appendItems: (datasource, data) ->
-        return if _.isEmpty data
+        error = if xhr.status is 403 then "Ошибка доступа" else "Ошибка"
 
-        @data.push { id: item[@primaryKey], title: item[@primaryColumn] } for item in data
+        @$el.html "<span class=error>#{ error }</span>"
 
-        @renderItems()
+        this
+
+    loading: ->
+        @moreElement.addClass "loading"
 
         this
 
     renderItems: ->
+        @moreElement = null
+
         html = ""
-        html += @renderItem item for item in @data
+
+        if @dataSource?
+            html += @renderItem item for item in @dataSource.data
+
+            html += """<li class="more #{ if @dataSource.inProgress() then "loading" else "" }">еще</li>""" if @dataSource.more
+
         @items.html html
+
+        if @dataSource?.more
+            @moreElement = @items.children ".more"
+            @checkForMore()
 
         this
 
     renderItem: (item) ->
         className = if item.id of @selected then "selected" else ""
 
-        """<li class="#{ className }" data-id="#{ item.id }">#{ item.title }</li>"""
+        """<li class="item #{ className }" data-id="#{ item.id }">#{ item.title }</li>"""
 
     render: ->
         @dispose()
@@ -759,16 +874,44 @@ class EntitySelector extends BaseInput
 
         @items = @$ ".items"
 
-        @appendItems @dataSource, @dataSource.get "data" if @dataSource? and @dataSource.hasData()
+        @renderItems()
+
+        @items.parent().on "scroll", $.proxy this, "checkForMore"
+
+        @renderSearch() if @dataSource?
+
+        this
+
+    renderSearch: ->
+        return if not @search
+
+        @searchInput = new TextInput
+            model: @dataSource
+            key: "search"
+            continous: yes
+            attributes:
+                placeholder: "поиск"
+            className: "form-control search-input"
+
+        @$el.prepend @searchInput.render().el
+
+        @searchInput.$el.wrap "<div class=search-input-container></div>"
 
         this
 
     template: -> """<div class="items-container"><ul class="items"></ul></div>"""
 
-    dispose: ->
+    focus: ->
+        @searchInput?.focus()
+
         this
 
-    stopListening: ->
+    dispose: ->
+        @searchInput?.remove()
+
+        this
+
+    remove: ->
         @dispose()
 
         super
@@ -948,7 +1091,7 @@ class FieldView extends Backbone.View
 
     # Render a field.
     render: ->
-        @input.remove() if @input?
+        @dispose()
 
         @$el.html @template()
 
@@ -990,10 +1133,16 @@ class FieldView extends Backbone.View
     # Focus the input that this field view holds.
     focus: ->
         @input.focus() if @input?
+
+        this
+
+    dispose: ->
+        @input?.remove()
+
         this
 
     stopListening: ->
-        @input.stopListening() if @input?
+        @dispose()
 
         super
 
@@ -1217,10 +1366,15 @@ class Entity extends Backbone.Model
         new EntityInstance _.extend({}, @get("defaults"), attributes), { entity: this, related: related }
 
     search: ->
-        @searchInstance = @createDataSource ["id", @get "primary_column"] if not @searchInstance?
-        @searchInstance.set "current_page", 1
+        return @searchDataSource if @searchDataSource?
 
-        @searchInstance
+        @searchDataSource = new SearchDataSource {},
+            url: @url "search"
+            primaryColumn: @get "primary_column"
+            ajaxOptions:
+                dontRedirect: yes
+
+        @searchDataSource.next()
 
     # Load a model
     load: (id) ->

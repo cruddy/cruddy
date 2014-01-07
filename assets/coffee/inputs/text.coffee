@@ -7,11 +7,10 @@ class TextInput extends BaseInput
         "keydown": "keydown"
 
     constructor: (options) ->
-        @size = options.size ? "sm"
-        @className = options.className ? "form-control"
         @continous = options.continous ? false
 
-        @className += " input-#{ @size }"
+        options.className ?= "form-control"
+        options.className += " input-#{ options.size ? "sm" }"
 
         super
 

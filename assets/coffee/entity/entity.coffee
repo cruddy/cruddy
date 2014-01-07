@@ -40,10 +40,15 @@ class Entity extends Backbone.Model
         new EntityInstance _.extend({}, @get("defaults"), attributes), { entity: this, related: related }
 
     search: ->
-        @searchInstance = @createDataSource ["id", @get "primary_column"] if not @searchInstance?
-        @searchInstance.set "current_page", 1
+        return @searchDataSource if @searchDataSource?
 
-        @searchInstance
+        @searchDataSource = new SearchDataSource {},
+            url: @url "search"
+            primaryColumn: @get "primary_column"
+            ajaxOptions:
+                dontRedirect: yes
+
+        @searchDataSource.next()
 
     # Load a model
     load: (id) ->

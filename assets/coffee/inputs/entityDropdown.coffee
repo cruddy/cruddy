@@ -36,9 +36,10 @@ class EntityDropdown extends BaseInput
             multiple: @multiple
             reference: @reference
 
-        @dropdown = $ "<div></div>", class: "selector-wrap"
+        @$el.append @selector.render().el
 
-        @$el.append @dropdown.append @selector.render().el
+        # TODO: figure out how to overcome this
+        setTimeout (=> @selector.focus()), 1
 
         this
 
@@ -82,8 +83,7 @@ class EntityDropdown extends BaseInput
         this
 
     renderSingle: ->
-
-        @$el.html @itemTemplate "", ""
+        @$el.html @itemTemplate "", "0"
 
         @itemTitle = @$ ".form-control"
         @itemDelete = @$ ".btn-remove"
@@ -92,15 +92,15 @@ class EntityDropdown extends BaseInput
 
     updateItem: ->
         value = @model.get @key
-        @itemTitle.text if value then value.title else "Не выбрано"
+        @itemTitle.val if value then value.title else "Не выбрано"
         @itemDelete.toggle !!value
 
         this
 
     itemTemplate: (value, key = null) ->
         html = """
-        <div class="input-group input-group-sm item">
-            <p class="form-control">#{ _.escape value }</p>
+        <div class="input-group input-group-sm ed-item">
+            <input type="text" class="form-control" #{ if not @multiple or key is null then "data-toggle=dropdown data-target=##{ @cid }" else ""} value="#{ _.escape value }" readonly>
             <div class="input-group-btn">
         """
 
@@ -114,19 +114,18 @@ class EntityDropdown extends BaseInput
         if not @multiple or key is null
             html += """
                 <button type="button" class="btn btn-default btn-dropdown dropdown-toggle" data-toggle="dropdown" data-target="##{ @cid }">
-                    <span class="caret"></span>
+                    <span class="glyphicon glyphicon-search"></span>
                 </button>
                 """
 
         html += "</div></div>"
 
     dispose: ->
-        @selector.stopListening() if @selector
-        @selector = null
+        @selector?.remove()
 
         this
 
-    stopListening: ->
+    remove: ->
         @dispose()
 
         super

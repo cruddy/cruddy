@@ -39,7 +39,7 @@ class FieldView extends Backbone.View
 
     # Render a field.
     render: ->
-        @input.remove() if @input?
+        @dispose()
 
         @$el.html @template()
 
@@ -81,10 +81,16 @@ class FieldView extends Backbone.View
     # Focus the input that this field view holds.
     focus: ->
         @input.focus() if @input?
+
+        this
+
+    dispose: ->
+        @input?.remove()
+
         this
 
     stopListening: ->
-        @input.stopListening() if @input?
+        @dispose()
 
         super
 

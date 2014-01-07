@@ -195,8 +195,10 @@ class Entity implements FormInterface, ComponentInterface {
     /**
      * List all items.
      *
-     * @param  array $filters
-     * @param  array $order
+     * @param string $search
+     * @param array  $filters
+     * @param array  $order
+     * @param array  $columns
      *
      * @return array
      */

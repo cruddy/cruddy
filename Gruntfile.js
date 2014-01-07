@@ -24,6 +24,7 @@ module.exports = function(grunt) {
                     '<%= app %>/factory.coffee',
                     '<%= app %>/attribute.coffee',
                     '<%= app %>/datasource.coffee',
+                    '<%= app %>/searchDataSource.coffee',
                     '<%= app %>/pagination.coffee',
                     '<%= app %>/datagrid.coffee',
                     '<%= app %>/fieldList.coffee',

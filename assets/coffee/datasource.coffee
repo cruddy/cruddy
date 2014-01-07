@@ -15,7 +15,11 @@ class DataSource extends Backbone.Model
 
     hasData: -> not _.isEmpty @get "data"
 
-    isFull: -> @get("current_page") == @get("last_page")
+    hasMore: -> @get("current_page") < @get("last_page")
+
+    isFull: -> !@hasMore()
+
+    inProgress: -> @request?
 
     fetch: ->
         @request.abort() if @request?
@@ -32,6 +36,13 @@ class DataSource extends Backbone.Model
         @trigger "request", this, @request
 
         @request
+
+    more: ->
+        return if @isFull()
+
+        @set current_page: @get("current_page") + 1, silent: yes
+
+        @fetch()
 
     data: ->
         data = {

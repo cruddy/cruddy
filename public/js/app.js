@@ -1389,7 +1389,7 @@
     };
 
     FileList.prototype.initialize = function(options) {
-      var _ref15, _ref16;
+      var _ref15, _ref16, _ref17;
       this.multiple = (_ref15 = options.multiple) != null ? _ref15 : false;
       this.formatter = (_ref16 = options.formatter) != null ? _ref16 : {
         format: function(value) {
@@ -1400,6 +1400,7 @@
           }
         }
       };
+      this.accepts = (_ref17 = options.accepts) != null ? _ref17 : "";
       return FileList.__super__.initialize.apply(this, arguments);
     };
 
@@ -1455,7 +1456,7 @@
       if (html) {
         html = this.wrapItems(html);
       }
-      html += this.renderInput(this.multiple ? "Добавить" : "Выбрать");
+      html += this.renderInput(this.multiple ? "<span class='glyphicon glyphicon-plus'></span> Добавить" : "Выбрать");
       this.$el.html(html);
       return this;
     };
@@ -1465,7 +1466,7 @@
     };
 
     FileList.prototype.renderInput = function(label) {
-      return "<div class=\"btn btn-sm btn-default file-list-input-wrap\">\n    <input type=\"file\" " + (this.multiple ? "multiple" : void 0) + ">\n    " + label + "\n</div>";
+      return "<div class=\"btn btn-sm btn-default file-list-input-wrap\">\n    <input type=\"file\" accept=\"" + this.accepts + " \"" + (this.multiple ? "multiple" : void 0) + ">\n    " + label + "\n</div>";
     };
 
     FileList.prototype.renderItem = function(item, i) {
@@ -1511,11 +1512,15 @@
       return this;
     };
 
+    ImageList.prototype.wrapItems = function(html) {
+      return "<ul class=\"image-group\">" + html + "</ul>";
+    };
+
     ImageList.prototype.renderItem = function(item, i) {
       if (i == null) {
         i = 0;
       }
-      return "<li class=\"image-list-item\">\n    " + (this.renderImage(item, i)) + "\n    <a href=\"#\" class=\"action-delete\" data-index=\"" + i + "\"><span class=\"glyphicon glyphicon-remove\"></span></a>\n</li>";
+      return "<li class=\"image-group-item\">\n    " + (this.renderImage(item, i)) + "\n    <a href=\"#\" class=\"action-delete\" data-index=\"" + i + "\"><span class=\"glyphicon glyphicon-remove\"></span></a>\n</li>";
     };
 
     ImageList.prototype.renderImage = function(item, i) {
@@ -1917,9 +1922,7 @@
         model: model,
         key: this.id,
         multiple: this.get("multiple"),
-        attributes: {
-          accepts: this.get("accepts")
-        }
+        accepts: this.get("accepts")
       });
     };
 
@@ -1950,9 +1953,7 @@
         width: this.get("width"),
         height: this.get("height"),
         multiple: this.get("multiple"),
-        attributes: {
-          accepts: this.get("accepts")
-        }
+        accepts: this.get("accepts")
       });
     };
 

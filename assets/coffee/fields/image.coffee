@@ -5,7 +5,6 @@ class Cruddy.fields.Image extends Cruddy.fields.File
         width: @get "width"
         height: @get "height"
         multiple: @get "multiple"
-        attributes:
-            accepts: @get "accepts"
+        accepts: @get "accepts"
 
     format: (value) -> if value instanceof File then value.name else value

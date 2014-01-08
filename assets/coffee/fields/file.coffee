@@ -3,7 +3,6 @@ class Cruddy.fields.File extends Field
         model: model
         key: @id
         multiple: @get "multiple"
-        attributes:
-            accepts: @get "accepts"
+        accepts: @get "accepts"
 
     format: (value) -> if value instanceof File then value.name else value

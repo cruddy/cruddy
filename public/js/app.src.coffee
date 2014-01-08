@@ -924,6 +924,7 @@ class FileList extends BaseInput
     initialize: (options) ->
         @multiple = options.multiple ? false
         @formatter = options.formatter ? format: (value) -> if value instanceof File then value.name else value
+        @accepts = options.accepts ? ""
 
         super
 
@@ -961,7 +962,7 @@ class FileList extends BaseInput
 
         html = @wrapItems html if html
 
-        html += @renderInput if @multiple then "Добавить" else "Выбрать"
+        html += @renderInput if @multiple then "<span class='glyphicon glyphicon-plus'></span> Добавить" else "Выбрать"
 
         @$el.html html
 
@@ -972,7 +973,7 @@ class FileList extends BaseInput
     renderInput: (label) ->
         """
         <div class="btn btn-sm btn-default file-list-input-wrap">
-            <input type="file" #{ "multiple" if @multiple }>
+            <input type="file" accept="#{ @accepts } "#{ "multiple" if @multiple }>
             #{ label }
         </div>
         """
@@ -1012,9 +1013,11 @@ class ImageList extends FileList
 
         this
 
+    wrapItems: (html) -> """<ul class="image-group">#{ html }</ul>"""
+
     renderItem: (item, i = 0) ->
         """
-        <li class="image-list-item">
+        <li class="image-group-item">
             #{ @renderImage item, i }
             <a href="#" class="action-delete" data-index="#{ i }"><span class="glyphicon glyphicon-remove"></span></a>
         </li>
@@ -1241,8 +1244,7 @@ class Cruddy.fields.File extends Field
         model: model
         key: @id
         multiple: @get "multiple"
-        attributes:
-            accepts: @get "accepts"
+        accepts: @get "accepts"
 
     format: (value) -> if value instanceof File then value.name else value
 class Cruddy.fields.Image extends Cruddy.fields.File
@@ -1252,8 +1254,7 @@ class Cruddy.fields.Image extends Cruddy.fields.File
         width: @get "width"
         height: @get "height"
         multiple: @get "multiple"
-        attributes:
-            accepts: @get "accepts"
+        accepts: @get "accepts"
 
     format: (value) -> if value instanceof File then value.name else value
 Cruddy.columns = new Factory

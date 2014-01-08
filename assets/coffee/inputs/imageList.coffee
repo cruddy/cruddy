@@ -22,9 +22,11 @@ class ImageList extends FileList
 
         this
 
+    wrapItems: (html) -> """<ul class="image-group">#{ html }</ul>"""
+
     renderItem: (item, i = 0) ->
         """
-        <li class="image-list-item">
+        <li class="image-group-item">
             #{ @renderImage item, i }
             <a href="#" class="action-delete" data-index="#{ i }"><span class="glyphicon glyphicon-remove"></span></a>
         </li>

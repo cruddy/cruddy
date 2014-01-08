@@ -8,6 +8,7 @@ class FileList extends BaseInput
     initialize: (options) ->
         @multiple = options.multiple ? false
         @formatter = options.formatter ? format: (value) -> if value instanceof File then value.name else value
+        @accepts = options.accepts ? ""
 
         super
 
@@ -45,7 +46,7 @@ class FileList extends BaseInput
 
         html = @wrapItems html if html
 
-        html += @renderInput if @multiple then "Добавить" else "Выбрать"
+        html += @renderInput if @multiple then "<span class='glyphicon glyphicon-plus'></span> Добавить" else "Выбрать"
 
         @$el.html html
 
@@ -56,7 +57,7 @@ class FileList extends BaseInput
     renderInput: (label) ->
         """
         <div class="btn btn-sm btn-default file-list-input-wrap">
-            <input type="file" #{ "multiple" if @multiple }>
+            <input type="file" accept="#{ @accepts } "#{ "multiple" if @multiple }>
             #{ label }
         </div>
         """

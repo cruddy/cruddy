@@ -148,6 +148,10 @@
 }
 
 .file-list {
+    .list-group {
+        margin-bottom: @thumbnail-padding;
+    }
+    
     .list-group-item {
         font-size: @font-size-small;
         padding: @padding-small-vertical @padding-small-horizontal;
@@ -168,7 +172,10 @@
     }
 }
 
-.image-list {
+.image-list .image-group {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
     margin-left: -5px;
 
     &-item {

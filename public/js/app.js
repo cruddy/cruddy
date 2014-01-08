@@ -2744,13 +2744,13 @@
       this.submit.attr("disabled", (this.request != null) || !this.model.hasChangedSinceSync());
       this.submit.toggle(this.model.entity.get(this.model.isNew() ? "can_create" : "can_update"));
       this.destroy.attr("disabled", this.request != null);
-      this.destroy.text(this.model.entity.get("soft_deleting" && this.model.get("deleted_at")) ? "Восстановить" : "Удалить");
+      this.destroy.html(this.model.entity.get("soft_deleting" && this.model.get("deleted_at")) ? "Восстановить" : "<span class='glyphicon glyphicon-trash' title='Удалить'></span>");
       this.destroy.toggle(!this.model.isNew() && this.model.entity.get("can_delete"));
       return this;
     };
 
     EntityForm.prototype.template = function() {
-      return "<header>\n    <ul class=\"nav nav-pills\"></ul>\n</header>\n\n<footer>\n    <button class=\"btn btn-default btn-close btn-sm\" type=\"button\">Закрыть</button>\n    <button class=\"btn btn-default btn-destroy btn-sm\" type=\"button\"><span class=\"glyphicon glyphicon-trash\"></span></button>\n    <button class=\"btn btn-primary btn-save btn-sm\" type=\"button\" disabled></button>\n</footer>";
+      return "<header>\n    <ul class=\"nav nav-pills\"></ul>\n</header>\n\n<footer>\n    <button class=\"btn btn-default btn-close btn-sm\" type=\"button\">Закрыть</button>\n    <button class=\"btn btn-default btn-destroy btn-sm\" type=\"button\"></button>\n    <button class=\"btn btn-primary btn-save btn-sm\" type=\"button\" disabled></button>\n</footer>";
     };
 
     EntityForm.prototype.navTemplate = function(label, target, active) {

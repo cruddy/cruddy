@@ -155,7 +155,7 @@ class EntityForm extends Backbone.View
         @submit.toggle @model.entity.get if @model.isNew() then "can_create" else "can_update"
 
         @destroy.attr "disabled", @request?
-        @destroy.text if @model.entity.get "soft_deleting" and @model.get "deleted_at" then "Восстановить" else "Удалить"
+        @destroy.html if @model.entity.get "soft_deleting" and @model.get "deleted_at" then "Восстановить" else "<span class='glyphicon glyphicon-trash' title='Удалить'></span>"
         @destroy.toggle not @model.isNew() and @model.entity.get "can_delete"
 
         this
@@ -168,7 +168,7 @@ class EntityForm extends Backbone.View
 
         <footer>
             <button class="btn btn-default btn-close btn-sm" type="button">Закрыть</button>
-            <button class="btn btn-default btn-destroy btn-sm" type="button"><span class="glyphicon glyphicon-trash"></span></button>
+            <button class="btn btn-default btn-destroy btn-sm" type="button"></button>
             <button class="btn btn-primary btn-save btn-sm" type="button" disabled></button>
         </footer>
         """

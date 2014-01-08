@@ -790,7 +790,7 @@ class EntitySelector extends BaseInput
         this
 
     checkForMore: ->
-        @more() if @items.parent().height() + 50 > @moreElement?.position().top
+        @more() if @moreElement? and @items.parent().height() + 50 > @moreElement.position().top
 
         this
 
@@ -834,11 +834,9 @@ class EntitySelector extends BaseInput
         this
 
     displayError: (xhr) ->
-        xhr.handled = yes
+        return if xhr.status isnt 403
 
-        error = if xhr.status is 403 then "Ошибка доступа" else "Ошибка"
-
-        @$el.html "<span class=error>#{ error }</span>"
+        @$el.html "<span class=error>Ошибка доступа</span>"
 
         this
 
@@ -852,14 +850,16 @@ class EntitySelector extends BaseInput
 
         html = ""
 
-        if @dataSource?
+        if @dataSource.data.length or @dataSource.more
             html += @renderItem item for item in @dataSource.data
 
             html += """<li class="more #{ if @dataSource.inProgress() then "loading" else "" }">еще</li>""" if @dataSource.more
+        else
+            html += "<li class='empty'>нет результатов</li>"
 
         @items.html html
 
-        if @dataSource?.more
+        if @dataSource.more
             @moreElement = @items.children ".more"
             @checkForMore()
 

@@ -1217,8 +1217,7 @@
     };
 
     EntitySelector.prototype.checkForMore = function() {
-      var _ref14;
-      if (this.items.parent().height() + 50 > ((_ref14 = this.moreElement) != null ? _ref14.position().top : void 0)) {
+      if ((this.moreElement != null) && this.items.parent().height() + 50 > this.moreElement.position().top) {
         this.more();
       }
       return this;
@@ -1277,10 +1276,10 @@
     };
 
     EntitySelector.prototype.displayError = function(xhr) {
-      var error;
-      xhr.handled = true;
-      error = xhr.status === 403 ? "Ошибка доступа" : "Ошибка";
-      this.$el.html("<span class=error>" + error + "</span>");
+      if (xhr.status !== 403) {
+        return;
+      }
+      this.$el.html("<span class=error>Ошибка доступа</span>");
       return this;
     };
 
@@ -1293,10 +1292,10 @@
     };
 
     EntitySelector.prototype.renderItems = function() {
-      var html, item, _i, _len, _ref14, _ref15;
+      var html, item, _i, _len, _ref14;
       this.moreElement = null;
       html = "";
-      if (this.dataSource != null) {
+      if (this.dataSource.data.length || this.dataSource.more) {
         _ref14 = this.dataSource.data;
         for (_i = 0, _len = _ref14.length; _i < _len; _i++) {
           item = _ref14[_i];
@@ -1305,9 +1304,11 @@
         if (this.dataSource.more) {
           html += "<li class=\"more " + (this.dataSource.inProgress() ? "loading" : "") + "\">еще</li>";
         }
+      } else {
+        html += "<li class='empty'>нет результатов</li>";
       }
       this.items.html(html);
-      if ((_ref15 = this.dataSource) != null ? _ref15.more : void 0) {
+      if (this.dataSource.more) {
         this.moreElement = this.items.children(".more");
         this.checkForMore();
       }

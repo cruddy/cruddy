@@ -130,9 +130,12 @@
             }
         }
 
-        .more {
+        .empty, .more {
             text-align: center;
             font-style: italic;
+        }
+
+        .more {
             cursor: pointer;
 
             &.loading {
@@ -151,7 +154,7 @@
     .list-group {
         margin-bottom: @thumbnail-padding;
     }
-    
+
     .list-group-item {
         font-size: @font-size-small;
         padding: @padding-small-vertical @padding-small-horizontal;

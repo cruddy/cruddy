@@ -13,6 +13,7 @@ class App extends Backbone.Model
 
     initialize: ->
         @container = $ "#container"
+        @loadingRequests = 0
 
         @on "change:entity", @displayEntity, this
 
@@ -27,18 +28,44 @@ class App extends Backbone.Model
         @dispose()
         @container.html "<p class='alert alert-danger'>#{ error }</p>"
 
-        console.log @entities
+        this
+
+    startLoading: ->
+        @loading = setTimeout (=>
+            $(document.body).addClass "loading"
+            @loading = no
+
+        ), 1000 if @loadingRequests++ is 0
 
         this
 
-    startLoading: -> $(document.body).addClass "loading"
+    doneLoading: ->
+        if @loadingRequests is 0
+            console.error "Seems like doneLoading is called too many times."
 
-    doneLoading: -> $(document.body).removeClass "loading"
+            return
 
-    entity: (id) ->
+        if --@loadingRequests is 0
+            if @loading
+                clearTimeout @loading
+                @loading = no
+            else
+                $(document.body).removeClass "loading"
+
+        this
+
+    entity: (id, options = {}) ->
         return @entities[id] if id of @entities
 
-        @entities[id] = $.getJSON(entity_url id, "schema").then (resp) =>
+        options = $.extend {}, {
+            url: entity_url id, "schema"
+            type: "get"
+            dataType: "json"
+            displayLoading: yes
+
+        }, options
+
+        @entities[id] = $.ajax(options).then (resp) =>
             entity = new Entity resp.data
 
             return entity if _.isEmpty entity.related.models
@@ -74,11 +101,11 @@ class Router extends Backbone.Router
 
         promise.fail -> Cruddy.app.displayError.apply(Cruddy.app, arguments).set "entity", false
 
-    page: (page) -> @loading @entity page
+    page: (page) -> @entity page
 
-    create: (page) -> @loading @entity(page).done (entity) -> entity.set "instance", entity.createInstance()
+    create: (page) -> @entity(page).done (entity) -> entity.set "instance", entity.createInstance()
 
-    update: (page, id) -> @loading @entity(page).then (entity) -> entity.update(id)
+    update: (page, id) -> @entity(page).then (entity) -> entity.update(id)
 
 Cruddy.router = new Router
 

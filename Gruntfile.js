@@ -40,6 +40,7 @@ module.exports = function(grunt) {
                     '<%= app %>/inputs/entitySelector.coffee',
                     '<%= app %>/inputs/fileList.coffee',
                     '<%= app %>/inputs/imageList.coffee',
+                    '<%= app %>/inputs/search.coffee',
 
                     // Fields
                     '<%= app %>/fields/field.coffee',

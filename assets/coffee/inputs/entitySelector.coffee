@@ -16,10 +16,9 @@ class EntitySelector extends BaseInput
         @data = []
         @buildSelected @model.get @key
 
-        entity = Cruddy.app.entity(options.reference)
+        @entity = Cruddy.app.entity(options.reference)
 
-        entity.done (entity) =>
-            @entity = entity
+        @entity.done (entity) =>
             @primaryKey = "id"
             @primaryColumn = entity.get "primary_column"
 
@@ -29,9 +28,7 @@ class EntitySelector extends BaseInput
             @listenTo @dataSource, "data",    @renderItems
             @listenTo @dataSource, "error",   @displayError
 
-            @renderSearch() if @items?
-
-        entity.fail $.proxy this, "displayError"
+        @entity.fail $.proxy this, "displayError"
 
         this
 
@@ -89,7 +86,7 @@ class EntitySelector extends BaseInput
         this
 
     loading: ->
-        @moreElement.addClass "loading"
+        @moreElement?.addClass "loading"
 
         this
 
@@ -123,24 +120,19 @@ class EntitySelector extends BaseInput
 
         @items = @$ ".items"
 
-        @renderItems()
+        @entity.done =>
+            @renderItems()
 
-        @items.parent().on "scroll", $.proxy this, "checkForMore"
+            @items.parent().on "scroll", $.proxy this, "checkForMore"
 
-        @renderSearch() if @dataSource?
+            @renderSearch()
 
         this
 
     renderSearch: ->
-        return if not @search
-
-        @searchInput = new TextInput
+        @searchInput = new SearchInput
             model: @dataSource
             key: "search"
-            continous: yes
-            attributes:
-                placeholder: "поиск"
-            className: "form-control search-input"
 
         @$el.prepend @searchInput.render().el
 
@@ -148,10 +140,10 @@ class EntitySelector extends BaseInput
 
         this
 
-    template: -> """<div class="items-container"><ul class="items"></ul></div>"""
+    template: -> """<div class="items-container"><ul class="items"><li class="more loading"></li></ul></div>"""
 
     focus: ->
-        @searchInput?.focus()
+        @searchInput?.focus() or @entity.done => @searchInput.focus()
 
         this
 

@@ -10,6 +10,10 @@ Backbone.emulateJSON = true
 #$(document).ajaxError (e, xhr, options) =>
 #    location.href = "/login" if xhr.status is 403 and not options.dontRedirect
 
+$(document)
+    .ajaxSend((e, xhr, options) -> Cruddy.app.startLoading() if options.displayLoading)
+    .ajaxComplete((e, xhr, options) -> Cruddy.app.doneLoading() if options.displayLoading)
+
 $.extend $.fancybox.defaults,
     openEffect: "elastic"
 humanize = (id) => id.replace(/_-/, " ")
@@ -19,6 +23,8 @@ entity_url = (id, extra) ->
     url += "/" + extra if extra
 
     url
+
+after_break = (callback) -> setTimeout callback, 50
 
 class Alert extends Backbone.View
     tagName: "span"
@@ -507,31 +513,14 @@ class TextInput extends BaseInput
         "keydown": "keydown"
 
     constructor: (options) ->
-        @continous = options.continous ? false
-
         options.className ?= "form-control"
         options.className += " input-#{ options.size ? "sm" }"
 
         super
 
-    scheduleChange: ->
-        clearTimeout @timeout if @timeout?
-        @timeout = setTimeout (=> @change()), 300
-
-        this
-
     keydown: (e) ->
         # Ctrl + Enter
-        if e.ctrlKey and e.keyCode is 13
-            @change()
-            return
-
-        # Escape
-        if e.keyCode is 27
-            @model.set @key, ""
-            return false
-
-        @scheduleChange() if @continous
+        return @change() if e.ctrlKey and e.keyCode is 13
 
         this
 
@@ -628,7 +617,9 @@ class EntityDropdown extends BaseInput
 
     events:
         "click .btn-remove": "removeItem"
+        "keydown [type=search]": "searchKeydown"
         "show.bs.dropdown": "renderDropdown"
+        "shown.bs.dropdown": -> after_break => @selector.focus()
 
     mutiple: false
     reference: null
@@ -652,6 +643,11 @@ class EntityDropdown extends BaseInput
 
         this
 
+    searchKeydown: (e) ->
+        if (e.keyCode is 27)
+            @$el.dropdown "toggle"
+            return false
+
     renderDropdown: ->
         return if @selector?
 
@@ -661,13 +657,9 @@ class EntityDropdown extends BaseInput
             multiple: @multiple
             reference: @reference
 
-        @$el.append @selector.render().el
-
-        # TODO: figure out how to overcome this
-        setTimeout (=> @selector.focus()), 1
+        @selector.render().entity.done => @$el.append @selector.el
 
         this
-
 
     applyChanges: (model, value) ->
         if @multiple
@@ -725,20 +717,20 @@ class EntityDropdown extends BaseInput
     itemTemplate: (value, key = null) ->
         html = """
         <div class="input-group input-group-sm ed-item">
-            <input type="text" class="form-control" #{ if not @multiple or key is null then "data-toggle=dropdown data-target=##{ @cid }" else ""} value="#{ _.escape value }" readonly>
+            <input type="text" class="form-control" #{ if not @multiple or key is null then "data-toggle='dropdown' data-target='##{ @cid }'" else "tab-index='-1'"} value="#{ _.escape value }" readonly>
             <div class="input-group-btn">
         """
 
         if not @multiple or key isnt null
             html += """
-                <button type="button" class="btn btn-default btn-remove" data-key="#{ key }">
+                <button type="button" class="btn btn-default btn-remove" data-key="#{ key }" tabindex="-1">
                     <span class="glyphicon glyphicon-remove"></span>
                 </button>
                 """
 
         if not @multiple or key is null
             html += """
-                <button type="button" class="btn btn-default btn-dropdown dropdown-toggle" data-toggle="dropdown" data-target="##{ @cid }">
+                <button type="button" class="btn btn-default btn-dropdown dropdown-toggle" data-toggle="dropdown" data-target="##{ @cid }" tab-index="1">
                     <span class="glyphicon glyphicon-search"></span>
                 </button>
                 """
@@ -772,10 +764,9 @@ class EntitySelector extends BaseInput
         @data = []
         @buildSelected @model.get @key
 
-        entity = Cruddy.app.entity(options.reference)
+        @entity = Cruddy.app.entity(options.reference)
 
-        entity.done (entity) =>
-            @entity = entity
+        @entity.done (entity) =>
             @primaryKey = "id"
             @primaryColumn = entity.get "primary_column"
 
@@ -785,9 +776,7 @@ class EntitySelector extends BaseInput
             @listenTo @dataSource, "data",    @renderItems
             @listenTo @dataSource, "error",   @displayError
 
-            @renderSearch() if @items?
-
-        entity.fail $.proxy this, "displayError"
+        @entity.fail $.proxy this, "displayError"
 
         this
 
@@ -845,7 +834,7 @@ class EntitySelector extends BaseInput
         this
 
     loading: ->
-        @moreElement.addClass "loading"
+        @moreElement?.addClass "loading"
 
         this
 
@@ -879,24 +868,19 @@ class EntitySelector extends BaseInput
 
         @items = @$ ".items"
 
-        @renderItems()
+        @entity.done =>
+            @renderItems()
 
-        @items.parent().on "scroll", $.proxy this, "checkForMore"
+            @items.parent().on "scroll", $.proxy this, "checkForMore"
 
-        @renderSearch() if @dataSource?
+            @renderSearch()
 
         this
 
     renderSearch: ->
-        return if not @search
-
-        @searchInput = new TextInput
+        @searchInput = new SearchInput
             model: @dataSource
             key: "search"
-            continous: yes
-            attributes:
-                placeholder: "поиск"
-            className: "form-control search-input"
 
         @$el.prepend @searchInput.render().el
 
@@ -904,10 +888,10 @@ class EntitySelector extends BaseInput
 
         this
 
-    template: -> """<div class="items-container"><ul class="items"></ul></div>"""
+    template: -> """<div class="items-container"><ul class="items"><li class="more loading"></li></ul></div>"""
 
     focus: ->
-        @searchInput?.focus()
+        @searchInput?.focus() or @entity.done => @searchInput.focus()
 
         this
 
@@ -943,7 +927,7 @@ class FileList extends BaseInput
 
         @model.set @key, value
 
-        this
+        false
 
     appendFiles: (e) ->
         return if e.target.files.length is 0
@@ -996,17 +980,16 @@ class FileList extends BaseInput
         """
 
 class ImageList extends FileList
-
+    className: "image-list"
 
     constructor: ->
-        @className += " image-list"
         @readers = []
 
         super
 
     initialize: (options) ->
-        @width = options.width ? 40
-        @height = options.height ? 40
+        @width = options.width ? 80
+        @height = options.height ? 80
 
         super
 
@@ -1021,14 +1004,10 @@ class ImageList extends FileList
         this
 
     renderItem: (item, i = 0) ->
-        label = @formatter.format item
-
         """
-        <li class="list-group-item">
+        <li class="image-list-item">
             #{ @renderImage item, i }
-            <a href="#" class="action-delete pull-right" data-index="#{ i }"><span class="glyphicon glyphicon-remove"></span></a>
-
-            #{ label }
+            <a href="#" class="action-delete" data-index="#{ i }"><span class="glyphicon glyphicon-remove"></span></a>
         </li>
         """
 
@@ -1036,14 +1015,14 @@ class ImageList extends FileList
         id = @key + i
 
         if item instanceof File
-            image = if item.data then "background-image:url(#{ item.data }" else ""
+            image = item.data or ""
             @readers.push @createPreviewLoader item, id if not item.data?
         else
-            image = "background-image:url('#{ item }')"
+            image = item
 
         """
         <a href="#{ if item instanceof File then item.data or "#" else item }" class="fancybox">
-            <span class="image-thumbnail" id="#{ id }" style="width:#{ @width }px;height:#{ @height }px;#{ image }"></span>
+            <img src="#{ image }" id="#{ id }">
         </a>
         """
 
@@ -1052,9 +1031,32 @@ class ImageList extends FileList
         reader.item = item
         reader.onload = (e) ->
             e.target.item.data = e.target.result
-            $("#" + id).css("background-image", "url(#{ e.target.result })").parent().attr "href", e.target.result
+            $("#" + id).attr("src", e.target.result).parent().attr "href", e.target.result
 
         reader
+# Search input implements "change when type" and also allows to clear text with Esc
+class SearchInput extends TextInput
+
+    attributes:
+        type: "search"
+        placeholder: "поиск"
+
+    scheduleChange: ->
+        clearTimeout @timeout if @timeout?
+        @timeout = setTimeout (=> @change()), 300
+
+        this
+
+    keydown: (e) ->
+
+        # Backspace
+        if e.keyCode is 8
+            @model.set @key, ""
+            return false
+
+        @scheduleChange()
+
+        super
 Cruddy.fields = new Factory
 
 class FieldView extends Backbone.View
@@ -1488,7 +1490,8 @@ class EntityPage extends Backbone.View
 
             @form = new EntityForm model: instance
             @$el.append @form.render().$el
-            @form.show()
+
+            after_break => @form.show()
 
         this
 
@@ -1514,13 +1517,9 @@ class EntityPage extends Backbone.View
             model: @dataSource.filter
             entity: @dataSource.entity
 
-        @search = new TextInput
+        @search = new SearchInput
             model: @dataSource
             key: "search"
-            continous: yes
-            attributes:
-                type: "search"
-                placeholder: "поиск"
 
         @dataSource.fetch()
 
@@ -1593,7 +1592,7 @@ class EntityForm extends Backbone.View
 
     hotkeys: (e) ->
         # Ctrl + Z
-        if e.ctrlKey and e.keyCode is 90
+        if e.ctrlKey and e.keyCode is 90 and e.target is document.body
             @model.set @model.previousAttributes()
             return false
 
@@ -1642,17 +1641,15 @@ class EntityForm extends Backbone.View
         this
 
     show: ->
-        setTimeout (=>
-            @$el.toggleClass "opened", true
-            @tabs[0].focus()
-        ), 50
+        @$el.toggleClass "opened", true
+        @tabs[0].focus()
 
         this
 
     save: ->
         return if @request? or not @model.hasChangedSinceSync()
 
-        @request = @model.save().done($.proxy this, "displaySuccess").fail($.proxy this, "displayError")
+        @request = @model.save(displayLoading: yes).done($.proxy this, "displaySuccess").fail($.proxy this, "displayError")
 
         @request.always =>
             @request = null
@@ -1735,7 +1732,7 @@ class EntityForm extends Backbone.View
 
         <footer>
             <button class="btn btn-default btn-close btn-sm" type="button">Закрыть</button>
-            <button class="btn btn-default btn-destroy btn-sm" type="button">Удалить</button>
+            <button class="btn btn-default btn-destroy btn-sm" type="button"><span class="glyphicon glyphicon-trash"></span></button>
             <button class="btn btn-primary btn-save btn-sm" type="button" disabled></button>
         </footer>
         """
@@ -1777,6 +1774,7 @@ class App extends Backbone.Model
 
     initialize: ->
         @container = $ "#container"
+        @loadingRequests = 0
 
         @on "change:entity", @displayEntity, this
 
@@ -1791,18 +1789,44 @@ class App extends Backbone.Model
         @dispose()
         @container.html "<p class='alert alert-danger'>#{ error }</p>"
 
-        console.log @entities
+        this
+
+    startLoading: ->
+        @loading = setTimeout (=>
+            $(document.body).addClass "loading"
+            @loading = no
+
+        ), 1000 if @loadingRequests++ is 0
 
         this
 
-    startLoading: -> $(document.body).addClass "loading"
+    doneLoading: ->
+        if @loadingRequests is 0
+            console.error "Seems like doneLoading is called too many times."
 
-    doneLoading: -> $(document.body).removeClass "loading"
+            return
 
-    entity: (id) ->
+        if --@loadingRequests is 0
+            if @loading
+                clearTimeout @loading
+                @loading = no
+            else
+                $(document.body).removeClass "loading"
+
+        this
+
+    entity: (id, options = {}) ->
         return @entities[id] if id of @entities
 
-        @entities[id] = $.getJSON(entity_url id, "schema").then (resp) =>
+        options = $.extend {}, {
+            url: entity_url id, "schema"
+            type: "get"
+            dataType: "json"
+            displayLoading: yes
+
+        }, options
+
+        @entities[id] = $.ajax(options).then (resp) =>
             entity = new Entity resp.data
 
             return entity if _.isEmpty entity.related.models
@@ -1838,11 +1862,11 @@ class Router extends Backbone.Router
 
         promise.fail -> Cruddy.app.displayError.apply(Cruddy.app, arguments).set "entity", false
 
-    page: (page) -> @loading @entity page
+    page: (page) -> @entity page
 
-    create: (page) -> @loading @entity(page).done (entity) -> entity.set "instance", entity.createInstance()
+    create: (page) -> @entity(page).done (entity) -> entity.set "instance", entity.createInstance()
 
-    update: (page, id) -> @loading @entity(page).then (entity) -> entity.update(id)
+    update: (page, id) -> @entity(page).then (entity) -> entity.update(id)
 
 Cruddy.router = new Router
 

@@ -3,7 +3,9 @@ class EntityDropdown extends BaseInput
 
     events:
         "click .btn-remove": "removeItem"
+        "keydown [type=search]": "searchKeydown"
         "show.bs.dropdown": "renderDropdown"
+        "shown.bs.dropdown": -> after_break => @selector.focus()
 
     mutiple: false
     reference: null
@@ -27,6 +29,11 @@ class EntityDropdown extends BaseInput
 
         this
 
+    searchKeydown: (e) ->
+        if (e.keyCode is 27)
+            @$el.dropdown "toggle"
+            return false
+
     renderDropdown: ->
         return if @selector?
 
@@ -36,13 +43,9 @@ class EntityDropdown extends BaseInput
             multiple: @multiple
             reference: @reference
 
-        @$el.append @selector.render().el
-
-        # TODO: figure out how to overcome this
-        setTimeout (=> @selector.focus()), 1
+        @selector.render().entity.done => @$el.append @selector.el
 
         this
-
 
     applyChanges: (model, value) ->
         if @multiple
@@ -100,20 +103,20 @@ class EntityDropdown extends BaseInput
     itemTemplate: (value, key = null) ->
         html = """
         <div class="input-group input-group-sm ed-item">
-            <input type="text" class="form-control" #{ if not @multiple or key is null then "data-toggle=dropdown data-target=##{ @cid }" else ""} value="#{ _.escape value }" readonly>
+            <input type="text" class="form-control" #{ if not @multiple or key is null then "data-toggle='dropdown' data-target='##{ @cid }'" else "tab-index='-1'"} value="#{ _.escape value }" readonly>
             <div class="input-group-btn">
         """
 
         if not @multiple or key isnt null
             html += """
-                <button type="button" class="btn btn-default btn-remove" data-key="#{ key }">
+                <button type="button" class="btn btn-default btn-remove" data-key="#{ key }" tabindex="-1">
                     <span class="glyphicon glyphicon-remove"></span>
                 </button>
                 """
 
         if not @multiple or key is null
             html += """
-                <button type="button" class="btn btn-default btn-dropdown dropdown-toggle" data-toggle="dropdown" data-target="##{ @cid }">
+                <button type="button" class="btn btn-default btn-dropdown dropdown-toggle" data-toggle="dropdown" data-target="##{ @cid }" tab-index="1">
                     <span class="glyphicon glyphicon-search"></span>
                 </button>
                 """

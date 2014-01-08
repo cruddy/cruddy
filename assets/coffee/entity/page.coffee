@@ -25,7 +25,8 @@ class EntityPage extends Backbone.View
 
             @form = new EntityForm model: instance
             @$el.append @form.render().$el
-            @form.show()
+
+            after_break => @form.show()
 
         this
 
@@ -51,13 +52,9 @@ class EntityPage extends Backbone.View
             model: @dataSource.filter
             entity: @dataSource.entity
 
-        @search = new TextInput
+        @search = new SearchInput
             model: @dataSource
             key: "search"
-            continous: yes
-            attributes:
-                type: "search"
-                placeholder: "поиск"
 
         @dataSource.fetch()
 

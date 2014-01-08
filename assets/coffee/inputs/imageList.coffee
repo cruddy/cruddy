@@ -1,15 +1,14 @@
 class ImageList extends FileList
-
+    className: "image-list"
 
     constructor: ->
-        @className += " image-list"
         @readers = []
 
         super
 
     initialize: (options) ->
-        @width = options.width ? 40
-        @height = options.height ? 40
+        @width = options.width ? 80
+        @height = options.height ? 80
 
         super
 
@@ -24,14 +23,10 @@ class ImageList extends FileList
         this
 
     renderItem: (item, i = 0) ->
-        label = @formatter.format item
-
         """
-        <li class="list-group-item">
+        <li class="image-list-item">
             #{ @renderImage item, i }
-            <a href="#" class="action-delete pull-right" data-index="#{ i }"><span class="glyphicon glyphicon-remove"></span></a>
-
-            #{ label }
+            <a href="#" class="action-delete" data-index="#{ i }"><span class="glyphicon glyphicon-remove"></span></a>
         </li>
         """
 
@@ -39,14 +34,14 @@ class ImageList extends FileList
         id = @key + i
 
         if item instanceof File
-            image = if item.data then "background-image:url(#{ item.data }" else ""
+            image = item.data or ""
             @readers.push @createPreviewLoader item, id if not item.data?
         else
-            image = "background-image:url('#{ item }')"
+            image = item
 
         """
         <a href="#{ if item instanceof File then item.data or "#" else item }" class="fancybox">
-            <span class="image-thumbnail" id="#{ id }" style="width:#{ @width }px;height:#{ @height }px;#{ image }"></span>
+            <img src="#{ image }" id="#{ id }">
         </a>
         """
 
@@ -55,6 +50,6 @@ class ImageList extends FileList
         reader.item = item
         reader.onload = (e) ->
             e.target.item.data = e.target.result
-            $("#" + id).css("background-image", "url(#{ e.target.result })").parent().attr "href", e.target.result
+            $("#" + id).attr("src", e.target.result).parent().attr "href", e.target.result
 
         reader

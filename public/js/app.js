@@ -1,5 +1,5 @@
 (function() {
-  var API_URL, AdvFormData, Alert, App, Attribute, BaseFormatter, BaseInput, BooleanInput, Checkbox, Column, Cruddy, DataGrid, DataSource, Entity, EntityDropdown, EntityForm, EntityInstance, EntityPage, EntitySelector, Factory, Field, FieldList, FieldView, FileList, FilterList, ImageList, Pagination, Related, Router, SearchDataSource, StaticInput, TRANSITIONEND, TextInput, Textarea, entity_url, humanize, _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref18, _ref19, _ref2, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref26, _ref27, _ref28, _ref29, _ref3, _ref30, _ref31, _ref32, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9,
+  var API_URL, AdvFormData, Alert, App, Attribute, BaseFormatter, BaseInput, BooleanInput, Checkbox, Column, Cruddy, DataGrid, DataSource, Entity, EntityDropdown, EntityForm, EntityInstance, EntityPage, EntitySelector, Factory, Field, FieldList, FieldView, FileList, FilterList, ImageList, Pagination, Related, Router, SearchDataSource, SearchInput, StaticInput, TRANSITIONEND, TextInput, Textarea, after_break, entity_url, humanize, _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref18, _ref19, _ref2, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref26, _ref27, _ref28, _ref29, _ref3, _ref30, _ref31, _ref32, _ref33, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9,
     _this = this,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -16,6 +16,16 @@
 
   Backbone.emulateJSON = true;
 
+  $(document).ajaxSend(function(e, xhr, options) {
+    if (options.displayLoading) {
+      return Cruddy.app.startLoading();
+    }
+  }).ajaxComplete(function(e, xhr, options) {
+    if (options.displayLoading) {
+      return Cruddy.app.doneLoading();
+    }
+  });
+
   $.extend($.fancybox.defaults, {
     openEffect: "elastic"
   });
@@ -31,6 +41,10 @@
       url += "/" + extra;
     }
     return url;
+  };
+
+  after_break = function(callback) {
+    return setTimeout(callback, 50);
   };
 
   Alert = (function(_super) {
@@ -821,37 +835,17 @@
     };
 
     function TextInput(options) {
-      var _ref10, _ref9;
-      this.continous = (_ref9 = options.continous) != null ? _ref9 : false;
+      var _ref9;
       if (options.className == null) {
         options.className = "form-control";
       }
-      options.className += " input-" + ((_ref10 = options.size) != null ? _ref10 : "sm");
+      options.className += " input-" + ((_ref9 = options.size) != null ? _ref9 : "sm");
       TextInput.__super__.constructor.apply(this, arguments);
     }
 
-    TextInput.prototype.scheduleChange = function() {
-      var _this = this;
-      if (this.timeout != null) {
-        clearTimeout(this.timeout);
-      }
-      this.timeout = setTimeout((function() {
-        return _this.change();
-      }), 300);
-      return this;
-    };
-
     TextInput.prototype.keydown = function(e) {
       if (e.ctrlKey && e.keyCode === 13) {
-        this.change();
-        return;
-      }
-      if (e.keyCode === 27) {
-        this.model.set(this.key, "");
-        return false;
-      }
-      if (this.continous) {
-        this.scheduleChange();
+        return this.change();
       }
       return this;
     };
@@ -1017,7 +1011,14 @@
 
     EntityDropdown.prototype.events = {
       "click .btn-remove": "removeItem",
-      "show.bs.dropdown": "renderDropdown"
+      "keydown [type=search]": "searchKeydown",
+      "show.bs.dropdown": "renderDropdown",
+      "shown.bs.dropdown": function() {
+        var _this = this;
+        return after_break(function() {
+          return _this.selector.focus();
+        });
+      }
     };
 
     EntityDropdown.prototype.mutiple = false;
@@ -1048,6 +1049,13 @@
       return this;
     };
 
+    EntityDropdown.prototype.searchKeydown = function(e) {
+      if (e.keyCode === 27) {
+        this.$el.dropdown("toggle");
+        return false;
+      }
+    };
+
     EntityDropdown.prototype.renderDropdown = function() {
       var _this = this;
       if (this.selector != null) {
@@ -1059,10 +1067,9 @@
         multiple: this.multiple,
         reference: this.reference
       });
-      this.$el.append(this.selector.render().el);
-      setTimeout((function() {
-        return _this.selector.focus();
-      }), 1);
+      this.selector.render().entity.done(function() {
+        return _this.$el.append(_this.selector.el);
+      });
       return this;
     };
 
@@ -1128,12 +1135,12 @@
       if (key == null) {
         key = null;
       }
-      html = "<div class=\"input-group input-group-sm ed-item\">\n    <input type=\"text\" class=\"form-control\" " + (!this.multiple || key === null ? "data-toggle=dropdown data-target=#" + this.cid : "") + " value=\"" + (_.escape(value)) + "\" readonly>\n    <div class=\"input-group-btn\">";
+      html = "<div class=\"input-group input-group-sm ed-item\">\n    <input type=\"text\" class=\"form-control\" " + (!this.multiple || key === null ? "data-toggle='dropdown' data-target='#" + this.cid + "'" : "tab-index='-1'") + " value=\"" + (_.escape(value)) + "\" readonly>\n    <div class=\"input-group-btn\">";
       if (!this.multiple || key !== null) {
-        html += "<button type=\"button\" class=\"btn btn-default btn-remove\" data-key=\"" + key + "\">\n    <span class=\"glyphicon glyphicon-remove\"></span>\n</button>";
+        html += "<button type=\"button\" class=\"btn btn-default btn-remove\" data-key=\"" + key + "\" tabindex=\"-1\">\n    <span class=\"glyphicon glyphicon-remove\"></span>\n</button>";
       }
       if (!this.multiple || key === null) {
-        html += "<button type=\"button\" class=\"btn btn-default btn-dropdown dropdown-toggle\" data-toggle=\"dropdown\" data-target=\"#" + this.cid + "\">\n    <span class=\"glyphicon glyphicon-search\"></span>\n</button>";
+        html += "<button type=\"button\" class=\"btn btn-default btn-dropdown dropdown-toggle\" data-toggle=\"dropdown\" data-target=\"#" + this.cid + "\" tab-index=\"1\">\n    <span class=\"glyphicon glyphicon-search\"></span>\n</button>";
       }
       return html += "</div></div>";
     };
@@ -1174,7 +1181,7 @@
     };
 
     EntitySelector.prototype.initialize = function(options) {
-      var entity, _ref14, _ref15, _ref16,
+      var _ref14, _ref15, _ref16,
         _this = this;
       EntitySelector.__super__.initialize.apply(this, arguments);
       this.filter = (_ref14 = options.filter) != null ? _ref14 : false;
@@ -1182,20 +1189,16 @@
       this.search = (_ref16 = options.search) != null ? _ref16 : true;
       this.data = [];
       this.buildSelected(this.model.get(this.key));
-      entity = Cruddy.app.entity(options.reference);
-      entity.done(function(entity) {
-        _this.entity = entity;
+      this.entity = Cruddy.app.entity(options.reference);
+      this.entity.done(function(entity) {
         _this.primaryKey = "id";
         _this.primaryColumn = entity.get("primary_column");
         _this.dataSource = entity.search();
         _this.listenTo(_this.dataSource, "request", _this.loading);
         _this.listenTo(_this.dataSource, "data", _this.renderItems);
-        _this.listenTo(_this.dataSource, "error", _this.displayError);
-        if (_this.items != null) {
-          return _this.renderSearch();
-        }
+        return _this.listenTo(_this.dataSource, "error", _this.displayError);
       });
-      entity.fail($.proxy(this, "displayError"));
+      this.entity.fail($.proxy(this, "displayError"));
       return this;
     };
 
@@ -1268,7 +1271,10 @@
     };
 
     EntitySelector.prototype.loading = function() {
-      this.moreElement.addClass("loading");
+      var _ref14;
+      if ((_ref14 = this.moreElement) != null) {
+        _ref14.addClass("loading");
+      }
       return this;
     };
 
@@ -1301,29 +1307,22 @@
     };
 
     EntitySelector.prototype.render = function() {
+      var _this = this;
       this.dispose();
       this.$el.html(this.template());
       this.items = this.$(".items");
-      this.renderItems();
-      this.items.parent().on("scroll", $.proxy(this, "checkForMore"));
-      if (this.dataSource != null) {
-        this.renderSearch();
-      }
+      this.entity.done(function() {
+        _this.renderItems();
+        _this.items.parent().on("scroll", $.proxy(_this, "checkForMore"));
+        return _this.renderSearch();
+      });
       return this;
     };
 
     EntitySelector.prototype.renderSearch = function() {
-      if (!this.search) {
-        return;
-      }
-      this.searchInput = new TextInput({
+      this.searchInput = new SearchInput({
         model: this.dataSource,
-        key: "search",
-        continous: true,
-        attributes: {
-          placeholder: "поиск"
-        },
-        className: "form-control search-input"
+        key: "search"
       });
       this.$el.prepend(this.searchInput.render().el);
       this.searchInput.$el.wrap("<div class=search-input-container></div>");
@@ -1331,14 +1330,15 @@
     };
 
     EntitySelector.prototype.template = function() {
-      return "<div class=\"items-container\"><ul class=\"items\"></ul></div>";
+      return "<div class=\"items-container\"><ul class=\"items\"><li class=\"more loading\"></li></ul></div>";
     };
 
     EntitySelector.prototype.focus = function() {
-      var _ref14;
-      if ((_ref14 = this.searchInput) != null) {
-        _ref14.focus();
-      }
+      var _ref14,
+        _this = this;
+      ((_ref14 = this.searchInput) != null ? _ref14.focus() : void 0) || this.entity.done(function() {
+        return _this.searchInput.focus();
+      });
       return this;
     };
 
@@ -1398,7 +1398,7 @@
         value = '';
       }
       this.model.set(this.key, value);
-      return this;
+      return false;
     };
 
     FileList.prototype.appendFiles = function(e) {
@@ -1470,16 +1470,17 @@
   ImageList = (function(_super) {
     __extends(ImageList, _super);
 
+    ImageList.prototype.className = "image-list";
+
     function ImageList() {
-      this.className += " image-list";
       this.readers = [];
       ImageList.__super__.constructor.apply(this, arguments);
     }
 
     ImageList.prototype.initialize = function(options) {
       var _ref15, _ref16;
-      this.width = (_ref15 = options.width) != null ? _ref15 : 40;
-      this.height = (_ref16 = options.height) != null ? _ref16 : 40;
+      this.width = (_ref15 = options.width) != null ? _ref15 : 80;
+      this.height = (_ref16 = options.height) != null ? _ref16 : 80;
       return ImageList.__super__.initialize.apply(this, arguments);
     };
 
@@ -1497,12 +1498,10 @@
     };
 
     ImageList.prototype.renderItem = function(item, i) {
-      var label;
       if (i == null) {
         i = 0;
       }
-      label = this.formatter.format(item);
-      return "<li class=\"list-group-item\">\n    " + (this.renderImage(item, i)) + "\n    <a href=\"#\" class=\"action-delete pull-right\" data-index=\"" + i + "\"><span class=\"glyphicon glyphicon-remove\"></span></a>\n\n    " + label + "\n</li>";
+      return "<li class=\"image-list-item\">\n    " + (this.renderImage(item, i)) + "\n    <a href=\"#\" class=\"action-delete\" data-index=\"" + i + "\"><span class=\"glyphicon glyphicon-remove\"></span></a>\n</li>";
     };
 
     ImageList.prototype.renderImage = function(item, i) {
@@ -1512,14 +1511,14 @@
       }
       id = this.key + i;
       if (item instanceof File) {
-        image = item.data ? "background-image:url(" + item.data : "";
+        image = item.data || "";
         if (item.data == null) {
           this.readers.push(this.createPreviewLoader(item, id));
         }
       } else {
-        image = "background-image:url('" + item + "')";
+        image = item;
       }
-      return "<a href=\"" + (item instanceof File ? item.data || "#" : item) + "\" class=\"fancybox\">\n    <span class=\"image-thumbnail\" id=\"" + id + "\" style=\"width:" + this.width + "px;height:" + this.height + "px;" + image + "\"></span>\n</a>";
+      return "<a href=\"" + (item instanceof File ? item.data || "#" : item) + "\" class=\"fancybox\">\n    <img src=\"" + image + "\" id=\"" + id + "\">\n</a>";
     };
 
     ImageList.prototype.createPreviewLoader = function(item, id) {
@@ -1528,7 +1527,7 @@
       reader.item = item;
       reader.onload = function(e) {
         e.target.item.data = e.target.result;
-        return $("#" + id).css("background-image", "url(" + e.target.result + ")").parent().attr("href", e.target.result);
+        return $("#" + id).attr("src", e.target.result).parent().attr("href", e.target.result);
       };
       return reader;
     };
@@ -1536,6 +1535,43 @@
     return ImageList;
 
   })(FileList);
+
+  SearchInput = (function(_super) {
+    __extends(SearchInput, _super);
+
+    function SearchInput() {
+      _ref15 = SearchInput.__super__.constructor.apply(this, arguments);
+      return _ref15;
+    }
+
+    SearchInput.prototype.attributes = {
+      type: "search",
+      placeholder: "поиск"
+    };
+
+    SearchInput.prototype.scheduleChange = function() {
+      var _this = this;
+      if (this.timeout != null) {
+        clearTimeout(this.timeout);
+      }
+      this.timeout = setTimeout((function() {
+        return _this.change();
+      }), 300);
+      return this;
+    };
+
+    SearchInput.prototype.keydown = function(e) {
+      if (e.keyCode === 8) {
+        this.model.set(this.key, "");
+        return false;
+      }
+      this.scheduleChange();
+      return SearchInput.__super__.keydown.apply(this, arguments);
+    };
+
+    return SearchInput;
+
+  })(TextInput);
 
   Cruddy.fields = new Factory;
 
@@ -1634,9 +1670,9 @@
     };
 
     FieldView.prototype.dispose = function() {
-      var _ref15;
-      if ((_ref15 = this.input) != null) {
-        _ref15.remove();
+      var _ref16;
+      if ((_ref16 = this.input) != null) {
+        _ref16.remove();
       }
       return this;
     };
@@ -1654,8 +1690,8 @@
     __extends(Field, _super);
 
     function Field() {
-      _ref15 = Field.__super__.constructor.apply(this, arguments);
-      return _ref15;
+      _ref16 = Field.__super__.constructor.apply(this, arguments);
+      return _ref16;
     }
 
     Field.prototype.viewConstructor = FieldView;
@@ -1707,8 +1743,8 @@
     __extends(Input, _super);
 
     function Input() {
-      _ref16 = Input.__super__.constructor.apply(this, arguments);
-      return _ref16;
+      _ref17 = Input.__super__.constructor.apply(this, arguments);
+      return _ref17;
     }
 
     Input.prototype.createEditableInput = function(model) {
@@ -1767,8 +1803,8 @@
     __extends(DateTime, _super);
 
     function DateTime() {
-      _ref17 = DateTime.__super__.constructor.apply(this, arguments);
-      return _ref17;
+      _ref18 = DateTime.__super__.constructor.apply(this, arguments);
+      return _ref18;
     }
 
     DateTime.prototype.format = function(value) {
@@ -1787,8 +1823,8 @@
     __extends(Boolean, _super);
 
     function Boolean() {
-      _ref18 = Boolean.__super__.constructor.apply(this, arguments);
-      return _ref18;
+      _ref19 = Boolean.__super__.constructor.apply(this, arguments);
+      return _ref19;
     }
 
     Boolean.prototype.createEditableInput = function(model) {
@@ -1822,8 +1858,8 @@
     __extends(Relation, _super);
 
     function Relation() {
-      _ref19 = Relation.__super__.constructor.apply(this, arguments);
-      return _ref19;
+      _ref20 = Relation.__super__.constructor.apply(this, arguments);
+      return _ref20;
     }
 
     Relation.prototype.createEditableInput = function(model) {
@@ -1858,8 +1894,8 @@
     __extends(File, _super);
 
     function File() {
-      _ref20 = File.__super__.constructor.apply(this, arguments);
-      return _ref20;
+      _ref21 = File.__super__.constructor.apply(this, arguments);
+      return _ref21;
     }
 
     File.prototype.createEditableInput = function(model) {
@@ -1889,8 +1925,8 @@
     __extends(Image, _super);
 
     function Image() {
-      _ref21 = Image.__super__.constructor.apply(this, arguments);
-      return _ref21;
+      _ref22 = Image.__super__.constructor.apply(this, arguments);
+      return _ref22;
     }
 
     Image.prototype.createEditableInput = function(model) {
@@ -1924,8 +1960,8 @@
     __extends(Column, _super);
 
     function Column() {
-      _ref22 = Column.__super__.constructor.apply(this, arguments);
-      return _ref22;
+      _ref23 = Column.__super__.constructor.apply(this, arguments);
+      return _ref23;
     }
 
     Column.prototype.initialize = function(options) {
@@ -1973,13 +2009,13 @@
     __extends(Field, _super);
 
     function Field() {
-      _ref23 = Field.__super__.constructor.apply(this, arguments);
-      return _ref23;
+      _ref24 = Field.__super__.constructor.apply(this, arguments);
+      return _ref24;
     }
 
     Field.prototype.initialize = function(attributes) {
-      var field, _ref24;
-      field = (_ref24 = attributes.field) != null ? _ref24 : attributes.id;
+      var field, _ref25;
+      field = (_ref25 = attributes.field) != null ? _ref25 : attributes.id;
       this.field = attributes.entity.fields.get(field);
       if (attributes.title === null) {
         this.set("title", this.field.get("label"));
@@ -2011,8 +2047,8 @@
     __extends(Computed, _super);
 
     function Computed() {
-      _ref24 = Computed.__super__.constructor.apply(this, arguments);
-      return _ref24;
+      _ref25 = Computed.__super__.constructor.apply(this, arguments);
+      return _ref25;
     }
 
     Computed.prototype.createFilterInput = function(model) {
@@ -2058,8 +2094,8 @@
     __extends(Image, _super);
 
     function Image() {
-      _ref25 = Image.__super__.constructor.apply(this, arguments);
-      return _ref25;
+      _ref26 = Image.__super__.constructor.apply(this, arguments);
+      return _ref26;
     }
 
     Image.prototype.defaultOptions = {
@@ -2087,8 +2123,8 @@
     __extends(Related, _super);
 
     function Related() {
-      _ref26 = Related.__super__.constructor.apply(this, arguments);
-      return _ref26;
+      _ref27 = Related.__super__.constructor.apply(this, arguments);
+      return _ref27;
     }
 
     Related.prototype.resolve = function() {
@@ -2110,8 +2146,8 @@
     __extends(One, _super);
 
     function One() {
-      _ref27 = One.__super__.constructor.apply(this, arguments);
-      return _ref27;
+      _ref28 = One.__super__.constructor.apply(this, arguments);
+      return _ref28;
     }
 
     One.prototype.associate = function(parent, child) {
@@ -2127,8 +2163,8 @@
     __extends(MorphOne, _super);
 
     function MorphOne() {
-      _ref28 = MorphOne.__super__.constructor.apply(this, arguments);
-      return _ref28;
+      _ref29 = MorphOne.__super__.constructor.apply(this, arguments);
+      return _ref29;
     }
 
     MorphOne.prototype.associate = function(parent, child) {
@@ -2144,8 +2180,8 @@
     __extends(Entity, _super);
 
     function Entity() {
-      _ref29 = Entity.__super__.constructor.apply(this, arguments);
-      return _ref29;
+      _ref30 = Entity.__super__.constructor.apply(this, arguments);
+      return _ref30;
     }
 
     Entity.prototype.initialize = function(attributes, options) {
@@ -2193,11 +2229,11 @@
         columns = this.columns;
       }
       filters = (function() {
-        var _i, _len, _ref30, _results;
-        _ref30 = columns.models;
+        var _i, _len, _ref31, _results;
+        _ref31 = columns.models;
         _results = [];
-        for (_i = 0, _len = _ref30.length; _i < _len; _i++) {
-          col = _ref30[_i];
+        for (_i = 0, _len = _ref31.length; _i < _len; _i++) {
+          col = _ref31[_i];
           if (col.get("filterable")) {
             _results.push(col.createFilter());
           }
@@ -2208,7 +2244,7 @@
     };
 
     Entity.prototype.createInstance = function(attributes, relatedData) {
-      var item, related, _i, _len, _ref30;
+      var item, related, _i, _len, _ref31;
       if (attributes == null) {
         attributes = {};
       }
@@ -2216,9 +2252,9 @@
         relatedData = {};
       }
       related = {};
-      _ref30 = this.related.models;
-      for (_i = 0, _len = _ref30.length; _i < _len; _i++) {
-        item = _ref30[_i];
+      _ref31 = this.related.models;
+      for (_i = 0, _len = _ref31.length; _i < _len; _i++) {
+        item = _ref31[_i];
         related[item.id] = item.related.createInstance(relatedData[item.id]);
       }
       return new EntityInstance(_.extend({}, this.get("defaults"), attributes), {
@@ -2270,8 +2306,8 @@
     __extends(EntityInstance, _super);
 
     function EntityInstance() {
-      _ref30 = EntityInstance.__super__.constructor.apply(this, arguments);
-      return _ref30;
+      _ref31 = EntityInstance.__super__.constructor.apply(this, arguments);
+      return _ref31;
     }
 
     EntityInstance.prototype.initialize = function(attributes, options) {
@@ -2310,9 +2346,9 @@
     };
 
     EntityInstance.prototype.sync = function(method, model, options) {
-      var _ref31;
+      var _ref32;
       if (method === "update" || method === "create") {
-        options.data = new AdvFormData((_ref31 = options.attrs) != null ? _ref31 : this.attributes).original;
+        options.data = new AdvFormData((_ref32 = options.attrs) != null ? _ref32 : this.attributes).original;
         options.contentType = false;
         options.processData = false;
       }
@@ -2327,14 +2363,14 @@
         return xhr;
       }
       queue = function(xhr) {
-        var key, model, save, _ref31;
+        var key, model, save, _ref32;
         save = [];
         if (xhr != null) {
           save.push(xhr);
         }
-        _ref31 = _this.related;
-        for (key in _ref31) {
-          model = _ref31[key];
+        _ref32 = _this.related;
+        for (key in _ref32) {
+          model = _ref32[key];
           if (model.isNew()) {
             _this.entity.related.get(key).associate(_this, model);
           }
@@ -2358,18 +2394,18 @@
     };
 
     EntityInstance.prototype.hasChangedSinceSync = function() {
-      var key, related, value, _ref31, _ref32;
-      _ref31 = this.attributes;
-      for (key in _ref31) {
-        value = _ref31[key];
+      var key, related, value, _ref32, _ref33;
+      _ref32 = this.attributes;
+      for (key in _ref32) {
+        value = _ref32[key];
         if (!_.isEqual(value, this.original[key])) {
           return true;
         }
       }
       if (!this.isNew()) {
-        _ref32 = this.related;
-        for (key in _ref32) {
-          related = _ref32[key];
+        _ref33 = this.related;
+        for (key in _ref33) {
+          related = _ref33[key];
           if (related.hasChangedSinceSync()) {
             return true;
           }
@@ -2406,6 +2442,7 @@
     };
 
     EntityPage.prototype.toggleForm = function(entity, instance) {
+      var _this = this;
       if (this.form != null) {
         this.stopListening(this.form.model);
         this.form.remove();
@@ -2418,7 +2455,9 @@
           model: instance
         });
         this.$el.append(this.form.render().$el);
-        this.form.show();
+        after_break(function() {
+          return _this.form.show();
+        });
       }
       return this;
     };
@@ -2444,14 +2483,9 @@
         model: this.dataSource.filter,
         entity: this.dataSource.entity
       });
-      this.search = new TextInput({
+      this.search = new SearchInput({
         model: this.dataSource,
-        key: "search",
-        continous: true,
-        attributes: {
-          type: "search",
-          placeholder: "поиск"
-        }
+        key: "search"
       });
       this.dataSource.fetch();
       this.$(".col-search").append(this.search.render().el);
@@ -2519,12 +2553,12 @@
     }
 
     EntityForm.prototype.initialize = function() {
-      var key, related, _ref31;
+      var key, related, _ref32;
       this.listenTo(this.model, "destroy", this.handleDestroy);
       this.signOn(this.model);
-      _ref31 = this.model.related;
-      for (key in _ref31) {
-        related = _ref31[key];
+      _ref32 = this.model.related;
+      for (key in _ref32) {
+        related = _ref32[key];
         this.signOn(related);
       }
       this.hotkeys = $(document).on("keydown." + this.cid, "body", $.proxy(this, "hotkeys"));
@@ -2537,7 +2571,7 @@
     };
 
     EntityForm.prototype.hotkeys = function(e) {
-      if (e.ctrlKey && e.keyCode === 90) {
+      if (e.ctrlKey && e.keyCode === 90 && e.target === document.body) {
         this.model.set(this.model.previousAttributes());
         return false;
       }
@@ -2582,8 +2616,8 @@
     };
 
     EntityForm.prototype.displayError = function(xhr) {
-      var _ref31;
-      if (((_ref31 = xhr.responseJSON) != null ? _ref31.error : void 0) !== "VALIDATION") {
+      var _ref32;
+      if (((_ref32 = xhr.responseJSON) != null ? _ref32.error : void 0) !== "VALIDATION") {
         return this.displayAlert("Ошибка", "danger");
       }
     };
@@ -2600,11 +2634,8 @@
     };
 
     EntityForm.prototype.show = function() {
-      var _this = this;
-      setTimeout((function() {
-        _this.$el.toggleClass("opened", true);
-        return _this.tabs[0].focus();
-      }), 50);
+      this.$el.toggleClass("opened", true);
+      this.tabs[0].focus();
       return this;
     };
 
@@ -2613,7 +2644,9 @@
       if ((this.request != null) || !this.model.hasChangedSinceSync()) {
         return;
       }
-      this.request = this.model.save().done($.proxy(this, "displaySuccess")).fail($.proxy(this, "displayError"));
+      this.request = this.model.save({
+        displayLoading: true
+      }).done($.proxy(this, "displaySuccess")).fail($.proxy(this, "displayError"));
       this.request.always(function() {
         _this.request = null;
         return _this.update();
@@ -2660,7 +2693,7 @@
     };
 
     EntityForm.prototype.render = function() {
-      var key, related, _ref31;
+      var key, related, _ref32;
       this.dispose();
       this.$el.html(this.template());
       this.nav = this.$(".nav");
@@ -2669,9 +2702,9 @@
       this.destroy = this.$(".btn-destroy");
       this.tabs = [];
       this.renderTab(this.model, true);
-      _ref31 = this.model.related;
-      for (key in _ref31) {
-        related = _ref31[key];
+      _ref32 = this.model.related;
+      for (key in _ref32) {
+        related = _ref32[key];
         this.renderTab(related);
       }
       return this.update();
@@ -2703,7 +2736,7 @@
     };
 
     EntityForm.prototype.template = function() {
-      return "<header>\n    <ul class=\"nav nav-pills\"></ul>\n</header>\n\n<footer>\n    <button class=\"btn btn-default btn-close btn-sm\" type=\"button\">Закрыть</button>\n    <button class=\"btn btn-default btn-destroy btn-sm\" type=\"button\">Удалить</button>\n    <button class=\"btn btn-primary btn-save btn-sm\" type=\"button\" disabled></button>\n</footer>";
+      return "<header>\n    <ul class=\"nav nav-pills\"></ul>\n</header>\n\n<footer>\n    <button class=\"btn btn-default btn-close btn-sm\" type=\"button\">Закрыть</button>\n    <button class=\"btn btn-default btn-destroy btn-sm\" type=\"button\"><span class=\"glyphicon glyphicon-trash\"></span></button>\n    <button class=\"btn btn-primary btn-save btn-sm\" type=\"button\" disabled></button>\n</footer>";
     };
 
     EntityForm.prototype.navTemplate = function(label, target, active) {
@@ -2722,11 +2755,11 @@
     };
 
     EntityForm.prototype.dispose = function() {
-      var fieldList, _i, _len, _ref31;
+      var fieldList, _i, _len, _ref32;
       if (this.tabs != null) {
-        _ref31 = this.tabs;
-        for (_i = 0, _len = _ref31.length; _i < _len; _i++) {
-          fieldList = _ref31[_i];
+        _ref32 = this.tabs;
+        for (_i = 0, _len = _ref32.length; _i < _len; _i++) {
+          fieldList = _ref32[_i];
           fieldList.remove();
         }
       }
@@ -2751,14 +2784,15 @@
     __extends(App, _super);
 
     function App() {
-      _ref31 = App.__super__.constructor.apply(this, arguments);
-      return _ref31;
+      _ref32 = App.__super__.constructor.apply(this, arguments);
+      return _ref32;
     }
 
     App.prototype.entities = {};
 
     App.prototype.initialize = function() {
       this.container = $("#container");
+      this.loadingRequests = 0;
       return this.on("change:entity", this.displayEntity, this);
     };
 
@@ -2776,35 +2810,62 @@
       error = (xhr == null) || xhr.status === 403 ? "Ошибка доступа" : "Ошибка";
       this.dispose();
       this.container.html("<p class='alert alert-danger'>" + error + "</p>");
-      console.log(this.entities);
       return this;
     };
 
     App.prototype.startLoading = function() {
-      return $(document.body).addClass("loading");
+      var _this = this;
+      if (this.loadingRequests++ === 0) {
+        this.loading = setTimeout((function() {
+          $(document.body).addClass("loading");
+          return _this.loading = false;
+        }), 1000);
+      }
+      return this;
     };
 
     App.prototype.doneLoading = function() {
-      return $(document.body).removeClass("loading");
+      if (this.loadingRequests === 0) {
+        console.error("Seems like doneLoading is called too many times.");
+        return;
+      }
+      if (--this.loadingRequests === 0) {
+        if (this.loading) {
+          clearTimeout(this.loading);
+          this.loading = false;
+        } else {
+          $(document.body).removeClass("loading");
+        }
+      }
+      return this;
     };
 
-    App.prototype.entity = function(id) {
+    App.prototype.entity = function(id, options) {
       var _this = this;
+      if (options == null) {
+        options = {};
+      }
       if (id in this.entities) {
         return this.entities[id];
       }
-      return this.entities[id] = $.getJSON(entity_url(id, "schema")).then(function(resp) {
+      options = $.extend({}, {
+        url: entity_url(id, "schema"),
+        type: "get",
+        dataType: "json",
+        displayLoading: true
+      }, options);
+      return this.entities[id] = $.ajax(options).then(function(resp) {
         var entity, related, wait;
         entity = new Entity(resp.data);
         if (_.isEmpty(entity.related.models)) {
           return entity;
         }
         wait = (function() {
-          var _i, _len, _ref32, _results;
-          _ref32 = entity.related.models;
+          var _i, _len, _ref33, _results;
+          _ref33 = entity.related.models;
           _results = [];
-          for (_i = 0, _len = _ref32.length; _i < _len; _i++) {
-            related = _ref32[_i];
+          for (_i = 0, _len = _ref33.length; _i < _len; _i++) {
+            related = _ref33[_i];
             _results.push(related.resolve());
           }
           return _results;
@@ -2816,9 +2877,9 @@
     };
 
     App.prototype.dispose = function() {
-      var _ref32;
-      if ((_ref32 = this.page) != null) {
-        _ref32.remove();
+      var _ref33;
+      if ((_ref33 = this.page) != null) {
+        _ref33.remove();
       }
       return this;
     };
@@ -2833,8 +2894,8 @@
     __extends(Router, _super);
 
     function Router() {
-      _ref32 = Router.__super__.constructor.apply(this, arguments);
-      return _ref32;
+      _ref33 = Router.__super__.constructor.apply(this, arguments);
+      return _ref33;
     }
 
     Router.prototype.routes = {
@@ -2862,19 +2923,19 @@
     };
 
     Router.prototype.page = function(page) {
-      return this.loading(this.entity(page));
+      return this.entity(page);
     };
 
     Router.prototype.create = function(page) {
-      return this.loading(this.entity(page).done(function(entity) {
+      return this.entity(page).done(function(entity) {
         return entity.set("instance", entity.createInstance());
-      }));
+      });
     };
 
     Router.prototype.update = function(page, id) {
-      return this.loading(this.entity(page).then(function(entity) {
+      return this.entity(page).then(function(entity) {
         return entity.update(id);
-      }));
+      });
     };
 
     return Router;

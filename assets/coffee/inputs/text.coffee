@@ -7,31 +7,14 @@ class TextInput extends BaseInput
         "keydown": "keydown"
 
     constructor: (options) ->
-        @continous = options.continous ? false
-
         options.className ?= "form-control"
         options.className += " input-#{ options.size ? "sm" }"
 
         super
 
-    scheduleChange: ->
-        clearTimeout @timeout if @timeout?
-        @timeout = setTimeout (=> @change()), 300
-
-        this
-
     keydown: (e) ->
         # Ctrl + Enter
-        if e.ctrlKey and e.keyCode is 13
-            @change()
-            return
-
-        # Escape
-        if e.keyCode is 27
-            @model.set @key, ""
-            return false
-
-        @scheduleChange() if @continous
+        return @change() if e.ctrlKey and e.keyCode is 13
 
         this
 

@@ -20,7 +20,7 @@ class FileList extends BaseInput
 
         @model.set @key, value
 
-        this
+        false
 
     appendFiles: (e) ->
         return if e.target.files.length is 0

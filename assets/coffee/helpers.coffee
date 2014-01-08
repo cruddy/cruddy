@@ -6,6 +6,8 @@ entity_url = (id, extra) ->
 
     url
 
+after_break = (callback) -> setTimeout callback, 50
+
 class Alert extends Backbone.View
     tagName: "span"
     className: "alert"

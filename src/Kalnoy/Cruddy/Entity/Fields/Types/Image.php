@@ -14,14 +14,14 @@ class Image extends File {
      *
      * @var int
      */
-    public $width = 40;
+    public $width = 80;
 
     /**
      * The height of the thumbnail.
      *
      * @var int
      */
-    public $height = 40;
+    public $height = 80;
 
     /**
      * @inheritdoc

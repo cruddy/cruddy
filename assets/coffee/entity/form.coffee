@@ -28,7 +28,7 @@ class EntityForm extends Backbone.View
 
     hotkeys: (e) ->
         # Ctrl + Z
-        if e.ctrlKey and e.keyCode is 90
+        if e.ctrlKey and e.keyCode is 90 and e.target is document.body
             @model.set @model.previousAttributes()
             return false
 
@@ -77,17 +77,15 @@ class EntityForm extends Backbone.View
         this
 
     show: ->
-        setTimeout (=>
-            @$el.toggleClass "opened", true
-            @tabs[0].focus()
-        ), 50
+        @$el.toggleClass "opened", true
+        @tabs[0].focus()
 
         this
 
     save: ->
         return if @request? or not @model.hasChangedSinceSync()
 
-        @request = @model.save().done($.proxy this, "displaySuccess").fail($.proxy this, "displayError")
+        @request = @model.save(displayLoading: yes).done($.proxy this, "displaySuccess").fail($.proxy this, "displayError")
 
         @request.always =>
             @request = null
@@ -170,7 +168,7 @@ class EntityForm extends Backbone.View
 
         <footer>
             <button class="btn btn-default btn-close btn-sm" type="button">Закрыть</button>
-            <button class="btn btn-default btn-destroy btn-sm" type="button">Удалить</button>
+            <button class="btn btn-default btn-destroy btn-sm" type="button"><span class="glyphicon glyphicon-trash"></span></button>
             <button class="btn btn-primary btn-save btn-sm" type="button" disabled></button>
         </footer>
         """

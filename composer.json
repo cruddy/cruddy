@@ -11,7 +11,9 @@
     "require": {
         "php": ">=5.4.0",
         "laravel/framework": "4.1.*",
-        "cartalyst/sentry": "2.0.*"
+        "cartalyst/sentry": "2.0.*",
+        "intervention/image": "dev-master",
+        "intervention/imagecache": "dev-master"
     },
 
     "autoload": {

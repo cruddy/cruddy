@@ -1,5 +1,8 @@
 <?php  namespace Kalnoy\Cruddy\Entity\Fields\Types;
 
+use Illuminate\Database\Eloquent\Model as Eloquent;
+use Kalnoy\Cruddy\Entity\Fields\AbstractField;
+
 class Image extends File {
 
     /**
@@ -10,14 +13,14 @@ class Image extends File {
     public $accepts = 'image/*';
 
     /**
-     * The width of the thumbnail.
+     * The max width of the thumbnail.
      *
      * @var int
      */
-    public $width = 80;
+    public $width;
 
     /**
-     * The height of the thumbnail.
+     * The max height of the thumbnail.
      *
      * @var int
      */

@@ -2,7 +2,10 @@
 
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\View;
-use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Input;
+use Intervention\Image\Exception\ImageNotFoundException;
+use Kalnoy\Cruddy\Service\ThumbnailFactory;
 
 class CruddyController extends Controller {
 
@@ -12,13 +15,22 @@ class CruddyController extends Controller {
     protected $cruddy;
 
     /**
+     * @var ThumbnailFactory
+     */
+    protected $thumb;
+
+    /**
      * Initialize the controller.
      *
-     * @param Environment $cruddy
+     * @param Environment                             $cruddy
+     * @param \Kalnoy\Cruddy\Service\ThumbnailFactory $thumb
      */
-    public function __construct(Environment $cruddy)
+    public function __construct(Environment $cruddy, ThumbnailFactory $thumb)
     {
         $this->cruddy = $cruddy;
+        $this->thumb = $thumb;
+
+        $this->beforeFilter('cruddy.auth', ['only' => ['index']]);
     }
 
     /**
@@ -47,5 +59,27 @@ class CruddyController extends Controller {
     public function index()
     {
         $this->layout->content = "";
+    }
+
+    /**
+     * Generate a thumbnail for an image.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function thumb()
+    {
+        $src = Input::get('src');
+        $width = Input::get('width');
+        $height = Input::get('height');
+
+        try
+        {
+            return $this->thumb->make(public_path().$src, $width, $height)->response();
+        }
+
+        catch (ImageNotFoundException $e)
+        {
+            App::abort(404);
+        }
     }
 }

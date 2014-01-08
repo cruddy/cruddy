@@ -35,6 +35,8 @@ class EntityApiController extends ApiController {
     {
         $this->cruddy = $cruddy;
         $this->permissions = $permissions;
+
+        $this->beforeFilter('cruddy.auth');
     }
 
     /**

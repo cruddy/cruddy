@@ -8,5 +8,5 @@ class Cruddy.formatters.Image extends BaseFormatter
         value = value[0] if _.isArray value
 
         """
-        <span class="image-thumbnail" style="width:#{ @options.width }px;height:#{ @options.height }px;background-image:url(#{ value });"></span>
+        <img src="#{ thumb value, @options.width, @options.height }" width="#{ @options.width or @defaultOptions.width }" height="#{ @options.height or @defaultOptions.height }" alt="#{ _.escape value }">
         """

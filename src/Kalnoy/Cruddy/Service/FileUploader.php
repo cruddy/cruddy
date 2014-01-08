@@ -1,4 +1,4 @@
-<?php  namespace Kalnoy\Cruddy;
+<?php  namespace Kalnoy\Cruddy\Service;
 
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;

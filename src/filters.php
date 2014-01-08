@@ -1,7 +1,7 @@
 <?php
 
-Route::filter('auth.backend', function () {
-
+Route::filter('cruddy.auth', function ()
+{
     if (!app('Kalnoy\Cruddy\PermissionsInterface')->hasAccess())
     {
         if (Request::ajax()) App::abort(403);

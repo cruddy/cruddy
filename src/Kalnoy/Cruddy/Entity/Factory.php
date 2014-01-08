@@ -1,9 +1,8 @@
 <?php namespace Kalnoy\Cruddy\Entity;
 
 use Illuminate\Filesystem\Filesystem;
-use Illuminate\Support\Str;
 use Kalnoy\Cruddy\EntityNotFoundException;
-use Kalnoy\Cruddy\FileUploader;
+use Kalnoy\Cruddy\Service\FileUploader;
 use Kalnoy\Cruddy\PermissionsInterface;
 use RuntimeException;
 use Symfony\Component\Translation\TranslatorInterface;

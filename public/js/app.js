@@ -1,10 +1,12 @@
 (function() {
-  var API_URL, AdvFormData, Alert, App, Attribute, BaseFormatter, BaseInput, BooleanInput, Checkbox, Column, Cruddy, DataGrid, DataSource, Entity, EntityDropdown, EntityForm, EntityInstance, EntityPage, EntitySelector, Factory, Field, FieldList, FieldView, FileList, FilterList, ImageList, Pagination, Related, Router, SearchDataSource, SearchInput, StaticInput, TRANSITIONEND, TextInput, Textarea, after_break, entity_url, humanize, _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref18, _ref19, _ref2, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref26, _ref27, _ref28, _ref29, _ref3, _ref30, _ref31, _ref32, _ref33, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9,
+  var API_URL, AdvFormData, Alert, App, Attribute, BaseFormatter, BaseInput, BooleanInput, Checkbox, Column, Cruddy, DataGrid, DataSource, Entity, EntityDropdown, EntityForm, EntityInstance, EntityPage, EntitySelector, Factory, Field, FieldList, FieldView, FileList, FilterList, ImageList, Pagination, Related, Router, SearchDataSource, SearchInput, StaticInput, TRANSITIONEND, TextInput, Textarea, after_break, entity_url, humanize, thumb, _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref18, _ref19, _ref2, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref26, _ref27, _ref28, _ref29, _ref3, _ref30, _ref31, _ref32, _ref33, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9,
     _this = this,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Cruddy = window.Cruddy || {};
+
+  Cruddy.baseUrl = Cruddy.root + "/" + Cruddy.uri;
 
   API_URL = "/backend/api/v1";
 
@@ -36,7 +38,7 @@
 
   entity_url = function(id, extra) {
     var url;
-    url = Cruddy.root + "/" + Cruddy.uri + "/api/v1/entity/" + id;
+    url = Cruddy.baseUrl + "/api/v1/entity/" + id;
     if (extra) {
       url += "/" + extra;
     }
@@ -45,6 +47,18 @@
 
   after_break = function(callback) {
     return setTimeout(callback, 50);
+  };
+
+  thumb = function(src, width, height) {
+    var url;
+    url = "" + Cruddy.baseUrl + "/thumb?src=" + (encodeURIComponent(src));
+    if (width) {
+      url += "&amp;width=" + width;
+    }
+    if (height) {
+      url += "&amp;height=" + height;
+    }
+    return url;
   };
 
   Alert = (function(_super) {
@@ -1479,7 +1493,7 @@
 
     ImageList.prototype.initialize = function(options) {
       var _ref15, _ref16;
-      this.width = (_ref15 = options.width) != null ? _ref15 : 80;
+      this.width = (_ref15 = options.width) != null ? _ref15 : 0;
       this.height = (_ref16 = options.height) != null ? _ref16 : 80;
       return ImageList.__super__.initialize.apply(this, arguments);
     };
@@ -1516,7 +1530,7 @@
           this.readers.push(this.createPreviewLoader(item, id));
         }
       } else {
-        image = item;
+        image = thumb(item, this.width, this.height);
       }
       return "<a href=\"" + (item instanceof File ? item.data || "#" : item) + "\" class=\"fancybox\">\n    <img src=\"" + image + "\" id=\"" + id + "\">\n</a>";
     };
@@ -2110,7 +2124,7 @@
       if (_.isArray(value)) {
         value = value[0];
       }
-      return "<span class=\"image-thumbnail\" style=\"width:" + this.options.width + "px;height:" + this.options.height + "px;background-image:url(" + value + ");\"></span>";
+      return "<img src=\"" + (thumb(value, this.options.width, this.options.height)) + "\" width=\"" + (this.options.width || this.defaultOptions.width) + "\" height=\"" + (this.options.height || this.defaultOptions.height) + "\" alt=\"" + (_.escape(value)) + "\">";
     };
 
     return Image;

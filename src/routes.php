@@ -1,12 +1,15 @@
 <?php
 
-Route::group(['prefix' => Config::get('cruddy::uri'), 'before' => 'auth.backend'], function () {
+Route::group(['prefix' => Config::get('cruddy::uri')], function () {
 
     $index = 'Kalnoy\Cruddy\CruddyController@index';
 
     Route::get('/', $index);
+    Route::get('thumb', 'Kalnoy\Cruddy\CruddyController@thumb');
+
     Route::get('{model}', ['as' => 'cruddy.index', 'uses' => $index]);
     Route::get('{model}/{id}', ['as' => 'cruddy.show', 'uses' => $index]);
+
 
     Route::group(['prefix' => 'api/v1'], function () {
 

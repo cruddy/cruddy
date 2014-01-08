@@ -1,5 +1,7 @@
 Cruddy = window.Cruddy || {}
 
+Cruddy.baseUrl = Cruddy.root + "/" + Cruddy.uri
+
 API_URL = "/backend/api/v1"
 TRANSITIONEND = "transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd"
 moment.lang Cruddy.locale ? "en"

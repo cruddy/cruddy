@@ -1,5 +1,7 @@
 Cruddy = window.Cruddy || {}
 
+Cruddy.baseUrl = Cruddy.root + "/" + Cruddy.uri
+
 API_URL = "/backend/api/v1"
 TRANSITIONEND = "transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd"
 moment.lang Cruddy.locale ? "en"
@@ -19,12 +21,19 @@ $.extend $.fancybox.defaults,
 humanize = (id) => id.replace(/_-/, " ")
 
 entity_url = (id, extra) ->
-    url = Cruddy.root + "/" + Cruddy.uri + "/api/v1/entity/" + id;
+    url = Cruddy.baseUrl + "/api/v1/entity/" + id;
     url += "/" + extra if extra
 
     url
 
 after_break = (callback) -> setTimeout callback, 50
+
+thumb = (src, width, height) ->
+    url = "#{ Cruddy.baseUrl }/thumb?src=#{ encodeURIComponent(src) }"
+    url += "&amp;width=#{ width }" if width
+    url += "&amp;height=#{ height }" if height
+
+    url
 
 class Alert extends Backbone.View
     tagName: "span"
@@ -988,7 +997,7 @@ class ImageList extends FileList
         super
 
     initialize: (options) ->
-        @width = options.width ? 80
+        @width = options.width ? 0
         @height = options.height ? 80
 
         super
@@ -1018,7 +1027,7 @@ class ImageList extends FileList
             image = item.data or ""
             @readers.push @createPreviewLoader item, id if not item.data?
         else
-            image = item
+            image = thumb item, @width, @height
 
         """
         <a href="#{ if item instanceof File then item.data or "#" else item }" class="fancybox">
@@ -1313,7 +1322,7 @@ class Cruddy.formatters.Image extends BaseFormatter
         value = value[0] if _.isArray value
 
         """
-        <span class="image-thumbnail" style="width:#{ @options.width }px;height:#{ @options.height }px;background-image:url(#{ value });"></span>
+        <img src="#{ thumb value, @options.width, @options.height }" width="#{ @options.width or @defaultOptions.width }" height="#{ @options.height or @defaultOptions.height }" alt="#{ _.escape value }">
         """
 Cruddy.related = new Factory
 

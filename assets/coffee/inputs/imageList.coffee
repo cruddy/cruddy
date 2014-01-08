@@ -7,7 +7,7 @@ class ImageList extends FileList
         super
 
     initialize: (options) ->
-        @width = options.width ? 80
+        @width = options.width ? 0
         @height = options.height ? 80
 
         super
@@ -37,7 +37,7 @@ class ImageList extends FileList
             image = item.data or ""
             @readers.push @createPreviewLoader item, id if not item.data?
         else
-            image = item
+            image = thumb item, @width, @height
 
         """
         <a href="#{ if item instanceof File then item.data or "#" else item }" class="fancybox">

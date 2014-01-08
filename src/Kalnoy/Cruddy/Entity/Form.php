@@ -4,7 +4,7 @@ use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Validator;
-use Kalnoy\Cruddy\FileUploader;
+use Kalnoy\Cruddy\Service\FileUploader;
 use Exception;
 
 class Form implements FormInterface {

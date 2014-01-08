@@ -203,6 +203,21 @@
       if (options.filter != null) {
         this.filter = options.filter;
       }
+      this.options = {
+        url: this.entity.url(),
+        dataType: "json",
+        type: "get",
+        displayLoading: true,
+        success: function(resp) {
+          _this._hold = true;
+          _this.set(resp.data);
+          _this._hold = false;
+          return _this.trigger("data", _this, resp.data.data);
+        },
+        error: function(xhr) {
+          return _this.trigger("error", _this, xhr);
+        }
+      };
       if (this.filter != null) {
         this.listenTo(this.filter, "change", this.fetch);
       }
@@ -240,15 +255,8 @@
       if (this.request != null) {
         this.request.abort();
       }
-      this.request = $.getJSON(this.entity.url(), this.data(), function(resp) {
-        _this._hold = true;
-        _this.set(resp.data);
-        _this._hold = false;
-        return _this.trigger("data", _this, resp.data.data);
-      });
-      this.request.fail(function(xhr) {
-        return _this.trigger("error", _this, xhr);
-      });
+      this.options.data = this.data();
+      this.request = $.ajax(this.options);
       this.request.always(function() {
         return _this.request = null;
       });
@@ -505,7 +513,6 @@
       this.columns = this.entity.columns.models.filter(function(col) {
         return col.get("visible");
       });
-      this.listenTo(this.model, "request", this.loading);
       this.listenTo(this.model, "data", this.updateData);
       this.listenTo(this.model, "change:order_by change:order_dir", this.onOrderChange);
       return this.listenTo(this.entity, "change:instance", this.onInstanceChange);
@@ -563,13 +570,8 @@
       return this;
     };
 
-    DataGrid.prototype.loading = function() {
-      return Cruddy.app.startLoading();
-    };
-
     DataGrid.prototype.updateData = function(datasource, data) {
       this.$(".items").replaceWith(this.renderBody(this.columns, data));
-      Cruddy.app.doneLoading();
       return this;
     };
 

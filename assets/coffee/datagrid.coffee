@@ -16,7 +16,6 @@ class DataGrid extends Backbone.View
         @entity = @model.entity
         @columns = @entity.columns.models.filter (col) -> col.get "visible"
 
-        @listenTo @model, "request", @loading
         @listenTo @model, "data", @updateData
         @listenTo @model, "change:order_by change:order_dir", @onOrderChange
 
@@ -65,12 +64,8 @@ class DataGrid extends Backbone.View
 
         this
 
-    loading: -> Cruddy.app.startLoading()
-
     updateData: (datasource, data) ->
         @$(".items").replaceWith @renderBody @columns, data
-
-        Cruddy.app.doneLoading()
 
         this
 

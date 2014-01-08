@@ -99,6 +99,21 @@ class DataSource extends Backbone.Model
         @columns = options.columns if options.columns?
         @filter = options.filter if options.filter?
 
+        @options =
+            url: @entity.url()
+            dataType: "json"
+            type: "get"
+            displayLoading: yes
+
+            success: (resp) =>
+                @_hold = true
+                @set resp.data
+                @_hold = false
+
+                @trigger "data", this, resp.data.data
+
+            error: (xhr) => @trigger "error", this, xhr
+
         @listenTo @filter, "change", @fetch if @filter?
 
         @on "change", => @fetch() unless @_hold
@@ -115,13 +130,10 @@ class DataSource extends Backbone.Model
     fetch: ->
         @request.abort() if @request?
 
-        @request = $.getJSON @entity.url(), @data(), (resp) =>
-            @_hold = true
-            @set resp.data
-            @_hold = false
-            @trigger "data", this, resp.data.data
+        @options.data = @data()
 
-        @request.fail (xhr) => @trigger "error", this, xhr
+        @request = $.ajax @options
+
         @request.always => @request = null
 
         @trigger "request", this, @request
@@ -303,7 +315,6 @@ class DataGrid extends Backbone.View
         @entity = @model.entity
         @columns = @entity.columns.models.filter (col) -> col.get "visible"
 
-        @listenTo @model, "request", @loading
         @listenTo @model, "data", @updateData
         @listenTo @model, "change:order_by change:order_dir", @onOrderChange
 
@@ -352,12 +363,8 @@ class DataGrid extends Backbone.View
 
         this
 
-    loading: -> Cruddy.app.startLoading()
-
     updateData: (datasource, data) ->
         @$(".items").replaceWith @renderBody @columns, data
-
-        Cruddy.app.doneLoading()
 
         this
 

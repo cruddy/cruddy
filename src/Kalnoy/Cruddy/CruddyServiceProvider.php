@@ -20,7 +20,6 @@ class CruddyServiceProvider extends ServiceProvider {
 	{
 		$this->package('kalnoy/cruddy');
 
-        include __DIR__."/../../helpers.php";
         include __DIR__."/../../filters.php";
         include __DIR__."/../../routes.php";
 	}

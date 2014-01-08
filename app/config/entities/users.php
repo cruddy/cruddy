@@ -4,16 +4,19 @@
 
     'form' => array(
         'model' => 'User',
-        'rules' => array(
-            'email' => 'required|email|max:255',
-            'password' => 'required_without:id',
-            'first_name' => 'max:255',
-            'last_name' => 'max:255',
-        ),
 
-        'messages' => array(
-            'password.required_without' => 'Необходимо указать пароль при создании пользователя.',
-        ),
+        'validator' => function ($v)
+        {
+            $v->rules([
+                'email' => 'required|email|max:255',
+                'first_name' => 'max:255',
+                'last_name' => 'max:255',
+            ]);
+
+            $v->create([
+                'password' => 'required',
+            ]);
+        },
     ),
 
     'columns' => array(

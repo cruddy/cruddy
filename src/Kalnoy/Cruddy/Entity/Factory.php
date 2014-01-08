@@ -1,9 +1,11 @@
 <?php namespace Kalnoy\Cruddy\Entity;
 
+use Closure;
 use Illuminate\Filesystem\Filesystem;
 use Kalnoy\Cruddy\EntityNotFoundException;
 use Kalnoy\Cruddy\Service\FileUploader;
 use Kalnoy\Cruddy\PermissionsInterface;
+use Kalnoy\Cruddy\Service\Validation\LaravelValidator;
 use RuntimeException;
 use Symfony\Component\Translation\TranslatorInterface;
 use Illuminate\Container\Container;
@@ -190,11 +192,31 @@ class Factory {
      */
     protected function createValidator(array $config)
     {
-        $rules = array_get($config, 'rules', array());
-        $messages = array_get($config, 'messages', array());
-        $customAttributes = array_get($config, 'customAttributes', array());
+        $validator = array_get($config, 'validator');
 
-        return $this->validator->make(array(), $rules, $messages, $customAttributes);
+        // Obsolete approach
+        if ($validator === null)
+        {
+            $instance = new LaravelValidator($this->validator);
+
+            foreach (['rules', 'messages', 'customAttributes'] as $attr)
+            {
+                $instance[$attr] = array_get($config, $attr, []);
+            }
+
+            return $instance;
+        }
+
+        if ($validator instanceof Closure)
+        {
+            $instance = new LaravelValidator($this->validator);
+
+            $validator($instance);
+
+            return $instance;
+        }
+
+        return $this->container->make($validator);
     }
 
     protected function createFiles(array $config)

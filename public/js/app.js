@@ -2741,9 +2741,9 @@
     EntityForm.prototype.update = function() {
       this.$el.toggleClass("loading", this.request != null);
       this.submit.text(this.model.isNew() ? "Создать" : "Сохранить");
-      this.submit.attr("disabled", !this.request || !this.model.hasChangedSinceSync());
+      this.submit.attr("disabled", (this.request != null) || !this.model.hasChangedSinceSync());
       this.submit.toggle(this.model.entity.get(this.model.isNew() ? "can_create" : "can_update"));
-      this.destroy.attr("disabled", this.request === true);
+      this.destroy.attr("disabled", this.request != null);
       this.destroy.text(this.model.entity.get("soft_deleting" && this.model.get("deleted_at")) ? "Восстановить" : "Удалить");
       this.destroy.toggle(!this.model.isNew() && this.model.entity.get("can_delete"));
       return this;

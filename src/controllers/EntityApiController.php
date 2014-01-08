@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Config;
 use Exception;
 use Kalnoy\Cruddy\Entity\Entity;
+use Kalnoy\Cruddy\Service\Validation\ValidationException;
 
 class EntityApiController extends ApiController {
 
@@ -134,7 +135,7 @@ class EntityApiController extends ApiController {
     {
         return $this->resolveSafe($type, 'create', function ($entity) {
 
-            if (!$model = $entity->create(Input::all())) return $this->invalid($entity);
+            $model = $entity->create(Input::all());
 
             return $this->success($entity->fields()->data($model));
         });
@@ -154,7 +155,7 @@ class EntityApiController extends ApiController {
 
             $model = $entity->findOrFail($id);
 
-            if (!$entity->update($model, Input::all())) return $this->invalid($entity);
+            $entity->update($model, Input::all());
 
             return $this->success($entity->fields()->data($model));
         });
@@ -211,6 +212,11 @@ class EntityApiController extends ApiController {
             return $callback($entity);
         }
 
+        catch (ValidationException $e)
+        {
+            return $this->failure(400, self::E_VALIDATION, $e->getErrors());
+        }
+
         catch (EntityNotFoundException $e)
         {
             return $this->notFound();
@@ -241,18 +247,6 @@ class EntityApiController extends ApiController {
     protected function resolveSafe($id, $method, Callable $callback)
     {
         return $this->resolve($id, $method, $callback, true);
-    }
-
-    /**
-     * Get response with validation errors.
-     *
-     * @param Entity $entity
-     *
-     * @return \Illuminate\Support\Facades\Response
-     */
-    protected function invalid(Entity $entity)
-    {
-        return $this->failure(400, self::E_VALIDATION, $entity->errors());
     }
 
     /**

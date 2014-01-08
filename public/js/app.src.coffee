@@ -1724,10 +1724,10 @@ class EntityForm extends Backbone.View
         @$el.toggleClass "loading", @request?
 
         @submit.text if @model.isNew() then "Создать" else "Сохранить"
-        @submit.attr "disabled", not @request or not @model.hasChangedSinceSync()
+        @submit.attr "disabled", @request? or not @model.hasChangedSinceSync()
         @submit.toggle @model.entity.get if @model.isNew() then "can_create" else "can_update"
 
-        @destroy.attr "disabled", @request is on
+        @destroy.attr "disabled", @request?
         @destroy.text if @model.entity.get "soft_deleting" and @model.get "deleted_at" then "Восстановить" else "Удалить"
         @destroy.toggle not @model.isNew() and @model.entity.get "can_delete"
 

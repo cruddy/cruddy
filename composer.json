@@ -21,6 +21,7 @@
             "app/commands",
             "app/controllers",
             "app/models",
+            "app/tests",
             "app/database/migrations",
             "app/database/seeds",
 
@@ -31,11 +32,16 @@
         "psr-0": {
             "Kalnoy\\Cruddy\\": "src/",
             "App": "app/lib"
-        }
+        },
+
+        "files": [
+            "src/helpers.php"
+        ]
     },
 
     "minimum-stability": "dev",
     "require-dev": {
-        "fzaninotto/faker": "dev-master"
+        "fzaninotto/faker": "dev-master",
+        "mockery/mockery": "dev-master"
     }
 }

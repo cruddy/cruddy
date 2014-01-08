@@ -3,9 +3,9 @@
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Validator;
 use Kalnoy\Cruddy\Service\FileUploader;
 use Exception;
+use Kalnoy\Cruddy\Service\Validation\ValidableInterface;
 
 class Form implements FormInterface {
 
@@ -19,9 +19,9 @@ class Form implements FormInterface {
     /**
      * Validators factory.
      *
-     * @var Validator
+     * @var ValidableInterface
      */
-    protected $validator;
+    protected $validate;
 
     /**
      * @var FileUploader[]
@@ -36,14 +36,14 @@ class Form implements FormInterface {
     /**
      * Init a model form.
      *
-     * @param Eloquent  $model
-     * @param Validator $validator
-     * @param array     $files
+     * @param Eloquent                                             $model
+     * @param \Kalnoy\Cruddy\Service\Validation\ValidableInterface $validator
+     * @param array                                                $files
      */
-    public function __construct(Eloquent $model, Validator $validator, array $files)
+    public function __construct(Eloquent $model, ValidableInterface $validator, array $files)
     {
         $this->model = $model;
-        $this->validator = $validator;
+        $this->validate = $validator;
         $this->files = $files;
     }
 
@@ -62,11 +62,12 @@ class Form implements FormInterface {
      *
      * @param  array  $data
      *
-     * @return false|Eloquent
+     * @return Eloquent
+     * @throws \Kalnoy\Cruddy\Service\Validation\ValidationException
      */
     public function create(array $data)
     {
-        if (!$this->validate($data)) return false;
+        $this->validate->beforeCreate($data);
 
         return $this->save($this->model->newInstance(), $data);
     }
@@ -77,11 +78,12 @@ class Form implements FormInterface {
      * @param \Illuminate\Database\Eloquent\Model $instance
      * @param  array                              $data
      *
-     * @return false|Eloquent
+     * @return Eloquent
+     * @throws \Kalnoy\Cruddy\Service\Validation\ValidationException
      */
     public function update(Eloquent $instance, array $data)
     {
-        if (!$this->validate($data)) return false;
+        $this->validate->beforeUpdate($data);
 
         return $this->save($instance, $data);
     }
@@ -392,9 +394,9 @@ class Form implements FormInterface {
      */
     protected function validate(array $data)
     {
-        $this->validator->setData($data);
+        $this->validate->setData($data);
 
-        return $this->validator->passes();
+        return $this->validate->passes();
     }
 
     /**
@@ -404,6 +406,6 @@ class Form implements FormInterface {
      */
     public function errors()
     {
-        return $this->validator->errors();
+        return $this->validate->errors();
     }
 }

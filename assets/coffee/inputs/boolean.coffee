@@ -2,36 +2,48 @@ class BooleanInput extends BaseInput
     tripleState: false
 
     events:
-        "click input": "check"
+        "click .btn": "check"
 
     initialize: (options) ->
         @tripleState = options.tripleState if options.tripleState?
 
+        super
+
     check: (e) ->
-        @model.set @key, switch e.target.value
-            when "1" then yes
-            when "0" then no
-            else null
+        value = !!$(e.target).data "value"
+        currentValue = @model.get @key
+
+        value = null if value == currentValue and @tripleState
+
+        @model.set @key, value
 
         this
 
     applyChanges: (model, value) ->
         value = switch value
-            when yes then "1"
-            when no then "0"
-            else ""
+            when yes then 0
+            when no then 1
+            else null
 
-        @$("[value=\"#{ value }\"]").prop "checked", true
+        @values.removeClass("active")
+        @values.eq(value).addClass "active" if value?
 
         this
 
     render: ->
-        @$el.empty()
-        @$el.append @itemTemplate "неважно", "" if @tripleState
-        @$el.append @itemTemplate "да", 1
-        @$el.append @itemTemplate "нет", 0
+        @$el.html @template()
+
+        @values = @$ ".btn"
 
         super
+
+    template: ->
+        """
+        <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-info" data-value="1">да</button>
+            <button type="button" class="btn btn-default" data-value="0">нет</button>
+        </div>
+        """
 
     itemTemplate: (label, value) -> """
         <label class="radio-inline">

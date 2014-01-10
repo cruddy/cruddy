@@ -41,6 +41,7 @@ module.exports = function(grunt) {
                     '<%= app %>/inputs/fileList.coffee',
                     '<%= app %>/inputs/imageList.coffee',
                     '<%= app %>/inputs/search.coffee',
+                    '<%= app %>/inputs/slug.coffee',
 
                     // Fields
                     '<%= app %>/fields/field.coffee',
@@ -50,6 +51,7 @@ module.exports = function(grunt) {
                     '<%= app %>/fields/relation.coffee',
                     '<%= app %>/fields/file.coffee',
                     '<%= app %>/fields/image.coffee',
+                    '<%= app %>/fields/slug.coffee',
 
                     // Columns
                     '<%= app %>/columns/column.coffee',

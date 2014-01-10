@@ -18,6 +18,7 @@ class Factory extends AttributeFactory {
         'relation' => 'Kalnoy\Cruddy\Entity\Fields\Types\Relation',
         'file' => 'Kalnoy\Cruddy\Entity\Fields\Types\File',
         'image' => 'Kalnoy\Cruddy\Entity\Fields\Types\Image',
+        'slug' => 'Kalnoy\Cruddy\Entity\Fields\Types\Slug',
     );
 
     protected $defaultType = 'string';

@@ -2,7 +2,7 @@
 
 class Category extends Eloquent {
 
-    protected $fillable = array('title', 'images');
+    protected $fillable = array('title', 'slug', 'images');
 
     public function getImagesAttribute($value)
     {

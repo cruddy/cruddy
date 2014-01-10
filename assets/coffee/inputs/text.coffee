@@ -18,6 +18,16 @@ class TextInput extends BaseInput
 
         this
 
+    disable: ->
+        @$el.prop "disabled", yes
+
+        this
+
+    enable: ->
+        @$el.prop "disabled", no
+
+        this
+
     change: ->
         @model.set @key, @el.value
 

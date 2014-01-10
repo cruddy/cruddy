@@ -16,6 +16,7 @@
 
     'fields' => [
         'title' => ['required' => true],
+        'slug' => ['type' => 'slug', 'required' => true, 'ref' => 'title', 'separator' => '_'],
         'images' => ['type' => 'image', 'multiple' => true],
         'parent' => ['type' => 'relation', 'reference' => 'categories'],
         'children' => ['type' => 'relation', 'reference' => 'categories'],

@@ -46,14 +46,18 @@ class Pagination extends Backbone.View
         this
 
     render: ->
-        @$el.html @template @model.get("current_page"), @model.get("last_page")
+        last = @model.get("last_page")
+
+        @$el.toggle last? and last > 1
+
+        @$el.html @template @model.get("current_page"), last if last > 1
 
         this
 
     template: (current, last) ->
         html = ""
         html += @renderLink current - 1, "&larr; Назад", "previous" + if current > 1 then "" else " disabled"
-        html += @renderStats()
+        html += @renderStats() if @model.get("total")?
         html += @renderLink current + 1, "Вперед &rarr;", "next" + if current < last then "" else " disabled"
 
         html

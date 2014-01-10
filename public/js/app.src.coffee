@@ -250,7 +250,8 @@ class Pagination extends Backbone.View
         "click a": "navigate"
 
     initialize: (options) ->
-        @listenTo @model, "change:last_page change:current_page", @render
+        @listenTo @model, "data", @render
+        @listenTo @model, "request", @disable
 
         $(document).on "keydown.pagination", $.proxy this, "hotkeys"
 
@@ -281,21 +282,33 @@ class Pagination extends Backbone.View
     navigate: (e) ->
         e.preventDefault()
 
-        @page $(e.target).data "page"
+        @page $(e.target).data "page" if !@model.inProgress()
+
+    disable: ->
+        @$("a").addClass "disabled"
+
+        this
 
     render: ->
-        @$el.html @template @model.get("current_page"), @model.get("last_page")
+        last = @model.get("last_page")
+
+        @$el.toggle last? and last > 1
+
+        @$el.html @template @model.get("current_page"), last if last > 1
 
         this
 
     template: (current, last) ->
         html = ""
-        html += @link current - 1, "&larr; Назад", "previous" if current > 1
-        html += @link current + 1, "Вперед &rarr;", "next" if current < last
+        html += @renderLink current - 1, "&larr; Назад", "previous" + if current > 1 then "" else " disabled"
+        html += @renderStats() if @model.get("total")?
+        html += @renderLink current + 1, "Вперед &rarr;", "next" + if current < last then "" else " disabled"
 
         html
 
-    link: (page, label, className = "") -> """<li class="#{ className }"><a href="#" data-page="#{ page }">#{ label }</a></li>"""
+    renderStats: -> """<li class="stats"><span>#{ @model.get "from" } - #{ @model.get "to" } / #{ @model.get "total" }</span></li>"""
+
+    renderLink: (page, label, className = "") -> """<li class="#{ className }"><a href="#" data-page="#{ page }">#{ label }</a></li>"""
 
 class DataGrid extends Backbone.View
     tagName: "table"
@@ -540,6 +553,16 @@ class TextInput extends BaseInput
 
         this
 
+    disable: ->
+        @$el.prop "disabled", yes
+
+        this
+
+    enable: ->
+        @$el.prop "disabled", no
+
+        this
+
     change: ->
         @model.set @key, @el.value
 
@@ -591,36 +614,48 @@ class BooleanInput extends BaseInput
     tripleState: false
 
     events:
-        "click input": "check"
+        "click .btn": "check"
 
     initialize: (options) ->
         @tripleState = options.tripleState if options.tripleState?
 
+        super
+
     check: (e) ->
-        @model.set @key, switch e.target.value
-            when "1" then yes
-            when "0" then no
-            else null
+        value = !!$(e.target).data "value"
+        currentValue = @model.get @key
+
+        value = null if value == currentValue and @tripleState
+
+        @model.set @key, value
 
         this
 
     applyChanges: (model, value) ->
         value = switch value
-            when yes then "1"
-            when no then "0"
-            else ""
+            when yes then 0
+            when no then 1
+            else null
 
-        @$("[value=\"#{ value }\"]").prop "checked", true
+        @values.removeClass("active")
+        @values.eq(value).addClass "active" if value?
 
         this
 
     render: ->
-        @$el.empty()
-        @$el.append @itemTemplate "неважно", "" if @tripleState
-        @$el.append @itemTemplate "да", 1
-        @$el.append @itemTemplate "нет", 0
+        @$el.html @template()
+
+        @values = @$ ".btn"
 
         super
+
+    template: ->
+        """
+        <div class="btn-group btn-group-sm">
+            <button type="button" class="btn btn-info" data-value="1">да</button>
+            <button type="button" class="btn btn-default" data-value="0">нет</button>
+        </div>
+        """
 
     itemTemplate: (label, value) -> """
         <label class="radio-inline">
@@ -768,7 +803,7 @@ class EntitySelector extends BaseInput
     events:
         "click .item": "check"
         "click .more": "more"
-        "click .search-input": -> false
+        "click [type=search]": -> false
 
     initialize: (options) ->
         super
@@ -1076,6 +1111,88 @@ class SearchInput extends TextInput
         @scheduleChange()
 
         super
+class SlugInput extends Backbone.View
+    events:
+        "click .btn": "toggleSyncing"
+
+    constructor: (options) ->
+        @input = new TextInput _.clone options
+
+        options.className ?= "input-group"
+        options.className += " input-group-#{ options.size ? "sm" }"
+
+        delete options.attributes if options.attributes?
+
+        super
+
+    initialize: (options) ->
+        chars = options.chars ? "a-z0-9\-_"
+
+        @regexp = new RegExp "[^#{ chars }]+", "g"
+        @separator = options.separator ? "-"
+
+        @key = options.key
+        @ref = options.ref if options.ref?
+
+        super
+
+    toggleSyncing: ->
+        if @syncButton.hasClass "active" then @unlink() else @link()
+
+        this
+
+    link: ->
+        return if not @ref
+
+        @listenTo @model, "change:" + @ref, @sync
+        @syncButton.addClass "active"
+        @input.disable()
+
+        @sync()
+
+    unlink: ->
+        @stopListening @model, null, @sync if @ref?
+        @syncButton.removeClass "active"
+        @input.enable()
+
+        this
+
+    linkable: ->
+        refValue = @convert @model.get @ref
+        refValue == @model.get @key
+
+    convert: (value) -> if value then value.toLocaleLowerCase().replace(/\s+/g, @separator).replace(@regexp, "") else value
+
+    change: ->
+        @unlink()
+
+        @$el.val @convert @$el.val()
+
+        super
+
+    sync: ->
+        @model.set @key, @convert @model.get @ref
+
+        this
+
+    render: ->
+        @$el.html @template()
+        @$el.prepend @input.render().el
+
+        if @ref?
+            @syncButton = @$ ".btn"
+            @link() if @linkable()
+
+        this
+
+    template: ->
+        return "" if not @ref?
+
+        """
+        <div class="input-group-btn">
+            <button type="button" tabindex="-1" class="btn btn-default" title="Связать с полем #{ @model.entity.fields.get(@ref).get "label" }"><span class="glyphicon glyphicon-link"></span></button>
+        </div>
+        """
 Cruddy.fields = new Factory
 
 class FieldView extends Backbone.View
@@ -1264,6 +1381,23 @@ class Cruddy.fields.Image extends Cruddy.fields.File
         accepts: @get "accepts"
 
     format: (value) -> if value instanceof File then value.name else value
+class Cruddy.fields.Slug extends Field
+    createEditableInput: (model) ->
+        new SlugInput
+            model: model
+            key: @id
+            chars: @get "chars"
+            ref: @get "ref"
+            separator: @get "separator"
+            attributes:
+                placeholder: @get "label"
+
+    createFilterInput: (model, column) ->
+        new TextInput
+            model: model
+            key: @id
+            attributes:
+                placeholder: @get "label"
 Cruddy.columns = new Factory
 
 class Column extends Attribute

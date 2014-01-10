@@ -1,5 +1,5 @@
 (function() {
-  var API_URL, AdvFormData, Alert, App, Attribute, BaseFormatter, BaseInput, BooleanInput, Checkbox, Column, Cruddy, DataGrid, DataSource, Entity, EntityDropdown, EntityForm, EntityInstance, EntityPage, EntitySelector, Factory, Field, FieldList, FieldView, FileList, FilterList, ImageList, Pagination, Related, Router, SearchDataSource, SearchInput, StaticInput, TRANSITIONEND, TextInput, Textarea, after_break, entity_url, humanize, thumb, _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref18, _ref19, _ref2, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref26, _ref27, _ref28, _ref29, _ref3, _ref30, _ref31, _ref32, _ref33, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9,
+  var API_URL, AdvFormData, Alert, App, Attribute, BaseFormatter, BaseInput, BooleanInput, Checkbox, Column, Cruddy, DataGrid, DataSource, Entity, EntityDropdown, EntityForm, EntityInstance, EntityPage, EntitySelector, Factory, Field, FieldList, FieldView, FileList, FilterList, ImageList, Pagination, Related, Router, SearchDataSource, SearchInput, SlugInput, StaticInput, TRANSITIONEND, TextInput, Textarea, after_break, entity_url, humanize, thumb, _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref18, _ref19, _ref2, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref26, _ref27, _ref28, _ref29, _ref3, _ref30, _ref31, _ref32, _ref33, _ref34, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9,
     _this = this,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -426,7 +426,8 @@
     };
 
     Pagination.prototype.initialize = function(options) {
-      this.listenTo(this.model, "change:last_page change:current_page", this.render);
+      this.listenTo(this.model, "data", this.render);
+      this.listenTo(this.model, "request", this.disable);
       $(document).on("keydown.pagination", $.proxy(this, "hotkeys"));
       return this;
     };
@@ -460,27 +461,42 @@
 
     Pagination.prototype.navigate = function(e) {
       e.preventDefault();
-      return this.page($(e.target).data("page"));
+      if (!this.model.inProgress()) {
+        return this.page($(e.target).data("page"));
+      }
+    };
+
+    Pagination.prototype.disable = function() {
+      this.$("a").addClass("disabled");
+      return this;
     };
 
     Pagination.prototype.render = function() {
-      this.$el.html(this.template(this.model.get("current_page"), this.model.get("last_page")));
+      var last;
+      last = this.model.get("last_page");
+      this.$el.toggle((last != null) && last > 1);
+      if (last > 1) {
+        this.$el.html(this.template(this.model.get("current_page"), last));
+      }
       return this;
     };
 
     Pagination.prototype.template = function(current, last) {
       var html;
       html = "";
-      if (current > 1) {
-        html += this.link(current - 1, "&larr; Назад", "previous");
+      html += this.renderLink(current - 1, "&larr; Назад", "previous" + (current > 1 ? "" : " disabled"));
+      if (this.model.get("total") != null) {
+        html += this.renderStats();
       }
-      if (current < last) {
-        html += this.link(current + 1, "Вперед &rarr;", "next");
-      }
+      html += this.renderLink(current + 1, "Вперед &rarr;", "next" + (current < last ? "" : " disabled"));
       return html;
     };
 
-    Pagination.prototype.link = function(page, label, className) {
+    Pagination.prototype.renderStats = function() {
+      return "<li class=\"stats\"><span>" + (this.model.get("from")) + " - " + (this.model.get("to")) + " / " + (this.model.get("total")) + "</span></li>";
+    };
+
+    Pagination.prototype.renderLink = function(page, label, className) {
       if (className == null) {
         className = "";
       }
@@ -866,6 +882,16 @@
       return this;
     };
 
+    TextInput.prototype.disable = function() {
+      this.$el.prop("disabled", true);
+      return this;
+    };
+
+    TextInput.prototype.enable = function() {
+      this.$el.prop("disabled", false);
+      return this;
+    };
+
     TextInput.prototype.change = function() {
       this.model.set(this.key, this.el.value);
       return this;
@@ -959,26 +985,24 @@
     BooleanInput.prototype.tripleState = false;
 
     BooleanInput.prototype.events = {
-      "click input": "check"
+      "click .btn": "check"
     };
 
     BooleanInput.prototype.initialize = function(options) {
       if (options.tripleState != null) {
-        return this.tripleState = options.tripleState;
+        this.tripleState = options.tripleState;
       }
+      return BooleanInput.__super__.initialize.apply(this, arguments);
     };
 
     BooleanInput.prototype.check = function(e) {
-      this.model.set(this.key, (function() {
-        switch (e.target.value) {
-          case "1":
-            return true;
-          case "0":
-            return false;
-          default:
-            return null;
-        }
-      })());
+      var currentValue, value;
+      value = !!$(e.target).data("value");
+      currentValue = this.model.get(this.key);
+      if (value === currentValue && this.tripleState) {
+        value = null;
+      }
+      this.model.set(this.key, value);
       return this;
     };
 
@@ -986,25 +1010,28 @@
       value = (function() {
         switch (value) {
           case true:
-            return "1";
+            return 0;
           case false:
-            return "0";
+            return 1;
           default:
-            return "";
+            return null;
         }
       })();
-      this.$("[value=\"" + value + "\"]").prop("checked", true);
+      this.values.removeClass("active");
+      if (value != null) {
+        this.values.eq(value).addClass("active");
+      }
       return this;
     };
 
     BooleanInput.prototype.render = function() {
-      this.$el.empty();
-      if (this.tripleState) {
-        this.$el.append(this.itemTemplate("неважно", ""));
-      }
-      this.$el.append(this.itemTemplate("да", 1));
-      this.$el.append(this.itemTemplate("нет", 0));
+      this.$el.html(this.template());
+      this.values = this.$(".btn");
       return BooleanInput.__super__.render.apply(this, arguments);
+    };
+
+    BooleanInput.prototype.template = function() {
+      return "<div class=\"btn-group btn-group-sm\">\n    <button type=\"button\" class=\"btn btn-info\" data-value=\"1\">да</button>\n    <button type=\"button\" class=\"btn btn-default\" data-value=\"0\">нет</button>\n</div>";
     };
 
     BooleanInput.prototype.itemTemplate = function(label, value) {
@@ -1191,7 +1218,7 @@
     EntitySelector.prototype.events = {
       "click .item": "check",
       "click .more": "more",
-      "click .search-input": function() {
+      "click [type=search]": function() {
         return false;
       }
     };
@@ -1595,6 +1622,114 @@
 
   })(TextInput);
 
+  SlugInput = (function(_super) {
+    __extends(SlugInput, _super);
+
+    SlugInput.prototype.events = {
+      "click .btn": "toggleSyncing"
+    };
+
+    function SlugInput(options) {
+      var _ref16;
+      this.input = new TextInput(_.clone(options));
+      if (options.className == null) {
+        options.className = "input-group";
+      }
+      options.className += " input-group-" + ((_ref16 = options.size) != null ? _ref16 : "sm");
+      if (options.attributes != null) {
+        delete options.attributes;
+      }
+      SlugInput.__super__.constructor.apply(this, arguments);
+    }
+
+    SlugInput.prototype.initialize = function(options) {
+      var chars, _ref16, _ref17;
+      chars = (_ref16 = options.chars) != null ? _ref16 : "a-z0-9\-_";
+      this.regexp = new RegExp("[^" + chars + "]+", "g");
+      this.separator = (_ref17 = options.separator) != null ? _ref17 : "-";
+      this.key = options.key;
+      if (options.ref != null) {
+        this.ref = options.ref;
+      }
+      return SlugInput.__super__.initialize.apply(this, arguments);
+    };
+
+    SlugInput.prototype.toggleSyncing = function() {
+      if (this.syncButton.hasClass("active")) {
+        this.unlink();
+      } else {
+        this.link();
+      }
+      return this;
+    };
+
+    SlugInput.prototype.link = function() {
+      if (!this.ref) {
+        return;
+      }
+      this.listenTo(this.model, "change:" + this.ref, this.sync);
+      this.syncButton.addClass("active");
+      this.input.disable();
+      return this.sync();
+    };
+
+    SlugInput.prototype.unlink = function() {
+      if (this.ref != null) {
+        this.stopListening(this.model, null, this.sync);
+      }
+      this.syncButton.removeClass("active");
+      this.input.enable();
+      return this;
+    };
+
+    SlugInput.prototype.linkable = function() {
+      var refValue;
+      refValue = this.convert(this.model.get(this.ref));
+      return refValue === this.model.get(this.key);
+    };
+
+    SlugInput.prototype.convert = function(value) {
+      if (value) {
+        return value.toLocaleLowerCase().replace(/\s+/g, this.separator).replace(this.regexp, "");
+      } else {
+        return value;
+      }
+    };
+
+    SlugInput.prototype.change = function() {
+      this.unlink();
+      this.$el.val(this.convert(this.$el.val()));
+      return SlugInput.__super__.change.apply(this, arguments);
+    };
+
+    SlugInput.prototype.sync = function() {
+      this.model.set(this.key, this.convert(this.model.get(this.ref)));
+      return this;
+    };
+
+    SlugInput.prototype.render = function() {
+      this.$el.html(this.template());
+      this.$el.prepend(this.input.render().el);
+      if (this.ref != null) {
+        this.syncButton = this.$(".btn");
+        if (this.linkable()) {
+          this.link();
+        }
+      }
+      return this;
+    };
+
+    SlugInput.prototype.template = function() {
+      if (this.ref == null) {
+        return "";
+      }
+      return "<div class=\"input-group-btn\">\n    <button type=\"button\" tabindex=\"-1\" class=\"btn btn-default\" title=\"Связать с полем " + (this.model.entity.fields.get(this.ref).get("label")) + "\"><span class=\"glyphicon glyphicon-link\"></span></button>\n</div>";
+    };
+
+    return SlugInput;
+
+  })(Backbone.View);
+
   Cruddy.fields = new Factory;
 
   FieldView = (function(_super) {
@@ -1972,14 +2107,49 @@
 
   })(Cruddy.fields.File);
 
+  Cruddy.fields.Slug = (function(_super) {
+    __extends(Slug, _super);
+
+    function Slug() {
+      _ref23 = Slug.__super__.constructor.apply(this, arguments);
+      return _ref23;
+    }
+
+    Slug.prototype.createEditableInput = function(model) {
+      return new SlugInput({
+        model: model,
+        key: this.id,
+        chars: this.get("chars"),
+        ref: this.get("ref"),
+        separator: this.get("separator"),
+        attributes: {
+          placeholder: this.get("label")
+        }
+      });
+    };
+
+    Slug.prototype.createFilterInput = function(model, column) {
+      return new TextInput({
+        model: model,
+        key: this.id,
+        attributes: {
+          placeholder: this.get("label")
+        }
+      });
+    };
+
+    return Slug;
+
+  })(Field);
+
   Cruddy.columns = new Factory;
 
   Column = (function(_super) {
     __extends(Column, _super);
 
     function Column() {
-      _ref23 = Column.__super__.constructor.apply(this, arguments);
-      return _ref23;
+      _ref24 = Column.__super__.constructor.apply(this, arguments);
+      return _ref24;
     }
 
     Column.prototype.initialize = function(options) {
@@ -2027,13 +2197,13 @@
     __extends(Field, _super);
 
     function Field() {
-      _ref24 = Field.__super__.constructor.apply(this, arguments);
-      return _ref24;
+      _ref25 = Field.__super__.constructor.apply(this, arguments);
+      return _ref25;
     }
 
     Field.prototype.initialize = function(attributes) {
-      var field, _ref25;
-      field = (_ref25 = attributes.field) != null ? _ref25 : attributes.id;
+      var field, _ref26;
+      field = (_ref26 = attributes.field) != null ? _ref26 : attributes.id;
       this.field = attributes.entity.fields.get(field);
       if (attributes.title === null) {
         this.set("title", this.field.get("label"));
@@ -2065,8 +2235,8 @@
     __extends(Computed, _super);
 
     function Computed() {
-      _ref25 = Computed.__super__.constructor.apply(this, arguments);
-      return _ref25;
+      _ref26 = Computed.__super__.constructor.apply(this, arguments);
+      return _ref26;
     }
 
     Computed.prototype.createFilterInput = function(model) {
@@ -2112,8 +2282,8 @@
     __extends(Image, _super);
 
     function Image() {
-      _ref26 = Image.__super__.constructor.apply(this, arguments);
-      return _ref26;
+      _ref27 = Image.__super__.constructor.apply(this, arguments);
+      return _ref27;
     }
 
     Image.prototype.defaultOptions = {
@@ -2141,8 +2311,8 @@
     __extends(Related, _super);
 
     function Related() {
-      _ref27 = Related.__super__.constructor.apply(this, arguments);
-      return _ref27;
+      _ref28 = Related.__super__.constructor.apply(this, arguments);
+      return _ref28;
     }
 
     Related.prototype.resolve = function() {
@@ -2164,8 +2334,8 @@
     __extends(One, _super);
 
     function One() {
-      _ref28 = One.__super__.constructor.apply(this, arguments);
-      return _ref28;
+      _ref29 = One.__super__.constructor.apply(this, arguments);
+      return _ref29;
     }
 
     One.prototype.associate = function(parent, child) {
@@ -2181,8 +2351,8 @@
     __extends(MorphOne, _super);
 
     function MorphOne() {
-      _ref29 = MorphOne.__super__.constructor.apply(this, arguments);
-      return _ref29;
+      _ref30 = MorphOne.__super__.constructor.apply(this, arguments);
+      return _ref30;
     }
 
     MorphOne.prototype.associate = function(parent, child) {
@@ -2198,8 +2368,8 @@
     __extends(Entity, _super);
 
     function Entity() {
-      _ref30 = Entity.__super__.constructor.apply(this, arguments);
-      return _ref30;
+      _ref31 = Entity.__super__.constructor.apply(this, arguments);
+      return _ref31;
     }
 
     Entity.prototype.initialize = function(attributes, options) {
@@ -2247,11 +2417,11 @@
         columns = this.columns;
       }
       filters = (function() {
-        var _i, _len, _ref31, _results;
-        _ref31 = columns.models;
+        var _i, _len, _ref32, _results;
+        _ref32 = columns.models;
         _results = [];
-        for (_i = 0, _len = _ref31.length; _i < _len; _i++) {
-          col = _ref31[_i];
+        for (_i = 0, _len = _ref32.length; _i < _len; _i++) {
+          col = _ref32[_i];
           if (col.get("filterable")) {
             _results.push(col.createFilter());
           }
@@ -2262,7 +2432,7 @@
     };
 
     Entity.prototype.createInstance = function(attributes, relatedData) {
-      var item, related, _i, _len, _ref31;
+      var item, related, _i, _len, _ref32;
       if (attributes == null) {
         attributes = {};
       }
@@ -2270,9 +2440,9 @@
         relatedData = {};
       }
       related = {};
-      _ref31 = this.related.models;
-      for (_i = 0, _len = _ref31.length; _i < _len; _i++) {
-        item = _ref31[_i];
+      _ref32 = this.related.models;
+      for (_i = 0, _len = _ref32.length; _i < _len; _i++) {
+        item = _ref32[_i];
         related[item.id] = item.related.createInstance(relatedData[item.id]);
       }
       return new EntityInstance(_.extend({}, this.get("defaults"), attributes), {
@@ -2324,8 +2494,8 @@
     __extends(EntityInstance, _super);
 
     function EntityInstance() {
-      _ref31 = EntityInstance.__super__.constructor.apply(this, arguments);
-      return _ref31;
+      _ref32 = EntityInstance.__super__.constructor.apply(this, arguments);
+      return _ref32;
     }
 
     EntityInstance.prototype.initialize = function(attributes, options) {
@@ -2364,9 +2534,9 @@
     };
 
     EntityInstance.prototype.sync = function(method, model, options) {
-      var _ref32;
+      var _ref33;
       if (method === "update" || method === "create") {
-        options.data = new AdvFormData((_ref32 = options.attrs) != null ? _ref32 : this.attributes).original;
+        options.data = new AdvFormData((_ref33 = options.attrs) != null ? _ref33 : this.attributes).original;
         options.contentType = false;
         options.processData = false;
       }
@@ -2381,14 +2551,14 @@
         return xhr;
       }
       queue = function(xhr) {
-        var key, model, save, _ref32;
+        var key, model, save, _ref33;
         save = [];
         if (xhr != null) {
           save.push(xhr);
         }
-        _ref32 = _this.related;
-        for (key in _ref32) {
-          model = _ref32[key];
+        _ref33 = _this.related;
+        for (key in _ref33) {
+          model = _ref33[key];
           if (model.isNew()) {
             _this.entity.related.get(key).associate(_this, model);
           }
@@ -2412,18 +2582,18 @@
     };
 
     EntityInstance.prototype.hasChangedSinceSync = function() {
-      var key, related, value, _ref32, _ref33;
-      _ref32 = this.attributes;
-      for (key in _ref32) {
-        value = _ref32[key];
+      var key, related, value, _ref33, _ref34;
+      _ref33 = this.attributes;
+      for (key in _ref33) {
+        value = _ref33[key];
         if (!_.isEqual(value, this.original[key])) {
           return true;
         }
       }
       if (!this.isNew()) {
-        _ref33 = this.related;
-        for (key in _ref33) {
-          related = _ref33[key];
+        _ref34 = this.related;
+        for (key in _ref34) {
+          related = _ref34[key];
           if (related.hasChangedSinceSync()) {
             return true;
           }
@@ -2571,12 +2741,12 @@
     }
 
     EntityForm.prototype.initialize = function() {
-      var key, related, _ref32;
+      var key, related, _ref33;
       this.listenTo(this.model, "destroy", this.handleDestroy);
       this.signOn(this.model);
-      _ref32 = this.model.related;
-      for (key in _ref32) {
-        related = _ref32[key];
+      _ref33 = this.model.related;
+      for (key in _ref33) {
+        related = _ref33[key];
         this.signOn(related);
       }
       this.hotkeys = $(document).on("keydown." + this.cid, "body", $.proxy(this, "hotkeys"));
@@ -2634,8 +2804,8 @@
     };
 
     EntityForm.prototype.displayError = function(xhr) {
-      var _ref32;
-      if (((_ref32 = xhr.responseJSON) != null ? _ref32.error : void 0) !== "VALIDATION") {
+      var _ref33;
+      if (((_ref33 = xhr.responseJSON) != null ? _ref33.error : void 0) !== "VALIDATION") {
         return this.displayAlert("Ошибка", "danger");
       }
     };
@@ -2711,7 +2881,7 @@
     };
 
     EntityForm.prototype.render = function() {
-      var key, related, _ref32;
+      var key, related, _ref33;
       this.dispose();
       this.$el.html(this.template());
       this.nav = this.$(".nav");
@@ -2720,9 +2890,9 @@
       this.destroy = this.$(".btn-destroy");
       this.tabs = [];
       this.renderTab(this.model, true);
-      _ref32 = this.model.related;
-      for (key in _ref32) {
-        related = _ref32[key];
+      _ref33 = this.model.related;
+      for (key in _ref33) {
+        related = _ref33[key];
         this.renderTab(related);
       }
       return this.update();
@@ -2773,11 +2943,11 @@
     };
 
     EntityForm.prototype.dispose = function() {
-      var fieldList, _i, _len, _ref32;
+      var fieldList, _i, _len, _ref33;
       if (this.tabs != null) {
-        _ref32 = this.tabs;
-        for (_i = 0, _len = _ref32.length; _i < _len; _i++) {
-          fieldList = _ref32[_i];
+        _ref33 = this.tabs;
+        for (_i = 0, _len = _ref33.length; _i < _len; _i++) {
+          fieldList = _ref33[_i];
           fieldList.remove();
         }
       }
@@ -2802,8 +2972,8 @@
     __extends(App, _super);
 
     function App() {
-      _ref32 = App.__super__.constructor.apply(this, arguments);
-      return _ref32;
+      _ref33 = App.__super__.constructor.apply(this, arguments);
+      return _ref33;
     }
 
     App.prototype.entities = {};
@@ -2879,11 +3049,11 @@
           return entity;
         }
         wait = (function() {
-          var _i, _len, _ref33, _results;
-          _ref33 = entity.related.models;
+          var _i, _len, _ref34, _results;
+          _ref34 = entity.related.models;
           _results = [];
-          for (_i = 0, _len = _ref33.length; _i < _len; _i++) {
-            related = _ref33[_i];
+          for (_i = 0, _len = _ref34.length; _i < _len; _i++) {
+            related = _ref34[_i];
             _results.push(related.resolve());
           }
           return _results;
@@ -2895,9 +3065,9 @@
     };
 
     App.prototype.dispose = function() {
-      var _ref33;
-      if ((_ref33 = this.page) != null) {
-        _ref33.remove();
+      var _ref34;
+      if ((_ref34 = this.page) != null) {
+        _ref34.remove();
       }
       return this;
     };
@@ -2912,8 +3082,8 @@
     __extends(Router, _super);
 
     function Router() {
-      _ref33 = Router.__super__.constructor.apply(this, arguments);
-      return _ref33;
+      _ref34 = Router.__super__.constructor.apply(this, arguments);
+      return _ref34;
     }
 
     Router.prototype.routes = {

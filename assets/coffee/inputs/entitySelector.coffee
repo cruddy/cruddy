@@ -4,7 +4,7 @@ class EntitySelector extends BaseInput
     events:
         "click .item": "check"
         "click .more": "more"
-        "click .search-input": -> false
+        "click [type=search]": -> false
 
     initialize: (options) ->
         super

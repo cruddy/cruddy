@@ -6,7 +6,8 @@ class Pagination extends Backbone.View
         "click a": "navigate"
 
     initialize: (options) ->
-        @listenTo @model, "change:last_page change:current_page", @render
+        @listenTo @model, "data", @render
+        @listenTo @model, "request", @disable
 
         $(document).on "keydown.pagination", $.proxy this, "hotkeys"
 
@@ -37,7 +38,12 @@ class Pagination extends Backbone.View
     navigate: (e) ->
         e.preventDefault()
 
-        @page $(e.target).data "page"
+        @page $(e.target).data "page" if !@model.inProgress()
+
+    disable: ->
+        @$("a").addClass "disabled"
+
+        this
 
     render: ->
         @$el.html @template @model.get("current_page"), @model.get("last_page")
@@ -46,9 +52,12 @@ class Pagination extends Backbone.View
 
     template: (current, last) ->
         html = ""
-        html += @link current - 1, "&larr; Назад", "previous" if current > 1
-        html += @link current + 1, "Вперед &rarr;", "next" if current < last
+        html += @renderLink current - 1, "&larr; Назад", "previous" + if current > 1 then "" else " disabled"
+        html += @renderStats()
+        html += @renderLink current + 1, "Вперед &rarr;", "next" + if current < last then "" else " disabled"
 
         html
 
-    link: (page, label, className = "") -> """<li class="#{ className }"><a href="#" data-page="#{ page }">#{ label }</a></li>"""
+    renderStats: -> """<li class="stats"><span>#{ @model.get "from" } - #{ @model.get "to" } / #{ @model.get "total" }</span></li>"""
+
+    renderLink: (page, label, className = "") -> """<li class="#{ className }"><a href="#" data-page="#{ page }">#{ label }</a></li>"""

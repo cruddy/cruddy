@@ -19,6 +19,7 @@ class Factory extends AttributeFactory {
         'file' => 'Kalnoy\Cruddy\Entity\Fields\Types\File',
         'image' => 'Kalnoy\Cruddy\Entity\Fields\Types\Image',
         'slug' => 'Kalnoy\Cruddy\Entity\Fields\Types\Slug',
+        'enum' => 'Kalnoy\Cruddy\Entity\Fields\Types\Enum',
     );
 
     protected $defaultType = 'string';

@@ -6,7 +6,11 @@ class Cruddy.fields.Relation extends Field
             multiple: @get "multiple"
             reference: @get "reference"
 
-    createFilterInput: (model) -> @createEditableInput model
+    createFilterInput: (model) ->
+        new EntityDropdown
+            model: model
+            key: @id
+            reference: @get "reference"
 
     format: (value) ->
         return "не указано" if _.isEmpty value

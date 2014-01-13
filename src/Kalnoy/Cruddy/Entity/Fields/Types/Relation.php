@@ -1,5 +1,7 @@
 <?php namespace Kalnoy\Cruddy\Entity\Fields\Types;
 
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Str;
 use Kalnoy\Cruddy\Entity\Columns\ColumnInterface;
@@ -192,7 +194,9 @@ class Relation extends AbstractField implements ColumnInterface {
      */
     function isFilterable()
     {
-        return false;
+        list(, $method) = $this->getConstraintMethod();
+
+        return (bool)$method;
     }
 
     /**
@@ -223,7 +227,7 @@ class Relation extends AbstractField implements ColumnInterface {
      *
      * @return $this
      */
-    function applyOrder(Builder $builder, $direction)
+    public function applyOrder(Builder $builder, $direction)
     {
         return $this;
     }
@@ -236,8 +240,64 @@ class Relation extends AbstractField implements ColumnInterface {
      *
      * @return $this
      */
-    function applyConstraints(Builder $query, $data, $boolean = 'and')
+    public function applyConstraints(Builder $query, $data, $boolean = 'and')
     {
+        list($relation, $method) = $this->getConstraintMethod();
+
+        if ($method)
+        {
+            $this->$method($query, $relation, $data, $boolean);
+        }
+
         return $this;
+    }
+
+    /**
+     * Resolve relation and constraint method.
+     *
+     * @return array
+     */
+    protected function getConstraintMethod()
+    {
+        $relation = $this->query();
+
+        $method = 'constraint'.class_basename($relation);
+
+        return method_exists($this, $method) ? [ $relation, $method ] : [ $relation, null ];
+    }
+
+    /**
+     * @param Builder   $query
+     * @param BelongsTo $relation
+     * @param int       $data
+     * @param bool      $boolean
+     */
+    protected function constraintBelongsTo(Builder $query, BelongsTo $relation, $data, $boolean)
+    {
+        $query->where($relation->getForeignKey(), '=', $this->process($data), $boolean);
+    }
+
+    /**
+     * @param Builder       $query
+     * @param BelongsToMany $relation
+     * @param mixed         $data
+     * @param bool          $boolean
+     */
+    protected function constraintBelongsToMany(Builder $query, BelongsToMany $relation, $data, $boolean)
+    {
+        $data = $this->process($data);
+
+        $query->whereExists(function (Builder $q) use ($relation, $data)
+        {
+            $connection = $q->getConnection();
+            $keyName = $connection->raw($relation->getParent()->getQualifiedKeyName());
+
+            $q
+                ->from($relation->getTable())
+                ->select($connection->raw('1'))
+                ->where($relation->getForeignKey(), $keyName)
+                ->where($relation->getOtherKey(), $data);
+
+        }, $boolean);
     }
 }

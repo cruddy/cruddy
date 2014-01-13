@@ -1193,6 +1193,33 @@ class SlugInput extends Backbone.View
             <button type="button" tabindex="-1" class="btn btn-default" title="Связать с полем #{ @model.entity.fields.get(@ref).get "label" }"><span class="glyphicon glyphicon-link"></span></button>
         </div>
         """
+class SelectInput extends TextInput
+    tagName: "select"
+
+    initialize: (options) ->
+        @items = options.items ? {}
+        @prompt = options.prompt ? null
+
+        super
+
+    applyChanges: (model, data) ->
+        @$("[value='#{ data }']").prop "selected", yes
+
+        this
+
+    render: ->
+        @$el.html @template()
+
+        super
+
+    template: ->
+        html = ""
+        html += @optionTemplate "", @prompt ? ""
+        html += @optionTemplate key, value for key, value of @items
+        html
+
+    optionTemplate: (value, title) ->
+        """<option value="#{ _.escape value }">#{ _.escape title }</option>"""
 Cruddy.fields = new Factory
 
 class FieldView extends Backbone.View
@@ -1358,7 +1385,11 @@ class Cruddy.fields.Relation extends Field
             multiple: @get "multiple"
             reference: @get "reference"
 
-    createFilterInput: (model) -> @createEditableInput model
+    createFilterInput: (model) ->
+        new EntityDropdown
+            model: model
+            key: @id
+            reference: @get "reference"
 
     format: (value) ->
         return "не указано" if _.isEmpty value
@@ -1398,6 +1429,25 @@ class Cruddy.fields.Slug extends Field
             key: @id
             attributes:
                 placeholder: @get "label"
+class Cruddy.fields.Enum extends Field
+    createEditableInput: (model) ->
+        new SelectInput
+            model: model
+            key: @id
+            prompt: @get "prompt"
+            items: @get "items"
+
+    createFilterInput: (model) ->
+        new SelectInput
+            model: model
+            key: @id
+            prompt: "Любое значение"
+            items: @get "items"
+
+    format: (value) ->
+        items = @get "items"
+
+        if value of items then items[value] else "n/a"
 Cruddy.columns = new Factory
 
 class Column extends Attribute

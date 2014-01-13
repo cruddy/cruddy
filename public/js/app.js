@@ -1,5 +1,5 @@
 (function() {
-  var API_URL, AdvFormData, Alert, App, Attribute, BaseFormatter, BaseInput, BooleanInput, Checkbox, Column, Cruddy, DataGrid, DataSource, Entity, EntityDropdown, EntityForm, EntityInstance, EntityPage, EntitySelector, Factory, Field, FieldList, FieldView, FileList, FilterList, ImageList, Pagination, Related, Router, SearchDataSource, SearchInput, SlugInput, StaticInput, TRANSITIONEND, TextInput, Textarea, after_break, entity_url, humanize, thumb, _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref18, _ref19, _ref2, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref26, _ref27, _ref28, _ref29, _ref3, _ref30, _ref31, _ref32, _ref33, _ref34, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9,
+  var API_URL, AdvFormData, Alert, App, Attribute, BaseFormatter, BaseInput, BooleanInput, Checkbox, Column, Cruddy, DataGrid, DataSource, Entity, EntityDropdown, EntityForm, EntityInstance, EntityPage, EntitySelector, Factory, Field, FieldList, FieldView, FileList, FilterList, ImageList, Pagination, Related, Router, SearchDataSource, SearchInput, SelectInput, SlugInput, StaticInput, TRANSITIONEND, TextInput, Textarea, after_break, entity_url, humanize, thumb, _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref18, _ref19, _ref2, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref26, _ref27, _ref28, _ref29, _ref3, _ref30, _ref31, _ref32, _ref33, _ref34, _ref35, _ref36, _ref4, _ref5, _ref6, _ref7, _ref8, _ref9,
     _this = this,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -1730,6 +1730,53 @@
 
   })(Backbone.View);
 
+  SelectInput = (function(_super) {
+    __extends(SelectInput, _super);
+
+    function SelectInput() {
+      _ref16 = SelectInput.__super__.constructor.apply(this, arguments);
+      return _ref16;
+    }
+
+    SelectInput.prototype.tagName = "select";
+
+    SelectInput.prototype.initialize = function(options) {
+      var _ref17, _ref18;
+      this.items = (_ref17 = options.items) != null ? _ref17 : {};
+      this.prompt = (_ref18 = options.prompt) != null ? _ref18 : null;
+      return SelectInput.__super__.initialize.apply(this, arguments);
+    };
+
+    SelectInput.prototype.applyChanges = function(model, data) {
+      this.$("[value='" + data + "']").prop("selected", true);
+      return this;
+    };
+
+    SelectInput.prototype.render = function() {
+      this.$el.html(this.template());
+      return SelectInput.__super__.render.apply(this, arguments);
+    };
+
+    SelectInput.prototype.template = function() {
+      var html, key, value, _ref17, _ref18;
+      html = "";
+      html += this.optionTemplate("", (_ref17 = this.prompt) != null ? _ref17 : "");
+      _ref18 = this.items;
+      for (key in _ref18) {
+        value = _ref18[key];
+        html += this.optionTemplate(key, value);
+      }
+      return html;
+    };
+
+    SelectInput.prototype.optionTemplate = function(value, title) {
+      return "<option value=\"" + (_.escape(value)) + "\">" + (_.escape(title)) + "</option>";
+    };
+
+    return SelectInput;
+
+  })(TextInput);
+
   Cruddy.fields = new Factory;
 
   FieldView = (function(_super) {
@@ -1827,9 +1874,9 @@
     };
 
     FieldView.prototype.dispose = function() {
-      var _ref16;
-      if ((_ref16 = this.input) != null) {
-        _ref16.remove();
+      var _ref17;
+      if ((_ref17 = this.input) != null) {
+        _ref17.remove();
       }
       return this;
     };
@@ -1847,8 +1894,8 @@
     __extends(Field, _super);
 
     function Field() {
-      _ref16 = Field.__super__.constructor.apply(this, arguments);
-      return _ref16;
+      _ref17 = Field.__super__.constructor.apply(this, arguments);
+      return _ref17;
     }
 
     Field.prototype.viewConstructor = FieldView;
@@ -1900,8 +1947,8 @@
     __extends(Input, _super);
 
     function Input() {
-      _ref17 = Input.__super__.constructor.apply(this, arguments);
-      return _ref17;
+      _ref18 = Input.__super__.constructor.apply(this, arguments);
+      return _ref18;
     }
 
     Input.prototype.createEditableInput = function(model) {
@@ -1960,8 +2007,8 @@
     __extends(DateTime, _super);
 
     function DateTime() {
-      _ref18 = DateTime.__super__.constructor.apply(this, arguments);
-      return _ref18;
+      _ref19 = DateTime.__super__.constructor.apply(this, arguments);
+      return _ref19;
     }
 
     DateTime.prototype.format = function(value) {
@@ -1980,8 +2027,8 @@
     __extends(Boolean, _super);
 
     function Boolean() {
-      _ref19 = Boolean.__super__.constructor.apply(this, arguments);
-      return _ref19;
+      _ref20 = Boolean.__super__.constructor.apply(this, arguments);
+      return _ref20;
     }
 
     Boolean.prototype.createEditableInput = function(model) {
@@ -2015,8 +2062,8 @@
     __extends(Relation, _super);
 
     function Relation() {
-      _ref20 = Relation.__super__.constructor.apply(this, arguments);
-      return _ref20;
+      _ref21 = Relation.__super__.constructor.apply(this, arguments);
+      return _ref21;
     }
 
     Relation.prototype.createEditableInput = function(model) {
@@ -2029,7 +2076,11 @@
     };
 
     Relation.prototype.createFilterInput = function(model) {
-      return this.createEditableInput(model);
+      return new EntityDropdown({
+        model: model,
+        key: this.id,
+        reference: this.get("reference")
+      });
     };
 
     Relation.prototype.format = function(value) {
@@ -2051,8 +2102,8 @@
     __extends(File, _super);
 
     function File() {
-      _ref21 = File.__super__.constructor.apply(this, arguments);
-      return _ref21;
+      _ref22 = File.__super__.constructor.apply(this, arguments);
+      return _ref22;
     }
 
     File.prototype.createEditableInput = function(model) {
@@ -2080,8 +2131,8 @@
     __extends(Image, _super);
 
     function Image() {
-      _ref22 = Image.__super__.constructor.apply(this, arguments);
-      return _ref22;
+      _ref23 = Image.__super__.constructor.apply(this, arguments);
+      return _ref23;
     }
 
     Image.prototype.createEditableInput = function(model) {
@@ -2111,8 +2162,8 @@
     __extends(Slug, _super);
 
     function Slug() {
-      _ref23 = Slug.__super__.constructor.apply(this, arguments);
-      return _ref23;
+      _ref24 = Slug.__super__.constructor.apply(this, arguments);
+      return _ref24;
     }
 
     Slug.prototype.createEditableInput = function(model) {
@@ -2142,14 +2193,54 @@
 
   })(Field);
 
+  Cruddy.fields.Enum = (function(_super) {
+    __extends(Enum, _super);
+
+    function Enum() {
+      _ref25 = Enum.__super__.constructor.apply(this, arguments);
+      return _ref25;
+    }
+
+    Enum.prototype.createEditableInput = function(model) {
+      return new SelectInput({
+        model: model,
+        key: this.id,
+        prompt: this.get("prompt"),
+        items: this.get("items")
+      });
+    };
+
+    Enum.prototype.createFilterInput = function(model) {
+      return new SelectInput({
+        model: model,
+        key: this.id,
+        prompt: "Любое значение",
+        items: this.get("items")
+      });
+    };
+
+    Enum.prototype.format = function(value) {
+      var items;
+      items = this.get("items");
+      if (value in items) {
+        return items[value];
+      } else {
+        return "n/a";
+      }
+    };
+
+    return Enum;
+
+  })(Field);
+
   Cruddy.columns = new Factory;
 
   Column = (function(_super) {
     __extends(Column, _super);
 
     function Column() {
-      _ref24 = Column.__super__.constructor.apply(this, arguments);
-      return _ref24;
+      _ref26 = Column.__super__.constructor.apply(this, arguments);
+      return _ref26;
     }
 
     Column.prototype.initialize = function(options) {
@@ -2197,13 +2288,13 @@
     __extends(Field, _super);
 
     function Field() {
-      _ref25 = Field.__super__.constructor.apply(this, arguments);
-      return _ref25;
+      _ref27 = Field.__super__.constructor.apply(this, arguments);
+      return _ref27;
     }
 
     Field.prototype.initialize = function(attributes) {
-      var field, _ref26;
-      field = (_ref26 = attributes.field) != null ? _ref26 : attributes.id;
+      var field, _ref28;
+      field = (_ref28 = attributes.field) != null ? _ref28 : attributes.id;
       this.field = attributes.entity.fields.get(field);
       if (attributes.title === null) {
         this.set("title", this.field.get("label"));
@@ -2235,8 +2326,8 @@
     __extends(Computed, _super);
 
     function Computed() {
-      _ref26 = Computed.__super__.constructor.apply(this, arguments);
-      return _ref26;
+      _ref28 = Computed.__super__.constructor.apply(this, arguments);
+      return _ref28;
     }
 
     Computed.prototype.createFilterInput = function(model) {
@@ -2282,8 +2373,8 @@
     __extends(Image, _super);
 
     function Image() {
-      _ref27 = Image.__super__.constructor.apply(this, arguments);
-      return _ref27;
+      _ref29 = Image.__super__.constructor.apply(this, arguments);
+      return _ref29;
     }
 
     Image.prototype.defaultOptions = {
@@ -2311,8 +2402,8 @@
     __extends(Related, _super);
 
     function Related() {
-      _ref28 = Related.__super__.constructor.apply(this, arguments);
-      return _ref28;
+      _ref30 = Related.__super__.constructor.apply(this, arguments);
+      return _ref30;
     }
 
     Related.prototype.resolve = function() {
@@ -2334,8 +2425,8 @@
     __extends(One, _super);
 
     function One() {
-      _ref29 = One.__super__.constructor.apply(this, arguments);
-      return _ref29;
+      _ref31 = One.__super__.constructor.apply(this, arguments);
+      return _ref31;
     }
 
     One.prototype.associate = function(parent, child) {
@@ -2351,8 +2442,8 @@
     __extends(MorphOne, _super);
 
     function MorphOne() {
-      _ref30 = MorphOne.__super__.constructor.apply(this, arguments);
-      return _ref30;
+      _ref32 = MorphOne.__super__.constructor.apply(this, arguments);
+      return _ref32;
     }
 
     MorphOne.prototype.associate = function(parent, child) {
@@ -2368,8 +2459,8 @@
     __extends(Entity, _super);
 
     function Entity() {
-      _ref31 = Entity.__super__.constructor.apply(this, arguments);
-      return _ref31;
+      _ref33 = Entity.__super__.constructor.apply(this, arguments);
+      return _ref33;
     }
 
     Entity.prototype.initialize = function(attributes, options) {
@@ -2417,11 +2508,11 @@
         columns = this.columns;
       }
       filters = (function() {
-        var _i, _len, _ref32, _results;
-        _ref32 = columns.models;
+        var _i, _len, _ref34, _results;
+        _ref34 = columns.models;
         _results = [];
-        for (_i = 0, _len = _ref32.length; _i < _len; _i++) {
-          col = _ref32[_i];
+        for (_i = 0, _len = _ref34.length; _i < _len; _i++) {
+          col = _ref34[_i];
           if (col.get("filterable")) {
             _results.push(col.createFilter());
           }
@@ -2432,7 +2523,7 @@
     };
 
     Entity.prototype.createInstance = function(attributes, relatedData) {
-      var item, related, _i, _len, _ref32;
+      var item, related, _i, _len, _ref34;
       if (attributes == null) {
         attributes = {};
       }
@@ -2440,9 +2531,9 @@
         relatedData = {};
       }
       related = {};
-      _ref32 = this.related.models;
-      for (_i = 0, _len = _ref32.length; _i < _len; _i++) {
-        item = _ref32[_i];
+      _ref34 = this.related.models;
+      for (_i = 0, _len = _ref34.length; _i < _len; _i++) {
+        item = _ref34[_i];
         related[item.id] = item.related.createInstance(relatedData[item.id]);
       }
       return new EntityInstance(_.extend({}, this.get("defaults"), attributes), {
@@ -2494,8 +2585,8 @@
     __extends(EntityInstance, _super);
 
     function EntityInstance() {
-      _ref32 = EntityInstance.__super__.constructor.apply(this, arguments);
-      return _ref32;
+      _ref34 = EntityInstance.__super__.constructor.apply(this, arguments);
+      return _ref34;
     }
 
     EntityInstance.prototype.initialize = function(attributes, options) {
@@ -2534,9 +2625,9 @@
     };
 
     EntityInstance.prototype.sync = function(method, model, options) {
-      var _ref33;
+      var _ref35;
       if (method === "update" || method === "create") {
-        options.data = new AdvFormData((_ref33 = options.attrs) != null ? _ref33 : this.attributes).original;
+        options.data = new AdvFormData((_ref35 = options.attrs) != null ? _ref35 : this.attributes).original;
         options.contentType = false;
         options.processData = false;
       }
@@ -2551,14 +2642,14 @@
         return xhr;
       }
       queue = function(xhr) {
-        var key, model, save, _ref33;
+        var key, model, save, _ref35;
         save = [];
         if (xhr != null) {
           save.push(xhr);
         }
-        _ref33 = _this.related;
-        for (key in _ref33) {
-          model = _ref33[key];
+        _ref35 = _this.related;
+        for (key in _ref35) {
+          model = _ref35[key];
           if (model.isNew()) {
             _this.entity.related.get(key).associate(_this, model);
           }
@@ -2582,18 +2673,18 @@
     };
 
     EntityInstance.prototype.hasChangedSinceSync = function() {
-      var key, related, value, _ref33, _ref34;
-      _ref33 = this.attributes;
-      for (key in _ref33) {
-        value = _ref33[key];
+      var key, related, value, _ref35, _ref36;
+      _ref35 = this.attributes;
+      for (key in _ref35) {
+        value = _ref35[key];
         if (!_.isEqual(value, this.original[key])) {
           return true;
         }
       }
       if (!this.isNew()) {
-        _ref34 = this.related;
-        for (key in _ref34) {
-          related = _ref34[key];
+        _ref36 = this.related;
+        for (key in _ref36) {
+          related = _ref36[key];
           if (related.hasChangedSinceSync()) {
             return true;
           }
@@ -2741,12 +2832,12 @@
     }
 
     EntityForm.prototype.initialize = function() {
-      var key, related, _ref33;
+      var key, related, _ref35;
       this.listenTo(this.model, "destroy", this.handleDestroy);
       this.signOn(this.model);
-      _ref33 = this.model.related;
-      for (key in _ref33) {
-        related = _ref33[key];
+      _ref35 = this.model.related;
+      for (key in _ref35) {
+        related = _ref35[key];
         this.signOn(related);
       }
       this.hotkeys = $(document).on("keydown." + this.cid, "body", $.proxy(this, "hotkeys"));
@@ -2804,8 +2895,8 @@
     };
 
     EntityForm.prototype.displayError = function(xhr) {
-      var _ref33;
-      if (((_ref33 = xhr.responseJSON) != null ? _ref33.error : void 0) !== "VALIDATION") {
+      var _ref35;
+      if (((_ref35 = xhr.responseJSON) != null ? _ref35.error : void 0) !== "VALIDATION") {
         return this.displayAlert("Ошибка", "danger");
       }
     };
@@ -2881,7 +2972,7 @@
     };
 
     EntityForm.prototype.render = function() {
-      var key, related, _ref33;
+      var key, related, _ref35;
       this.dispose();
       this.$el.html(this.template());
       this.nav = this.$(".nav");
@@ -2890,9 +2981,9 @@
       this.destroy = this.$(".btn-destroy");
       this.tabs = [];
       this.renderTab(this.model, true);
-      _ref33 = this.model.related;
-      for (key in _ref33) {
-        related = _ref33[key];
+      _ref35 = this.model.related;
+      for (key in _ref35) {
+        related = _ref35[key];
         this.renderTab(related);
       }
       return this.update();
@@ -2943,11 +3034,11 @@
     };
 
     EntityForm.prototype.dispose = function() {
-      var fieldList, _i, _len, _ref33;
+      var fieldList, _i, _len, _ref35;
       if (this.tabs != null) {
-        _ref33 = this.tabs;
-        for (_i = 0, _len = _ref33.length; _i < _len; _i++) {
-          fieldList = _ref33[_i];
+        _ref35 = this.tabs;
+        for (_i = 0, _len = _ref35.length; _i < _len; _i++) {
+          fieldList = _ref35[_i];
           fieldList.remove();
         }
       }
@@ -2972,8 +3063,8 @@
     __extends(App, _super);
 
     function App() {
-      _ref33 = App.__super__.constructor.apply(this, arguments);
-      return _ref33;
+      _ref35 = App.__super__.constructor.apply(this, arguments);
+      return _ref35;
     }
 
     App.prototype.entities = {};
@@ -3049,11 +3140,11 @@
           return entity;
         }
         wait = (function() {
-          var _i, _len, _ref34, _results;
-          _ref34 = entity.related.models;
+          var _i, _len, _ref36, _results;
+          _ref36 = entity.related.models;
           _results = [];
-          for (_i = 0, _len = _ref34.length; _i < _len; _i++) {
-            related = _ref34[_i];
+          for (_i = 0, _len = _ref36.length; _i < _len; _i++) {
+            related = _ref36[_i];
             _results.push(related.resolve());
           }
           return _results;
@@ -3065,9 +3156,9 @@
     };
 
     App.prototype.dispose = function() {
-      var _ref34;
-      if ((_ref34 = this.page) != null) {
-        _ref34.remove();
+      var _ref36;
+      if ((_ref36 = this.page) != null) {
+        _ref36.remove();
       }
       return this;
     };
@@ -3082,8 +3173,8 @@
     __extends(Router, _super);
 
     function Router() {
-      _ref34 = Router.__super__.constructor.apply(this, arguments);
-      return _ref34;
+      _ref36 = Router.__super__.constructor.apply(this, arguments);
+      return _ref36;
     }
 
     Router.prototype.routes = {

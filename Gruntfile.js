@@ -61,6 +61,7 @@ module.exports = function(grunt) {
                     // Formatters
                     '<%= app %>/formatters/base.coffee',
                     '<%= app %>/formatters/image.coffee',
+                    '<%= app %>/formatters/plain.coffee',
 
                     // Related
                     '<%= app %>/related/related.coffee',

@@ -1516,6 +1516,8 @@ class Cruddy.formatters.Image extends BaseFormatter
         """
         <img src="#{ thumb value, @options.width, @options.height }" width="#{ @options.width or @defaultOptions.width }" height="#{ @options.height or @defaultOptions.height }" alt="#{ _.escape value }">
         """
+class Cruddy.formatters.Plain extends BaseFormatter
+    format: (value) -> value
 Cruddy.related = new Factory
 
 class Related extends Backbone.Model

@@ -1,4 +1,4 @@
-<?php namespace Kalnoy\Cruddy;
+<?php namespace Kalnoy\Cruddy\Service\Permissions;
 
 use Kalnoy\Cruddy\Entity\Entity;
 

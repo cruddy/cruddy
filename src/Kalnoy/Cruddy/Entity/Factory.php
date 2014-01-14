@@ -4,7 +4,7 @@ use Closure;
 use Illuminate\Filesystem\Filesystem;
 use Kalnoy\Cruddy\EntityNotFoundException;
 use Kalnoy\Cruddy\Service\FileUploader;
-use Kalnoy\Cruddy\PermissionsInterface;
+use Kalnoy\Cruddy\Service\Permissions\PermissionsInterface;
 use Kalnoy\Cruddy\Service\Validation\LaravelValidator;
 use RuntimeException;
 use Symfony\Component\Translation\TranslatorInterface;
@@ -45,7 +45,7 @@ class Factory {
      * @param TranslatorInterface                 $translator
      * @param ConfigRepository                    $config
      * @param ValidationFactory                   $validator
-     * @param \Kalnoy\Cruddy\PermissionsInterface $permissions
+     * @param PermissionsInterface                $permissions
      * @param FieldFactory                        $fields
      * @param ColumnFactory                       $columns
      * @param Related\Factory                     $related

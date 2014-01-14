@@ -1,6 +1,7 @@
 <?php namespace Kalnoy\Cruddy;
 
 use Illuminate\Support\ServiceProvider;
+use Kalnoy\Cruddy\Service\Permissions\SentryPermissions;
 
 class CruddyServiceProvider extends ServiceProvider {
 
@@ -37,7 +38,7 @@ class CruddyServiceProvider extends ServiceProvider {
 
     public function registerPermissions()
     {
-        $this->app['Kalnoy\Cruddy\PermissionsInterface'] = $this->app->share(function ($app) {
+        $this->app['Kalnoy\Cruddy\Service\Permissions\PermissionsInterface'] = $this->app->share(function ($app) {
 
             return new SentryPermissions($app['sentry']);
         });
@@ -53,7 +54,7 @@ class CruddyServiceProvider extends ServiceProvider {
             $validator = $app['validator'];
             $translator = $app['translator'];
             $files = $app['files'];
-            $permissions = $app['Kalnoy\Cruddy\PermissionsInterface'];
+            $permissions = $app['Kalnoy\Cruddy\Service\Permissions\PermissionsInterface'];
 
             $fields = new Entity\Fields\Factory();
             $columns = new Entity\Columns\Factory();
@@ -63,7 +64,6 @@ class CruddyServiceProvider extends ServiceProvider {
             $columns,
                 $related);
 
-            $permissions = $app['Kalnoy\Cruddy\PermissionsInterface'];
             $menu = new Menu($factory, $permissions);
 
             return new Environment($config, $factory, $permissions, $menu, $app['request']);

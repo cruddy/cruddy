@@ -4,7 +4,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Kalnoy\Cruddy\ComponentInterface;
-use Kalnoy\Cruddy\PermissionsInterface;
+use Kalnoy\Cruddy\Service\Permissions\PermissionsInterface;
 use Symfony\Component\Translation\TranslatorInterface;
 use Kalnoy\Cruddy;
 

@@ -6,6 +6,7 @@ use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Config;
 use Exception;
 use Kalnoy\Cruddy\Entity\Entity;
+use Kalnoy\Cruddy\Service\Permissions\PermissionsInterface;
 use Kalnoy\Cruddy\Service\Validation\ValidationException;
 
 class EntityApiController extends ApiController {
@@ -70,9 +71,10 @@ class EntityApiController extends ApiController {
 
             if (Input::has('order_by'))
             {
-                $order = array(
+                $order =
+                [
                     Input::get('order_by') => Input::get('order_dir', 'asc'),
-                );
+                ];
             }
 
             $filters = Input::get('filters') ?: array();

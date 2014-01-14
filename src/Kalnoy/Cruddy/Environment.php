@@ -4,6 +4,7 @@ use Illuminate\Support\Contracts\JsonableInterface;
 use Illuminate\Http\Request;
 use Illuminate\Config\Repository as Config;
 use Kalnoy\Cruddy\Entity\Factory as EntityFactory;
+use Kalnoy\Cruddy\Service\Permissions\PermissionsInterface;
 
 class Environment implements JsonableInterface {
 

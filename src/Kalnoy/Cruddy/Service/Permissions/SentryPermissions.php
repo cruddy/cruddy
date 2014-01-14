@@ -1,4 +1,4 @@
-<?php namespace Kalnoy\Cruddy;
+<?php namespace Kalnoy\Cruddy\Service\Permissions;
 
 use Cartalyst\Sentry\Sentry;
 use Kalnoy\Cruddy\Entity\Entity;

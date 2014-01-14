@@ -1,6 +1,7 @@
 <?php namespace Kalnoy\Cruddy;
 
 use Kalnoy\Cruddy\Entity\Factory as EntityFactory;
+use Kalnoy\Cruddy\Service\Permissions\PermissionsInterface;
 
 class Menu {
 

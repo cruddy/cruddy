@@ -50,21 +50,21 @@
         display: none;
         position: absolute;
         width: 100%;
-        top: 100%;
         left: 0;
         z-index: @zindex-dropdown;
 
         background: @dropdown-bg;
 
         border: 1px solid @input-border;
-        border-top: none;
-        .border-bottom-radius(@border-radius-small);
 
-        padding-bottom: @border-radius-small;
         padding-top: @padding-base-vertical;
     }
 
-    &.open {
+    &.open .entity-selector {
+        display: block;
+    }
+
+    &.open.open-down {
         .input-group {
             .form-control, .btn {
                 .border-bottom-radius(0);
@@ -76,7 +76,24 @@
         }
 
         .entity-selector {
-            display: block;
+            top: 100%;
+            border-top: none;
+            .border-bottom-radius(@border-radius-small);
+            padding-bottom: @border-radius-small;
+        }
+    }
+
+    &.open.open-up {
+        .input-group {
+            .form-control, .btn {
+                .border-top-radius(0);
+            }
+        }
+
+        .entity-selector {
+            bottom: 26px;
+            border-bottom: none;
+            .border-top-radius(@border-radius-small);
         }
     }
 }

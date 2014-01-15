@@ -5,7 +5,16 @@ class EntityDropdown extends BaseInput
         "click .btn-remove": "removeItem"
         "keydown [type=search]": "searchKeydown"
         "show.bs.dropdown": "renderDropdown"
-        "shown.bs.dropdown": -> after_break => @selector.focus()
+
+        "shown.bs.dropdown": ->
+            after_break => @selector.focus()
+
+            this
+
+        "hidden.bs.dropdown": ->
+            @opened = no
+
+            this
 
     mutiple: false
     reference: null
@@ -35,7 +44,9 @@ class EntityDropdown extends BaseInput
             return false
 
     renderDropdown: ->
-        return if @selector?
+        @opened = yes
+
+        return @toggleOpenDirection() if @selector?
 
         @selector = new EntitySelector
             model: @model
@@ -45,6 +56,18 @@ class EntityDropdown extends BaseInput
 
         @selector.render().entity.done => @$el.append @selector.el
 
+        @toggleOpenDirection()
+
+    toggleOpenDirection: ->
+        return if not @opened
+
+        wnd = $(window)
+        space = wnd.height() - @$el.offset().top - wnd.scrollTop() - @$el.parent(".field-list").scrollTop()
+
+        targetClass = if space > 292 then "open-down" else "open-up"
+
+        @$el.removeClass("open-up open-down").addClass targetClass if not @$el.hasClass targetClass
+
         this
 
     applyChanges: (model, value) ->
@@ -53,6 +76,8 @@ class EntityDropdown extends BaseInput
         else
             @updateItem()
             @$el.removeClass "open"
+
+        @toggleOpenDirection()
 
         this
 

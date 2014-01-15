@@ -670,7 +670,16 @@ class EntityDropdown extends BaseInput
         "click .btn-remove": "removeItem"
         "keydown [type=search]": "searchKeydown"
         "show.bs.dropdown": "renderDropdown"
-        "shown.bs.dropdown": -> after_break => @selector.focus()
+
+        "shown.bs.dropdown": ->
+            after_break => @selector.focus()
+
+            this
+
+        "hidden.bs.dropdown": ->
+            @opened = no
+
+            this
 
     mutiple: false
     reference: null
@@ -700,7 +709,9 @@ class EntityDropdown extends BaseInput
             return false
 
     renderDropdown: ->
-        return if @selector?
+        @opened = yes
+
+        return @toggleOpenDirection() if @selector?
 
         @selector = new EntitySelector
             model: @model
@@ -710,6 +721,18 @@ class EntityDropdown extends BaseInput
 
         @selector.render().entity.done => @$el.append @selector.el
 
+        @toggleOpenDirection()
+
+    toggleOpenDirection: ->
+        return if not @opened
+
+        wnd = $(window)
+        space = wnd.height() - @$el.offset().top - wnd.scrollTop() - @$el.parent(".field-list").scrollTop()
+
+        targetClass = if space > 292 then "open-down" else "open-up"
+
+        @$el.removeClass("open-up open-down").addClass targetClass if not @$el.hasClass targetClass
+
         this
 
     applyChanges: (model, value) ->
@@ -718,6 +741,8 @@ class EntityDropdown extends BaseInput
         else
             @updateItem()
             @$el.removeClass "open"
+
+        @toggleOpenDirection()
 
         this
 
@@ -1296,7 +1321,7 @@ class FieldView extends Backbone.View
         """
 
     # Get whether this field view is visible.
-    isVisible: -> @field.get("visible") and (@field.get("editable") and @field.get("updatable") or not @model.isNew())
+    isVisible: -> @field.get("visible") and (@field.get("editable") and @field.get("updateable") or not @model.isNew())
 
     toggleVisibility: -> @$el.toggle @isVisible()
 
@@ -1330,7 +1355,7 @@ class Field extends Attribute
 
     format: (value) -> if value then value else "n/a"
 
-    isEditable: (model) -> @get("editable") and (@get("updatable") or not model.isNew()) and model.isSaveable()
+    isEditable: (model) -> @get("editable") and (@get("updateable") or not model.isNew()) and model.isSaveable()
 class Cruddy.fields.Input extends Field
     createEditableInput: (model) ->
         attributes = placeholder: @get "label"
@@ -1600,6 +1625,12 @@ class Entity extends Backbone.Model
 
             instance
 
+    getCopyableAttributes: (attributes) ->
+        data = {}
+        data[field.id] = attributes[field.id] for field in @fields.models when field.get("copyable") and field.id of attributes
+
+        data
+
     url: (id) -> entity_url @id, id
 
     link: (id) -> "#{ @id}" + if id? then "/#{ id }" else ""
@@ -1620,7 +1651,7 @@ class EntityInstance extends Backbone.Model
         @set "errors", {}
         null
 
-    link: -> @entity.link @id
+    link: -> @entity.link if @isNew() then "create" else @id
 
     url: -> @entity.url @id
 
@@ -1656,6 +1687,16 @@ class EntityInstance extends Backbone.Model
         if @isNew() then xhr.then (resp) -> queue() else queue xhr
 
     parse: (resp) -> resp.data
+
+    copy: ->
+        copy = @entity.createInstance()
+
+        copy.set @getCopyableAttributes(), silent: yes
+        copy.related[key].set item.getCopyableAttributes(), silent: yes for key, item of @related
+
+        copy
+
+    getCopyableAttributes: -> @entity.getCopyableAttributes @attributes
 
     hasChangedSinceSync: ->
         return yes for key, value of @attributes when not _.isEqual value, @original[key]
@@ -1773,6 +1814,7 @@ class EntityForm extends Backbone.View
         "click .btn-save": "save"
         "click .btn-close": "close"
         "click .btn-destroy": "destroy"
+        "click .btn-copy": "copy"
 
     constructor: (options) ->
         @className += " " + @className + "-" + options.model.entity.id
@@ -1888,6 +1930,12 @@ class EntityForm extends Backbone.View
 
         this
 
+    copy: ->
+        @model.entity.set "instance", copy = @model.copy()
+        Cruddy.router.navigate copy.link()
+
+        this
+
     render: ->
         @dispose()
 
@@ -1897,6 +1945,7 @@ class EntityForm extends Backbone.View
         @footer = @$ "footer"
         @submit = @$ ".btn-save"
         @destroy = @$ ".btn-destroy"
+        @copy = @$ ".btn-copy"
 
         @tabs = []
         @renderTab @model, yes
@@ -1924,19 +1973,26 @@ class EntityForm extends Backbone.View
         @destroy.attr "disabled", @request?
         @destroy.html if @model.entity.get "soft_deleting" and @model.get "deleted_at" then "Восстановить" else "<span class='glyphicon glyphicon-trash' title='Удалить'></span>"
         @destroy.toggle not @model.isNew() and @model.entity.get "can_delete"
+        
+        @copy.toggle not @model.isNew() and @model.entity.get "can_create"
 
         this
 
     template: ->
         """
         <header>
+            <div class="btn-group btn-group-sm">
+                <button type="button" tabindex="-1" class="btn btn-link btn-copy" title="Копировать">
+                    <span class="glyphicon glyphicon-book"></span>
+                </button>
+            </div>
             <ul class="nav nav-pills"></ul>
         </header>
 
         <footer>
-            <button class="btn btn-default btn-close btn-sm" type="button">Закрыть</button>
-            <button class="btn btn-default btn-destroy btn-sm" type="button"></button>
-            <button class="btn btn-primary btn-save btn-sm" type="button" disabled></button>
+            <button type="button" class="btn btn-default btn-close btn-sm" type="button">Закрыть</button>
+            <button type="button" class="btn btn-default btn-destroy btn-sm" type="button"></button>
+            <button type="button" class="btn btn-primary btn-save btn-sm" type="button" disabled></button>
         </footer>
         """
 

@@ -1058,9 +1058,14 @@
       "show.bs.dropdown": "renderDropdown",
       "shown.bs.dropdown": function() {
         var _this = this;
-        return after_break(function() {
+        after_break(function() {
           return _this.selector.focus();
         });
+        return this;
+      },
+      "hidden.bs.dropdown": function() {
+        this.opened = false;
+        return this;
       }
     };
 
@@ -1101,8 +1106,9 @@
 
     EntityDropdown.prototype.renderDropdown = function() {
       var _this = this;
+      this.opened = true;
       if (this.selector != null) {
-        return;
+        return this.toggleOpenDirection();
       }
       this.selector = new EntitySelector({
         model: this.model,
@@ -1113,6 +1119,20 @@
       this.selector.render().entity.done(function() {
         return _this.$el.append(_this.selector.el);
       });
+      return this.toggleOpenDirection();
+    };
+
+    EntityDropdown.prototype.toggleOpenDirection = function() {
+      var space, targetClass, wnd;
+      if (!this.opened) {
+        return;
+      }
+      wnd = $(window);
+      space = wnd.height() - this.$el.offset().top - wnd.scrollTop() - this.$el.parent(".field-list").scrollTop();
+      targetClass = space > 292 ? "open-down" : "open-up";
+      if (!this.$el.hasClass(targetClass)) {
+        this.$el.removeClass("open-up open-down").addClass(targetClass);
+      }
       return this;
     };
 
@@ -1123,6 +1143,7 @@
         this.updateItem();
         this.$el.removeClass("open");
       }
+      this.toggleOpenDirection();
       return this;
     };
 
@@ -1859,7 +1880,7 @@
     };
 
     FieldView.prototype.isVisible = function() {
-      return this.field.get("visible") && (this.field.get("editable") && this.field.get("updatable") || !this.model.isNew());
+      return this.field.get("visible") && (this.field.get("editable") && this.field.get("updateable") || !this.model.isNew());
     };
 
     FieldView.prototype.toggleVisibility = function() {
@@ -1936,7 +1957,7 @@
     };
 
     Field.prototype.isEditable = function(model) {
-      return this.get("editable") && (this.get("updatable") || !model.isNew()) && model.isSaveable();
+      return this.get("editable") && (this.get("updateable") || !model.isNew()) && model.isSaveable();
     };
 
     return Field;
@@ -2585,6 +2606,19 @@
       });
     };
 
+    Entity.prototype.getCopyableAttributes = function(attributes) {
+      var data, field, _i, _len, _ref35;
+      data = {};
+      _ref35 = this.fields.models;
+      for (_i = 0, _len = _ref35.length; _i < _len; _i++) {
+        field = _ref35[_i];
+        if (field.get("copyable") && field.id in attributes) {
+          data[field.id] = attributes[field.id];
+        }
+      }
+      return data;
+    };
+
     Entity.prototype.url = function(id) {
       return entity_url(this.id, id);
     };
@@ -2633,7 +2667,7 @@
     };
 
     EntityInstance.prototype.link = function() {
-      return this.entity.link(this.id);
+      return this.entity.link(this.isNew() ? "create" : this.id);
     };
 
     EntityInstance.prototype.url = function() {
@@ -2686,6 +2720,26 @@
 
     EntityInstance.prototype.parse = function(resp) {
       return resp.data;
+    };
+
+    EntityInstance.prototype.copy = function() {
+      var copy, item, key, _ref36;
+      copy = this.entity.createInstance();
+      copy.set(this.getCopyableAttributes(), {
+        silent: true
+      });
+      _ref36 = this.related;
+      for (key in _ref36) {
+        item = _ref36[key];
+        copy.related[key].set(item.getCopyableAttributes(), {
+          silent: true
+        });
+      }
+      return copy;
+    };
+
+    EntityInstance.prototype.getCopyableAttributes = function() {
+      return this.entity.getCopyableAttributes(this.attributes);
     };
 
     EntityInstance.prototype.hasChangedSinceSync = function() {
@@ -2839,7 +2893,8 @@
     EntityForm.prototype.events = {
       "click .btn-save": "save",
       "click .btn-close": "close",
-      "click .btn-destroy": "destroy"
+      "click .btn-destroy": "destroy",
+      "click .btn-copy": "copy"
     };
 
     function EntityForm(options) {
@@ -2987,6 +3042,13 @@
       return this;
     };
 
+    EntityForm.prototype.copy = function() {
+      var copy;
+      this.model.entity.set("instance", copy = this.model.copy());
+      Cruddy.router.navigate(copy.link());
+      return this;
+    };
+
     EntityForm.prototype.render = function() {
       var key, related, _ref36;
       this.dispose();
@@ -2995,6 +3057,7 @@
       this.footer = this.$("footer");
       this.submit = this.$(".btn-save");
       this.destroy = this.$(".btn-destroy");
+      this.copy = this.$(".btn-copy");
       this.tabs = [];
       this.renderTab(this.model, true);
       _ref36 = this.model.related;
@@ -3027,11 +3090,12 @@
       this.destroy.attr("disabled", this.request != null);
       this.destroy.html(this.model.entity.get("soft_deleting" && this.model.get("deleted_at")) ? "Восстановить" : "<span class='glyphicon glyphicon-trash' title='Удалить'></span>");
       this.destroy.toggle(!this.model.isNew() && this.model.entity.get("can_delete"));
+      this.copy.toggle(!this.model.isNew() && this.model.entity.get("can_create"));
       return this;
     };
 
     EntityForm.prototype.template = function() {
-      return "<header>\n    <ul class=\"nav nav-pills\"></ul>\n</header>\n\n<footer>\n    <button class=\"btn btn-default btn-close btn-sm\" type=\"button\">Закрыть</button>\n    <button class=\"btn btn-default btn-destroy btn-sm\" type=\"button\"></button>\n    <button class=\"btn btn-primary btn-save btn-sm\" type=\"button\" disabled></button>\n</footer>";
+      return "<header>\n    <div class=\"btn-group btn-group-sm\">\n        <button type=\"button\" tabindex=\"-1\" class=\"btn btn-link btn-copy\" title=\"Копировать\">\n            <span class=\"glyphicon glyphicon-book\"></span>\n        </button>\n    </div>\n    <ul class=\"nav nav-pills\"></ul>\n</header>\n\n<footer>\n    <button type=\"button\" class=\"btn btn-default btn-close btn-sm\" type=\"button\">Закрыть</button>\n    <button type=\"button\" class=\"btn btn-default btn-destroy btn-sm\" type=\"button\"></button>\n    <button type=\"button\" class=\"btn btn-primary btn-save btn-sm\" type=\"button\" disabled></button>\n</footer>";
     };
 
     EntityForm.prototype.navTemplate = function(label, target, active) {

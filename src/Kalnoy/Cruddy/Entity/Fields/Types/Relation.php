@@ -161,10 +161,12 @@ class Relation extends AbstractField implements ColumnInterface {
      */
     public function toArray()
     {
-        return parent::toArray() + array(
+        return
+        [
             'reference' => $this->entity()->getId(),
             'multiple' => $this->isMultiple(),
-        );
+
+        ] + parent::toArray();
     }
 
     /**

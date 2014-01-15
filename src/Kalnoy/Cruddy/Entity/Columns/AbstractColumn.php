@@ -59,7 +59,8 @@ abstract class AbstractColumn extends Attribute implements ColumnInterface {
      */
     public function toArray()
     {
-        return parent::toArray() + array(
+        return
+        [
             'title' => $this->getTitle(),
             'sortable' => $this->isSortable(),
             'filterable' => $this->isFilterable(),
@@ -67,6 +68,7 @@ abstract class AbstractColumn extends Attribute implements ColumnInterface {
             'order_dir' => $this->order_dir,
             'formatter' => $this->formatter,
             'formatterOptions' => $this->formatterOptions,
-        );
+
+        ] + parent::toArray();
     }
 }

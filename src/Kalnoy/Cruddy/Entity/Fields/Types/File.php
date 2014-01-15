@@ -118,10 +118,13 @@ class File extends AbstractField implements ColumnInterface {
      */
     public function toArray()
     {
-        return parent::toArray() + [
+        return
+        [
             'multiple' => $this->multiple,
             'accepts' => $this->accepts,
-        ];
+            'copyable' => false,
+
+        ] + parent::toArray();
     }
 
     /**

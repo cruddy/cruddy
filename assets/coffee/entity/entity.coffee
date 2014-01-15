@@ -60,6 +60,12 @@ class Entity extends Backbone.Model
 
             instance
 
+    getCopyableAttributes: (attributes) ->
+        data = {}
+        data[field.id] = attributes[field.id] for field in @fields.models when field.get("copyable") and field.id of attributes
+
+        data
+
     url: (id) -> entity_url @id, id
 
     link: (id) -> "#{ @id}" + if id? then "/#{ id }" else ""

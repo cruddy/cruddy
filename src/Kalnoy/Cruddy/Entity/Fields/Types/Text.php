@@ -12,13 +12,6 @@ class Text extends Input {
     protected $inputType = 'text';
 
     /**
-     * Input pattern attribute.
-     *
-     * @var string
-     */
-    public $pattern;
-
-    /**
      * Process value.
      *
      * @param  string $value
@@ -28,15 +21,5 @@ class Text extends Input {
     public function process($value)
     {
         return trim($value);
-    }
-
-    /**
-     * Convert field to an array.
-     *
-     * @return array
-     */
-    public function toArray()
-    {
-        return parent::toArray() + array('pattern' => $this->pattern);
     }
 }

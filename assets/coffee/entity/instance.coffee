@@ -15,7 +15,7 @@ class EntityInstance extends Backbone.Model
         @set "errors", {}
         null
 
-    link: -> @entity.link @id
+    link: -> @entity.link if @isNew() then "create" else @id
 
     url: -> @entity.url @id
 
@@ -51,6 +51,16 @@ class EntityInstance extends Backbone.Model
         if @isNew() then xhr.then (resp) -> queue() else queue xhr
 
     parse: (resp) -> resp.data
+
+    copy: ->
+        copy = @entity.createInstance()
+
+        copy.set @getCopyableAttributes(), silent: yes
+        copy.related[key].set item.getCopyableAttributes(), silent: yes for key, item of @related
+
+        copy
+
+    getCopyableAttributes: -> @entity.getCopyableAttributes @attributes
 
     hasChangedSinceSync: ->
         return yes for key, value of @attributes when not _.isEqual value, @original[key]

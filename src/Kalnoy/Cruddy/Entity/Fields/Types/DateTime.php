@@ -28,7 +28,7 @@ class DateTime extends Input {
 
     public function toArray()
     {
-        return parent::toArray() + array('format' => $this->format);
+        return ['format' => $this->format] + parent::toArray();
     }
 
     public function isFilterable()

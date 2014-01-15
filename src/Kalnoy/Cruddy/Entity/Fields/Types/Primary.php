@@ -27,4 +27,9 @@ class Primary extends Text {
 
         return $this;
     }
+
+    public function toArray()
+    {
+        return ['copyable' => false] + parent::toArray();
+    }
 }

@@ -33,11 +33,12 @@ class Image extends File {
      */
     public function toArray()
     {
-        return parent::toArray() +
+        return
         [
             'width' => $this->width,
             'height' => $this->height,
-        ];
+
+        ] + parent::toArray();
     }
 
     /**

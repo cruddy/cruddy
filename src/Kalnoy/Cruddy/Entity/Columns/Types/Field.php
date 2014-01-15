@@ -140,9 +140,11 @@ class Field extends AbstractColumn {
      */
     public function toArray()
     {
-        return parent::toArray() + array(
+        return
+        [
             'field' => $this->field,
-        );
+
+        ] + parent::toArray();
     }
 
     /**

@@ -6,6 +6,7 @@ class EntityForm extends Backbone.View
         "click .btn-save": "save"
         "click .btn-close": "close"
         "click .btn-destroy": "destroy"
+        "click .btn-copy": "copy"
 
     constructor: (options) ->
         @className += " " + @className + "-" + options.model.entity.id
@@ -121,6 +122,12 @@ class EntityForm extends Backbone.View
 
         this
 
+    copy: ->
+        @model.entity.set "instance", copy = @model.copy()
+        Cruddy.router.navigate copy.link()
+
+        this
+
     render: ->
         @dispose()
 
@@ -130,6 +137,7 @@ class EntityForm extends Backbone.View
         @footer = @$ "footer"
         @submit = @$ ".btn-save"
         @destroy = @$ ".btn-destroy"
+        @copy = @$ ".btn-copy"
 
         @tabs = []
         @renderTab @model, yes
@@ -157,19 +165,26 @@ class EntityForm extends Backbone.View
         @destroy.attr "disabled", @request?
         @destroy.html if @model.entity.get "soft_deleting" and @model.get "deleted_at" then "Восстановить" else "<span class='glyphicon glyphicon-trash' title='Удалить'></span>"
         @destroy.toggle not @model.isNew() and @model.entity.get "can_delete"
+        
+        @copy.toggle not @model.isNew() and @model.entity.get "can_create"
 
         this
 
     template: ->
         """
         <header>
+            <div class="btn-group btn-group-sm">
+                <button type="button" tabindex="-1" class="btn btn-link btn-copy" title="Копировать">
+                    <span class="glyphicon glyphicon-book"></span>
+                </button>
+            </div>
             <ul class="nav nav-pills"></ul>
         </header>
 
         <footer>
-            <button class="btn btn-default btn-close btn-sm" type="button">Закрыть</button>
-            <button class="btn btn-default btn-destroy btn-sm" type="button"></button>
-            <button class="btn btn-primary btn-save btn-sm" type="button" disabled></button>
+            <button type="button" class="btn btn-default btn-close btn-sm" type="button">Закрыть</button>
+            <button type="button" class="btn btn-default btn-destroy btn-sm" type="button"></button>
+            <button type="button" class="btn btn-primary btn-save btn-sm" type="button" disabled></button>
         </footer>
         """
 

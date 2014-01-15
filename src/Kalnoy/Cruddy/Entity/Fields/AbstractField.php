@@ -11,7 +11,7 @@ abstract class AbstractField extends Attribute implements EditableInterface {
      *
      * @var bool
      */
-    public $updatable = true;
+    public $updateable = true;
 
     /**
      * Whether the value is required.
@@ -19,6 +19,13 @@ abstract class AbstractField extends Attribute implements EditableInterface {
      * @var bool
      */
     public $required = false;
+
+    /**
+     * Whether the value of this field can be transferred to a copy.
+     *
+     * @var bool
+     */
+    public $copyable = true;
 
     /**
      * @inheritdoc
@@ -94,10 +101,13 @@ abstract class AbstractField extends Attribute implements EditableInterface {
      */
     public function toArray()
     {
-        return parent::toArray() + array(
-            'updatable' => $this->updatable,
+        return
+        [
+            'updateable' => $this->updateable,
             'label' => $this->getLabel(),
             'required' => $this->required,
-        );
+            'copyable' => $this->copyable,
+
+        ] + parent::toArray();
     }
 }

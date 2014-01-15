@@ -74,7 +74,7 @@ class FieldView extends Backbone.View
         """
 
     # Get whether this field view is visible.
-    isVisible: -> @field.get("visible") and (@field.get("editable") and @field.get("updatable") or not @model.isNew())
+    isVisible: -> @field.get("visible") and (@field.get("editable") and @field.get("updateable") or not @model.isNew())
 
     toggleVisibility: -> @$el.toggle @isVisible()
 
@@ -108,4 +108,4 @@ class Field extends Attribute
 
     format: (value) -> if value then value else "n/a"
 
-    isEditable: (model) -> @get("editable") and (@get("updatable") or not model.isNew()) and model.isSaveable()
+    isEditable: (model) -> @get("editable") and (@get("updateable") or not model.isNew()) and model.isSaveable()

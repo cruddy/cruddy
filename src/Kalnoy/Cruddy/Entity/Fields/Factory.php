@@ -54,6 +54,7 @@ class Factory extends AttributeFactory {
                 if ($collection->has($id)) continue;
 
                 $item = $this->create($entity, 'datetime', $id);
+                $item->copyable = false;
 
                 $collection->put($id, $item);
             }

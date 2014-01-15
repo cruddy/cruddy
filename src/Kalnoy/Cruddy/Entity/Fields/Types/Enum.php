@@ -90,10 +90,11 @@ class Enum extends AbstractField implements ColumnInterface {
 
     public function toArray()
     {
-        return parent::toArray() +
+        return
         [
             'prompt' => \Kalnoy\Cruddy\try_trans($this->prompt),
             'items' => $this->evaluate($this->items, $this->entity->form()->instance()),
-        ];
+
+        ] + parent::toArray();
     }
 }

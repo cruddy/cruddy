@@ -25,6 +25,6 @@ class TextArea extends Input {
      */
     public function toArray()
     {
-        return parent::toArray() + array('rows' => $this->rows);
+        return ['rows' => $this->rows]  + parent::toArray();
     }
 }

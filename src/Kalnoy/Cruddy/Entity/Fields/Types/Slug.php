@@ -44,11 +44,13 @@ class Slug extends Input {
      */
     public function toArray()
     {
-        return parent::toArray() + [
+        return
+        [
             'chars' => $this->chars,
             'ref' => $this->ref,
             'separator' => $this->separator,
-        ];
+
+        ] + parent::toArray();
     }
 
     public function getJavaScriptClass()

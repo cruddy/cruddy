@@ -221,12 +221,12 @@ class EntityApiController extends ApiController {
 
         catch (EntityNotFoundException $e)
         {
-            return $this->notFound();
+            return $this->notFound($e->getMessage());
         }
 
         catch (ModelNotFoundException $e)
         {
-            return $this->notFound();
+            return $this->notFound('ModelNotFoundException');
         }
 
         catch (Exception $e)

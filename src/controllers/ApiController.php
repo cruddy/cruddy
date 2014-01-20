@@ -75,11 +75,13 @@ class ApiController extends Controller {
     /**
      * Get not found response.
      *
+     * @param string $message
+     * 
      * @return Response
      */
-    protected function notFound()
+    protected function notFound($message = null)
     {
-        return $this->failure(404, self::E_NOT_FOUND);
+        return $this->failure(404, self::E_NOT_FOUND, $message);
     }
 
     /**

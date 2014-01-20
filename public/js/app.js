@@ -347,7 +347,7 @@
           for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
             item = _ref6[_i];
             _this.data.push({
-              id: item[keyName],
+              id: item[keyName].toString(),
               title: item[valueName]
             });
           }
@@ -1275,15 +1275,15 @@
 
     EntitySelector.prototype.check = function(e) {
       var id, item, uncheck, value;
-      id = $(e.target).data("id");
+      id = $(e.target).data("id").toString();
       uncheck = id in this.selected;
       item = _.find(this.dataSource.data, function(item) {
-        return item.id.toString() === id;
+        return item.id === id;
       });
       if (this.multiple) {
         if (uncheck) {
           value = _.filter(this.model.get(this.key), function(item) {
-            return item.id.toString() !== id;
+            return item.id !== id;
           });
         } else {
           value = _.clone(this.model.get(this.key));

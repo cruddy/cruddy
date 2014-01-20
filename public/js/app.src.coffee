@@ -193,7 +193,7 @@ class SearchDataSource extends Backbone.Model
             success: (resp) =>
                 resp = resp.data
 
-                @data.push { id: item[keyName], title: item[valueName] } for item in resp.data
+                @data.push { id: item[keyName].toString(), title: item[valueName] } for item in resp.data
 
                 @page = resp.current_page
                 @more = resp.current_page < resp.last_page
@@ -862,13 +862,13 @@ class EntitySelector extends BaseInput
         this
 
     check: (e) ->
-        id = $(e.target).data "id"
+        id = $(e.target).data("id").toString()
         uncheck = id of @selected
-        item = _.find @dataSource.data, (item) -> item.id.toString() == id
+        item = _.find @dataSource.data, (item) -> item.id == id
 
         if @multiple
             if uncheck
-                value = _.filter @model.get(@key), (item) -> item.id.toString() != id
+                value = _.filter @model.get(@key), (item) -> item.id != id
             else
                 value = _.clone @model.get(@key)
                 value.push item

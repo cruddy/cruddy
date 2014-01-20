@@ -19,7 +19,7 @@ class SearchDataSource extends Backbone.Model
             success: (resp) =>
                 resp = resp.data
 
-                @data.push { id: item[keyName], title: item[valueName] } for item in resp.data
+                @data.push { id: item[keyName].toString(), title: item[valueName] } for item in resp.data
 
                 @page = resp.current_page
                 @more = resp.current_page < resp.last_page

@@ -1275,15 +1275,15 @@
 
     EntitySelector.prototype.check = function(e) {
       var id, item, uncheck, value;
-      id = parseInt($(e.target).data("id"));
+      id = $(e.target).data("id");
       uncheck = id in this.selected;
       item = _.find(this.dataSource.data, function(item) {
-        return item.id === id;
+        return item.id.toString() === id;
       });
       if (this.multiple) {
         if (uncheck) {
           value = _.filter(this.model.get(this.key), function(item) {
-            return item.id !== id;
+            return item.id.toString() !== id;
           });
         } else {
           value = _.clone(this.model.get(this.key));

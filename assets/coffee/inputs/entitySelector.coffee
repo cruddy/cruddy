@@ -38,13 +38,13 @@ class EntitySelector extends BaseInput
         this
 
     check: (e) ->
-        id = parseInt $(e.target).data "id"
+        id = $(e.target).data "id"
         uncheck = id of @selected
-        item = _.find @dataSource.data, (item) -> item.id == id
+        item = _.find @dataSource.data, (item) -> item.id.toString() == id
 
         if @multiple
             if uncheck
-                value = _.filter @model.get(@key), (item) -> item.id != id
+                value = _.filter @model.get(@key), (item) -> item.id.toString() != id
             else
                 value = _.clone @model.get(@key)
                 value.push item

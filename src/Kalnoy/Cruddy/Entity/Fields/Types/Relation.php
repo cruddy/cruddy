@@ -78,7 +78,7 @@ class Relation extends AbstractField implements ColumnInterface {
      */
     public function process($data)
     {
-        if (empty($data)) return false;
+        if (empty($data)) return '';
 
         if (isset($data['id'])) return $data['id'];
 

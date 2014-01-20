@@ -185,7 +185,7 @@ class Form implements FormInterface {
      */
     protected function syncBelongsToMany(Eloquent $instance, $relationId, $key, $data)
     {
-        $data = $data === false ? [] : $data;
+        $data = is_array($data) ? $data : [];
 
         return $this->afterSave(function ($instance) use ($relationId, $key, $data)
         {
@@ -269,7 +269,7 @@ class Form implements FormInterface {
             $foreignKey = $relation->getPlainForeignKey();
             $relatedKey = $related->getKeyName();
 
-            $ids = (array)$ids;
+            $ids = is_array($ids) ? $ids : [];
 
             if ($exists)
             {

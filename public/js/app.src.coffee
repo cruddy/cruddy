@@ -1749,6 +1749,10 @@ class EntityPage extends Backbone.View
 
         @$el.html @template()
 
+        @header = @$ ".entity-page-header"
+        @content = @$ ".entity-page-content"
+        @footer = @$ ".entity-page-footer"
+
         @dataSource = @model.createDataSource()
 
         @dataGrid = new DataGrid
@@ -1769,14 +1773,15 @@ class EntityPage extends Backbone.View
 
         @$(".col-search").append @search.render().el
         @$(".col-filters").append @filterList.render().el
-        @$el.append @dataGrid.render().el
-        @$el.append @pagination.render().el
+        @content.append @dataGrid.render().el
+        @footer.append @pagination.render().el
 
         this
 
     template: ->
-        html = """
-        <h1 class="page-header">
+        html = "<div class='entity-page-header'>"
+        html += """
+        <h1>
             #{ @model.get "title" }
 
         """
@@ -1791,6 +1796,10 @@ class EntityPage extends Backbone.View
         html += "</h1>"
 
         html += """<div class="row row-search"><div class="col-xs-2 col-search"></div><div class="col-xs-10 col-filters"></div></div>"""
+        html += "</div>"
+        
+        html += "<div class='entity-page-content-wrap'><div class='entity-page-content'></div></div>"
+        html += "<div class='entity-page-footer'></div>"
 
     dispose: ->
         @form.remove() if @form?
@@ -2032,7 +2041,7 @@ class App extends Backbone.Model
     entities: {}
 
     initialize: ->
-        @container = $ "#container"
+        @container = $ "body"
         @loadingRequests = 0
 
         @on "change:entity", @displayEntity, this
@@ -2040,7 +2049,7 @@ class App extends Backbone.Model
     displayEntity: (model, entity) ->
         @dispose()
 
-        @container.html (@page = new EntityPage model: entity).render().el if entity
+        @container.append (@page = new EntityPage model: entity).render().el if entity
 
     displayError: (xhr) ->
         error = if not xhr? or xhr.status is 403 then "Ошибка доступа" else "Ошибка"

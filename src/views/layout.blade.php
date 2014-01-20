@@ -5,7 +5,7 @@
     <link rel="stylesheet" href="{{ asset("{$assets}/css/styles.min.css") }}">
 </head>
 <body>
-    <nav class="navbar navbar-default" role="navigation">
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
         <div class="navbar-header">
             <a href="{{ url("/") }}" class="navbar-brand">{{ $brand }}</a>
         </div>
@@ -18,8 +18,6 @@
             </p>
         </div>
     </nav>
-
-    <div id="container" class="main-container"></div>
 
     <script>
     Cruddy = {{ $cruddy->toJSON() }};

@@ -12,7 +12,7 @@ class App extends Backbone.Model
     entities: {}
 
     initialize: ->
-        @container = $ "#container"
+        @container = $ "body"
         @loadingRequests = 0
 
         @on "change:entity", @displayEntity, this
@@ -20,7 +20,7 @@ class App extends Backbone.Model
     displayEntity: (model, entity) ->
         @dispose()
 
-        @container.html (@page = new EntityPage model: entity).render().el if entity
+        @container.append (@page = new EntityPage model: entity).render().el if entity
 
     displayError: (xhr) ->
         error = if not xhr? or xhr.status is 403 then "Ошибка доступа" else "Ошибка"

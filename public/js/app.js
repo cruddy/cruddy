@@ -2821,6 +2821,9 @@
     EntityPage.prototype.render = function() {
       this.dispose();
       this.$el.html(this.template());
+      this.header = this.$(".entity-page-header");
+      this.content = this.$(".entity-page-content");
+      this.footer = this.$(".entity-page-footer");
       this.dataSource = this.model.createDataSource();
       this.dataGrid = new DataGrid({
         model: this.dataSource
@@ -2839,19 +2842,23 @@
       this.dataSource.fetch();
       this.$(".col-search").append(this.search.render().el);
       this.$(".col-filters").append(this.filterList.render().el);
-      this.$el.append(this.dataGrid.render().el);
-      this.$el.append(this.pagination.render().el);
+      this.content.append(this.dataGrid.render().el);
+      this.footer.append(this.pagination.render().el);
       return this;
     };
 
     EntityPage.prototype.template = function() {
       var html;
-      html = "<h1 class=\"page-header\">\n    " + (this.model.get("title")) + "\n";
+      html = "<div class='entity-page-header'>";
+      html += "<h1>\n    " + (this.model.get("title")) + "\n";
       if (this.model.get("can_create")) {
         html += "<button class=\"btn btn-default btn-create\" type=\"button\">\n    <span class=\"glyphicon glyphicon-plus\"</span>\n</button>";
       }
       html += "</h1>";
-      return html += "<div class=\"row row-search\"><div class=\"col-xs-2 col-search\"></div><div class=\"col-xs-10 col-filters\"></div></div>";
+      html += "<div class=\"row row-search\"><div class=\"col-xs-2 col-search\"></div><div class=\"col-xs-10 col-filters\"></div></div>";
+      html += "</div>";
+      html += "<div class='entity-page-content-wrap'><div class='entity-page-content'></div></div>";
+      return html += "<div class='entity-page-footer'></div>";
     };
 
     EntityPage.prototype.dispose = function() {
@@ -3150,7 +3157,7 @@
     App.prototype.entities = {};
 
     App.prototype.initialize = function() {
-      this.container = $("#container");
+      this.container = $("body");
       this.loadingRequests = 0;
       return this.on("change:entity", this.displayEntity, this);
     };
@@ -3158,7 +3165,7 @@
     App.prototype.displayEntity = function(model, entity) {
       this.dispose();
       if (entity) {
-        return this.container.html((this.page = new EntityPage({
+        return this.container.append((this.page = new EntityPage({
           model: entity
         })).render().el);
       }

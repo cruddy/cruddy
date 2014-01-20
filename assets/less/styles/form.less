@@ -4,12 +4,12 @@
 
 .entity-form {
     @width: 400px;
-    @padding: 10px;
-    @header-height: (@padding + @padding-small-vertical) * 2 + @line-height-computed + 1;
-    @footer-height: (@padding + @padding-small-vertical) * 2 + @line-height-computed;
+    @padding: 13px;
+    @header-height: @navbar-height + 1;
+    @footer-height: @navbar-height + 1;
 
     position: fixed;
-    z-index: @zindex-navbar - 1;
+    z-index: @zindex-navbar-fixed + 1;
     top: 0;
     right: -@width;
 
@@ -54,6 +54,7 @@
         padding: @padding;
         top: 0;
         height: @header-height;
+        background: @navbar-default-bg;
 
         .nav {
             >li>a {

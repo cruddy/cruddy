@@ -1,5 +1,6 @@
 /.idea
 /vendor
+/app/config/local
 /assets/vendor
 /node_modules
 composer.phar

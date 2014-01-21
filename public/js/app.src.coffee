@@ -668,6 +668,7 @@ class EntityDropdown extends BaseInput
 
     events:
         "click .btn-remove": "removeItem"
+        "click .btn-edit": "editItem"
         "keydown [type=search]": "searchKeydown"
         "show.bs.dropdown": "renderDropdown"
 
@@ -691,15 +692,47 @@ class EntityDropdown extends BaseInput
 
         super
 
+    getKey: (e) -> $(e.currentTarget).closest(".ed-item").data "key"
+
     removeItem: (e) ->
         if @multiple
-            i = $(e.currentTarget).data "key"
+            i = @getKey e
             value = _.clone @model.get(@key)
             value.splice i, 1
         else
             value = null
 
         @model.set @key, value
+
+        this
+
+    editItem: (e) ->
+        item = @model.get @key
+        item = item[@getKey e] if @multiple
+
+        return if not item
+
+        target = $(e.currentTarget).prop "disabled", yes
+
+        xhr = Cruddy.app.entity(@reference).then (entity) => entity.load(item.id).done (instance) =>
+            @innerForm = new EntityForm
+                model: instance
+                inner: yes
+
+            @innerForm.render().$el.appendTo document.body
+            after_break => @innerForm.show()
+
+            @listenTo instance, "sync", (model, resp) =>
+                # Check whether the model was destroyed
+                if resp.data
+                    target.parent().siblings("input").val resp.data.title
+                    @innerForm.remove()
+                else
+                    @removeItem e
+
+            @listenTo @innerForm, "remove", => @innerForm = null
+
+        xhr.always -> target.prop "disabled", no
 
         this
 
@@ -759,7 +792,7 @@ class EntityDropdown extends BaseInput
         @$el.append @items = $ "<div>", class: "items"
 
         @$el.append """
-            <button type="button" class="btn btn-default btn-sm btn-block dropdown-toggle" data-toggle="dropdown" data-target="##{ @cid }">
+            <button type="button" class="btn btn-default btn-sm btn-block dropdown-toggle ed-dropdown-toggle" data-toggle="dropdown" data-target="##{ @cid }">
                 Выбрать
                 <span class="caret"></span>
             </button>
@@ -780,6 +813,7 @@ class EntityDropdown extends BaseInput
 
         @itemTitle = @$ ".form-control"
         @itemDelete = @$ ".btn-remove"
+        @itemEdit = @$ ".btn-edit"
 
         @updateItem()
 
@@ -787,24 +821,26 @@ class EntityDropdown extends BaseInput
         value = @model.get @key
         @itemTitle.val if value then value.title else "Не выбрано"
         @itemDelete.toggle !!value
+        @itemEdit.toggle !!value
 
         this
 
     itemTemplate: (value, key = null) ->
         html = """
-        <div class="input-group input-group-sm ed-item">
-            <input type="text" class="form-control" #{ if not @multiple or key is null then "data-toggle='dropdown' data-target='##{ @cid }'" else "tab-index='-1'"} value="#{ _.escape value }" readonly>
+        <div class="input-group input-group-sm ed-item #{ if not @multiple then "ed-dropdown-toggle" else "" }" data-key="#{ key }">
+            <input type="text" class="form-control" #{ if not @multiple then "data-toggle='dropdown' data-target='##{ @cid }'" else "tab-index='-1'"} value="#{ _.escape value }" readonly>
             <div class="input-group-btn">
         """
 
-        if not @multiple or key isnt null
-            html += """
-                <button type="button" class="btn btn-default btn-remove" data-key="#{ key }" tabindex="-1">
-                    <span class="glyphicon glyphicon-remove"></span>
-                </button>
-                """
+        html += """
+            <button type="button" class="btn btn-default btn-edit" tabindex="-1">
+                <span class="glyphicon glyphicon-pencil"></span>
+            </button><button type="button" class="btn btn-default btn-remove" tabindex="-1">
+                <span class="glyphicon glyphicon-remove"></span>
+            </button>
+            """
 
-        if not @multiple or key is null
+        if not @multiple
             html += """
                 <button type="button" class="btn btn-default btn-dropdown dropdown-toggle" data-toggle="dropdown" data-target="##{ @cid }" tab-index="1">
                     <span class="glyphicon glyphicon-search"></span>
@@ -815,6 +851,7 @@ class EntityDropdown extends BaseInput
 
     dispose: ->
         @selector?.remove()
+        @innerForm?.remove()
 
         this
 
@@ -828,6 +865,7 @@ class EntitySelector extends BaseInput
     events:
         "click .item": "check"
         "click .more": "more"
+        "click .btn-add": "add"
         "click [type=search]": -> false
 
     initialize: (options) ->
@@ -863,11 +901,13 @@ class EntitySelector extends BaseInput
 
     check: (e) ->
         id = $(e.target).data("id").toString()
-        uncheck = id of @selected
-        item = _.find @dataSource.data, (item) -> item.id == id
+        @select _.find @dataSource.data, (item) -> item.id == id
 
+        false
+
+    select: (item) ->
         if @multiple
-            if uncheck
+            if item.id of @selected
                 value = _.filter @model.get(@key), (item) -> item.id != id
             else
                 value = _.clone @model.get(@key)
@@ -877,7 +917,7 @@ class EntitySelector extends BaseInput
 
         @model.set @key, value
 
-        false
+        this
 
     more: ->
         return if not @dataSource or @dataSource.inProgress()
@@ -885,6 +925,42 @@ class EntitySelector extends BaseInput
         @dataSource.next()
 
         false
+
+    add: (e) ->
+        e.preventDefault()
+        e.stopPropagation()
+
+        target = $(e.currentTarget).prop "disabled", yes
+
+        @entity.always -> target.prop "disabled", no
+
+        @entity.done (entity) =>
+            attrs = {}
+
+            # Fill primary column with search data if primary column maps to a field
+            primaryColumn = entity.get "primary_column"
+            attrs[primaryColumn] = @dataSource.get "search" if entity.columns.get(primaryColumn) instanceof Cruddy.columns.Field
+
+            instance = entity.createInstance(attrs)
+
+            @innerForm = new EntityForm
+                model: instance
+                inner: yes
+
+            @innerForm.render().$el.appendTo document.body
+            after_break => @innerForm.show()
+
+            @listenToOnce @innerForm, "remove", => @innerForm = null
+
+            @listenToOnce instance, "sync", (instance, resp) =>
+                @select
+                    id: instance.id
+                    title: resp.data.title
+
+                @dataSource.set "search", ""
+                @innerForm.remove()
+
+        this
 
     applyChanges: (model, data) ->
         @buildSelected data
@@ -960,7 +1036,15 @@ class EntitySelector extends BaseInput
 
         @$el.prepend @searchInput.render().el
 
-        @searchInput.$el.wrap "<div class=search-input-container></div>"
+        @searchInput.$el
+            .wrap("<div class='input-group input-group-sm search-input-container'></div>")
+            .after("""
+                <div class='input-group-btn'>
+                    <button type='button' class='btn btn-default btn-add' tabindex='-1'>
+                        <span class='glyphicon glyphicon-plus'></span>
+                    </button>
+                </div>
+            """)
 
         this
 
@@ -973,6 +1057,7 @@ class EntitySelector extends BaseInput
 
     dispose: ->
         @searchInput?.remove()
+        @innerForm?.remove()
 
         this
 
@@ -1613,7 +1698,14 @@ class Entity extends Backbone.Model
 
     # Load a model
     load: (id) ->
-        $.getJSON(@url(id)).then (resp) =>
+        xhr = $.ajax
+            url: @url(id)
+            type: "GET"
+            dataType: "json"
+            cache: yes
+            displayLoading: yes
+
+        xhr.then (resp) =>
             resp = resp.data
 
             @createInstance resp.model, resp.related
@@ -1686,7 +1778,7 @@ class EntityInstance extends Backbone.Model
         # Create related models after the main model is saved
         if @isNew() then xhr.then (resp) -> queue() else queue xhr
 
-    parse: (resp) -> resp.data
+    parse: (resp) -> resp.data.instance
 
     copy: ->
         copy = @entity.createInstance()
@@ -1830,7 +1922,9 @@ class EntityForm extends Backbone.View
 
         super
 
-    initialize: ->
+    initialize: (options) ->
+        @inner = options.inner ? no
+
         @listenTo @model, "destroy", @handleDestroy
 
         @signOn @model
@@ -1890,7 +1984,7 @@ class EntityForm extends Backbone.View
         if @model.entity.get "soft_deleting"
             @update()
         else
-            Cruddy.router.navigate @model.entity.link(), trigger: true
+            if @inner then @remove() else Cruddy.router.navigate @model.entity.link(), trigger: true
 
         this
 
@@ -1921,7 +2015,7 @@ class EntityForm extends Backbone.View
 
         if confirmed
             @request.abort() if @request
-            Cruddy.router.navigate @model.entity.link(), trigger: true
+            if @inner then @remove() else Cruddy.router.navigate @model.entity.link(), trigger: true
 
         this
 
@@ -2012,10 +2106,14 @@ class EntityForm extends Backbone.View
         """
 
     remove: ->
+        @trigger "remove", @
+        
         @$el.one(TRANSITIONEND, =>
             @dispose()
 
             $(document).off "." + @cid
+
+            @trigger "removed", @
 
             super
         )

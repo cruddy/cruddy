@@ -50,7 +50,7 @@ class EntityInstance extends Backbone.Model
         # Create related models after the main model is saved
         if @isNew() then xhr.then (resp) -> queue() else queue xhr
 
-    parse: (resp) -> resp.data
+    parse: (resp) -> resp.data.instance
 
     copy: ->
         copy = @entity.createInstance()

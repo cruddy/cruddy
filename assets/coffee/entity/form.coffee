@@ -13,7 +13,9 @@ class EntityForm extends Backbone.View
 
         super
 
-    initialize: ->
+    initialize: (options) ->
+        @inner = options.inner ? no
+
         @listenTo @model, "destroy", @handleDestroy
 
         @signOn @model
@@ -73,7 +75,7 @@ class EntityForm extends Backbone.View
         if @model.entity.get "soft_deleting"
             @update()
         else
-            Cruddy.router.navigate @model.entity.link(), trigger: true
+            if @inner then @remove() else Cruddy.router.navigate @model.entity.link(), trigger: true
 
         this
 
@@ -104,7 +106,7 @@ class EntityForm extends Backbone.View
 
         if confirmed
             @request.abort() if @request
-            Cruddy.router.navigate @model.entity.link(), trigger: true
+            if @inner then @remove() else Cruddy.router.navigate @model.entity.link(), trigger: true
 
         this
 
@@ -195,10 +197,14 @@ class EntityForm extends Backbone.View
         """
 
     remove: ->
+        @trigger "remove", @
+        
         @$el.one(TRANSITIONEND, =>
             @dispose()
 
             $(document).off "." + @cid
+
+            @trigger "removed", @
 
             super
         )

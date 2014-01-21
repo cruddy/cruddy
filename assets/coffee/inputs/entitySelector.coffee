@@ -4,6 +4,7 @@ class EntitySelector extends BaseInput
     events:
         "click .item": "check"
         "click .more": "more"
+        "click .btn-add": "add"
         "click [type=search]": -> false
 
     initialize: (options) ->
@@ -39,11 +40,13 @@ class EntitySelector extends BaseInput
 
     check: (e) ->
         id = $(e.target).data("id").toString()
-        uncheck = id of @selected
-        item = _.find @dataSource.data, (item) -> item.id == id
+        @select _.find @dataSource.data, (item) -> item.id == id
 
+        false
+
+    select: (item) ->
         if @multiple
-            if uncheck
+            if item.id of @selected
                 value = _.filter @model.get(@key), (item) -> item.id != id
             else
                 value = _.clone @model.get(@key)
@@ -53,7 +56,7 @@ class EntitySelector extends BaseInput
 
         @model.set @key, value
 
-        false
+        this
 
     more: ->
         return if not @dataSource or @dataSource.inProgress()
@@ -61,6 +64,42 @@ class EntitySelector extends BaseInput
         @dataSource.next()
 
         false
+
+    add: (e) ->
+        e.preventDefault()
+        e.stopPropagation()
+
+        target = $(e.currentTarget).prop "disabled", yes
+
+        @entity.always -> target.prop "disabled", no
+
+        @entity.done (entity) =>
+            attrs = {}
+
+            # Fill primary column with search data if primary column maps to a field
+            primaryColumn = entity.get "primary_column"
+            attrs[primaryColumn] = @dataSource.get "search" if entity.columns.get(primaryColumn) instanceof Cruddy.columns.Field
+
+            instance = entity.createInstance(attrs)
+
+            @innerForm = new EntityForm
+                model: instance
+                inner: yes
+
+            @innerForm.render().$el.appendTo document.body
+            after_break => @innerForm.show()
+
+            @listenToOnce @innerForm, "remove", => @innerForm = null
+
+            @listenToOnce instance, "sync", (instance, resp) =>
+                @select
+                    id: instance.id
+                    title: resp.data.title
+
+                @dataSource.set "search", ""
+                @innerForm.remove()
+
+        this
 
     applyChanges: (model, data) ->
         @buildSelected data
@@ -136,7 +175,15 @@ class EntitySelector extends BaseInput
 
         @$el.prepend @searchInput.render().el
 
-        @searchInput.$el.wrap "<div class=search-input-container></div>"
+        @searchInput.$el
+            .wrap("<div class='input-group input-group-sm search-input-container'></div>")
+            .after("""
+                <div class='input-group-btn'>
+                    <button type='button' class='btn btn-default btn-add' tabindex='-1'>
+                        <span class='glyphicon glyphicon-plus'></span>
+                    </button>
+                </div>
+            """)
 
         this
 
@@ -149,6 +196,7 @@ class EntitySelector extends BaseInput
 
     dispose: ->
         @searchInput?.remove()
+        @innerForm?.remove()
 
         this
 

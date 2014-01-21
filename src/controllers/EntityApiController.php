@@ -139,7 +139,7 @@ class EntityApiController extends ApiController {
 
             $model = $entity->create(Input::all());
 
-            return $this->success($entity->fields()->data($model));
+            return $this->modelData($entity, $model);
         });
     }
 
@@ -159,8 +159,24 @@ class EntityApiController extends ApiController {
 
             $entity->update($model, Input::all());
 
-            return $this->success($entity->fields()->data($model));
+            return $this->modelData($entity, $model);
         });
+    }
+
+    /**
+     * Response model data.
+     *
+     * @param   Entity  $entity
+     * @param   mixed   $model
+     *
+     * @return  Response
+     */
+    protected function modelData(Entity $entity, $model)
+    {
+        $instance = $entity->fields()->data($model);
+        $title = $entity->title($model);
+
+        return $this->success(compact('instance', 'title'));
     }
 
     /**

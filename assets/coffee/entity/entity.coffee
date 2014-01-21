@@ -48,7 +48,14 @@ class Entity extends Backbone.Model
 
     # Load a model
     load: (id) ->
-        $.getJSON(@url(id)).then (resp) =>
+        xhr = $.ajax
+            url: @url(id)
+            type: "GET"
+            dataType: "json"
+            cache: yes
+            displayLoading: yes
+
+        xhr.then (resp) =>
             resp = resp.data
 
             @createInstance resp.model, resp.related

@@ -3,6 +3,7 @@ class EntityDropdown extends BaseInput
 
     events:
         "click .btn-remove": "removeItem"
+        "click .btn-edit": "editItem"
         "keydown [type=search]": "searchKeydown"
         "show.bs.dropdown": "renderDropdown"
 
@@ -26,15 +27,47 @@ class EntityDropdown extends BaseInput
 
         super
 
+    getKey: (e) -> $(e.currentTarget).closest(".ed-item").data "key"
+
     removeItem: (e) ->
         if @multiple
-            i = $(e.currentTarget).data "key"
+            i = @getKey e
             value = _.clone @model.get(@key)
             value.splice i, 1
         else
             value = null
 
         @model.set @key, value
+
+        this
+
+    editItem: (e) ->
+        item = @model.get @key
+        item = item[@getKey e] if @multiple
+
+        return if not item
+
+        target = $(e.currentTarget).prop "disabled", yes
+
+        xhr = Cruddy.app.entity(@reference).then (entity) => entity.load(item.id).done (instance) =>
+            @innerForm = new EntityForm
+                model: instance
+                inner: yes
+
+            @innerForm.render().$el.appendTo document.body
+            after_break => @innerForm.show()
+
+            @listenTo instance, "sync", (model, resp) =>
+                # Check whether the model was destroyed
+                if resp.data
+                    target.parent().siblings("input").val resp.data.title
+                    @innerForm.remove()
+                else
+                    @removeItem e
+
+            @listenTo @innerForm, "remove", => @innerForm = null
+
+        xhr.always -> target.prop "disabled", no
 
         this
 
@@ -94,7 +127,7 @@ class EntityDropdown extends BaseInput
         @$el.append @items = $ "<div>", class: "items"
 
         @$el.append """
-            <button type="button" class="btn btn-default btn-sm btn-block dropdown-toggle" data-toggle="dropdown" data-target="##{ @cid }">
+            <button type="button" class="btn btn-default btn-sm btn-block dropdown-toggle ed-dropdown-toggle" data-toggle="dropdown" data-target="##{ @cid }">
                 Выбрать
                 <span class="caret"></span>
             </button>
@@ -115,6 +148,7 @@ class EntityDropdown extends BaseInput
 
         @itemTitle = @$ ".form-control"
         @itemDelete = @$ ".btn-remove"
+        @itemEdit = @$ ".btn-edit"
 
         @updateItem()
 
@@ -122,24 +156,26 @@ class EntityDropdown extends BaseInput
         value = @model.get @key
         @itemTitle.val if value then value.title else "Не выбрано"
         @itemDelete.toggle !!value
+        @itemEdit.toggle !!value
 
         this
 
     itemTemplate: (value, key = null) ->
         html = """
-        <div class="input-group input-group-sm ed-item">
-            <input type="text" class="form-control" #{ if not @multiple or key is null then "data-toggle='dropdown' data-target='##{ @cid }'" else "tab-index='-1'"} value="#{ _.escape value }" readonly>
+        <div class="input-group input-group-sm ed-item #{ if not @multiple then "ed-dropdown-toggle" else "" }" data-key="#{ key }">
+            <input type="text" class="form-control" #{ if not @multiple then "data-toggle='dropdown' data-target='##{ @cid }'" else "tab-index='-1'"} value="#{ _.escape value }" readonly>
             <div class="input-group-btn">
         """
 
-        if not @multiple or key isnt null
-            html += """
-                <button type="button" class="btn btn-default btn-remove" data-key="#{ key }" tabindex="-1">
-                    <span class="glyphicon glyphicon-remove"></span>
-                </button>
-                """
+        html += """
+            <button type="button" class="btn btn-default btn-edit" tabindex="-1">
+                <span class="glyphicon glyphicon-pencil"></span>
+            </button><button type="button" class="btn btn-default btn-remove" tabindex="-1">
+                <span class="glyphicon glyphicon-remove"></span>
+            </button>
+            """
 
-        if not @multiple or key is null
+        if not @multiple
             html += """
                 <button type="button" class="btn btn-default btn-dropdown dropdown-toggle" data-toggle="dropdown" data-target="##{ @cid }" tab-index="1">
                     <span class="glyphicon glyphicon-search"></span>
@@ -150,6 +186,7 @@ class EntityDropdown extends BaseInput
 
     dispose: ->
         @selector?.remove()
+        @innerForm?.remove()
 
         this
 

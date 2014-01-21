@@ -1054,6 +1054,7 @@
 
     EntityDropdown.prototype.events = {
       "click .btn-remove": "removeItem",
+      "click .btn-edit": "editItem",
       "keydown [type=search]": "searchKeydown",
       "show.bs.dropdown": "renderDropdown",
       "shown.bs.dropdown": function() {
@@ -1084,16 +1085,60 @@
       return EntityDropdown.__super__.initialize.apply(this, arguments);
     };
 
+    EntityDropdown.prototype.getKey = function(e) {
+      return $(e.currentTarget).closest(".ed-item").data("key");
+    };
+
     EntityDropdown.prototype.removeItem = function(e) {
       var i, value;
       if (this.multiple) {
-        i = $(e.currentTarget).data("key");
+        i = this.getKey(e);
         value = _.clone(this.model.get(this.key));
         value.splice(i, 1);
       } else {
         value = null;
       }
       this.model.set(this.key, value);
+      return this;
+    };
+
+    EntityDropdown.prototype.editItem = function(e) {
+      var item, target, xhr,
+        _this = this;
+      item = this.model.get(this.key);
+      if (this.multiple) {
+        item = item[this.getKey(e)];
+      }
+      if (!item) {
+        return;
+      }
+      target = $(e.currentTarget).prop("disabled", true);
+      xhr = Cruddy.app.entity(this.reference).then(function(entity) {
+        return entity.load(item.id).done(function(instance) {
+          _this.innerForm = new EntityForm({
+            model: instance,
+            inner: true
+          });
+          _this.innerForm.render().$el.appendTo(document.body);
+          after_break(function() {
+            return _this.innerForm.show();
+          });
+          _this.listenTo(instance, "sync", function(model, resp) {
+            if (resp.data) {
+              target.parent().siblings("input").val(resp.data.title);
+              return _this.innerForm.remove();
+            } else {
+              return _this.removeItem(e);
+            }
+          });
+          return _this.listenTo(_this.innerForm, "remove", function() {
+            return _this.innerForm = null;
+          });
+        });
+      });
+      xhr.always(function() {
+        return target.prop("disabled", false);
+      });
       return this;
     };
 
@@ -1162,7 +1207,7 @@
       this.$el.append(this.items = $("<div>", {
         "class": "items"
       }));
-      this.$el.append("<button type=\"button\" class=\"btn btn-default btn-sm btn-block dropdown-toggle\" data-toggle=\"dropdown\" data-target=\"#" + this.cid + "\">\n    Выбрать\n    <span class=\"caret\"></span>\n</button>");
+      this.$el.append("<button type=\"button\" class=\"btn btn-default btn-sm btn-block dropdown-toggle ed-dropdown-toggle\" data-toggle=\"dropdown\" data-target=\"#" + this.cid + "\">\n    Выбрать\n    <span class=\"caret\"></span>\n</button>");
       return this.renderItems();
     };
 
@@ -1183,6 +1228,7 @@
       this.$el.html(this.itemTemplate("", "0"));
       this.itemTitle = this.$(".form-control");
       this.itemDelete = this.$(".btn-remove");
+      this.itemEdit = this.$(".btn-edit");
       return this.updateItem();
     };
 
@@ -1191,6 +1237,7 @@
       value = this.model.get(this.key);
       this.itemTitle.val(value ? value.title : "Не выбрано");
       this.itemDelete.toggle(!!value);
+      this.itemEdit.toggle(!!value);
       return this;
     };
 
@@ -1199,20 +1246,21 @@
       if (key == null) {
         key = null;
       }
-      html = "<div class=\"input-group input-group-sm ed-item\">\n    <input type=\"text\" class=\"form-control\" " + (!this.multiple || key === null ? "data-toggle='dropdown' data-target='#" + this.cid + "'" : "tab-index='-1'") + " value=\"" + (_.escape(value)) + "\" readonly>\n    <div class=\"input-group-btn\">";
-      if (!this.multiple || key !== null) {
-        html += "<button type=\"button\" class=\"btn btn-default btn-remove\" data-key=\"" + key + "\" tabindex=\"-1\">\n    <span class=\"glyphicon glyphicon-remove\"></span>\n</button>";
-      }
-      if (!this.multiple || key === null) {
+      html = "<div class=\"input-group input-group-sm ed-item " + (!this.multiple ? "ed-dropdown-toggle" : "") + "\" data-key=\"" + key + "\">\n    <input type=\"text\" class=\"form-control\" " + (!this.multiple ? "data-toggle='dropdown' data-target='#" + this.cid + "'" : "tab-index='-1'") + " value=\"" + (_.escape(value)) + "\" readonly>\n    <div class=\"input-group-btn\">";
+      html += "<button type=\"button\" class=\"btn btn-default btn-edit\" tabindex=\"-1\">\n    <span class=\"glyphicon glyphicon-pencil\"></span>\n</button><button type=\"button\" class=\"btn btn-default btn-remove\" tabindex=\"-1\">\n    <span class=\"glyphicon glyphicon-remove\"></span>\n</button>";
+      if (!this.multiple) {
         html += "<button type=\"button\" class=\"btn btn-default btn-dropdown dropdown-toggle\" data-toggle=\"dropdown\" data-target=\"#" + this.cid + "\" tab-index=\"1\">\n    <span class=\"glyphicon glyphicon-search\"></span>\n</button>";
       }
       return html += "</div></div>";
     };
 
     EntityDropdown.prototype.dispose = function() {
-      var _ref13;
+      var _ref13, _ref14;
       if ((_ref13 = this.selector) != null) {
         _ref13.remove();
+      }
+      if ((_ref14 = this.innerForm) != null) {
+        _ref14.remove();
       }
       return this;
     };
@@ -1239,6 +1287,7 @@
     EntitySelector.prototype.events = {
       "click .item": "check",
       "click .more": "more",
+      "click .btn-add": "add",
       "click [type=search]": function() {
         return false;
       }
@@ -1274,14 +1323,18 @@
     };
 
     EntitySelector.prototype.check = function(e) {
-      var id, item, uncheck, value;
+      var id;
       id = $(e.target).data("id").toString();
-      uncheck = id in this.selected;
-      item = _.find(this.dataSource.data, function(item) {
+      this.select(_.find(this.dataSource.data, function(item) {
         return item.id === id;
-      });
+      }));
+      return false;
+    };
+
+    EntitySelector.prototype.select = function(item) {
+      var value;
       if (this.multiple) {
-        if (uncheck) {
+        if (item.id in this.selected) {
           value = _.filter(this.model.get(this.key), function(item) {
             return item.id !== id;
           });
@@ -1293,7 +1346,7 @@
         value = item;
       }
       this.model.set(this.key, value);
-      return false;
+      return this;
     };
 
     EntitySelector.prototype.more = function() {
@@ -1302,6 +1355,46 @@
       }
       this.dataSource.next();
       return false;
+    };
+
+    EntitySelector.prototype.add = function(e) {
+      var target,
+        _this = this;
+      e.preventDefault();
+      e.stopPropagation();
+      target = $(e.currentTarget).prop("disabled", true);
+      this.entity.always(function() {
+        return target.prop("disabled", false);
+      });
+      this.entity.done(function(entity) {
+        var attrs, instance, primaryColumn;
+        attrs = {};
+        primaryColumn = entity.get("primary_column");
+        if (entity.columns.get(primaryColumn) instanceof Cruddy.columns.Field) {
+          attrs[primaryColumn] = _this.dataSource.get("search");
+        }
+        instance = entity.createInstance(attrs);
+        _this.innerForm = new EntityForm({
+          model: instance,
+          inner: true
+        });
+        _this.innerForm.render().$el.appendTo(document.body);
+        after_break(function() {
+          return _this.innerForm.show();
+        });
+        _this.listenToOnce(_this.innerForm, "remove", function() {
+          return _this.innerForm = null;
+        });
+        return _this.listenToOnce(instance, "sync", function(instance, resp) {
+          _this.select({
+            id: instance.id,
+            title: resp.data.title
+          });
+          _this.dataSource.set("search", "");
+          return _this.innerForm.remove();
+        });
+      });
+      return this;
     };
 
     EntitySelector.prototype.applyChanges = function(model, data) {
@@ -1390,7 +1483,7 @@
         key: "search"
       });
       this.$el.prepend(this.searchInput.render().el);
-      this.searchInput.$el.wrap("<div class=search-input-container></div>");
+      this.searchInput.$el.wrap("<div class='input-group input-group-sm search-input-container'></div>").after("<div class='input-group-btn'>\n    <button type='button' class='btn btn-default btn-add' tabindex='-1'>\n        <span class='glyphicon glyphicon-plus'></span>\n    </button>\n</div>");
       return this;
     };
 
@@ -1408,9 +1501,12 @@
     };
 
     EntitySelector.prototype.dispose = function() {
-      var _ref14;
+      var _ref14, _ref15;
       if ((_ref14 = this.searchInput) != null) {
         _ref14.remove();
+      }
+      if ((_ref15 = this.innerForm) != null) {
+        _ref15.remove();
       }
       return this;
     };
@@ -2591,8 +2687,16 @@
     };
 
     Entity.prototype.load = function(id) {
-      var _this = this;
-      return $.getJSON(this.url(id)).then(function(resp) {
+      var xhr,
+        _this = this;
+      xhr = $.ajax({
+        url: this.url(id),
+        type: "GET",
+        dataType: "json",
+        cache: true,
+        displayLoading: true
+      });
+      return xhr.then(function(resp) {
         resp = resp.data;
         return _this.createInstance(resp.model, resp.related);
       });
@@ -2719,7 +2823,7 @@
     };
 
     EntityInstance.prototype.parse = function(resp) {
-      return resp.data;
+      return resp.data.instance;
     };
 
     EntityInstance.prototype.copy = function() {
@@ -2909,13 +3013,14 @@
       EntityForm.__super__.constructor.apply(this, arguments);
     }
 
-    EntityForm.prototype.initialize = function() {
-      var key, related, _ref36;
+    EntityForm.prototype.initialize = function(options) {
+      var key, related, _ref36, _ref37;
+      this.inner = (_ref36 = options.inner) != null ? _ref36 : false;
       this.listenTo(this.model, "destroy", this.handleDestroy);
       this.signOn(this.model);
-      _ref36 = this.model.related;
-      for (key in _ref36) {
-        related = _ref36[key];
+      _ref37 = this.model.related;
+      for (key in _ref37) {
+        related = _ref37[key];
         this.signOn(related);
       }
       this.hotkeys = $(document).on("keydown." + this.cid, "body", $.proxy(this, "hotkeys"));
@@ -2983,9 +3088,13 @@
       if (this.model.entity.get("soft_deleting")) {
         this.update();
       } else {
-        Cruddy.router.navigate(this.model.entity.link(), {
-          trigger: true
-        });
+        if (this.inner) {
+          this.remove();
+        } else {
+          Cruddy.router.navigate(this.model.entity.link(), {
+            trigger: true
+          });
+        }
       }
       return this;
     };
@@ -3023,9 +3132,13 @@
         if (this.request) {
           this.request.abort();
         }
-        Cruddy.router.navigate(this.model.entity.link(), {
-          trigger: true
-        });
+        if (this.inner) {
+          this.remove();
+        } else {
+          Cruddy.router.navigate(this.model.entity.link(), {
+            trigger: true
+          });
+        }
       }
       return this;
     };
@@ -3112,9 +3225,11 @@
 
     EntityForm.prototype.remove = function() {
       var _this = this;
+      this.trigger("remove", this);
       this.$el.one(TRANSITIONEND, function() {
         _this.dispose();
         $(document).off("." + _this.cid);
+        _this.trigger("removed", _this);
         return EntityForm.__super__.remove.apply(_this, arguments);
       }).removeClass("opened");
       return this;

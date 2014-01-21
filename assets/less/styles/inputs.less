@@ -65,14 +65,10 @@
     }
 
     &.open.open-down {
-        .input-group {
-            .form-control, .btn {
+        .ed-dropdown-toggle {
+            &, .btn, .form-control {
                 .border-bottom-radius(0);
             }
-        }
-
-        .btn.dropdown-toggle {
-            .border-bottom-radius(0);
         }
 
         .entity-selector {
@@ -84,8 +80,8 @@
     }
 
     &.open.open-up {
-        .input-group {
-            .form-control, .btn {
+        .ed-dropdown-toggle {
+            &, .btn, .form-control {
                 .border-top-radius(0);
             }
         }

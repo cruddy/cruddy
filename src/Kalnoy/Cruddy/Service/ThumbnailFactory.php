@@ -39,10 +39,10 @@ class ThumbnailFactory {
             $image->resizeCanvas($width, $height, 'center', false, 'ffffff');
         }
 
-        $image->encode('jpg');
-
         $expires = Carbon::createFromTimestamp(time() + $this->lifetime * 60);
 
-        return new Thumbnail($image->checksum(), $image->get($this->lifetime), $expires, 'image/jpeg');
+        $image = $image->get($this->lifetime, true);
+
+        return new Thumbnail($image->cachekey, $image->encode(), $expires, $image->mime);
     }
 }

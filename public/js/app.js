@@ -2677,7 +2677,7 @@
 
     Entity.prototype.search = function() {
       if (this.searchDataSource != null) {
-        return this.searchDataSource;
+        return this.searchDataSource.reset();
       }
       this.searchDataSource = new SearchDataSource({}, {
         url: this.url("search"),

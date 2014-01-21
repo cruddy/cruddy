@@ -1688,7 +1688,7 @@ class Entity extends Backbone.Model
         new EntityInstance _.extend({}, @get("defaults"), attributes), { entity: this, related: related }
 
     search: ->
-        return @searchDataSource if @searchDataSource?
+        return @searchDataSource.reset() if @searchDataSource?
 
         @searchDataSource = new SearchDataSource {},
             url: @url "search"

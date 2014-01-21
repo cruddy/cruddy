@@ -196,6 +196,21 @@ class Form implements FormInterface {
     }
 
     /**
+     * Sync MorphToMany relationship.
+     *
+     * @param   Eloquent  $instance
+     * @param   string    $relationId
+     * @param   string    $key
+     * @param   array     $data
+     *
+     * @return  $this
+     */
+    protected function syncMorphToMany(Eloquent $instance, $relationId, $key, $data)
+    {
+        return $this->syncBelongsToMany($instance, $relationId, $key, $data);
+    }
+
+    /**
      * Sync BelongsTo relationship.
      *
      * @param Eloquent $instance

@@ -3,7 +3,7 @@
 use Kalnoy\Cruddy\Service\Validation\LaravelValidator;
 use Mockery as m;
 
-class LaravelValidatorTest extends TestCase {
+class LaravelValidatorTest extends PHPUnit_Framework_TestCase {
 
     public function tearDown()
     {
@@ -51,7 +51,7 @@ class LaravelValidatorTest extends TestCase {
         $attrs = ['id' => 'id'];
 
         $messageBag = m::mock();
-        $messageBag->shouldReceive('all')->once()->andReturn([]);
+        $messageBag->shouldReceive('getMessages')->once()->andReturn([]);
 
         $validator = Mockery::mock();
         $validator->shouldReceive('passes')->once()->andReturn(false);

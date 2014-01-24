@@ -11,14 +11,14 @@
     "require": {
         "php": ">=5.4.0",
         "laravel/framework": "~4.1.18",
-        "cartalyst/sentry": "~2.0.0",
-        "intervention/image": "~1.5.8",
-        "intervention/imagecache": "~0.5.8"
+        "cartalyst/sentry": "~2.0",
+        "intervention/image": "~1.5",
+        "intervention/imagecache": "~0.5"
     },
 
     "require-dev": {
-        "mockery/mockery": "~0.8.0",
-        "phpunit/phpunit": "~3.7.29"
+        "mockery/mockery": "~0.8",
+        "phpunit/phpunit": "~3.7"
     },
 
     "autoload": {

@@ -162,10 +162,36 @@ module.exports = function(grunt) {
                 dest: 'public/css',
             }
         },
+
+        watch: {
+
+            styles: {
+                files: '<%= less_src %>/**/*.less',
+                tasks: ['less:styles'],
+            },
+
+            coffee: {
+                files: [
+                    '<%= app %>/**/*.coffee',
+                ],
+
+                tasks: ['app-dev'],
+            },
+
+            reload: {
+                files: [
+                    'public/css/*.min.css',
+                    'public/js/*.js',
+                ],
+
+                options: { livereload: true },
+            },
+        },
     });
 
     grunt.loadNpmTasks('grunt-contrib-coffee');
     grunt.loadNpmTasks('grunt-contrib-less');
+    grunt.loadNpmTasks('grunt-contrib-watch');
     grunt.loadNpmTasks('grunt-contrib-uglify');
     grunt.loadNpmTasks('grunt-contrib-concat');
     grunt.loadNpmTasks('grunt-contrib-copy');

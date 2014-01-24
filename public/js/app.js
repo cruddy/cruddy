@@ -219,7 +219,13 @@
         }
       };
       if (this.filter != null) {
-        this.listenTo(this.filter, "change", this.fetch);
+        this.listenTo(this.filter, "change", (function() {
+          _this.set({
+            current_page: 1,
+            silent: true
+          });
+          return _this.fetch();
+        }));
       }
       this.on("change", function() {
         if (!_this._hold) {
@@ -1075,12 +1081,14 @@
     EntityDropdown.prototype.reference = null;
 
     EntityDropdown.prototype.initialize = function(options) {
+      var _ref13;
       if (options.multiple != null) {
         this.multiple = options.multiple;
       }
       if (options.reference != null) {
         this.reference = options.reference;
       }
+      this.allowEdit = (_ref13 = options.allowEdit) != null ? _ref13 : true;
       this.active = false;
       return EntityDropdown.__super__.initialize.apply(this, arguments);
     };
@@ -1159,7 +1167,8 @@
         model: this.model,
         key: this.key,
         multiple: this.multiple,
-        reference: this.reference
+        reference: this.reference,
+        allowCreate: this.allowEdit
       });
       this.selector.render().entity.done(function() {
         return _this.$el.append(_this.selector.el);
@@ -1247,7 +1256,10 @@
         key = null;
       }
       html = "<div class=\"input-group input-group-sm ed-item " + (!this.multiple ? "ed-dropdown-toggle" : "") + "\" data-key=\"" + key + "\">\n    <input type=\"text\" class=\"form-control\" " + (!this.multiple ? "data-toggle='dropdown' data-target='#" + this.cid + "'" : "tab-index='-1'") + " value=\"" + (_.escape(value)) + "\" readonly>\n    <div class=\"input-group-btn\">";
-      html += "<button type=\"button\" class=\"btn btn-default btn-edit\" tabindex=\"-1\">\n    <span class=\"glyphicon glyphicon-pencil\"></span>\n</button><button type=\"button\" class=\"btn btn-default btn-remove\" tabindex=\"-1\">\n    <span class=\"glyphicon glyphicon-remove\"></span>\n</button>";
+      if (this.allowEdit) {
+        html += "<button type=\"button\" class=\"btn btn-default btn-edit\" tabindex=\"-1\">\n    <span class=\"glyphicon glyphicon-pencil\"></span>\n</button>";
+      }
+      html += "<button type=\"button\" class=\"btn btn-default btn-remove\" tabindex=\"-1\">\n    <span class=\"glyphicon glyphicon-remove\"></span>\n</button>";
       if (!this.multiple) {
         html += "<button type=\"button\" class=\"btn btn-default btn-dropdown dropdown-toggle\" data-toggle=\"dropdown\" data-target=\"#" + this.cid + "\" tab-index=\"1\">\n    <span class=\"glyphicon glyphicon-search\"></span>\n</button>";
       }
@@ -1294,12 +1306,13 @@
     };
 
     EntitySelector.prototype.initialize = function(options) {
-      var _ref14, _ref15, _ref16,
+      var _ref14, _ref15, _ref16, _ref17,
         _this = this;
       EntitySelector.__super__.initialize.apply(this, arguments);
       this.filter = (_ref14 = options.filter) != null ? _ref14 : false;
       this.multiple = (_ref15 = options.multiple) != null ? _ref15 : false;
-      this.search = (_ref16 = options.search) != null ? _ref16 : true;
+      this.allowSearch = (_ref16 = options.allowSearch) != null ? _ref16 : true;
+      this.allowCreate = (_ref17 = options.allowCreate) != null ? _ref17 : true;
       this.data = [];
       this.buildSelected(this.model.get(this.key));
       this.entity = Cruddy.app.entity(options.reference);
@@ -1472,7 +1485,9 @@
       this.entity.done(function() {
         _this.renderItems();
         _this.items.parent().on("scroll", $.proxy(_this, "checkForMore"));
-        return _this.renderSearch();
+        if (_this.allowSearch) {
+          return _this.renderSearch();
+        }
       });
       return this;
     };
@@ -1483,7 +1498,10 @@
         key: "search"
       });
       this.$el.prepend(this.searchInput.render().el);
-      this.searchInput.$el.wrap("<div class='input-group input-group-sm search-input-container'></div>").after("<div class='input-group-btn'>\n    <button type='button' class='btn btn-default btn-add' tabindex='-1'>\n        <span class='glyphicon glyphicon-plus'></span>\n    </button>\n</div>");
+      this.searchInput.$el.wrap("<div class='" + (this.allowCreate ? "input-group input-group-sm" : "") + " search-input-container'></div>");
+      if (this.allowCreate) {
+        this.searchInput.$el.after("<div class='input-group-btn'>\n    <button type='button' class='btn btn-default btn-add' tabindex='-1'>\n        <span class='glyphicon glyphicon-plus'></span>\n    </button>\n</div>");
+      }
       return this;
     };
 
@@ -2196,7 +2214,8 @@
       return new EntityDropdown({
         model: model,
         key: this.id,
-        reference: this.get("reference")
+        reference: this.get("reference"),
+        allowEdit: false
       });
     };
 

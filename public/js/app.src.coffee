@@ -114,7 +114,10 @@ class DataSource extends Backbone.Model
 
             error: (xhr) => @trigger "error", this, xhr
 
-        @listenTo @filter, "change", @fetch if @filter?
+        @listenTo @filter, "change", (=>
+            @set current_page: 1, silent: yes
+            @fetch()
+        ) if @filter?
 
         @on "change", => @fetch() unless @_hold
         @on "change:search", => @set current_page: 1, silent: yes
@@ -688,6 +691,7 @@ class EntityDropdown extends BaseInput
     initialize: (options) ->
         @multiple = options.multiple if options.multiple?
         @reference = options.reference if options.reference?
+        @allowEdit = options.allowEdit ? yes
         @active = false
 
         super
@@ -751,6 +755,7 @@ class EntityDropdown extends BaseInput
             key: @key
             multiple: @multiple
             reference: @reference
+            allowCreate: @allowEdit
 
         @selector.render().entity.done => @$el.append @selector.el
 
@@ -835,7 +840,11 @@ class EntityDropdown extends BaseInput
         html += """
             <button type="button" class="btn btn-default btn-edit" tabindex="-1">
                 <span class="glyphicon glyphicon-pencil"></span>
-            </button><button type="button" class="btn btn-default btn-remove" tabindex="-1">
+            </button>
+            """ if @allowEdit
+
+        html += """
+            <button type="button" class="btn btn-default btn-remove" tabindex="-1">
                 <span class="glyphicon glyphicon-remove"></span>
             </button>
             """
@@ -873,7 +882,9 @@ class EntitySelector extends BaseInput
 
         @filter = options.filter ? false
         @multiple = options.multiple ? false
-        @search = options.search ? true
+
+        @allowSearch = options.allowSearch ? yes
+        @allowCreate = options.allowCreate ? yes
 
         @data = []
         @buildSelected @model.get @key
@@ -1025,7 +1036,7 @@ class EntitySelector extends BaseInput
 
             @items.parent().on "scroll", $.proxy this, "checkForMore"
 
-            @renderSearch()
+            @renderSearch() if @allowSearch
 
         this
 
@@ -1036,15 +1047,15 @@ class EntitySelector extends BaseInput
 
         @$el.prepend @searchInput.render().el
 
-        @searchInput.$el
-            .wrap("<div class='input-group input-group-sm search-input-container'></div>")
-            .after("""
-                <div class='input-group-btn'>
-                    <button type='button' class='btn btn-default btn-add' tabindex='-1'>
-                        <span class='glyphicon glyphicon-plus'></span>
-                    </button>
-                </div>
-            """)
+        @searchInput.$el.wrap "<div class='#{ if @allowCreate then "input-group input-group-sm" else "" } search-input-container'></div>"
+
+        @searchInput.$el.after """
+            <div class='input-group-btn'>
+                <button type='button' class='btn btn-default btn-add' tabindex='-1'>
+                    <span class='glyphicon glyphicon-plus'></span>
+                </button>
+            </div>
+            """ if @allowCreate
 
         this
 
@@ -1500,6 +1511,7 @@ class Cruddy.fields.Relation extends Field
             model: model
             key: @id
             reference: @get "reference"
+            allowEdit: no
 
     format: (value) ->
         return "не указано" if _.isEmpty value

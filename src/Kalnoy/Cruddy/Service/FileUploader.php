@@ -86,7 +86,7 @@ class FileUploader {
      */
     public function upload($value)
     {
-        if ($this->multiple) return $this->uploadMany($value);
+        if ($this->multiple) return $this->uploadMany((array)$value);
 
         return is_string($value) ? $value : $this->uploadFile($value);
     }
@@ -98,16 +98,23 @@ class FileUploader {
      *
      * @return array
      */
-    protected function uploadMany($files)
+    protected function uploadMany(array $files)
     {
-        $files = (array)$files;
+        $result = [];
 
         foreach ($files as $i => $file)
         {
-            if ($file instanceof UploadedFile) $files[$i] = $this->uploadFile($file);
+            if ($file instanceof UploadedFile)
+            {
+                if ($file = $this->uploadFile($file)) $result[] = $file;
+            }
+            else
+            {
+                $result[] = $file;
+            }
         }
 
-        return $files;
+        return $result;
     }
 
     /**
@@ -115,17 +122,20 @@ class FileUploader {
      *
      * @param UploadedFile $file
      *
-     * @return string
+     * @return string|null
      */
     protected function uploadFile(UploadedFile $file)
     {
+        if (!$file->isValid()) return null;
+
         $path = $this->root.'/'.$this->path;
-        $name = $this->getName($file).'.'.$file->getClientOriginalExtension();
+        $ext = '.'.$file->getClientOriginalExtension();
+        $name = $this->getName($file);
 
         // If file already exists, we force random name.
-        if ($this->file->exists($path.'/'.$name)) $name = $this->getName();
+        if ($this->file->exists($path.'/'.$name.$ext)) $name = $this->getName();
 
-        $this->uploaded[] = $target = $file->move($path, $name);
+        $this->uploaded[] = $target = $file->move($path, $name.$ext);
 
         return strtr($target,
         [

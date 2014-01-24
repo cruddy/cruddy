@@ -23,7 +23,10 @@ class DataSource extends Backbone.Model
 
             error: (xhr) => @trigger "error", this, xhr
 
-        @listenTo @filter, "change", @fetch if @filter?
+        @listenTo @filter, "change", (=>
+            @set current_page: 1, silent: yes
+            @fetch()
+        ) if @filter?
 
         @on "change", => @fetch() unless @_hold
         @on "change:search", => @set current_page: 1, silent: yes

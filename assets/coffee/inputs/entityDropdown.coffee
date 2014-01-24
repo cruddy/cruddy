@@ -23,6 +23,7 @@ class EntityDropdown extends BaseInput
     initialize: (options) ->
         @multiple = options.multiple if options.multiple?
         @reference = options.reference if options.reference?
+        @allowEdit = options.allowEdit ? yes
         @active = false
 
         super
@@ -86,6 +87,7 @@ class EntityDropdown extends BaseInput
             key: @key
             multiple: @multiple
             reference: @reference
+            allowCreate: @allowEdit
 
         @selector.render().entity.done => @$el.append @selector.el
 
@@ -170,7 +172,11 @@ class EntityDropdown extends BaseInput
         html += """
             <button type="button" class="btn btn-default btn-edit" tabindex="-1">
                 <span class="glyphicon glyphicon-pencil"></span>
-            </button><button type="button" class="btn btn-default btn-remove" tabindex="-1">
+            </button>
+            """ if @allowEdit
+
+        html += """
+            <button type="button" class="btn btn-default btn-remove" tabindex="-1">
                 <span class="glyphicon glyphicon-remove"></span>
             </button>
             """

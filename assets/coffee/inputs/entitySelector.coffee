@@ -12,7 +12,9 @@ class EntitySelector extends BaseInput
 
         @filter = options.filter ? false
         @multiple = options.multiple ? false
-        @search = options.search ? true
+
+        @allowSearch = options.allowSearch ? yes
+        @allowCreate = options.allowCreate ? yes
 
         @data = []
         @buildSelected @model.get @key
@@ -164,7 +166,7 @@ class EntitySelector extends BaseInput
 
             @items.parent().on "scroll", $.proxy this, "checkForMore"
 
-            @renderSearch()
+            @renderSearch() if @allowSearch
 
         this
 
@@ -175,15 +177,15 @@ class EntitySelector extends BaseInput
 
         @$el.prepend @searchInput.render().el
 
-        @searchInput.$el
-            .wrap("<div class='input-group input-group-sm search-input-container'></div>")
-            .after("""
-                <div class='input-group-btn'>
-                    <button type='button' class='btn btn-default btn-add' tabindex='-1'>
-                        <span class='glyphicon glyphicon-plus'></span>
-                    </button>
-                </div>
-            """)
+        @searchInput.$el.wrap "<div class='#{ if @allowCreate then "input-group input-group-sm" else "" } search-input-container'></div>"
+
+        @searchInput.$el.after """
+            <div class='input-group-btn'>
+                <button type='button' class='btn btn-default btn-add' tabindex='-1'>
+                    <span class='glyphicon glyphicon-plus'></span>
+                </button>
+            </div>
+            """ if @allowCreate
 
         this
 

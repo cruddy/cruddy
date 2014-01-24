@@ -1,47 +1,37 @@
 {
     "name": "kalnoy/cruddy",
-    "description": "Cruddy -- backend CRUD interface",
+    "description": "Cruddy -- CRUD without a line of code",
     "authors": [
         {
-            "name": "Aleksander Kalnoy",
+            "name": "Alexander Kalnoy",
             "email": "lazychaser@gmail.com"
         }
     ],
 
     "require": {
         "php": ">=5.4.0",
-        "laravel/framework": "4.1.*",
-        "cartalyst/sentry": "2.0.*",
-        "intervention/image": "dev-master",
-        "intervention/imagecache": "dev-master"
+        "laravel/framework": "~4.1.18",
+        "cartalyst/sentry": "~2.0.0",
+        "intervention/image": "~1.5.8",
+        "intervention/imagecache": "~0.5.8"
+    },
+
+    "require-dev": {
+        "mockery/mockery": "~0.8.0"
     },
 
     "autoload": {
         "classmap": [
-            "app/commands",
-            "app/controllers",
-            "app/models",
-            "app/tests",
-            "app/database/migrations",
-            "app/database/seeds",
-
             "src/controllers",
             "src/exceptions.php"
         ],
 
         "psr-0": {
-            "Kalnoy\\Cruddy\\": "src/",
-            "App": "app/lib"
+            "Kalnoy\\Cruddy\\": "src/"
         },
 
         "files": [
             "src/helpers.php"
         ]
-    },
-
-    "minimum-stability": "dev",
-    "require-dev": {
-        "fzaninotto/faker": "dev-master",
-        "mockery/mockery": "dev-master"
     }
 }

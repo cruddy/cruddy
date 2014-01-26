@@ -12,6 +12,15 @@ class Text extends Input {
     protected $inputType = 'text';
 
     /**
+     * The input mask.
+     *
+     * {@link http://digitalbush.com/projects/masked-input-plugin}
+     *
+     * @var  [type]
+     */
+    public $mask;
+
+    /**
      * Process value.
      *
      * @param  string $value
@@ -21,5 +30,14 @@ class Text extends Input {
     public function process($value)
     {
         return trim($value);
+    }
+
+    public function toArray()
+    {
+        return
+        [
+            'mask' => $this->mask,
+            
+        ] + parent::toArray();
     }
 }

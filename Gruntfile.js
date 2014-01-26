@@ -87,6 +87,7 @@ module.exports = function(grunt) {
                     '<%= vendor %>/backbone/backbone.js',
                     '<%= vendor %>/moment/moment.js',
                     '<%= vendor %>/moment/lang/ru.js',
+                    '<%= vendor %>/jquery-maskedinput/dist/jquery.maskedinput.js',
 
                     '<%= bootstrap %>/js/tab.js',
                     '<%= bootstrap %>/js/dropdown.js',

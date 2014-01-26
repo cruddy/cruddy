@@ -1,3 +1,5 @@
+Cruddy.Inputs = {}
+
 # Base class for input that will be bound to a model's attribute.
 class BaseInput extends Backbone.View
     constructor: (options) ->

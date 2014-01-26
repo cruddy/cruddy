@@ -1,14 +1,12 @@
-# Renders an <input> value of which is bound to a model's attribute.
-class TextInput extends BaseInput
-    tagName: "input"
+class Cruddy.Inputs.BaseText extends BaseInput
+    className: "form-control"
 
     events:
         "change": "change"
         "keydown": "keydown"
 
-    constructor: (options) ->
-        options.className ?= "form-control"
-        options.className += " input-#{ options.size ? "sm" }"
+    initialize: (options) ->
+        @$el.addClass "input-#{ options.size ? "sm" }"
 
         super
 
@@ -42,7 +40,17 @@ class TextInput extends BaseInput
         @el.focus()
 
         this
+        
+# Renders an <input> value of which is bound to a model's attribute.
+class TextInput extends Cruddy.Inputs.BaseText
+    tagName: "input"
+
+    initialize: (options) ->
+        # Apply mask
+        options.mask and @$el.mask options.mask
+
+        super
 
 # Renders a <textarea> input.
-class Textarea extends TextInput
+class Textarea extends Cruddy.Inputs.BaseText
     tagName: "textarea"

@@ -1810,9 +1810,7 @@
       this.regexp = new RegExp("[^" + chars + "]+", "g");
       this.separator = (_ref19 = options.separator) != null ? _ref19 : "-";
       this.key = options.key;
-      if (options.ref != null) {
-        this.ref = options.ref;
-      }
+      this.ref = _.isArray(options.ref) ? options.ref : options.ref ? [options.ref] : void 0;
       return Slug.__super__.initialize.apply(this, arguments);
     };
 
@@ -1829,7 +1827,7 @@
       if (!this.ref) {
         return;
       }
-      this.listenTo(this.model, "change:" + this.ref, this.sync);
+      this.listenTo(this.model, "change:" + this.ref.join(" change:"), this.sync);
       this.syncButton.addClass("active");
       this.input.disable();
       return this.sync();
@@ -1845,9 +1843,10 @@
     };
 
     Slug.prototype.linkable = function() {
-      var refValue;
-      refValue = this.convert(this.model.get(this.ref));
-      return refValue === this.model.get(this.key);
+      var modelValue, value;
+      modelValue = this.model.get(this.key);
+      value = this.getValue();
+      return value === modelValue || modelValue === null && value === "";
     };
 
     Slug.prototype.convert = function(value) {
@@ -1858,15 +1857,27 @@
       }
     };
 
-    Slug.prototype.change = function() {
-      this.unlink();
-      this.$el.val(this.convert(this.$el.val()));
-      return Slug.__super__.change.apply(this, arguments);
+    Slug.prototype.sync = function() {
+      this.model.set(this.key, this.getValue());
+      return this;
     };
 
-    Slug.prototype.sync = function() {
-      this.model.set(this.key, this.convert(this.model.get(this.ref)));
-      return this;
+    Slug.prototype.getValue = function() {
+      var components, key, refValue, _i, _len, _ref18;
+      components = [];
+      _ref18 = this.ref;
+      for (_i = 0, _len = _ref18.length; _i < _len; _i++) {
+        key = _ref18[_i];
+        refValue = this.model.get(key);
+        if (refValue) {
+          components.push(refValue);
+        }
+      }
+      if (components.length) {
+        return this.convert(components.join(this.separator));
+      } else {
+        return "";
+      }
     };
 
     Slug.prototype.render = function() {
@@ -1885,7 +1896,7 @@
       if (this.ref == null) {
         return "";
       }
-      return "<div class=\"input-group-btn\">\n    <button type=\"button\" tabindex=\"-1\" class=\"btn btn-default\" title=\"Связать с полем " + (this.model.entity.fields.get(this.ref).get("label")) + "\"><span class=\"glyphicon glyphicon-link\"></span></button>\n</div>";
+      return "<div class=\"input-group-btn\">\n    <button type=\"button\" tabindex=\"-1\" class=\"btn btn-default\" title=\"Синхронизировать\"><span class=\"glyphicon glyphicon-link\"></span></button>\n</div>";
     };
 
     return Slug;

@@ -18,7 +18,7 @@ class Cruddy.Inputs.Slug extends Backbone.View
         @separator = options.separator ? "-"
 
         @key = options.key
-        @ref = options.ref if options.ref?
+        @ref = if _.isArray(options.ref) then options.ref else [options.ref] if options.ref
 
         super
 
@@ -30,7 +30,7 @@ class Cruddy.Inputs.Slug extends Backbone.View
     link: ->
         return if not @ref
 
-        @listenTo @model, "change:" + @ref, @sync
+        @listenTo @model, "change:" + @ref.join(" change:"), @sync
         @syncButton.addClass "active"
         @input.disable()
 
@@ -44,22 +44,26 @@ class Cruddy.Inputs.Slug extends Backbone.View
         this
 
     linkable: ->
-        refValue = @convert @model.get @ref
-        refValue == @model.get @key
+        modelValue = @model.get @key
+        value = @getValue()
+
+        value == modelValue or modelValue is null and value is ""
 
     convert: (value) -> if value then value.toLocaleLowerCase().replace(/\s+/g, @separator).replace(@regexp, "") else value
 
-    change: ->
-        @unlink()
-
-        @$el.val @convert @$el.val()
-
-        super
-
     sync: ->
-        @model.set @key, @convert @model.get @ref
+        @model.set @key, @getValue()
 
         this
+
+    getValue: ->
+        components = []
+
+        for key in @ref
+            refValue = @model.get key
+            components.push refValue if refValue
+
+        if components.length then @convert components.join @separator else ""
 
     render: ->
         @$el.html @template()
@@ -76,6 +80,6 @@ class Cruddy.Inputs.Slug extends Backbone.View
 
         """
         <div class="input-group-btn">
-            <button type="button" tabindex="-1" class="btn btn-default" title="Связать с полем #{ @model.entity.fields.get(@ref).get "label" }"><span class="glyphicon glyphicon-link"></span></button>
+            <button type="button" tabindex="-1" class="btn btn-default" title="Синхронизировать"><span class="glyphicon glyphicon-link"></span></button>
         </div>
         """

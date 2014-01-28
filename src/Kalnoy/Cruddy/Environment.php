@@ -88,9 +88,10 @@ class Environment implements JsonableInterface {
     {
         return json_encode(array(
 
-            "locale" => $this->config->get("app.locale"),
-            "uri" => $this->config("uri"),
-            "root" => $this->request->root(),
+            'locale' => $this->config->get('app.locale'),
+            'uri' => $this->config('uri'),
+            'root' => $this->request->root(),
+            'ace_theme' => $this->config('ace_theme', 'chrome'),
 
         ), $options);
     }

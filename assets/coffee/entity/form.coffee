@@ -135,7 +135,7 @@ class EntityForm extends Backbone.View
 
         @$el.html @template()
 
-        @nav = @$ ".nav"
+        @nav = @$ ".navbar-nav"
         @footer = @$ "footer"
         @submit = @$ ".btn-save"
         @destroy = @$ ".btn-destroy"
@@ -174,14 +174,13 @@ class EntityForm extends Backbone.View
 
     template: ->
         """
-        <header>
-            <div class="btn-group btn-group-sm">
-                <button type="button" tabindex="-1" class="btn btn-link btn-copy" title="Копировать">
-                    <span class="glyphicon glyphicon-book"></span>
-                </button>
-            </div>
-            <ul class="nav nav-pills"></ul>
-        </header>
+        <div class="navbar navbar-default navbar-static-top" role="navigation">
+            <button type="button" tabindex="-1" class="btn btn-link btn-copy navbar-btn pull-right" title="Копировать">
+                <span class="glyphicon glyphicon-book"></span>
+            </button>
+
+            <ul class="nav navbar-nav"></ul>
+        </div>
 
         <footer>
             <button type="button" class="btn btn-default btn-close btn-sm" type="button">Закрыть</button>

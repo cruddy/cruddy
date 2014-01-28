@@ -129,7 +129,7 @@ class EntityDropdown extends BaseInput
         @$el.append @items = $ "<div>", class: "items"
 
         @$el.append """
-            <button type="button" class="btn btn-default btn-sm btn-block dropdown-toggle ed-dropdown-toggle" data-toggle="dropdown" data-target="##{ @cid }">
+            <button type="button" class="btn btn-default btn-block dropdown-toggle ed-dropdown-toggle" data-toggle="dropdown" data-target="##{ @cid }">
                 Выбрать
                 <span class="caret"></span>
             </button>
@@ -164,7 +164,7 @@ class EntityDropdown extends BaseInput
 
     itemTemplate: (value, key = null) ->
         html = """
-        <div class="input-group input-group-sm ed-item #{ if not @multiple then "ed-dropdown-toggle" else "" }" data-key="#{ key }">
+        <div class="input-group input-group ed-item #{ if not @multiple then "ed-dropdown-toggle" else "" }" data-key="#{ key }">
             <input type="text" class="form-control" #{ if not @multiple then "data-toggle='dropdown' data-target='##{ @cid }'" else "tab-index='-1'"} value="#{ _.escape value }" readonly>
             <div class="input-group-btn">
         """

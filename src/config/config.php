@@ -9,6 +9,9 @@
     // The main layout view.
     'layout' => 'cruddy::layout',
 
+    // The default ace theme.
+    'ace_theme' => 'chrome',
+
     // The path to the assets.
     'assets' => 'packages/kalnoy/cruddy',
 

@@ -23,6 +23,8 @@
     Cruddy = {{ $cruddy->toJSON() }};
     </script>
 
+    {{ HTML::script("{$assets}/js/ace/ace.js") }}
+    
 @if (Config::get("app.debug"))
     {{ HTML::script("{$assets}/js/vendor.js") }}
     {{ HTML::script("{$assets}/js/app.js") }}

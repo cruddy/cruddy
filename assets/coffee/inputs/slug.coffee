@@ -6,7 +6,6 @@ class SlugInput extends Backbone.View
         @input = new TextInput _.clone options
 
         options.className ?= "input-group"
-        options.className += " input-group-#{ options.size ? "sm" }"
 
         delete options.attributes if options.attributes?
 

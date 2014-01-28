@@ -43,6 +43,8 @@ module.exports = function(grunt) {
                     '<%= app %>/inputs/search.coffee',
                     '<%= app %>/inputs/slug.coffee',
                     '<%= app %>/inputs/select.coffee',
+                    '<%= app %>/inputs/code.coffee',
+                    '<%= app %>/inputs/markdown.coffee',
 
                     // Fields
                     '<%= app %>/fields/field.coffee',
@@ -54,6 +56,8 @@ module.exports = function(grunt) {
                     '<%= app %>/fields/image.coffee',
                     '<%= app %>/fields/slug.coffee',
                     '<%= app %>/fields/enum.coffee',
+                    '<%= app %>/fields/markdown.coffee',
+                    '<%= app %>/fields/code.coffee',
 
                     // Columns
                     '<%= app %>/columns/column.coffee',
@@ -82,17 +86,25 @@ module.exports = function(grunt) {
         concat: {
             vendor: {
                 src: [
+                    // JQuery
                     '<%= vendor %>/jquery/jquery.js',
+                    '<%= vendor %>/fancybox/source/jquery.fancybox.js',
+                    '<%= vendor %>/jquery-maskedinput/dist/jquery.maskedinput.js',
+
                     '<%= vendor %>/underscore/underscore.js',
                     '<%= vendor %>/backbone/backbone.js',
                     '<%= vendor %>/moment/moment.js',
                     '<%= vendor %>/moment/lang/ru.js',
-                    '<%= vendor %>/jquery-maskedinput/dist/jquery.maskedinput.js',
+                    '<%= vendor %>/markdown/lib/markdown.js',
 
+                    // Ace
+                    // '<%= vendor %>/ace-builds/src-noconflict/ace.js',
+                    // '<%= vendor %>/ace-builds/src-noconflict/mode-markdown.js',
+                    // '<%= vendor %>/ace-builds/src-noconflict/theme-<%= ace_theme %>.js',
+
+                    // Bootstrap components
                     '<%= bootstrap %>/js/tab.js',
                     '<%= bootstrap %>/js/dropdown.js',
-
-                    '<%= vendor %>/fancybox/source/jquery.fancybox.js',
                 ],
 
                 dest: 'public/js/vendor.js',
@@ -161,6 +173,13 @@ module.exports = function(grunt) {
                 cwd: '<%= vendor %>/fancybox/source',
                 src: ['*.png', '*.gif'],
                 dest: 'public/css',
+            },
+
+            ace: {
+                expand: true,
+                cwd: '<%= vendor %>/ace-builds/src-min-noconflict',
+                src: '*.js',
+                dest: 'public/js/ace',
             }
         },
 
@@ -198,7 +217,7 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-copy');
 
     // Concat all needed vendor files
-    grunt.registerTask('vendor', ['concat:vendor', 'copy:fancybox']);
+    grunt.registerTask('vendor', ['concat:vendor', 'copy:fancybox', 'copy:ace']);
 
     // Backend scripts
     grunt.registerTask('app-dev', ['coffee:app']);

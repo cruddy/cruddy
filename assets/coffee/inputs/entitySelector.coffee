@@ -177,7 +177,7 @@ class EntitySelector extends BaseInput
 
         @$el.prepend @searchInput.render().el
 
-        @searchInput.$el.wrap "<div class='#{ if @allowCreate then "input-group input-group-sm" else "" } search-input-container'></div>"
+        @searchInput.$el.wrap "<div class='#{ if @allowCreate then "input-group" else "" } search-input-container'></div>"
 
         @searchInput.$el.after """
             <div class='input-group-btn'>

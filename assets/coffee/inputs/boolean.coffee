@@ -39,7 +39,7 @@ class BooleanInput extends BaseInput
 
     template: ->
         """
-        <div class="btn-group btn-group-sm">
+        <div class="btn-group">
             <button type="button" class="btn btn-info" data-value="1">да</button>
             <button type="button" class="btn btn-default" data-value="0">нет</button>
         </div>

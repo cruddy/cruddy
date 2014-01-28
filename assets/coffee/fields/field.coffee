@@ -1,4 +1,4 @@
-Cruddy.fields = new Factory
+Cruddy.fields = Cruddy.Fields = new Factory
 
 class FieldView extends Backbone.View
     className: "field"

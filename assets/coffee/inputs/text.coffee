@@ -5,11 +5,6 @@ class Cruddy.Inputs.BaseText extends BaseInput
         "change": "change"
         "keydown": "keydown"
 
-    initialize: (options) ->
-        @$el.addClass "input-#{ options.size ? "sm" }"
-
-        super
-
     keydown: (e) ->
         # Ctrl + Enter
         return @change() if e.ctrlKey and e.keyCode is 13

@@ -20,6 +20,8 @@ class Factory extends AttributeFactory {
         'image' => 'Kalnoy\Cruddy\Entity\Fields\Types\Image',
         'slug' => 'Kalnoy\Cruddy\Entity\Fields\Types\Slug',
         'enum' => 'Kalnoy\Cruddy\Entity\Fields\Types\Enum',
+        'markdown' => 'Kalnoy\Cruddy\Entity\Fields\Types\Markdown',
+        'code' => 'Kalnoy\Cruddy\Entity\Fields\Types\Code',
     );
 
     protected $defaultType = 'string';

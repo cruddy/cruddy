@@ -8,7 +8,7 @@
         }
 
         .input-group-btn .btn {
-            width: @input-height-small;
+            width: @input-height-base;
         }
 
         .input-group-btn > .btn + .btn {
@@ -23,19 +23,15 @@
                 .border-bottom-radius(0);
             }
 
-            &:last-child {
-                .form-control, .btn {
-                    border-bottom: none;
-                }
+            .form-control:focus {
+                position: relative;
+                z-index: 2;
             }
 
             + .ed-item {
                 .form-control, .btn {
                     .border-top-radius(0);
-                    border-top: none;
-
-                    overflow: hidden;
-                    text-overflow: ellipsis;
+                    margin-top: -1px;
                 }
             }
         }
@@ -44,6 +40,15 @@
 
     >.has-items + .dropdown-toggle {
         .border-top-radius(0);
+        margin-top: -1px;
+    }
+
+    .btn.dropdown-toggle {
+        position: relative;
+
+        &:hover {
+            z-index: 2;
+        }
     }
 
     .entity-selector {
@@ -246,4 +251,13 @@
     background-size: cover;
     background-repeat: no-repeat;
     background-position: center center;
+}
+
+.markdown-editor {
+    .tab-pane-preview {
+        overflow-y: auto;
+        margin-top: @padding-base-vertical;
+        padding-bottom: @padding-base-vertical;
+        border-bottom: 1px solid @nav-tabs-border-color;
+    }
 }

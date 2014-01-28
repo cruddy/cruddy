@@ -4,8 +4,7 @@
 
 .entity-form {
     @width: 600px;
-    @padding: 13px;
-    @header-height: @navbar-height + 1;
+    @footer-padding: @navbar-padding-vertical @navbar-padding-horizontal;
     @footer-height: @navbar-height + 1;
 
     position: fixed;
@@ -42,34 +41,15 @@
         right: 0px;
     }
 
-    header, footer {
+    footer {
         position: absolute;
         left: 0;
         width: 100%;
     }
 
-    header {
-        &:extend(.modal-header);
-
-        padding: @padding;
-        top: 0;
-        height: @header-height;
-        background: @navbar-default-bg;
-
-        .nav {
-            >li>a {
-                padding: @padding-small-vertical @padding-small-horizontal;
-                font-size: @font-size-small;
-            }
-        }
-
-        .btn-group {
-            float: right;
-        }
-
-        .btn-group + .nav {
-            margin-right: 26px;
-        }
+    .navbar {
+        position: absolute;
+        width: 100%;
     }
 
     &-title {
@@ -78,13 +58,14 @@
 
     footer {
         &:extend(.modal-footer);
+
         bottom: 0;
         height: @footer-height;
-        padding: @padding;
+        padding: @footer-padding;
     }
 
     .wrap {
-        padding-top: @header-height;
+        padding-top: @navbar-height;
         padding-bottom: @footer-height;
         height: 100%;
         display: none;

@@ -499,6 +499,8 @@ class FilterList extends Backbone.View
         @dispose()
 
         super
+Cruddy.Inputs = {}
+
 # Base class for input that will be bound to a model's attribute.
 class BaseInput extends Backbone.View
     constructor: (options) ->
@@ -536,19 +538,12 @@ class StaticInput extends BaseInput
         @$el.html value
 
         this
-# Renders an <input> value of which is bound to a model's attribute.
-class TextInput extends BaseInput
-    tagName: "input"
+class Cruddy.Inputs.BaseText extends BaseInput
+    className: "form-control"
 
     events:
         "change": "change"
         "keydown": "keydown"
-
-    constructor: (options) ->
-        options.className ?= "form-control"
-        options.className += " input-#{ options.size ? "sm" }"
-
-        super
 
     keydown: (e) ->
         # Ctrl + Enter
@@ -580,9 +575,19 @@ class TextInput extends BaseInput
         @el.focus()
 
         this
+        
+# Renders an <input> value of which is bound to a model's attribute.
+class TextInput extends Cruddy.Inputs.BaseText
+    tagName: "input"
+
+    initialize: (options) ->
+        # Apply mask
+        options.mask and @$el.mask options.mask
+
+        super
 
 # Renders a <textarea> input.
-class Textarea extends TextInput
+class Textarea extends Cruddy.Inputs.BaseText
     tagName: "textarea"
 # Renders a checkbox
 class Checkbox extends BaseInput
@@ -654,7 +659,7 @@ class BooleanInput extends BaseInput
 
     template: ->
         """
-        <div class="btn-group btn-group-sm">
+        <div class="btn-group">
             <button type="button" class="btn btn-info" data-value="1">да</button>
             <button type="button" class="btn btn-default" data-value="0">нет</button>
         </div>
@@ -797,7 +802,7 @@ class EntityDropdown extends BaseInput
         @$el.append @items = $ "<div>", class: "items"
 
         @$el.append """
-            <button type="button" class="btn btn-default btn-sm btn-block dropdown-toggle ed-dropdown-toggle" data-toggle="dropdown" data-target="##{ @cid }">
+            <button type="button" class="btn btn-default btn-block dropdown-toggle ed-dropdown-toggle" data-toggle="dropdown" data-target="##{ @cid }">
                 Выбрать
                 <span class="caret"></span>
             </button>
@@ -832,7 +837,7 @@ class EntityDropdown extends BaseInput
 
     itemTemplate: (value, key = null) ->
         html = """
-        <div class="input-group input-group-sm ed-item #{ if not @multiple then "ed-dropdown-toggle" else "" }" data-key="#{ key }">
+        <div class="input-group input-group ed-item #{ if not @multiple then "ed-dropdown-toggle" else "" }" data-key="#{ key }">
             <input type="text" class="form-control" #{ if not @multiple then "data-toggle='dropdown' data-target='##{ @cid }'" else "tab-index='-1'"} value="#{ _.escape value }" readonly>
             <div class="input-group-btn">
         """
@@ -1047,7 +1052,7 @@ class EntitySelector extends BaseInput
 
         @$el.prepend @searchInput.render().el
 
-        @searchInput.$el.wrap "<div class='#{ if @allowCreate then "input-group input-group-sm" else "" } search-input-container'></div>"
+        @searchInput.$el.wrap "<div class='#{ if @allowCreate then "input-group" else "" } search-input-container'></div>"
 
         @searchInput.$el.after """
             <div class='input-group-btn'>
@@ -1240,7 +1245,6 @@ class SlugInput extends Backbone.View
         @input = new TextInput _.clone options
 
         options.className ?= "input-group"
-        options.className += " input-group-#{ options.size ? "sm" }"
 
         delete options.attributes if options.attributes?
 
@@ -1341,7 +1345,101 @@ class SelectInput extends TextInput
 
     optionTemplate: (value, title) ->
         """<option value="#{ _.escape value }">#{ _.escape title }</option>"""
-Cruddy.fields = new Factory
+class Cruddy.Inputs.Code extends BaseInput
+    initialize: (options) ->
+        @$el.height (options.height ? 100) + "px"
+
+        @editor = ace.edit @el
+        @editor.setTheme "ace/theme/#{ options.theme ? Cruddy.ace_theme }"
+
+        session = @editor.getSession()
+
+        session.setMode "ace/mode/#{ options.mode }" if options.mode
+        session.setUseWrapMode true
+        session.setWrapLimitRange null, null
+
+        super
+
+    applyChanges: (model, value, options) ->
+        @editor.setValue value if not options?.input or options.input isnt this
+
+        this
+
+    render: ->
+        @editor.on "blur", => @model.set @key, @editor.getValue(), input: @
+
+        super
+
+    remove: ->
+        @editor?.destroy()
+        @editor = null
+
+        super
+
+    focus: ->
+        @editor?.focus()
+
+        this
+class Cruddy.Inputs.Markdown extends BaseInput
+
+    events:
+        "show.bs.tab [data-toggle=tab]": "showTab"
+        "shown.bs.tab [data-toggle=tab]": "shownTab"
+
+    initialize: (options) ->
+        @height = options.height ? 200
+
+        @editorInput = new Cruddy.Inputs.Code
+            model: @model
+            key: @key
+            mode: "markdown"
+            height: @height
+
+        super
+
+    showTab: (e) ->
+        @renderPreview() if $(e.target).data("tab") is "preview"
+
+        this
+
+    shownTab: (e) ->
+        @editorInput.focus() if $(e.traget).data("tab") is "editor"
+
+    render: ->
+        @$el.html @template()
+
+        @$(".tab-pane-editor").append @editorInput.render().el
+
+        @preview = @$ ".tab-pane-preview"
+
+        this
+
+    renderPreview: ->
+        @preview.html markdown.toHTML @model.get @key
+
+        this
+
+    template: ->
+        """
+        <div class="markdown-editor">
+            <ul class="nav nav-tabs">
+                <li class="active"><a href="##{ @cid }-editor" data-toggle="tab" data-tab="editor">Исходник</a></li>
+                <li><a href="##{ @cid }-preview" data-toggle="tab" data-tab="preview">Результат</a></li>
+            </ul>
+
+            <div class="tab-content">
+                <div class="tab-pane-editor tab-pane active" id="#{ @cid }-editor"></div>
+                <div class="tab-pane-preview tab-pane" id="#{ @cid }-preview" style="height:#{ @height }px"></div>
+            </div>
+        </div>
+        """
+
+    focus: ->
+        tab = @$ "[data-tab=editor]"
+        if tab.hasClass "active" then @editorInput.focus() else tab.tab "show"
+
+        this
+Cruddy.fields = Cruddy.Fields = new Factory
 
 class FieldView extends Backbone.View
     className: "field"
@@ -1470,6 +1568,7 @@ class Cruddy.fields.Input extends Field
             new TextInput
                 model: model
                 key: @id
+                mask: @get "mask"
                 attributes: attributes
 
     format: (value) -> if @get("input_type") is "textarea" then "<pre>#{ super }</pre>" else super
@@ -1570,6 +1669,21 @@ class Cruddy.fields.Enum extends Field
         items = @get "items"
 
         if value of items then items[value] else "n/a"
+class Cruddy.Fields.Markdown extends Field
+    createEditableInput: (model) ->
+        new Cruddy.Inputs.Markdown
+            model: model
+            key: @id
+            height: @get "height"
+            theme: @get "theme"
+class Cruddy.Fields.Code extends Field
+    createEditableInput: (model) ->
+        new Cruddy.Inputs.Markdown
+            model: model
+            key: @id
+            height: @get "height"
+            mode: @get "mode"
+            theme: @get "theme"
 Cruddy.columns = new Factory
 
 class Column extends Attribute
@@ -2056,7 +2170,7 @@ class EntityForm extends Backbone.View
 
         @$el.html @template()
 
-        @nav = @$ ".nav"
+        @nav = @$ ".navbar-nav"
         @footer = @$ "footer"
         @submit = @$ ".btn-save"
         @destroy = @$ ".btn-destroy"
@@ -2095,14 +2209,13 @@ class EntityForm extends Backbone.View
 
     template: ->
         """
-        <header>
-            <div class="btn-group btn-group-sm">
-                <button type="button" tabindex="-1" class="btn btn-link btn-copy" title="Копировать">
-                    <span class="glyphicon glyphicon-book"></span>
-                </button>
-            </div>
-            <ul class="nav nav-pills"></ul>
-        </header>
+        <div class="navbar navbar-default navbar-static-top" role="navigation">
+            <button type="button" tabindex="-1" class="btn btn-link btn-copy navbar-btn pull-right" title="Копировать">
+                <span class="glyphicon glyphicon-book"></span>
+            </button>
+
+            <ul class="nav navbar-nav"></ul>
+        </div>
 
         <footer>
             <button type="button" class="btn btn-default btn-close btn-sm" type="button">Закрыть</button>

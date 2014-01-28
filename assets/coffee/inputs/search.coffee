@@ -1,5 +1,5 @@
 # Search input implements "change when type" and also allows to clear text with Esc
-class SearchInput extends TextInput
+class Cruddy.Inputs.Search extends Cruddy.Inputs.Text
 
     attributes:
         type: "search"

@@ -1,5 +1,5 @@
 # Renders a checkbox
-class Checkbox extends BaseInput
+class Cruddy.Inputs.Checkbox extends Cruddy.Inputs.Base
     tagName: "label"
     label: ""
 
@@ -11,18 +11,15 @@ class Checkbox extends BaseInput
 
         super
 
-    change: ->
-        @model.set @key, @input.prop "checked"
+    change: -> @setValue @input.prop "checked"
 
-        this
-
-    applyChanges: (model, value) ->
-        @input.prop "checked", value
+    applyChanges: (value, external) ->
+        @input.prop "checked", value if external
 
         this
 
     render: ->
-        @input = $ "<input>", { type: "checkbox", checked: @model.get @key }
+        @input = $ "<input>", { type: "checkbox", checked: @getValue() }
         @$el.append @input
         @$el.append @label if @label?
 

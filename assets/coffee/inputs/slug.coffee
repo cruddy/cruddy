@@ -1,9 +1,9 @@
-class SlugInput extends Backbone.View
+class Cruddy.Inputs.Slug extends Backbone.View
     events:
         "click .btn": "toggleSyncing"
 
     constructor: (options) ->
-        @input = new TextInput _.clone options
+        @input = new Cruddy.Inputs.Text _.clone options
 
         options.className ?= "input-group"
 

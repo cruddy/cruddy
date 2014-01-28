@@ -1,13 +1,13 @@
-class Cruddy.fields.Enum extends Field
+class Cruddy.Fields.Enum extends Field
     createEditableInput: (model) ->
-        new SelectInput
+        new Cruddy.Inputs.Select
             model: model
             key: @id
             prompt: @get "prompt"
             items: @get "items"
 
     createFilterInput: (model) ->
-        new SelectInput
+        new Cruddy.Inputs.Select
             model: model
             key: @id
             prompt: "Любое значение"

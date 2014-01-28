@@ -1,4 +1,4 @@
-class Cruddy.fields.Input extends Field
+class Cruddy.Fields.Input extends Field
     createEditableInput: (model) ->
         attributes = placeholder: @get "label"
         type = @get "input_type"
@@ -6,14 +6,14 @@ class Cruddy.fields.Input extends Field
         if type is "textarea"
             attributes.rows = @get "rows"
 
-            new Textarea
+            new Cruddy.Inputs.Textarea
                 model: model
                 key: @id
                 attributes: attributes
         else
             attributes.type = type
 
-            new TextInput
+            new Cruddy.Inputs.Text
                 model: model
                 key: @id
                 mask: @get "mask"

@@ -1,5 +1,5 @@
 # View that displays a form for an entity instance
-class EntityForm extends Backbone.View
+class Cruddy.Entity.Form extends Backbone.View
     className: "entity-form"
 
     events:

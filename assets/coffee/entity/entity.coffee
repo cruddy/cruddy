@@ -1,9 +1,11 @@
-class Entity extends Backbone.Model
+Cruddy.Entity = {}
+
+class Cruddy.Entity.Entity extends Backbone.Model
 
     initialize: (attributes, options) ->
-        @fields = @createCollection Cruddy.fields, attributes.fields
-        @columns = @createCollection Cruddy.columns, attributes.columns
-        @related = @createCollection Cruddy.related, attributes.related
+        @fields = @createCollection Cruddy.Fields, attributes.fields
+        @columns = @createCollection Cruddy.Columns, attributes.columns
+        @related = @createCollection Cruddy.Related, attributes.related
 
         @set "label", humanize @id if @get("label") is null
 
@@ -35,7 +37,7 @@ class Entity extends Backbone.Model
         related = {}
         related[item.id] = item.related.createInstance(relatedData[item.id]) for item in @related.models
 
-        new EntityInstance _.extend({}, @get("defaults"), attributes), { entity: this, related: related }
+        new Cruddy.Entity.Instance _.extend({}, @get("defaults"), attributes), { entity: this, related: related }
 
     search: ->
         return @searchDataSource.reset() if @searchDataSource?

@@ -20,7 +20,7 @@ class App extends Backbone.Model
     displayEntity: (model, entity) ->
         @dispose()
 
-        @container.append (@page = new EntityPage model: entity).render().el if entity
+        @container.append (@page = new Cruddy.Entity.Page model: entity).render().el if entity
 
     displayError: (xhr) ->
         error = if not xhr? or xhr.status is 403 then "Ошибка доступа" else "Ошибка"
@@ -66,7 +66,7 @@ class App extends Backbone.Model
         }, options
 
         @entities[id] = $.ajax(options).then (resp) =>
-            entity = new Entity resp.data
+            entity = new Cruddy.Entity.Entity resp.data
 
             return entity if _.isEmpty entity.related.models
 

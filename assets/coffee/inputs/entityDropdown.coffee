@@ -1,4 +1,4 @@
-class EntityDropdown extends BaseInput
+class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     className: "entity-dropdown"
 
     events:
@@ -38,9 +38,7 @@ class EntityDropdown extends BaseInput
         else
             value = null
 
-        @model.set @key, value
-
-        this
+        @setValue value
 
     editItem: (e) ->
         item = @model.get @key
@@ -51,7 +49,7 @@ class EntityDropdown extends BaseInput
         target = $(e.currentTarget).prop "disabled", yes
 
         xhr = Cruddy.app.entity(@reference).then (entity) => entity.load(item.id).done (instance) =>
-            @innerForm = new EntityForm
+            @innerForm = new Cruddy.Entity.Form
                 model: instance
                 inner: yes
 
@@ -82,7 +80,7 @@ class EntityDropdown extends BaseInput
 
         return @toggleOpenDirection() if @selector?
 
-        @selector = new EntitySelector
+        @selector = new Cruddy.Inputs.EntitySelector
             model: @model
             key: @key
             multiple: @multiple
@@ -105,7 +103,7 @@ class EntityDropdown extends BaseInput
 
         this
 
-    applyChanges: (model, value) ->
+    applyChanges: (value) ->
         if @multiple
             @renderItems()
         else
@@ -139,7 +137,7 @@ class EntityDropdown extends BaseInput
 
     renderItems: ->
         html = ""
-        html += @itemTemplate value.title, key for value, key in @model.get @key
+        html += @itemTemplate value.title, key for value, key in @getValue()
         @items.html html
         @items.toggleClass "has-items", html isnt ""
 
@@ -155,7 +153,7 @@ class EntityDropdown extends BaseInput
         @updateItem()
 
     updateItem: ->
-        value = @model.get @key
+        value = @getValue()
         @itemTitle.val if value then value.title else "Не выбрано"
         @itemDelete.toggle !!value
         @itemEdit.toggle !!value

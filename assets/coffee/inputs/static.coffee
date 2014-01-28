@@ -1,5 +1,5 @@
 # Renders formatted text and doesn't have any editing features.
-class StaticInput extends BaseInput
+class Cruddy.Inputs.Static extends Cruddy.Inputs.Base
     tagName: "p"
     className: "form-control-static"
 
@@ -8,10 +8,10 @@ class StaticInput extends BaseInput
 
         super
 
-    applyChanges: (model, data) -> @render()
+    applyChanges: (data) -> @render()
 
     render: ->
-        value = @model.get @key
+        value = @getValue()
         value = @formatter.format value if @formatter?
 
         @$el.html value

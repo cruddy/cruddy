@@ -1,12 +1,12 @@
 # DATE AND TIME FIELD TYPE
 
 ###
-class Cruddy.fields.DateTimeView extends Cruddy.fields.InputView
+class Cruddy.Fields.DateTimeView extends Cruddy.Fields.InputView
     format: (value) -> moment.unix(value).format @field.get "format"
     unformat: (value) -> moment(value, @field.get "format").unix()
 ###
 
-class Cruddy.fields.DateTime extends Cruddy.fields.Input
-    #viewConstructor: Cruddy.fields.DateTimeView
+class Cruddy.Fields.DateTime extends Cruddy.Fields.Input
+    #viewConstructor: Cruddy.Fields.DateTimeView
 
     format: (value) -> if value is null then "никогда" else moment.unix(value).calendar()

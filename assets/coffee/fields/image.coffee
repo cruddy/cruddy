@@ -1,5 +1,5 @@
-class Cruddy.fields.Image extends Cruddy.fields.File
-    createEditableInput: (model) -> new ImageList
+class Cruddy.Fields.Image extends Cruddy.Fields.File
+    createEditableInput: (model) -> new Cruddy.Inputs.ImageList
         model: model
         key: @id
         width: @get "width"

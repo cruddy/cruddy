@@ -1,4 +1,4 @@
-class Cruddy.Inputs.Markdown extends BaseInput
+class Cruddy.Inputs.Markdown extends Cruddy.Inputs.Base
 
     events:
         "show.bs.tab [data-toggle=tab]": "showTab"
@@ -10,6 +10,7 @@ class Cruddy.Inputs.Markdown extends BaseInput
         @editorInput = new Cruddy.Inputs.Code
             model: @model
             key: @key
+            theme: options.theme
             mode: "markdown"
             height: @height
 
@@ -33,7 +34,7 @@ class Cruddy.Inputs.Markdown extends BaseInput
         this
 
     renderPreview: ->
-        @preview.html markdown.toHTML @model.get @key
+        @preview.html markdown.toHTML @getValue()
 
         this
 
@@ -41,8 +42,8 @@ class Cruddy.Inputs.Markdown extends BaseInput
         """
         <div class="markdown-editor">
             <ul class="nav nav-tabs">
-                <li class="active"><a href="##{ @cid }-editor" data-toggle="tab" data-tab="editor">Исходник</a></li>
-                <li><a href="##{ @cid }-preview" data-toggle="tab" data-tab="preview">Результат</a></li>
+                <li class="active"><a href="##{ @cid }-editor" data-toggle="tab" data-tab="editor" tab-index="-1">Исходник</a></li>
+                <li><a href="##{ @cid }-preview" data-toggle="tab" data-tab="preview" tab-index="-1">Результат</a></li>
             </ul>
 
             <div class="tab-content">

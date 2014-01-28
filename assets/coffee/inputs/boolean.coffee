@@ -1,4 +1,4 @@
-class BooleanInput extends BaseInput
+class Cruddy.Inputs.Boolean extends Cruddy.Inputs.Base
     tripleState: false
 
     events:
@@ -15,11 +15,9 @@ class BooleanInput extends BaseInput
 
         value = null if value == currentValue and @tripleState
 
-        @model.set @key, value
+        @setValue value
 
-        this
-
-    applyChanges: (model, value) ->
+    applyChanges: (value) ->
         value = switch value
             when yes then 0
             when no then 1

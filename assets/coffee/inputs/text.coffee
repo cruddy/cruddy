@@ -1,4 +1,4 @@
-class Cruddy.Inputs.BaseText extends BaseInput
+class Cruddy.Inputs.BaseText extends Cruddy.Inputs.Base
     className: "form-control"
 
     events:
@@ -26,8 +26,8 @@ class Cruddy.Inputs.BaseText extends BaseInput
 
         this
 
-    applyChanges: (model, data) ->
-        @$el.val data
+    applyChanges: (data, external) ->
+        @$el.val data if external
 
         this
 
@@ -37,7 +37,7 @@ class Cruddy.Inputs.BaseText extends BaseInput
         this
         
 # Renders an <input> value of which is bound to a model's attribute.
-class TextInput extends Cruddy.Inputs.BaseText
+class Cruddy.Inputs.Text extends Cruddy.Inputs.BaseText
     tagName: "input"
 
     initialize: (options) ->
@@ -47,5 +47,5 @@ class TextInput extends Cruddy.Inputs.BaseText
         super
 
 # Renders a <textarea> input.
-class Textarea extends Cruddy.Inputs.BaseText
+class Cruddy.Inputs.Textarea extends Cruddy.Inputs.BaseText
     tagName: "textarea"

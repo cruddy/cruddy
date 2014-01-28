@@ -1,4 +1,4 @@
-Cruddy.fields = Cruddy.Fields = new Factory
+Cruddy.Fields = new Factory
 
 class FieldView extends Backbone.View
     className: "field"
@@ -102,7 +102,7 @@ class Field extends Attribute
     createInput: (model) ->
         input = @createEditableInput model if @isEditable model
 
-        if input? then input else new StaticInput { model: model, key: @id, formatter: this }
+        if input? then input else new Cruddy.Inputs.Static { model: model, key: @id, formatter: this }
 
     createEditableInput: (model) -> null
 

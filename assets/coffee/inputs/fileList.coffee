@@ -1,4 +1,4 @@
-class FileList extends BaseInput
+class Cruddy.Inputs.FileList extends Cruddy.Inputs.Base
     className: "file-list"
 
     events:
@@ -32,9 +32,7 @@ class FileList extends BaseInput
         else
             value = e.target.files[0]
 
-        @model.set @key, value
-
-        this
+        @setValue value
 
     applyChanges: -> @render()
 

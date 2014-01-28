@@ -1,5 +1,5 @@
 (function() {
-  var API_URL, AdvFormData, Alert, App, Attribute, BaseFormatter, BaseInput, BooleanInput, Checkbox, Column, Cruddy, DataGrid, DataSource, Entity, EntityDropdown, EntityForm, EntityInstance, EntityPage, EntitySelector, Factory, Field, FieldList, FieldView, FileList, FilterList, ImageList, Pagination, Related, Router, SearchDataSource, SearchInput, SelectInput, SlugInput, StaticInput, TRANSITIONEND, TextInput, Textarea, after_break, entity_url, humanize, thumb, _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref18, _ref19, _ref2, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref26, _ref27, _ref28, _ref29, _ref3, _ref30, _ref31, _ref32, _ref33, _ref34, _ref35, _ref36, _ref37, _ref38, _ref39, _ref4, _ref40, _ref41, _ref42, _ref43, _ref5, _ref6, _ref7, _ref8, _ref9,
+  var API_URL, AdvFormData, Alert, App, Attribute, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, Field, FieldList, FieldView, FilterList, Pagination, Router, SearchDataSource, TRANSITIONEND, after_break, entity_url, humanize, thumb, _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref18, _ref19, _ref2, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref26, _ref27, _ref28, _ref29, _ref3, _ref30, _ref31, _ref32, _ref33, _ref34, _ref35, _ref36, _ref37, _ref38, _ref39, _ref4, _ref40, _ref41, _ref42, _ref43, _ref5, _ref6, _ref7, _ref8, _ref9,
     _this = this,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -798,61 +798,74 @@
 
   Cruddy.Inputs = {};
 
-  BaseInput = (function(_super) {
-    __extends(BaseInput, _super);
+  Cruddy.Inputs.Base = (function(_super) {
+    __extends(Base, _super);
 
-    function BaseInput(options) {
+    function Base(options) {
       this.key = options.key;
-      BaseInput.__super__.constructor.apply(this, arguments);
+      Base.__super__.constructor.apply(this, arguments);
     }
 
-    BaseInput.prototype.initialize = function() {
-      this.listenTo(this.model, "change:" + this.key, this.applyChanges);
+    Base.prototype.initialize = function() {
+      this.listenTo(this.model, "change:" + this.key, function(model, value, options) {
+        return this.applyChanges(value, !options.input || options.input !== this);
+      });
       return this;
     };
 
-    BaseInput.prototype.applyChanges = function(model, data) {
+    Base.prototype.applyChanges = function(data, external) {
       return this;
     };
 
-    BaseInput.prototype.render = function() {
-      return this.applyChanges(this.model, this.model.get(this.key));
+    Base.prototype.render = function() {
+      return this.applyChanges(this.getValue(), true);
     };
 
-    BaseInput.prototype.focus = function() {
+    Base.prototype.focus = function() {
       return this;
     };
 
-    return BaseInput;
+    Base.prototype.getValue = function() {
+      return this.model.get(this.key);
+    };
+
+    Base.prototype.setValue = function(value) {
+      this.model.set(this.key, value, {
+        input: this
+      });
+      return this;
+    };
+
+    return Base;
 
   })(Backbone.View);
 
-  StaticInput = (function(_super) {
-    __extends(StaticInput, _super);
+  Cruddy.Inputs.Static = (function(_super) {
+    __extends(Static, _super);
 
-    function StaticInput() {
-      _ref8 = StaticInput.__super__.constructor.apply(this, arguments);
+    function Static() {
+      _ref8 = Static.__super__.constructor.apply(this, arguments);
       return _ref8;
     }
 
-    StaticInput.prototype.tagName = "p";
+    Static.prototype.tagName = "p";
 
-    StaticInput.prototype.className = "form-control-static";
+    Static.prototype.className = "form-control-static";
 
-    StaticInput.prototype.initialize = function(options) {
+    Static.prototype.initialize = function(options) {
       if (options.formatter != null) {
         this.formatter = options.formatter;
       }
-      return StaticInput.__super__.initialize.apply(this, arguments);
+      return Static.__super__.initialize.apply(this, arguments);
     };
 
-    StaticInput.prototype.applyChanges = function(model, data) {
+    Static.prototype.applyChanges = function(data) {
       return this.render();
     };
 
-    StaticInput.prototype.render = function() {
+    Static.prototype.render = function() {
       var value;
-      value = this.model.get(this.key);
+      value = this.getValue();
       if (this.formatter != null) {
         value = this.formatter.format(value);
       }
@@ -860,9 +873,9 @@
       return this;
     };
 
-    return StaticInput;
+    return Static;
 
-  })(BaseInput);
+  })(Cruddy.Inputs.Base);
 
   Cruddy.Inputs.BaseText = (function(_super) {
     __extends(BaseText, _super);
@@ -901,8 +914,10 @@
       return this;
     };
 
-    BaseText.prototype.applyChanges = function(model, data) {
-      this.$el.val(data);
+    BaseText.prototype.applyChanges = function(data, external) {
+      if (external) {
+        this.$el.val(data);
+      }
       return this;
     };
 
@@ -913,28 +928,28 @@
 
     return BaseText;
 
-  })(BaseInput);
+  })(Cruddy.Inputs.Base);
 
-  TextInput = (function(_super) {
-    __extends(TextInput, _super);
+  Cruddy.Inputs.Text = (function(_super) {
+    __extends(Text, _super);
 
-    function TextInput() {
-      _ref10 = TextInput.__super__.constructor.apply(this, arguments);
+    function Text() {
+      _ref10 = Text.__super__.constructor.apply(this, arguments);
       return _ref10;
     }
 
-    TextInput.prototype.tagName = "input";
+    Text.prototype.tagName = "input";
 
-    TextInput.prototype.initialize = function(options) {
+    Text.prototype.initialize = function(options) {
       options.mask && this.$el.mask(options.mask);
-      return TextInput.__super__.initialize.apply(this, arguments);
+      return Text.__super__.initialize.apply(this, arguments);
     };
 
-    return TextInput;
+    return Text;
 
   })(Cruddy.Inputs.BaseText);
 
-  Textarea = (function(_super) {
+  Cruddy.Inputs.Textarea = (function(_super) {
     __extends(Textarea, _super);
 
     function Textarea() {
@@ -948,7 +963,7 @@
 
   })(Cruddy.Inputs.BaseText);
 
-  Checkbox = (function(_super) {
+  Cruddy.Inputs.Checkbox = (function(_super) {
     __extends(Checkbox, _super);
 
     function Checkbox() {
@@ -972,19 +987,20 @@
     };
 
     Checkbox.prototype.change = function() {
-      this.model.set(this.key, this.input.prop("checked"));
-      return this;
+      return this.setValue(this.input.prop("checked"));
     };
 
-    Checkbox.prototype.applyChanges = function(model, value) {
-      this.input.prop("checked", value);
+    Checkbox.prototype.applyChanges = function(value, external) {
+      if (external) {
+        this.input.prop("checked", value);
+      }
       return this;
     };
 
     Checkbox.prototype.render = function() {
       this.input = $("<input>", {
         type: "checkbox",
-        checked: this.model.get(this.key)
+        checked: this.getValue()
       });
       this.$el.append(this.input);
       if (this.label != null) {
@@ -995,41 +1011,40 @@
 
     return Checkbox;
 
-  })(BaseInput);
+  })(Cruddy.Inputs.Base);
 
-  BooleanInput = (function(_super) {
-    __extends(BooleanInput, _super);
+  Cruddy.Inputs.Boolean = (function(_super) {
+    __extends(Boolean, _super);
 
-    function BooleanInput() {
-      _ref13 = BooleanInput.__super__.constructor.apply(this, arguments);
+    function Boolean() {
+      _ref13 = Boolean.__super__.constructor.apply(this, arguments);
       return _ref13;
     }
 
-    BooleanInput.prototype.tripleState = false;
+    Boolean.prototype.tripleState = false;
 
-    BooleanInput.prototype.events = {
+    Boolean.prototype.events = {
       "click .btn": "check"
     };
 
-    BooleanInput.prototype.initialize = function(options) {
+    Boolean.prototype.initialize = function(options) {
       if (options.tripleState != null) {
         this.tripleState = options.tripleState;
       }
-      return BooleanInput.__super__.initialize.apply(this, arguments);
+      return Boolean.__super__.initialize.apply(this, arguments);
     };
 
-    BooleanInput.prototype.check = function(e) {
+    Boolean.prototype.check = function(e) {
       var currentValue, value;
       value = !!$(e.target).data("value");
       currentValue = this.model.get(this.key);
       if (value === currentValue && this.tripleState) {
         value = null;
       }
-      this.model.set(this.key, value);
-      return this;
+      return this.setValue(value);
     };
 
-    BooleanInput.prototype.applyChanges = function(model, value) {
+    Boolean.prototype.applyChanges = function(value) {
       value = (function() {
         switch (value) {
           case true:
@@ -1047,25 +1062,25 @@
       return this;
     };
 
-    BooleanInput.prototype.render = function() {
+    Boolean.prototype.render = function() {
       this.$el.html(this.template());
       this.values = this.$(".btn");
-      return BooleanInput.__super__.render.apply(this, arguments);
+      return Boolean.__super__.render.apply(this, arguments);
     };
 
-    BooleanInput.prototype.template = function() {
+    Boolean.prototype.template = function() {
       return "<div class=\"btn-group\">\n    <button type=\"button\" class=\"btn btn-info\" data-value=\"1\">да</button>\n    <button type=\"button\" class=\"btn btn-default\" data-value=\"0\">нет</button>\n</div>";
     };
 
-    BooleanInput.prototype.itemTemplate = function(label, value) {
+    Boolean.prototype.itemTemplate = function(label, value) {
       return "<label class=\"radio-inline\">\n    <input type=\"radio\" name=\"" + this.cid + "\" value=\"" + value + "\">\n    " + label + "\n</label>";
     };
 
-    return BooleanInput;
+    return Boolean;
 
-  })(BaseInput);
+  })(Cruddy.Inputs.Base);
 
-  EntityDropdown = (function(_super) {
+  Cruddy.Inputs.EntityDropdown = (function(_super) {
     __extends(EntityDropdown, _super);
 
     function EntityDropdown() {
@@ -1123,8 +1138,7 @@
       } else {
         value = null;
       }
-      this.model.set(this.key, value);
-      return this;
+      return this.setValue(value);
     };
 
     EntityDropdown.prototype.editItem = function(e) {
@@ -1140,7 +1154,7 @@
       target = $(e.currentTarget).prop("disabled", true);
       xhr = Cruddy.app.entity(this.reference).then(function(entity) {
         return entity.load(item.id).done(function(instance) {
-          _this.innerForm = new EntityForm({
+          _this.innerForm = new Cruddy.Entity.Form({
             model: instance,
             inner: true
           });
@@ -1180,7 +1194,7 @@
       if (this.selector != null) {
         return this.toggleOpenDirection();
       }
-      this.selector = new EntitySelector({
+      this.selector = new Cruddy.Inputs.EntitySelector({
         model: this.model,
         key: this.key,
         multiple: this.multiple,
@@ -1207,7 +1221,7 @@
       return this;
     };
 
-    EntityDropdown.prototype.applyChanges = function(model, value) {
+    EntityDropdown.prototype.applyChanges = function(value) {
       if (this.multiple) {
         this.renderItems();
       } else {
@@ -1240,7 +1254,7 @@
     EntityDropdown.prototype.renderItems = function() {
       var html, key, value, _i, _len, _ref15;
       html = "";
-      _ref15 = this.model.get(this.key);
+      _ref15 = this.getValue();
       for (key = _i = 0, _len = _ref15.length; _i < _len; key = ++_i) {
         value = _ref15[key];
         html += this.itemTemplate(value.title, key);
@@ -1260,7 +1274,7 @@
 
     EntityDropdown.prototype.updateItem = function() {
       var value;
-      value = this.model.get(this.key);
+      value = this.getValue();
       this.itemTitle.val(value ? value.title : "Не выбрано");
       this.itemDelete.toggle(!!value);
       this.itemEdit.toggle(!!value);
@@ -1301,9 +1315,9 @@
 
     return EntityDropdown;
 
-  })(BaseInput);
+  })(Cruddy.Inputs.Base);
 
-  EntitySelector = (function(_super) {
+  Cruddy.Inputs.EntitySelector = (function(_super) {
     __extends(EntitySelector, _super);
 
     function EntitySelector() {
@@ -1375,8 +1389,7 @@
       } else {
         value = item;
       }
-      this.model.set(this.key, value);
-      return this;
+      return this.setValue(value);
     };
 
     EntitySelector.prototype.more = function() {
@@ -1404,7 +1417,7 @@
           attrs[primaryColumn] = _this.dataSource.get("search");
         }
         instance = entity.createInstance(attrs);
-        _this.innerForm = new EntityForm({
+        _this.innerForm = new Cruddy.Entity.Form({
           model: instance,
           inner: true
         });
@@ -1427,7 +1440,7 @@
       return this;
     };
 
-    EntitySelector.prototype.applyChanges = function(model, data) {
+    EntitySelector.prototype.applyChanges = function(data) {
       this.buildSelected(data);
       return this.renderItems();
     };
@@ -1510,7 +1523,7 @@
     };
 
     EntitySelector.prototype.renderSearch = function() {
-      this.searchInput = new SearchInput({
+      this.searchInput = new Cruddy.Inputs.Search({
         model: this.dataSource,
         key: "search"
       });
@@ -1553,9 +1566,9 @@
 
     return EntitySelector;
 
-  })(BaseInput);
+  })(Cruddy.Inputs.Base);
 
-  FileList = (function(_super) {
+  Cruddy.Inputs.FileList = (function(_super) {
     __extends(FileList, _super);
 
     function FileList() {
@@ -1613,8 +1626,7 @@
       } else {
         value = e.target.files[0];
       }
-      this.model.set(this.key, value);
-      return this;
+      return this.setValue(value);
     };
 
     FileList.prototype.applyChanges = function() {
@@ -1662,9 +1674,9 @@
 
     return FileList;
 
-  })(BaseInput);
+  })(Cruddy.Inputs.Base);
 
-  ImageList = (function(_super) {
+  Cruddy.Inputs.ImageList = (function(_super) {
     __extends(ImageList, _super);
 
     ImageList.prototype.className = "image-list";
@@ -1735,22 +1747,22 @@
 
     return ImageList;
 
-  })(FileList);
+  })(Cruddy.Inputs.FileList);
 
-  SearchInput = (function(_super) {
-    __extends(SearchInput, _super);
+  Cruddy.Inputs.Search = (function(_super) {
+    __extends(Search, _super);
 
-    function SearchInput() {
-      _ref17 = SearchInput.__super__.constructor.apply(this, arguments);
+    function Search() {
+      _ref17 = Search.__super__.constructor.apply(this, arguments);
       return _ref17;
     }
 
-    SearchInput.prototype.attributes = {
+    Search.prototype.attributes = {
       type: "search",
       placeholder: "поиск"
     };
 
-    SearchInput.prototype.scheduleChange = function() {
+    Search.prototype.scheduleChange = function() {
       var _this = this;
       if (this.timeout != null) {
         clearTimeout(this.timeout);
@@ -1761,38 +1773,38 @@
       return this;
     };
 
-    SearchInput.prototype.keydown = function(e) {
+    Search.prototype.keydown = function(e) {
       if (e.keyCode === 8) {
         this.model.set(this.key, "");
         return false;
       }
       this.scheduleChange();
-      return SearchInput.__super__.keydown.apply(this, arguments);
+      return Search.__super__.keydown.apply(this, arguments);
     };
 
-    return SearchInput;
+    return Search;
 
-  })(TextInput);
+  })(Cruddy.Inputs.Text);
 
-  SlugInput = (function(_super) {
-    __extends(SlugInput, _super);
+  Cruddy.Inputs.Slug = (function(_super) {
+    __extends(Slug, _super);
 
-    SlugInput.prototype.events = {
+    Slug.prototype.events = {
       "click .btn": "toggleSyncing"
     };
 
-    function SlugInput(options) {
-      this.input = new TextInput(_.clone(options));
+    function Slug(options) {
+      this.input = new Cruddy.Inputs.Text(_.clone(options));
       if (options.className == null) {
         options.className = "input-group";
       }
       if (options.attributes != null) {
         delete options.attributes;
       }
-      SlugInput.__super__.constructor.apply(this, arguments);
+      Slug.__super__.constructor.apply(this, arguments);
     }
 
-    SlugInput.prototype.initialize = function(options) {
+    Slug.prototype.initialize = function(options) {
       var chars, _ref18, _ref19;
       chars = (_ref18 = options.chars) != null ? _ref18 : "a-z0-9\-_";
       this.regexp = new RegExp("[^" + chars + "]+", "g");
@@ -1801,10 +1813,10 @@
       if (options.ref != null) {
         this.ref = options.ref;
       }
-      return SlugInput.__super__.initialize.apply(this, arguments);
+      return Slug.__super__.initialize.apply(this, arguments);
     };
 
-    SlugInput.prototype.toggleSyncing = function() {
+    Slug.prototype.toggleSyncing = function() {
       if (this.syncButton.hasClass("active")) {
         this.unlink();
       } else {
@@ -1813,7 +1825,7 @@
       return this;
     };
 
-    SlugInput.prototype.link = function() {
+    Slug.prototype.link = function() {
       if (!this.ref) {
         return;
       }
@@ -1823,7 +1835,7 @@
       return this.sync();
     };
 
-    SlugInput.prototype.unlink = function() {
+    Slug.prototype.unlink = function() {
       if (this.ref != null) {
         this.stopListening(this.model, null, this.sync);
       }
@@ -1832,13 +1844,13 @@
       return this;
     };
 
-    SlugInput.prototype.linkable = function() {
+    Slug.prototype.linkable = function() {
       var refValue;
       refValue = this.convert(this.model.get(this.ref));
       return refValue === this.model.get(this.key);
     };
 
-    SlugInput.prototype.convert = function(value) {
+    Slug.prototype.convert = function(value) {
       if (value) {
         return value.toLocaleLowerCase().replace(/\s+/g, this.separator).replace(this.regexp, "");
       } else {
@@ -1846,18 +1858,18 @@
       }
     };
 
-    SlugInput.prototype.change = function() {
+    Slug.prototype.change = function() {
       this.unlink();
       this.$el.val(this.convert(this.$el.val()));
-      return SlugInput.__super__.change.apply(this, arguments);
+      return Slug.__super__.change.apply(this, arguments);
     };
 
-    SlugInput.prototype.sync = function() {
+    Slug.prototype.sync = function() {
       this.model.set(this.key, this.convert(this.model.get(this.ref)));
       return this;
     };
 
-    SlugInput.prototype.render = function() {
+    Slug.prototype.render = function() {
       this.$el.html(this.template());
       this.$el.prepend(this.input.render().el);
       if (this.ref != null) {
@@ -1869,45 +1881,47 @@
       return this;
     };
 
-    SlugInput.prototype.template = function() {
+    Slug.prototype.template = function() {
       if (this.ref == null) {
         return "";
       }
       return "<div class=\"input-group-btn\">\n    <button type=\"button\" tabindex=\"-1\" class=\"btn btn-default\" title=\"Связать с полем " + (this.model.entity.fields.get(this.ref).get("label")) + "\"><span class=\"glyphicon glyphicon-link\"></span></button>\n</div>";
     };
 
-    return SlugInput;
+    return Slug;
 
   })(Backbone.View);
 
-  SelectInput = (function(_super) {
-    __extends(SelectInput, _super);
+  Cruddy.Inputs.Select = (function(_super) {
+    __extends(Select, _super);
 
-    function SelectInput() {
-      _ref18 = SelectInput.__super__.constructor.apply(this, arguments);
+    function Select() {
+      _ref18 = Select.__super__.constructor.apply(this, arguments);
       return _ref18;
     }
 
-    SelectInput.prototype.tagName = "select";
+    Select.prototype.tagName = "select";
 
-    SelectInput.prototype.initialize = function(options) {
+    Select.prototype.initialize = function(options) {
       var _ref19, _ref20;
       this.items = (_ref19 = options.items) != null ? _ref19 : {};
       this.prompt = (_ref20 = options.prompt) != null ? _ref20 : null;
-      return SelectInput.__super__.initialize.apply(this, arguments);
+      return Select.__super__.initialize.apply(this, arguments);
     };
 
-    SelectInput.prototype.applyChanges = function(model, data) {
-      this.$("[value='" + data + "']").prop("selected", true);
+    Select.prototype.applyChanges = function(data, external) {
+      if (external) {
+        this.$("[value='" + data + "']").prop("selected", true);
+      }
       return this;
     };
 
-    SelectInput.prototype.render = function() {
+    Select.prototype.render = function() {
       this.$el.html(this.template());
-      return SelectInput.__super__.render.apply(this, arguments);
+      return Select.__super__.render.apply(this, arguments);
     };
 
-    SelectInput.prototype.template = function() {
+    Select.prototype.template = function() {
       var html, key, value, _ref19, _ref20;
       html = "";
       html += this.optionTemplate("", (_ref19 = this.prompt) != null ? _ref19 : "");
@@ -1919,13 +1933,13 @@
       return html;
     };
 
-    SelectInput.prototype.optionTemplate = function(value, title) {
+    Select.prototype.optionTemplate = function(value, title) {
       return "<option value=\"" + (_.escape(value)) + "\">" + (_.escape(title)) + "</option>";
     };
 
-    return SelectInput;
+    return Select;
 
-  })(TextInput);
+  })(Cruddy.Inputs.Text);
 
   Cruddy.Inputs.Code = (function(_super) {
     __extends(Code, _super);
@@ -1949,9 +1963,10 @@
       return Code.__super__.initialize.apply(this, arguments);
     };
 
-    Code.prototype.applyChanges = function(model, value, options) {
-      if (!(options != null ? options.input : void 0) || options.input !== this) {
+    Code.prototype.applyChanges = function(value, external) {
+      if (external) {
         this.editor.setValue(value);
+        this.editor.getSession().getSelection().clearSelection();
       }
       return this;
     };
@@ -1985,7 +2000,7 @@
 
     return Code;
 
-  })(BaseInput);
+  })(Cruddy.Inputs.Base);
 
   Cruddy.Inputs.Markdown = (function(_super) {
     __extends(Markdown, _super);
@@ -2006,6 +2021,7 @@
       this.editorInput = new Cruddy.Inputs.Code({
         model: this.model,
         key: this.key,
+        theme: options.theme,
         mode: "markdown",
         height: this.height
       });
@@ -2033,12 +2049,12 @@
     };
 
     Markdown.prototype.renderPreview = function() {
-      this.preview.html(markdown.toHTML(this.model.get(this.key)));
+      this.preview.html(markdown.toHTML(this.getValue()));
       return this;
     };
 
     Markdown.prototype.template = function() {
-      return "<div class=\"markdown-editor\">\n    <ul class=\"nav nav-tabs\">\n        <li class=\"active\"><a href=\"#" + this.cid + "-editor\" data-toggle=\"tab\" data-tab=\"editor\">Исходник</a></li>\n        <li><a href=\"#" + this.cid + "-preview\" data-toggle=\"tab\" data-tab=\"preview\">Результат</a></li>\n    </ul>\n\n    <div class=\"tab-content\">\n        <div class=\"tab-pane-editor tab-pane active\" id=\"" + this.cid + "-editor\"></div>\n        <div class=\"tab-pane-preview tab-pane\" id=\"" + this.cid + "-preview\" style=\"height:" + this.height + "px\"></div>\n    </div>\n</div>";
+      return "<div class=\"markdown-editor\">\n    <ul class=\"nav nav-tabs\">\n        <li class=\"active\"><a href=\"#" + this.cid + "-editor\" data-toggle=\"tab\" data-tab=\"editor\" tab-index=\"-1\">Исходник</a></li>\n        <li><a href=\"#" + this.cid + "-preview\" data-toggle=\"tab\" data-tab=\"preview\" tab-index=\"-1\">Результат</a></li>\n    </ul>\n\n    <div class=\"tab-content\">\n        <div class=\"tab-pane-editor tab-pane active\" id=\"" + this.cid + "-editor\"></div>\n        <div class=\"tab-pane-preview tab-pane\" id=\"" + this.cid + "-preview\" style=\"height:" + this.height + "px\"></div>\n    </div>\n</div>";
     };
 
     Markdown.prototype.focus = function() {
@@ -2054,9 +2070,9 @@
 
     return Markdown;
 
-  })(BaseInput);
+  })(Cruddy.Inputs.Base);
 
-  Cruddy.fields = Cruddy.Fields = new Factory;
+  Cruddy.Fields = new Factory;
 
   FieldView = (function(_super) {
     __extends(FieldView, _super);
@@ -2194,7 +2210,7 @@
       if (input != null) {
         return input;
       } else {
-        return new StaticInput({
+        return new Cruddy.Inputs.Static({
           model: model,
           key: this.id,
           formatter: this
@@ -2222,7 +2238,7 @@
 
   })(Attribute);
 
-  Cruddy.fields.Input = (function(_super) {
+  Cruddy.Fields.Input = (function(_super) {
     __extends(Input, _super);
 
     function Input() {
@@ -2238,14 +2254,14 @@
       type = this.get("input_type");
       if (type === "textarea") {
         attributes.rows = this.get("rows");
-        return new Textarea({
+        return new Cruddy.Inputs.Textarea({
           model: model,
           key: this.id,
           attributes: attributes
         });
       } else {
         attributes.type = type;
-        return new TextInput({
+        return new Cruddy.Inputs.Text({
           model: model,
           key: this.id,
           mask: this.get("mask"),
@@ -2277,13 +2293,13 @@
   })(Field);
 
   /*
-  class Cruddy.fields.DateTimeView extends Cruddy.fields.InputView
+  class Cruddy.Fields.DateTimeView extends Cruddy.Fields.InputView
       format: (value) -> moment.unix(value).format @field.get "format"
       unformat: (value) -> moment(value, @field.get "format").unix()
   */
 
 
-  Cruddy.fields.DateTime = (function(_super) {
+  Cruddy.Fields.DateTime = (function(_super) {
     __extends(DateTime, _super);
 
     function DateTime() {
@@ -2301,9 +2317,9 @@
 
     return DateTime;
 
-  })(Cruddy.fields.Input);
+  })(Cruddy.Fields.Input);
 
-  Cruddy.fields.Boolean = (function(_super) {
+  Cruddy.Fields.Boolean = (function(_super) {
     __extends(Boolean, _super);
 
     function Boolean() {
@@ -2312,14 +2328,14 @@
     }
 
     Boolean.prototype.createEditableInput = function(model) {
-      return new BooleanInput({
+      return new Cruddy.Inputs.Boolean({
         model: model,
         key: this.id
       });
     };
 
     Boolean.prototype.createFilterInput = function(model) {
-      return new BooleanInput({
+      return new Cruddy.Inputs.Boolean({
         model: model,
         key: this.id,
         tripleState: true
@@ -2338,7 +2354,7 @@
 
   })(Field);
 
-  Cruddy.fields.Relation = (function(_super) {
+  Cruddy.Fields.Relation = (function(_super) {
     __extends(Relation, _super);
 
     function Relation() {
@@ -2347,7 +2363,7 @@
     }
 
     Relation.prototype.createEditableInput = function(model) {
-      return new EntityDropdown({
+      return new Cruddy.Inputs.EntityDropdown({
         model: model,
         key: this.id,
         multiple: this.get("multiple"),
@@ -2356,7 +2372,7 @@
     };
 
     Relation.prototype.createFilterInput = function(model) {
-      return new EntityDropdown({
+      return new Cruddy.Inputs.EntityDropdown({
         model: model,
         key: this.id,
         reference: this.get("reference"),
@@ -2379,7 +2395,7 @@
 
   })(Field);
 
-  Cruddy.fields.File = (function(_super) {
+  Cruddy.Fields.File = (function(_super) {
     __extends(File, _super);
 
     function File() {
@@ -2388,7 +2404,7 @@
     }
 
     File.prototype.createEditableInput = function(model) {
-      return new FileList({
+      return new Cruddy.Inputs.FileList({
         model: model,
         key: this.id,
         multiple: this.get("multiple"),
@@ -2408,7 +2424,7 @@
 
   })(Field);
 
-  Cruddy.fields.Image = (function(_super) {
+  Cruddy.Fields.Image = (function(_super) {
     __extends(Image, _super);
 
     function Image() {
@@ -2417,7 +2433,7 @@
     }
 
     Image.prototype.createEditableInput = function(model) {
-      return new ImageList({
+      return new Cruddy.Inputs.ImageList({
         model: model,
         key: this.id,
         width: this.get("width"),
@@ -2437,9 +2453,9 @@
 
     return Image;
 
-  })(Cruddy.fields.File);
+  })(Cruddy.Fields.File);
 
-  Cruddy.fields.Slug = (function(_super) {
+  Cruddy.Fields.Slug = (function(_super) {
     __extends(Slug, _super);
 
     function Slug() {
@@ -2448,7 +2464,7 @@
     }
 
     Slug.prototype.createEditableInput = function(model) {
-      return new SlugInput({
+      return new Cruddy.Inputs.Slug({
         model: model,
         key: this.id,
         chars: this.get("chars"),
@@ -2461,7 +2477,7 @@
     };
 
     Slug.prototype.createFilterInput = function(model, column) {
-      return new TextInput({
+      return new Cruddy.Inputs.Text({
         model: model,
         key: this.id,
         attributes: {
@@ -2474,7 +2490,7 @@
 
   })(Field);
 
-  Cruddy.fields.Enum = (function(_super) {
+  Cruddy.Fields.Enum = (function(_super) {
     __extends(Enum, _super);
 
     function Enum() {
@@ -2483,7 +2499,7 @@
     }
 
     Enum.prototype.createEditableInput = function(model) {
-      return new SelectInput({
+      return new Cruddy.Inputs.Select({
         model: model,
         key: this.id,
         prompt: this.get("prompt"),
@@ -2492,7 +2508,7 @@
     };
 
     Enum.prototype.createFilterInput = function(model) {
-      return new SelectInput({
+      return new Cruddy.Inputs.Select({
         model: model,
         key: this.id,
         prompt: "Любое значение",
@@ -2557,24 +2573,24 @@
 
   })(Field);
 
-  Cruddy.columns = new Factory;
+  Cruddy.Columns = new Factory;
 
-  Column = (function(_super) {
-    __extends(Column, _super);
+  Cruddy.Columns.Base = (function(_super) {
+    __extends(Base, _super);
 
-    function Column() {
-      _ref32 = Column.__super__.constructor.apply(this, arguments);
+    function Base() {
+      _ref32 = Base.__super__.constructor.apply(this, arguments);
       return _ref32;
     }
 
-    Column.prototype.initialize = function(options) {
+    Base.prototype.initialize = function(options) {
       if (options.formatter != null) {
         this.formatter = Cruddy.formatters.create(options.formatter, options.formatterOptions);
       }
-      return Column.__super__.initialize.apply(this, arguments);
+      return Base.__super__.initialize.apply(this, arguments);
     };
 
-    Column.prototype.renderHeadCell = function() {
+    Base.prototype.renderHeadCell = function() {
       var help, title;
       title = this.get("title");
       help = this.get("help");
@@ -2588,7 +2604,7 @@
       }
     };
 
-    Column.prototype.renderCell = function(value) {
+    Base.prototype.renderCell = function(value) {
       if (this.formatter != null) {
         return this.formatter.format(value);
       } else {
@@ -2596,19 +2612,19 @@
       }
     };
 
-    Column.prototype.createFilterInput = function(model) {
+    Base.prototype.createFilterInput = function(model) {
       return null;
     };
 
-    Column.prototype.getClass = function() {
+    Base.prototype.getClass = function() {
       return "col-" + this.id;
     };
 
-    return Column;
+    return Base;
 
   })(Attribute);
 
-  Cruddy.columns.Field = (function(_super) {
+  Cruddy.Columns.Field = (function(_super) {
     __extends(Field, _super);
 
     function Field() {
@@ -2644,9 +2660,9 @@
 
     return Field;
 
-  })(Column);
+  })(Cruddy.Columns.Base);
 
-  Cruddy.columns.Computed = (function(_super) {
+  Cruddy.Columns.Computed = (function(_super) {
     __extends(Computed, _super);
 
     function Computed() {
@@ -2655,7 +2671,7 @@
     }
 
     Computed.prototype.createFilterInput = function(model) {
-      return new TextInput({
+      return new Cruddy.Inputs.Text({
         model: model,
         key: this.id,
         attributes: {
@@ -2670,7 +2686,7 @@
 
     return Computed;
 
-  })(Column);
+  })(Cruddy.Columns.Base);
 
   Cruddy.formatters = new Factory;
 
@@ -2736,17 +2752,17 @@
 
   })(BaseFormatter);
 
-  Cruddy.related = new Factory;
+  Cruddy.Related = new Factory;
 
-  Related = (function(_super) {
-    __extends(Related, _super);
+  Cruddy.Related.Base = (function(_super) {
+    __extends(Base, _super);
 
-    function Related() {
-      _ref37 = Related.__super__.constructor.apply(this, arguments);
+    function Base() {
+      _ref37 = Base.__super__.constructor.apply(this, arguments);
       return _ref37;
     }
 
-    Related.prototype.resolve = function() {
+    Base.prototype.resolve = function() {
       var _this = this;
       if (this.resolver != null) {
         return this.resolver;
@@ -2757,11 +2773,11 @@
       });
     };
 
-    return Related;
+    return Base;
 
   })(Backbone.Model);
 
-  Cruddy.related.One = (function(_super) {
+  Cruddy.Related.One = (function(_super) {
     __extends(One, _super);
 
     function One() {
@@ -2776,9 +2792,9 @@
 
     return One;
 
-  })(Related);
+  })(Cruddy.Related.Base);
 
-  Cruddy.related.MorphOne = (function(_super) {
+  Cruddy.Related.MorphOne = (function(_super) {
     __extends(MorphOne, _super);
 
     function MorphOne() {
@@ -2793,9 +2809,11 @@
 
     return MorphOne;
 
-  })(Cruddy.related.One);
+  })(Cruddy.Related.One);
 
-  Entity = (function(_super) {
+  Cruddy.Entity = {};
+
+  Cruddy.Entity.Entity = (function(_super) {
     __extends(Entity, _super);
 
     function Entity() {
@@ -2804,9 +2822,9 @@
     }
 
     Entity.prototype.initialize = function(attributes, options) {
-      this.fields = this.createCollection(Cruddy.fields, attributes.fields);
-      this.columns = this.createCollection(Cruddy.columns, attributes.columns);
-      this.related = this.createCollection(Cruddy.related, attributes.related);
+      this.fields = this.createCollection(Cruddy.Fields, attributes.fields);
+      this.columns = this.createCollection(Cruddy.Columns, attributes.columns);
+      this.related = this.createCollection(Cruddy.Related, attributes.related);
       if (this.get("label") === null) {
         return this.set("label", humanize(this.id));
       }
@@ -2876,7 +2894,7 @@
         item = _ref41[_i];
         related[item.id] = item.related.createInstance(relatedData[item.id]);
       }
-      return new EntityInstance(_.extend({}, this.get("defaults"), attributes), {
+      return new Cruddy.Entity.Instance(_.extend({}, this.get("defaults"), attributes), {
         entity: this,
         related: related
       });
@@ -2942,15 +2960,15 @@
 
   })(Backbone.Model);
 
-  EntityInstance = (function(_super) {
-    __extends(EntityInstance, _super);
+  Cruddy.Entity.Instance = (function(_super) {
+    __extends(Instance, _super);
 
-    function EntityInstance() {
-      _ref41 = EntityInstance.__super__.constructor.apply(this, arguments);
+    function Instance() {
+      _ref41 = Instance.__super__.constructor.apply(this, arguments);
       return _ref41;
     }
 
-    EntityInstance.prototype.initialize = function(attributes, options) {
+    Instance.prototype.initialize = function(attributes, options) {
       var _this = this;
       this.entity = options.entity;
       this.related = options.related;
@@ -2966,39 +2984,39 @@
       });
     };
 
-    EntityInstance.prototype.processError = function(model, xhr) {
+    Instance.prototype.processError = function(model, xhr) {
       if ((xhr.responseJSON != null) && xhr.responseJSON.error === "VALIDATION") {
         return this.trigger("invalid", this, xhr.responseJSON.data);
       }
     };
 
-    EntityInstance.prototype.validate = function() {
+    Instance.prototype.validate = function() {
       this.set("errors", {});
       return null;
     };
 
-    EntityInstance.prototype.link = function() {
+    Instance.prototype.link = function() {
       return this.entity.link(this.isNew() ? "create" : this.id);
     };
 
-    EntityInstance.prototype.url = function() {
+    Instance.prototype.url = function() {
       return this.entity.url(this.id);
     };
 
-    EntityInstance.prototype.sync = function(method, model, options) {
+    Instance.prototype.sync = function(method, model, options) {
       var _ref42;
       if (method === "update" || method === "create") {
         options.data = new AdvFormData((_ref42 = options.attrs) != null ? _ref42 : this.attributes).original;
         options.contentType = false;
         options.processData = false;
       }
-      return EntityInstance.__super__.sync.apply(this, arguments);
+      return Instance.__super__.sync.apply(this, arguments);
     };
 
-    EntityInstance.prototype.save = function() {
+    Instance.prototype.save = function() {
       var queue, xhr,
         _this = this;
-      xhr = EntityInstance.__super__.save.apply(this, arguments);
+      xhr = Instance.__super__.save.apply(this, arguments);
       if (_.isEmpty(this.related)) {
         return xhr;
       }
@@ -3029,11 +3047,11 @@
       }
     };
 
-    EntityInstance.prototype.parse = function(resp) {
+    Instance.prototype.parse = function(resp) {
       return resp.data.instance;
     };
 
-    EntityInstance.prototype.copy = function() {
+    Instance.prototype.copy = function() {
       var copy, item, key, _ref42;
       copy = this.entity.createInstance();
       copy.set(this.getCopyableAttributes(), {
@@ -3049,11 +3067,11 @@
       return copy;
     };
 
-    EntityInstance.prototype.getCopyableAttributes = function() {
+    Instance.prototype.getCopyableAttributes = function() {
       return this.entity.getCopyableAttributes(this.attributes);
     };
 
-    EntityInstance.prototype.hasChangedSinceSync = function() {
+    Instance.prototype.hasChangedSinceSync = function() {
       var key, related, value, _ref42, _ref43;
       _ref42 = this.attributes;
       for (key in _ref42) {
@@ -3074,34 +3092,34 @@
       return false;
     };
 
-    EntityInstance.prototype.isSaveable = function() {
+    Instance.prototype.isSaveable = function() {
       return (this.isNew() && this.entity.get("can_create")) || (!this.isNew() && this.entity.get("can_update"));
     };
 
-    return EntityInstance;
+    return Instance;
 
   })(Backbone.Model);
 
-  EntityPage = (function(_super) {
-    __extends(EntityPage, _super);
+  Cruddy.Entity.Page = (function(_super) {
+    __extends(Page, _super);
 
-    EntityPage.prototype.className = "entity-page";
+    Page.prototype.className = "entity-page";
 
-    EntityPage.prototype.events = {
+    Page.prototype.events = {
       "click .btn-create": "create"
     };
 
-    function EntityPage(options) {
+    function Page(options) {
       this.className += " " + this.className + "-" + options.model.id;
-      EntityPage.__super__.constructor.apply(this, arguments);
+      Page.__super__.constructor.apply(this, arguments);
     }
 
-    EntityPage.prototype.initialize = function(options) {
+    Page.prototype.initialize = function(options) {
       this.listenTo(this.model, "change:instance", this.toggleForm);
-      return EntityPage.__super__.initialize.apply(this, arguments);
+      return Page.__super__.initialize.apply(this, arguments);
     };
 
-    EntityPage.prototype.toggleForm = function(entity, instance) {
+    Page.prototype.toggleForm = function(entity, instance) {
       var _this = this;
       if (this.form != null) {
         this.stopListening(this.form.model);
@@ -3111,7 +3129,7 @@
         this.listenTo(instance, "sync", function() {
           return Cruddy.router.navigate(instance.link());
         });
-        this.form = new EntityForm({
+        this.form = new Cruddy.Entity.Form({
           model: instance
         });
         this.$el.append(this.form.render().$el);
@@ -3122,14 +3140,14 @@
       return this;
     };
 
-    EntityPage.prototype.create = function() {
+    Page.prototype.create = function() {
       Cruddy.router.navigate(this.model.link("create"), {
         trigger: true
       });
       return this;
     };
 
-    EntityPage.prototype.render = function() {
+    Page.prototype.render = function() {
       this.dispose();
       this.$el.html(this.template());
       this.header = this.$(".entity-page-header");
@@ -3146,7 +3164,7 @@
         model: this.dataSource.filter,
         entity: this.dataSource.entity
       });
-      this.search = new SearchInput({
+      this.search = new Cruddy.Inputs.Search({
         model: this.dataSource,
         key: "search"
       });
@@ -3158,7 +3176,7 @@
       return this;
     };
 
-    EntityPage.prototype.template = function() {
+    Page.prototype.template = function() {
       var html;
       html = "<div class='entity-page-header'>";
       html += "<h1>\n    " + (this.model.get("title")) + "\n";
@@ -3172,7 +3190,7 @@
       return html += "<div class='entity-page-footer'></div>";
     };
 
-    EntityPage.prototype.dispose = function() {
+    Page.prototype.dispose = function() {
       if (this.form != null) {
         this.form.remove();
       }
@@ -3194,33 +3212,33 @@
       return this;
     };
 
-    EntityPage.prototype.remove = function() {
+    Page.prototype.remove = function() {
       this.dispose();
-      return EntityPage.__super__.remove.apply(this, arguments);
+      return Page.__super__.remove.apply(this, arguments);
     };
 
-    return EntityPage;
+    return Page;
 
   })(Backbone.View);
 
-  EntityForm = (function(_super) {
-    __extends(EntityForm, _super);
+  Cruddy.Entity.Form = (function(_super) {
+    __extends(Form, _super);
 
-    EntityForm.prototype.className = "entity-form";
+    Form.prototype.className = "entity-form";
 
-    EntityForm.prototype.events = {
+    Form.prototype.events = {
       "click .btn-save": "save",
       "click .btn-close": "close",
       "click .btn-destroy": "destroy",
       "click .btn-copy": "copy"
     };
 
-    function EntityForm(options) {
+    function Form(options) {
       this.className += " " + this.className + "-" + options.model.entity.id;
-      EntityForm.__super__.constructor.apply(this, arguments);
+      Form.__super__.constructor.apply(this, arguments);
     }
 
-    EntityForm.prototype.initialize = function(options) {
+    Form.prototype.initialize = function(options) {
       var key, related, _ref42, _ref43;
       this.inner = (_ref42 = options.inner) != null ? _ref42 : false;
       this.listenTo(this.model, "destroy", this.handleDestroy);
@@ -3234,12 +3252,12 @@
       return this;
     };
 
-    EntityForm.prototype.signOn = function(model) {
+    Form.prototype.signOn = function(model) {
       this.listenTo(model, "change", this.enableSubmit);
       return this.listenTo(model, "invalid", this.displayInvalid);
     };
 
-    EntityForm.prototype.hotkeys = function(e) {
+    Form.prototype.hotkeys = function(e) {
       if (e.ctrlKey && e.keyCode === 90 && e.target === document.body) {
         this.model.set(this.model.previousAttributes());
         return false;
@@ -3255,14 +3273,14 @@
       return this;
     };
 
-    EntityForm.prototype.enableSubmit = function() {
+    Form.prototype.enableSubmit = function() {
       if (!this.request) {
         this.submit.attr("disabled", this.model.hasChangedSinceSync() === false);
       }
       return this;
     };
 
-    EntityForm.prototype.displayAlert = function(message, type) {
+    Form.prototype.displayAlert = function(message, type) {
       if (this.alert != null) {
         this.alert.remove();
       }
@@ -3276,22 +3294,22 @@
       return this;
     };
 
-    EntityForm.prototype.displaySuccess = function() {
+    Form.prototype.displaySuccess = function() {
       return this.displayAlert("Получилось!", "success");
     };
 
-    EntityForm.prototype.displayInvalid = function() {
+    Form.prototype.displayInvalid = function() {
       return this.displayAlert("Не получилось...", "warning");
     };
 
-    EntityForm.prototype.displayError = function(xhr) {
+    Form.prototype.displayError = function(xhr) {
       var _ref42;
       if (((_ref42 = xhr.responseJSON) != null ? _ref42.error : void 0) !== "VALIDATION") {
         return this.displayAlert("Ошибка", "danger");
       }
     };
 
-    EntityForm.prototype.handleDestroy = function() {
+    Form.prototype.handleDestroy = function() {
       if (this.model.entity.get("soft_deleting")) {
         this.update();
       } else {
@@ -3306,13 +3324,13 @@
       return this;
     };
 
-    EntityForm.prototype.show = function() {
+    Form.prototype.show = function() {
       this.$el.toggleClass("opened", true);
       this.tabs[0].focus();
       return this;
     };
 
-    EntityForm.prototype.save = function() {
+    Form.prototype.save = function() {
       var _this = this;
       if ((this.request != null) || !this.model.hasChangedSinceSync()) {
         return;
@@ -3328,7 +3346,7 @@
       return this;
     };
 
-    EntityForm.prototype.close = function() {
+    Form.prototype.close = function() {
       var confirmed;
       if (this.request) {
         confirmed = confirm("Вы точно хотите закрыть форму и отменить операцию?");
@@ -3350,7 +3368,7 @@
       return this;
     };
 
-    EntityForm.prototype.destroy = function() {
+    Form.prototype.destroy = function() {
       var confirmed, softDeleting,
         _this = this;
       if (this.request || this.model.isNew()) {
@@ -3369,14 +3387,14 @@
       return this;
     };
 
-    EntityForm.prototype.copy = function() {
+    Form.prototype.copy = function() {
       var copy;
       this.model.entity.set("instance", copy = this.model.copy());
       Cruddy.router.navigate(copy.link());
       return this;
     };
 
-    EntityForm.prototype.render = function() {
+    Form.prototype.render = function() {
       var key, related, _ref42;
       this.dispose();
       this.$el.html(this.template());
@@ -3395,7 +3413,7 @@
       return this.update();
     };
 
-    EntityForm.prototype.renderTab = function(model, active) {
+    Form.prototype.renderTab = function(model, active) {
       var fieldList, id;
       this.tabs.push(fieldList = new FieldList({
         model: model
@@ -3409,7 +3427,7 @@
       return this;
     };
 
-    EntityForm.prototype.update = function() {
+    Form.prototype.update = function() {
       this.$el.toggleClass("loading", this.request != null);
       this.submit.text(this.model.isNew() ? "Создать" : "Сохранить");
       this.submit.attr("disabled", (this.request != null) || !this.model.hasChangedSinceSync());
@@ -3421,28 +3439,28 @@
       return this;
     };
 
-    EntityForm.prototype.template = function() {
+    Form.prototype.template = function() {
       return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <button type=\"button\" tabindex=\"-1\" class=\"btn btn-link btn-copy navbar-btn pull-right\" title=\"Копировать\">\n        <span class=\"glyphicon glyphicon-book\"></span>\n    </button>\n\n    <ul class=\"nav navbar-nav\"></ul>\n</div>\n\n<footer>\n    <button type=\"button\" class=\"btn btn-default btn-close btn-sm\" type=\"button\">Закрыть</button>\n    <button type=\"button\" class=\"btn btn-default btn-destroy btn-sm\" type=\"button\"></button>\n    <button type=\"button\" class=\"btn btn-primary btn-save btn-sm\" type=\"button\" disabled></button>\n</footer>";
     };
 
-    EntityForm.prototype.navTemplate = function(label, target, active) {
+    Form.prototype.navTemplate = function(label, target, active) {
       active = active ? " class=\"active\"" : "";
       return "<li" + active + "><a href=\"#" + target + "\" data-toggle=\"tab\">" + label + "</a></li>";
     };
 
-    EntityForm.prototype.remove = function() {
+    Form.prototype.remove = function() {
       var _this = this;
       this.trigger("remove", this);
       this.$el.one(TRANSITIONEND, function() {
         _this.dispose();
         $(document).off("." + _this.cid);
         _this.trigger("removed", _this);
-        return EntityForm.__super__.remove.apply(_this, arguments);
+        return Form.__super__.remove.apply(_this, arguments);
       }).removeClass("opened");
       return this;
     };
 
-    EntityForm.prototype.dispose = function() {
+    Form.prototype.dispose = function() {
       var fieldList, _i, _len, _ref42;
       if (this.tabs != null) {
         _ref42 = this.tabs;
@@ -3454,7 +3472,7 @@
       return this;
     };
 
-    return EntityForm;
+    return Form;
 
   })(Backbone.View);
 
@@ -3487,7 +3505,7 @@
     App.prototype.displayEntity = function(model, entity) {
       this.dispose();
       if (entity) {
-        return this.container.append((this.page = new EntityPage({
+        return this.container.append((this.page = new Cruddy.Entity.Page({
           model: entity
         })).render().el);
       }
@@ -3544,7 +3562,7 @@
       }, options);
       return this.entities[id] = $.ajax(options).then(function(resp) {
         var entity, related, wait;
-        entity = new Entity(resp.data);
+        entity = new Cruddy.Entity.Entity(resp.data);
         if (_.isEmpty(entity.related.models)) {
           return entity;
         }

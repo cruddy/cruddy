@@ -502,25 +502,37 @@ class FilterList extends Backbone.View
 Cruddy.Inputs = {}
 
 # Base class for input that will be bound to a model's attribute.
-class BaseInput extends Backbone.View
+class Cruddy.Inputs.Base extends Backbone.View
     constructor: (options) ->
         @key = options.key
 
         super
 
     initialize: ->
-        @listenTo @model, "change:" + @key, @applyChanges
+        @listenTo @model, "change:" + @key, (model, value, options) ->
+            @applyChanges value, not options.input or options.input isnt this
 
         this
 
     # Apply changes when model's attribute changed.
-    applyChanges: (model, data) -> this
+    # external is true when value is changed not by input itself.
+    applyChanges: (data, external) -> this
 
-    render: -> @applyChanges @model, @model.get @key
+    render: -> @applyChanges @getValue(), yes
 
+    # Focus an element.
     focus: -> this
+
+    # Get current value.
+    getValue: -> @model.get @key
+
+    # Set current value.
+    setValue: (value) ->
+        @model.set @key, value, input: this
+
+        this
 # Renders formatted text and doesn't have any editing features.
-class StaticInput extends BaseInput
+class Cruddy.Inputs.Static extends Cruddy.Inputs.Base
     tagName: "p"
     className: "form-control-static"
 
@@ -529,16 +541,16 @@ class StaticInput extends BaseInput
 
         super
 
-    applyChanges: (model, data) -> @render()
+    applyChanges: (data) -> @render()
 
     render: ->
-        value = @model.get @key
+        value = @getValue()
         value = @formatter.format value if @formatter?
 
         @$el.html value
 
         this
-class Cruddy.Inputs.BaseText extends BaseInput
+class Cruddy.Inputs.BaseText extends Cruddy.Inputs.Base
     className: "form-control"
 
     events:
@@ -566,8 +578,8 @@ class Cruddy.Inputs.BaseText extends BaseInput
 
         this
 
-    applyChanges: (model, data) ->
-        @$el.val data
+    applyChanges: (data, external) ->
+        @$el.val data if external
 
         this
 
@@ -577,7 +589,7 @@ class Cruddy.Inputs.BaseText extends BaseInput
         this
         
 # Renders an <input> value of which is bound to a model's attribute.
-class TextInput extends Cruddy.Inputs.BaseText
+class Cruddy.Inputs.Text extends Cruddy.Inputs.BaseText
     tagName: "input"
 
     initialize: (options) ->
@@ -587,10 +599,10 @@ class TextInput extends Cruddy.Inputs.BaseText
         super
 
 # Renders a <textarea> input.
-class Textarea extends Cruddy.Inputs.BaseText
+class Cruddy.Inputs.Textarea extends Cruddy.Inputs.BaseText
     tagName: "textarea"
 # Renders a checkbox
-class Checkbox extends BaseInput
+class Cruddy.Inputs.Checkbox extends Cruddy.Inputs.Base
     tagName: "label"
     label: ""
 
@@ -602,23 +614,20 @@ class Checkbox extends BaseInput
 
         super
 
-    change: ->
-        @model.set @key, @input.prop "checked"
+    change: -> @setValue @input.prop "checked"
 
-        this
-
-    applyChanges: (model, value) ->
-        @input.prop "checked", value
+    applyChanges: (value, external) ->
+        @input.prop "checked", value if external
 
         this
 
     render: ->
-        @input = $ "<input>", { type: "checkbox", checked: @model.get @key }
+        @input = $ "<input>", { type: "checkbox", checked: @getValue() }
         @$el.append @input
         @$el.append @label if @label?
 
         this
-class BooleanInput extends BaseInput
+class Cruddy.Inputs.Boolean extends Cruddy.Inputs.Base
     tripleState: false
 
     events:
@@ -635,11 +644,9 @@ class BooleanInput extends BaseInput
 
         value = null if value == currentValue and @tripleState
 
-        @model.set @key, value
+        @setValue value
 
-        this
-
-    applyChanges: (model, value) ->
+    applyChanges: (value) ->
         value = switch value
             when yes then 0
             when no then 1
@@ -671,7 +678,7 @@ class BooleanInput extends BaseInput
             #{ label }
         </label>
         """
-class EntityDropdown extends BaseInput
+class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     className: "entity-dropdown"
 
     events:
@@ -711,9 +718,7 @@ class EntityDropdown extends BaseInput
         else
             value = null
 
-        @model.set @key, value
-
-        this
+        @setValue value
 
     editItem: (e) ->
         item = @model.get @key
@@ -724,7 +729,7 @@ class EntityDropdown extends BaseInput
         target = $(e.currentTarget).prop "disabled", yes
 
         xhr = Cruddy.app.entity(@reference).then (entity) => entity.load(item.id).done (instance) =>
-            @innerForm = new EntityForm
+            @innerForm = new Cruddy.Entity.Form
                 model: instance
                 inner: yes
 
@@ -755,7 +760,7 @@ class EntityDropdown extends BaseInput
 
         return @toggleOpenDirection() if @selector?
 
-        @selector = new EntitySelector
+        @selector = new Cruddy.Inputs.EntitySelector
             model: @model
             key: @key
             multiple: @multiple
@@ -778,7 +783,7 @@ class EntityDropdown extends BaseInput
 
         this
 
-    applyChanges: (model, value) ->
+    applyChanges: (value) ->
         if @multiple
             @renderItems()
         else
@@ -812,7 +817,7 @@ class EntityDropdown extends BaseInput
 
     renderItems: ->
         html = ""
-        html += @itemTemplate value.title, key for value, key in @model.get @key
+        html += @itemTemplate value.title, key for value, key in @getValue()
         @items.html html
         @items.toggleClass "has-items", html isnt ""
 
@@ -828,7 +833,7 @@ class EntityDropdown extends BaseInput
         @updateItem()
 
     updateItem: ->
-        value = @model.get @key
+        value = @getValue()
         @itemTitle.val if value then value.title else "Не выбрано"
         @itemDelete.toggle !!value
         @itemEdit.toggle !!value
@@ -873,7 +878,7 @@ class EntityDropdown extends BaseInput
         @dispose()
 
         super
-class EntitySelector extends BaseInput
+class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
     className: "entity-selector"
 
     events:
@@ -931,9 +936,7 @@ class EntitySelector extends BaseInput
         else
             value = item
 
-        @model.set @key, value
-
-        this
+        @setValue value
 
     more: ->
         return if not @dataSource or @dataSource.inProgress()
@@ -959,7 +962,7 @@ class EntitySelector extends BaseInput
 
             instance = entity.createInstance(attrs)
 
-            @innerForm = new EntityForm
+            @innerForm = new Cruddy.Entity.Form
                 model: instance
                 inner: yes
 
@@ -978,7 +981,7 @@ class EntitySelector extends BaseInput
 
         this
 
-    applyChanges: (model, data) ->
+    applyChanges: (data) ->
         @buildSelected data
         @renderItems()
 
@@ -1046,7 +1049,7 @@ class EntitySelector extends BaseInput
         this
 
     renderSearch: ->
-        @searchInput = new SearchInput
+        @searchInput = new Cruddy.Inputs.Search
             model: @dataSource
             key: "search"
 
@@ -1082,7 +1085,7 @@ class EntitySelector extends BaseInput
 
         super
 
-class FileList extends BaseInput
+class Cruddy.Inputs.FileList extends Cruddy.Inputs.Base
     className: "file-list"
 
     events:
@@ -1116,9 +1119,7 @@ class FileList extends BaseInput
         else
             value = e.target.files[0]
 
-        @model.set @key, value
-
-        this
+        @setValue value
 
     applyChanges: -> @render()
 
@@ -1157,7 +1158,7 @@ class FileList extends BaseInput
         </li>
         """
 
-class ImageList extends FileList
+class Cruddy.Inputs.ImageList extends Cruddy.Inputs.FileList
     className: "image-list"
 
     constructor: ->
@@ -1215,7 +1216,7 @@ class ImageList extends FileList
 
         reader
 # Search input implements "change when type" and also allows to clear text with Esc
-class SearchInput extends TextInput
+class Cruddy.Inputs.Search extends Cruddy.Inputs.Text
 
     attributes:
         type: "search"
@@ -1237,12 +1238,12 @@ class SearchInput extends TextInput
         @scheduleChange()
 
         super
-class SlugInput extends Backbone.View
+class Cruddy.Inputs.Slug extends Backbone.View
     events:
         "click .btn": "toggleSyncing"
 
     constructor: (options) ->
-        @input = new TextInput _.clone options
+        @input = new Cruddy.Inputs.Text _.clone options
 
         options.className ?= "input-group"
 
@@ -1318,7 +1319,7 @@ class SlugInput extends Backbone.View
             <button type="button" tabindex="-1" class="btn btn-default" title="Связать с полем #{ @model.entity.fields.get(@ref).get "label" }"><span class="glyphicon glyphicon-link"></span></button>
         </div>
         """
-class SelectInput extends TextInput
+class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
     tagName: "select"
 
     initialize: (options) ->
@@ -1327,8 +1328,8 @@ class SelectInput extends TextInput
 
         super
 
-    applyChanges: (model, data) ->
-        @$("[value='#{ data }']").prop "selected", yes
+    applyChanges: (data, external) ->
+        @$("[value='#{ data }']").prop "selected", yes if external
 
         this
 
@@ -1345,7 +1346,7 @@ class SelectInput extends TextInput
 
     optionTemplate: (value, title) ->
         """<option value="#{ _.escape value }">#{ _.escape title }</option>"""
-class Cruddy.Inputs.Code extends BaseInput
+class Cruddy.Inputs.Code extends Cruddy.Inputs.Base
     initialize: (options) ->
         @$el.height (options.height ? 100) + "px"
 
@@ -1360,8 +1361,10 @@ class Cruddy.Inputs.Code extends BaseInput
 
         super
 
-    applyChanges: (model, value, options) ->
-        @editor.setValue value if not options?.input or options.input isnt this
+    applyChanges: (value, external) ->
+        if external
+            @editor.setValue value
+            @editor.getSession().getSelection().clearSelection()
 
         this
 
@@ -1380,7 +1383,7 @@ class Cruddy.Inputs.Code extends BaseInput
         @editor?.focus()
 
         this
-class Cruddy.Inputs.Markdown extends BaseInput
+class Cruddy.Inputs.Markdown extends Cruddy.Inputs.Base
 
     events:
         "show.bs.tab [data-toggle=tab]": "showTab"
@@ -1392,6 +1395,7 @@ class Cruddy.Inputs.Markdown extends BaseInput
         @editorInput = new Cruddy.Inputs.Code
             model: @model
             key: @key
+            theme: options.theme
             mode: "markdown"
             height: @height
 
@@ -1415,7 +1419,7 @@ class Cruddy.Inputs.Markdown extends BaseInput
         this
 
     renderPreview: ->
-        @preview.html markdown.toHTML @model.get @key
+        @preview.html markdown.toHTML @getValue()
 
         this
 
@@ -1423,8 +1427,8 @@ class Cruddy.Inputs.Markdown extends BaseInput
         """
         <div class="markdown-editor">
             <ul class="nav nav-tabs">
-                <li class="active"><a href="##{ @cid }-editor" data-toggle="tab" data-tab="editor">Исходник</a></li>
-                <li><a href="##{ @cid }-preview" data-toggle="tab" data-tab="preview">Результат</a></li>
+                <li class="active"><a href="##{ @cid }-editor" data-toggle="tab" data-tab="editor" tab-index="-1">Исходник</a></li>
+                <li><a href="##{ @cid }-preview" data-toggle="tab" data-tab="preview" tab-index="-1">Результат</a></li>
             </ul>
 
             <div class="tab-content">
@@ -1439,7 +1443,7 @@ class Cruddy.Inputs.Markdown extends BaseInput
         if tab.hasClass "active" then @editorInput.focus() else tab.tab "show"
 
         this
-Cruddy.fields = Cruddy.Fields = new Factory
+Cruddy.Fields = new Factory
 
 class FieldView extends Backbone.View
     className: "field"
@@ -1543,14 +1547,14 @@ class Field extends Attribute
     createInput: (model) ->
         input = @createEditableInput model if @isEditable model
 
-        if input? then input else new StaticInput { model: model, key: @id, formatter: this }
+        if input? then input else new Cruddy.Inputs.Static { model: model, key: @id, formatter: this }
 
     createEditableInput: (model) -> null
 
     format: (value) -> if value then value else "n/a"
 
     isEditable: (model) -> @get("editable") and (@get("updateable") or not model.isNew()) and model.isSaveable()
-class Cruddy.fields.Input extends Field
+class Cruddy.Fields.Input extends Field
     createEditableInput: (model) ->
         attributes = placeholder: @get "label"
         type = @get "input_type"
@@ -1558,14 +1562,14 @@ class Cruddy.fields.Input extends Field
         if type is "textarea"
             attributes.rows = @get "rows"
 
-            new Textarea
+            new Cruddy.Inputs.Textarea
                 model: model
                 key: @id
                 attributes: attributes
         else
             attributes.type = type
 
-            new TextInput
+            new Cruddy.Inputs.Text
                 model: model
                 key: @id
                 mask: @get "mask"
@@ -1582,31 +1586,31 @@ class Cruddy.fields.Input extends Field
 # DATE AND TIME FIELD TYPE
 
 ###
-class Cruddy.fields.DateTimeView extends Cruddy.fields.InputView
+class Cruddy.Fields.DateTimeView extends Cruddy.Fields.InputView
     format: (value) -> moment.unix(value).format @field.get "format"
     unformat: (value) -> moment(value, @field.get "format").unix()
 ###
 
-class Cruddy.fields.DateTime extends Cruddy.fields.Input
-    #viewConstructor: Cruddy.fields.DateTimeView
+class Cruddy.Fields.DateTime extends Cruddy.Fields.Input
+    #viewConstructor: Cruddy.Fields.DateTimeView
 
     format: (value) -> if value is null then "никогда" else moment.unix(value).calendar()
-class Cruddy.fields.Boolean extends Field
-    createEditableInput: (model) -> new BooleanInput { model: model, key: @id }
+class Cruddy.Fields.Boolean extends Field
+    createEditableInput: (model) -> new Cruddy.Inputs.Boolean { model: model, key: @id }
 
-    createFilterInput: (model) -> new BooleanInput { model: model, key: @id, tripleState: yes }
+    createFilterInput: (model) -> new Cruddy.Inputs.Boolean { model: model, key: @id, tripleState: yes }
 
     format: (value) -> if value then "да" else "нет"
-class Cruddy.fields.Relation extends Field
+class Cruddy.Fields.Relation extends Field
     createEditableInput: (model) ->
-        new EntityDropdown
+        new Cruddy.Inputs.EntityDropdown
             model: model
             key: @id
             multiple: @get "multiple"
             reference: @get "reference"
 
     createFilterInput: (model) ->
-        new EntityDropdown
+        new Cruddy.Inputs.EntityDropdown
             model: model
             key: @id
             reference: @get "reference"
@@ -1615,16 +1619,16 @@ class Cruddy.fields.Relation extends Field
     format: (value) ->
         return "не указано" if _.isEmpty value
         if @attributes.multiple then _.pluck(value, "title").join ", " else value.title
-class Cruddy.fields.File extends Field
-    createEditableInput: (model) -> new FileList
+class Cruddy.Fields.File extends Field
+    createEditableInput: (model) -> new Cruddy.Inputs.FileList
         model: model
         key: @id
         multiple: @get "multiple"
         accepts: @get "accepts"
 
     format: (value) -> if value instanceof File then value.name else value
-class Cruddy.fields.Image extends Cruddy.fields.File
-    createEditableInput: (model) -> new ImageList
+class Cruddy.Fields.Image extends Cruddy.Fields.File
+    createEditableInput: (model) -> new Cruddy.Inputs.ImageList
         model: model
         key: @id
         width: @get "width"
@@ -1633,9 +1637,9 @@ class Cruddy.fields.Image extends Cruddy.fields.File
         accepts: @get "accepts"
 
     format: (value) -> if value instanceof File then value.name else value
-class Cruddy.fields.Slug extends Field
+class Cruddy.Fields.Slug extends Field
     createEditableInput: (model) ->
-        new SlugInput
+        new Cruddy.Inputs.Slug
             model: model
             key: @id
             chars: @get "chars"
@@ -1645,21 +1649,21 @@ class Cruddy.fields.Slug extends Field
                 placeholder: @get "label"
 
     createFilterInput: (model, column) ->
-        new TextInput
+        new Cruddy.Inputs.Text
             model: model
             key: @id
             attributes:
                 placeholder: @get "label"
-class Cruddy.fields.Enum extends Field
+class Cruddy.Fields.Enum extends Field
     createEditableInput: (model) ->
-        new SelectInput
+        new Cruddy.Inputs.Select
             model: model
             key: @id
             prompt: @get "prompt"
             items: @get "items"
 
     createFilterInput: (model) ->
-        new SelectInput
+        new Cruddy.Inputs.Select
             model: model
             key: @id
             prompt: "Любое значение"
@@ -1684,9 +1688,9 @@ class Cruddy.Fields.Code extends Field
             height: @get "height"
             mode: @get "mode"
             theme: @get "theme"
-Cruddy.columns = new Factory
+Cruddy.Columns = new Factory
 
-class Column extends Attribute
+class Cruddy.Columns.Base extends Attribute
     initialize: (options) ->
         @formatter = Cruddy.formatters.create options.formatter, options.formatterOptions if options.formatter?
 
@@ -1705,7 +1709,7 @@ class Column extends Attribute
     getClass: -> "col-" + @id
 
 
-class Cruddy.columns.Field extends Column
+class Cruddy.Columns.Field extends Cruddy.Columns.Base
     initialize: (attributes) ->
         field = attributes.field ? attributes.id
         @field = attributes.entity.fields.get field
@@ -1720,9 +1724,9 @@ class Cruddy.columns.Field extends Column
 
     getClass: -> super + " col-" + @field.get "type"
 
-class Cruddy.columns.Computed extends Column
+class Cruddy.Columns.Computed extends Cruddy.Columns.Base
     createFilterInput: (model) ->
-        new TextInput
+        new Cruddy.Inputs.Text
             model: model
             key: @id
             attributes:
@@ -1754,32 +1758,34 @@ class Cruddy.formatters.Image extends BaseFormatter
         """
 class Cruddy.formatters.Plain extends BaseFormatter
     format: (value) -> value
-Cruddy.related = new Factory
+Cruddy.Related = new Factory
 
-class Related extends Backbone.Model
+class Cruddy.Related.Base extends Backbone.Model
     resolve: ->
         return @resolver if @resolver?
 
         @resolver = Cruddy.app.entity @get "related"
         @resolver.done (entity) => @related = entity
 
-class Cruddy.related.One extends Related
+class Cruddy.Related.One extends Cruddy.Related.Base
     associate: (parent, child) ->
         child.set @get("foreign_key"), parent.id
 
         this
 
-class Cruddy.related.MorphOne extends Cruddy.related.One
+class Cruddy.Related.MorphOne extends Cruddy.Related.One
     associate: (parent, child) ->
         child.set @get("morph_type"), @get("morph_class")
 
         super
-class Entity extends Backbone.Model
+Cruddy.Entity = {}
+
+class Cruddy.Entity.Entity extends Backbone.Model
 
     initialize: (attributes, options) ->
-        @fields = @createCollection Cruddy.fields, attributes.fields
-        @columns = @createCollection Cruddy.columns, attributes.columns
-        @related = @createCollection Cruddy.related, attributes.related
+        @fields = @createCollection Cruddy.Fields, attributes.fields
+        @columns = @createCollection Cruddy.Columns, attributes.columns
+        @related = @createCollection Cruddy.Related, attributes.related
 
         @set "label", humanize @id if @get("label") is null
 
@@ -1811,7 +1817,7 @@ class Entity extends Backbone.Model
         related = {}
         related[item.id] = item.related.createInstance(relatedData[item.id]) for item in @related.models
 
-        new EntityInstance _.extend({}, @get("defaults"), attributes), { entity: this, related: related }
+        new Cruddy.Entity.Instance _.extend({}, @get("defaults"), attributes), { entity: this, related: related }
 
     search: ->
         return @searchDataSource.reset() if @searchDataSource?
@@ -1852,7 +1858,7 @@ class Entity extends Backbone.Model
     url: (id) -> entity_url @id, id
 
     link: (id) -> "#{ @id}" + if id? then "/#{ id }" else ""
-class EntityInstance extends Backbone.Model
+class Cruddy.Entity.Instance extends Backbone.Model
     initialize: (attributes, options) ->
         @entity = options.entity
         @related = options.related
@@ -1925,7 +1931,7 @@ class EntityInstance extends Backbone.Model
         no
 
     isSaveable: -> (@isNew() and @entity.get("can_create")) or (!@isNew() and @entity.get("can_update"))
-class EntityPage extends Backbone.View
+class Cruddy.Entity.Page extends Backbone.View
     className: "entity-page"
 
     events: {
@@ -1950,7 +1956,7 @@ class EntityPage extends Backbone.View
         if instance?
             @listenTo instance, "sync", -> Cruddy.router.navigate instance.link()
 
-            @form = new EntityForm model: instance
+            @form = new Cruddy.Entity.Form model: instance
             @$el.append @form.render().$el
 
             after_break => @form.show()
@@ -1983,7 +1989,7 @@ class EntityPage extends Backbone.View
             model: @dataSource.filter
             entity: @dataSource.entity
 
-        @search = new SearchInput
+        @search = new Cruddy.Inputs.Search
             model: @dataSource
             key: "search"
 
@@ -2034,7 +2040,7 @@ class EntityPage extends Backbone.View
 
         super
 # View that displays a form for an entity instance
-class EntityForm extends Backbone.View
+class Cruddy.Entity.Form extends Backbone.View
     className: "entity-form"
 
     events:
@@ -2272,7 +2278,7 @@ class App extends Backbone.Model
     displayEntity: (model, entity) ->
         @dispose()
 
-        @container.append (@page = new EntityPage model: entity).render().el if entity
+        @container.append (@page = new Cruddy.Entity.Page model: entity).render().el if entity
 
     displayError: (xhr) ->
         error = if not xhr? or xhr.status is 403 then "Ошибка доступа" else "Ошибка"
@@ -2318,7 +2324,7 @@ class App extends Backbone.Model
         }, options
 
         @entities[id] = $.ajax(options).then (resp) =>
-            entity = new Entity resp.data
+            entity = new Cruddy.Entity.Entity resp.data
 
             return entity if _.isEmpty entity.related.models
 

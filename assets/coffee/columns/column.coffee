@@ -1,6 +1,6 @@
-Cruddy.columns = new Factory
+Cruddy.Columns = new Factory
 
-class Column extends Attribute
+class Cruddy.Columns.Base extends Attribute
     initialize: (options) ->
         @formatter = Cruddy.formatters.create options.formatter, options.formatterOptions if options.formatter?
 
@@ -19,7 +19,7 @@ class Column extends Attribute
     getClass: -> "col-" + @id
 
 
-class Cruddy.columns.Field extends Column
+class Cruddy.Columns.Field extends Cruddy.Columns.Base
     initialize: (attributes) ->
         field = attributes.field ? attributes.id
         @field = attributes.entity.fields.get field
@@ -34,9 +34,9 @@ class Cruddy.columns.Field extends Column
 
     getClass: -> super + " col-" + @field.get "type"
 
-class Cruddy.columns.Computed extends Column
+class Cruddy.Columns.Computed extends Cruddy.Columns.Base
     createFilterInput: (model) ->
-        new TextInput
+        new Cruddy.Inputs.Text
             model: model
             key: @id
             attributes:

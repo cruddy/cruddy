@@ -1,4 +1,4 @@
-class EntityInstance extends Backbone.Model
+class Cruddy.Entity.Instance extends Backbone.Model
     initialize: (attributes, options) ->
         @entity = options.entity
         @related = options.related

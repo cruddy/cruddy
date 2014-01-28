@@ -1,13 +1,13 @@
-class Cruddy.fields.Relation extends Field
+class Cruddy.Fields.Relation extends Field
     createEditableInput: (model) ->
-        new EntityDropdown
+        new Cruddy.Inputs.EntityDropdown
             model: model
             key: @id
             multiple: @get "multiple"
             reference: @get "reference"
 
     createFilterInput: (model) ->
-        new EntityDropdown
+        new Cruddy.Inputs.EntityDropdown
             model: model
             key: @id
             reference: @get "reference"

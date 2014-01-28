@@ -1,4 +1,4 @@
-class EntityPage extends Backbone.View
+class Cruddy.Entity.Page extends Backbone.View
     className: "entity-page"
 
     events: {
@@ -23,7 +23,7 @@ class EntityPage extends Backbone.View
         if instance?
             @listenTo instance, "sync", -> Cruddy.router.navigate instance.link()
 
-            @form = new EntityForm model: instance
+            @form = new Cruddy.Entity.Form model: instance
             @$el.append @form.render().$el
 
             after_break => @form.show()
@@ -56,7 +56,7 @@ class EntityPage extends Backbone.View
             model: @dataSource.filter
             entity: @dataSource.entity
 
-        @search = new SearchInput
+        @search = new Cruddy.Inputs.Search
             model: @dataSource
             key: "search"
 

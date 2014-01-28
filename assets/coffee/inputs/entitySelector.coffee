@@ -1,4 +1,4 @@
-class EntitySelector extends BaseInput
+class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
     className: "entity-selector"
 
     events:
@@ -56,9 +56,7 @@ class EntitySelector extends BaseInput
         else
             value = item
 
-        @model.set @key, value
-
-        this
+        @setValue value
 
     more: ->
         return if not @dataSource or @dataSource.inProgress()
@@ -84,7 +82,7 @@ class EntitySelector extends BaseInput
 
             instance = entity.createInstance(attrs)
 
-            @innerForm = new EntityForm
+            @innerForm = new Cruddy.Entity.Form
                 model: instance
                 inner: yes
 
@@ -103,7 +101,7 @@ class EntitySelector extends BaseInput
 
         this
 
-    applyChanges: (model, data) ->
+    applyChanges: (data) ->
         @buildSelected data
         @renderItems()
 
@@ -171,7 +169,7 @@ class EntitySelector extends BaseInput
         this
 
     renderSearch: ->
-        @searchInput = new SearchInput
+        @searchInput = new Cruddy.Inputs.Search
             model: @dataSource
             key: "search"
 

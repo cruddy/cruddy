@@ -1,4 +1,4 @@
-class ImageList extends FileList
+class Cruddy.Inputs.ImageList extends Cruddy.Inputs.FileList
     className: "image-list"
 
     constructor: ->

@@ -1,4 +1,4 @@
-class SelectInput extends TextInput
+class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
     tagName: "select"
 
     initialize: (options) ->
@@ -7,8 +7,8 @@ class SelectInput extends TextInput
 
         super
 
-    applyChanges: (model, data) ->
-        @$("[value='#{ data }']").prop "selected", yes
+    applyChanges: (data, external) ->
+        @$("[value='#{ data }']").prop "selected", yes if external
 
         this
 

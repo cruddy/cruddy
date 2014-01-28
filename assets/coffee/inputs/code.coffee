@@ -1,4 +1,4 @@
-class Cruddy.Inputs.Code extends BaseInput
+class Cruddy.Inputs.Code extends Cruddy.Inputs.Base
     initialize: (options) ->
         @$el.height (options.height ? 100) + "px"
 
@@ -13,8 +13,10 @@ class Cruddy.Inputs.Code extends BaseInput
 
         super
 
-    applyChanges: (model, value, options) ->
-        @editor.setValue value if not options?.input or options.input isnt this
+    applyChanges: (value, external) ->
+        if external
+            @editor.setValue value
+            @editor.getSession().getSelection().clearSelection()
 
         this
 

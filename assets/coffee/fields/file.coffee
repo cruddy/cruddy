@@ -1,5 +1,5 @@
-class Cruddy.fields.File extends Field
-    createEditableInput: (model) -> new FileList
+class Cruddy.Fields.File extends Field
+    createEditableInput: (model) -> new Cruddy.Inputs.FileList
         model: model
         key: @id
         multiple: @get "multiple"

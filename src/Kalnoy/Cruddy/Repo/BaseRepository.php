@@ -476,7 +476,7 @@ abstract class BaseRepository implements RepositoryInterface {
 
         $count = 0;
 
-        foreach ($this->newQuery()->whereIn($key, $ids) as $item)
+        foreach ($this->newQuery()->whereIn($key, $ids)->get() as $item)
         {
             if ($item->delete()) $count++;
         }

@@ -403,7 +403,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function delete($ids)
     {
-        return $this->getForm()->delete($ids);
+        return $this->repo->delete($ids);
     }
 
     /**

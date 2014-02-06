@@ -86,7 +86,7 @@ abstract class BaseColumn extends Attribute implements ColumnInterface {
      */
     public function getHeader()
     {
-        return $this->translate('columns') ?: \Kalnoy\Cruddy\prettify_string($this->id);
+        return $this->translate('columns') ?: \Kalnoy\Cruddy\ucfirst(\Kalnoy\Cruddy\prettify_string($this->id));
     }
 
     /**

@@ -118,7 +118,7 @@ abstract class BaseField extends Attribute implements FieldInterface {
 
         if ($label === null) $label = \Kalnoy\Cruddy\prettify_string($this->id);
 
-        return ucfirst($label);
+        return \Kalnoy\Cruddy\ucfirst($label);
     }
 
     /**

@@ -47,3 +47,20 @@ if (!function_exists('Kalnoy\Cruddy\extract_list'))
         return explode(',', $value);
     }
 }
+
+if (!function_exists('Kalnoy\Cruddy\ucfirst'))
+{
+    /**
+     * `uncfirst` for unicode strings.
+     *
+     * @param string $str
+     *
+     * @return string
+     */
+    function ucfirst($str)
+    {
+        $char = mb_strtoupper(mb_substr($str, 0, 1));
+
+        return $char . mb_substr($str, 1);
+    }
+}

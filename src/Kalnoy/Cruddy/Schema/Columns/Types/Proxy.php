@@ -128,6 +128,16 @@ class Proxy extends BaseColumn {
     /**
      * @inheritdoc
      *
+     * @return string
+     */
+    public function getHeader()
+    {
+        return $this->translate('columns') ?: $this->field->getLabel();
+    }
+
+    /**
+     * @inheritdoc
+     *
      * @return array
      */
     public function toArray()

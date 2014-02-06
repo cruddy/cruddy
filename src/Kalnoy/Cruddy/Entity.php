@@ -70,6 +70,13 @@ class Entity implements JsonableInterface, ArrayableInterface {
     protected $related = [];
 
     /**
+     * The data that is used to save related items.
+     *
+     * @var array
+     */
+    protected $relatedData;
+
+    /**
      * Init entity.
      *
      * @param \Kalnoy\Cruddy\Environment            $env
@@ -275,7 +282,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     {
         $model = $callback($input);
 
-        $this->saveRelated($model, $input);
+        $this->saveRelated($model);
 
         return $this->extract($model);
     }
@@ -303,7 +310,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
 
         if ( ! empty($errors)) throw new ValidationException($errors);
 
-        return $processed;
+        return $this->fields->filterInput($processed);
     }
 
     /**
@@ -316,20 +323,26 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     protected function validateRelated(array $input, array &$errors)
     {
+        $this->relatedData = [];
+
         foreach ($this->related as $id => $item)
         {
             $attributes = $item->extractAttributes($input);
             $reference = $item->getReference();
-            list(, $action) = $reference->getKeyAndActionFromAttributes($attributes);
+
+            list($key, $action) = $reference->getKeyAndActionFromAttributes($attributes);
 
             try
             {
-                $reference->validate($action, $attributes);
+                $attributes = $reference->validate($action, $attributes);
             } 
             catch (ValidationException $e)
             {
                 $errors[$id] = $e->getErrors();
             }
+
+
+            $this->relatedData[$id] = compact('key', 'action', 'attributes');
         }
     }
 
@@ -343,8 +356,16 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     protected function getKeyAndActionFromAttributes(array $attributes)
     {
-        $key = $this->repo->newModel()->getKeyName();
-        $action = isset($attributes[$key]) && !empty($attributes[$key]) ? 'update' : 'create';
+        $keyName = $this->repo->newModel()->getKeyName();
+
+        $key = null;
+        $action = 'create';
+
+        if (isset($attributes[$keyName]) && !empty($attributes[$keyName]))
+        {
+            $key = $attributes[$keyName];
+            $action = 'update';
+        }
 
         return [ $key, $action ];
     }
@@ -371,26 +392,28 @@ class Entity implements JsonableInterface, ArrayableInterface {
      * Save related items.
      *
      * @param \Illuminate\Database\Eloquent\Model $model
-     * @param array                               $input
      *
      * @return void
      */
-    protected function saveRelated($model, array $input)
+    protected function saveRelated($model)
     {
         foreach ($this->related as $id => $relation)
         {
-            $attributes = $relation->extractAttributes($input);
+            // Will provider $attributes, $key and $action
+            extract($this->relatedData[$id]);
+
             $attributes += $relation->getConnectingAttributes($model);
 
             $reference = $relation->getReference();
-            
-            list($key, $action) = $reference->getKeyAndActionFromAttributes($attributes);
 
             switch ($action)
             {
-                case 'create': $reference->repo->create($attributes); break;
-                case 'update': $reference->repo->update($attributes[$key], $attributes); break;
+                case 'create': $inner = $reference->repo->create($attributes); break;
+                case 'update': $inner = $reference->repo->update($key, $attributes); break;
             }
+
+            // Process inner models
+            $reference->saveRelated($inner);
         }
     }
 

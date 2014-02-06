@@ -19,10 +19,29 @@ class Collection extends BaseCollection {
 
         foreach ($this->items as $key => $field)
         {
-            if ($field->isFillable() && isset($input[$key]) && !$field->skip($value = $input[$key]))
+            if (isset($input[$key]) && !$field->skip($value = $input[$key]))
             {
                 $result[$key] = $field->process($value);
             }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Filter input.
+     *
+     * @param array $input
+     *
+     * @return array
+     */
+    public function filterInput(array $input)
+    {
+        $result = [];
+
+        foreach ($input as $key => $value)
+        {
+            if ($this->items[$key]->isFillable()) $result[$key] = $value;
         }
 
         return $result;

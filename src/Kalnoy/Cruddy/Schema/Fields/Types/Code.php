@@ -83,7 +83,7 @@ class Code extends BaseField {
      */
     public function height($value)
     {
-        $this->height = $height;
+        $this->height = $value;
 
         return $this;
     }

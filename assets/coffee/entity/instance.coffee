@@ -48,7 +48,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
                     related = @related[id]
                     related.set relationAttrs.attributes if relationAttrs
                 else
-                    related = @related[id] = relation.getReference().createInstance relationAttrs
+                    related = @related[id] = if relationAttrs instanceof Cruddy.Entity.Instance then relationAttrs else relation.getReference().createInstance relationAttrs
                     related.parent = this
 
                 # Attribute will now hold instance
@@ -67,33 +67,14 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
         super
 
-    # save: ->
-    #     xhr = super
-
-    #     return xhr if _.isEmpty @related
-
-    #     queue = (xhr) =>
-    #         save = []
-
-    #         save.push xhr if xhr?
-
-    #         for key, model of @related
-    #             @entity.related.get(key).associate @, model if model.isNew()
-
-    #             save.push model.save() if model.hasChangedSinceSync()
-
-    #         $.when.apply $, save
-
-    #     # Create related models after the main model is saved
-    #     if @isNew() then xhr.then (resp) -> queue() else queue xhr
-
     parse: (resp) -> resp.data.attributes
 
     copy: ->
         copy = @entity.createInstance()
 
         copy.set @getCopyableAttributes(), silent: yes
-        copy.related[key].set item.getCopyableAttributes(), silent: yes for key, item of @related
+
+        console.log copy
 
         copy
 

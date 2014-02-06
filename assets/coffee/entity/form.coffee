@@ -21,13 +21,13 @@ class Cruddy.Entity.Form extends Backbone.View
         @signOn @model
         @signOn related for key, related of @model.related
 
+        @listenTo @model, "invalid", @displayInvalid
+
         @hotkeys = $(document).on "keydown." + @cid, "body", $.proxy this, "hotkeys"
 
         this
 
-    signOn: (model) ->
-        @listenTo model, "change", @enableSubmit
-        @listenTo model, "invalid", @displayInvalid
+    signOn: (model) -> @listenTo model, "change", @enableSubmit
 
     hotkeys: (e) ->
         # Ctrl + Z

@@ -2252,6 +2252,10 @@
       return this.attributes.required;
     };
 
+    Base.prototype.isUnique = function() {
+      return this.attributes.unique;
+    };
+
     return Base;
 
   })(Attribute);
@@ -2948,14 +2952,23 @@
     };
 
     Entity.prototype.getCopyableAttributes = function(attributes) {
-      var data, field, _i, _len, _ref41;
+      var data, field, ref, relation, _i, _j, _len, _len1, _ref41, _ref42;
       data = {};
       _ref41 = this.fields.models;
       for (_i = 0, _len = _ref41.length; _i < _len; _i++) {
         field = _ref41[_i];
-        if (!field.get("unique") && field.id in attributes) {
+        if (!field.isUnique() && field.id in attributes && !_.contains(this.attributes.related, field.id)) {
           data[field.id] = attributes[field.id];
         }
+      }
+      _ref42 = this.attributes.related;
+      for (_j = 0, _len1 = _ref42.length; _j < _len1; _j++) {
+        ref = _ref42[_j];
+        if (!(ref in attributes)) {
+          continue;
+        }
+        relation = this.getRelation(ref);
+        data[ref] = relation.isUnique() ? relation.getReference().createInstance() : attributes[ref].copy();
       }
       return data;
     };
@@ -3084,7 +3097,7 @@
               related.set(relationAttrs.attributes);
             }
           } else {
-            related = this.related[id] = relation.getReference().createInstance(relationAttrs);
+            related = this.related[id] = relationAttrs instanceof Cruddy.Entity.Instance ? relationAttrs : relation.getReference().createInstance(relationAttrs);
             related.parent = this;
           }
           attrs[id] = related;
@@ -3108,18 +3121,12 @@
     };
 
     Instance.prototype.copy = function() {
-      var copy, item, key, _ref41;
+      var copy;
       copy = this.entity.createInstance();
       copy.set(this.getCopyableAttributes(), {
         silent: true
       });
-      _ref41 = this.related;
-      for (key in _ref41) {
-        item = _ref41[key];
-        copy.related[key].set(item.getCopyableAttributes(), {
-          silent: true
-        });
-      }
+      console.log(copy);
       return copy;
     };
 
@@ -3295,13 +3302,13 @@
         related = _ref42[key];
         this.signOn(related);
       }
+      this.listenTo(this.model, "invalid", this.displayInvalid);
       this.hotkeys = $(document).on("keydown." + this.cid, "body", $.proxy(this, "hotkeys"));
       return this;
     };
 
     Form.prototype.signOn = function(model) {
-      this.listenTo(model, "change", this.enableSubmit);
-      return this.listenTo(model, "invalid", this.displayInvalid);
+      return this.listenTo(model, "change", this.enableSubmit);
     };
 
     Form.prototype.hotkeys = function(e) {

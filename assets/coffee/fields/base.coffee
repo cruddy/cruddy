@@ -133,3 +133,6 @@ class Cruddy.Fields.Base extends Attribute
 
     # Get whether field is required
     isRequired: -> @attributes.required
+
+    # Get whether the field is unique
+    isUnique: -> @attributes.unique

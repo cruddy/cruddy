@@ -1,4 +1,6 @@
-<?php namespace Kalnoy\Cruddy\Schema\Fields\Types;
+<?php
+
+namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
 use Kalnoy\Cruddy\Schema\Fields\BaseTextField;
 
@@ -40,6 +42,34 @@ class Slug extends BaseTextField {
      * @var string
      */
     public $separator;
+
+    /**
+     * Set allowed charachters.
+     *
+     * @param string $value
+     *
+     * @return $this
+     */
+    public function chars($value)
+    {
+        $this->chars = $value;
+
+        return $this;
+    }
+
+    /**
+     * Set separator.
+     *
+     * @param string $value
+     *
+     * @return $this
+     */
+    public function separator($value)
+    {
+        $this->separator = $value;
+
+        return $this;
+    }
 
     /**
      * @inheritdoc

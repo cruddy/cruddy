@@ -10,7 +10,7 @@ use Kalnoy\Cruddy\Service\ThumbnailFactory;
 class CruddyController extends Controller {
 
     /**
-     * @var Environment
+     * @var \Kalnoy\Cruddy\Environment
      */
     protected $cruddy;
 
@@ -22,12 +22,11 @@ class CruddyController extends Controller {
     /**
      * Initialize the controller.
      *
-     * @param Environment                             $cruddy
      * @param \Kalnoy\Cruddy\Service\ThumbnailFactory $thumb
      */
-    public function __construct(Environment $cruddy, ThumbnailFactory $thumb)
+    public function __construct(ThumbnailFactory $thumb)
     {
-        $this->cruddy = $cruddy;
+        $this->cruddy = app('cruddy');
         $this->thumb = $thumb;
 
         $this->beforeFilter('cruddy.auth', ['only' => ['index']]);
@@ -47,7 +46,7 @@ class CruddyController extends Controller {
         {
             $this->layout = View::make($this->layout);
 
-            $this->layout->brand = $this->layout->title = try_trans($this->cruddy->config('brand'));
+            $this->layout->brand = $this->layout->title = \Kalnoy\Cruddy\try_trans($this->cruddy->config('brand'));
             $this->layout->cruddy = $this->cruddy;
             $this->layout->assets = $this->cruddy->config('assets');
         }
@@ -58,7 +57,7 @@ class CruddyController extends Controller {
      */
     public function index()
     {
-        $this->layout->content = "";
+        $this->layout->content = '';
     }
 
     /**

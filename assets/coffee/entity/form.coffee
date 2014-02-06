@@ -144,7 +144,7 @@ class Cruddy.Entity.Form extends Backbone.View
         @tabs = []
         @renderTab @model, yes
 
-        @renderTab related for key, related of @model.related
+        # @renderTab related for key, related of @model.related
 
         @update()
 
@@ -153,22 +153,24 @@ class Cruddy.Entity.Form extends Backbone.View
 
         id = "tab-" + model.entity.id
         fieldList.render().$el.insertBefore(@footer).wrap $ "<div></div>", { id: id, class: "wrap" + if active then " active" else "" }
-        @nav.append @navTemplate model.entity.get("singular"), id, active
+        @nav.append @navTemplate model.entity.get("title").singular, id, active
 
         this
 
     update: ->
+        permit = @model.entity.getPermissions()
+
         @$el.toggleClass "loading", @request?
 
         @submit.text if @model.isNew() then "Создать" else "Сохранить"
         @submit.attr "disabled", @request? or not @model.hasChangedSinceSync()
-        @submit.toggle @model.entity.get if @model.isNew() then "can_create" else "can_update"
+        @submit.toggle if @model.isNew() then permit.create else permit.update
 
         @destroy.attr "disabled", @request?
-        @destroy.html if @model.entity.get "soft_deleting" and @model.get "deleted_at" then "Восстановить" else "<span class='glyphicon glyphicon-trash' title='Удалить'></span>"
-        @destroy.toggle not @model.isNew() and @model.entity.get "can_delete"
+        @destroy.html if @model.entity.isSoftDeleting() and @model.get "deleted_at" then "Восстановить" else "<span class='glyphicon glyphicon-trash' title='Удалить'></span>"
+        @destroy.toggle not @model.isNew() and permit.delete
         
-        @copy.toggle not @model.isNew() and @model.entity.get "can_create"
+        @copy.toggle not @model.isNew() and permit.create
 
         this
 

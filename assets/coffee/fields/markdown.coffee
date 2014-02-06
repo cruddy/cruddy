@@ -1,7 +1,7 @@
-class Cruddy.Fields.Markdown extends Field
-    createEditableInput: (model) ->
-        new Cruddy.Inputs.Markdown
-            model: model
-            key: @id
-            height: @get "height"
-            theme: @get "theme"
+class Cruddy.Fields.Markdown extends Cruddy.Fields.Base
+
+    createEditableInput: (model) -> new Cruddy.Inputs.Markdown
+        model: model
+        key: @id
+        height: @attributes.height
+        theme: @attributes.theme

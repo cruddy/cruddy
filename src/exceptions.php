@@ -5,3 +5,5 @@ use RuntimeException;
 class EntityNotFoundException extends RuntimeException {}
 
 class ModelNotFoundException extends RuntimeException {}
+
+class ModelNotSavedException extends RuntimeException {}

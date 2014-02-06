@@ -1,6 +1,8 @@
-<?php namespace Kalnoy\Cruddy\Service\Permissions;
+<?php
 
-use Kalnoy\Cruddy\Entity\Entity;
+namespace Kalnoy\Cruddy\Service\Permissions;
+
+use Kalnoy\Cruddy\Entity;
 
 interface PermissionsInterface {
 
@@ -9,7 +11,7 @@ interface PermissionsInterface {
      *
      * @return bool
      */
-    function hasAccess($to = "backend");
+    function hasAccess($to = 'backend');
 
     /**
      * Get whether an entity can be viewed.

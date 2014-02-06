@@ -1,7 +1,9 @@
-<?php namespace Kalnoy\Cruddy;
+<?php
+
+namespace Kalnoy\Cruddy;
 
 use Illuminate\Support\ServiceProvider;
-use Kalnoy\Cruddy\Service\Permissions\SentryPermissions;
+use Kalnoy\Cruddy\Service\Permissions\PermissionsManager;
 
 class CruddyServiceProvider extends ServiceProvider {
 
@@ -38,35 +40,28 @@ class CruddyServiceProvider extends ServiceProvider {
 
     public function registerPermissions()
     {
-        $this->app['Kalnoy\Cruddy\Service\Permissions\PermissionsInterface'] = $this->app->share(function ($app) {
-
-            return new SentryPermissions($app['sentry']);
+        $this->app['cruddy.permissions'] = $this->app->share(function ($app)
+        {
+            return new PermissionsManager($app);
         });
     }
 
     protected function registerCruddy()
     {
-        $this->app['Kalnoy\Cruddy\Environment'] = $this->app->share(function ($app) {
-
+        $this->app['cruddy'] = $this->app->share(function ($app)
+        {
             $config = $app['config'];
-            $config->addNamespace('entities', app_path('config/entities'));
-
             $validator = $app['validator'];
             $translator = $app['translator'];
             $files = $app['files'];
-            $permissions = $app['Kalnoy\Cruddy\Service\Permissions\PermissionsInterface'];
+            $permissions = $app['cruddy.permissions'];
 
-            $fields = new Entity\Fields\Factory();
-            $columns = new Entity\Columns\Factory();
-            $related = new Entity\Related\Factory();
+            $fields = new Schema\Fields\Factory;
+            $columns = new Schema\Columns\Factory;
 
-            $factory = new Entity\Factory($app, $files, $translator, $config, $validator, $permissions, $fields,
-            $columns,
-                $related);
+            $repository = new Schema\Repository($app, $config->get('cruddy::entities', []));
 
-            $menu = new Menu($factory, $permissions);
-
-            return new Environment($config, $factory, $permissions, $menu, $app['request']);
+            return new Environment($config, $app['request'], $translator, $repository, $fields, $columns, $permissions);
         });
     }
 }

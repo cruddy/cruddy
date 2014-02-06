@@ -47,10 +47,11 @@ module.exports = function(grunt) {
                     '<%= app %>/inputs/markdown.coffee',
 
                     // Fields
-                    '<%= app %>/fields/field.coffee',
+                    '<%= app %>/fields/base.coffee',
                     '<%= app %>/fields/input.coffee',
                     '<%= app %>/fields/datetime.coffee',
                     '<%= app %>/fields/boolean.coffee',
+                    '<%= app %>/fields/baseRelation.coffee',
                     '<%= app %>/fields/relation.coffee',
                     '<%= app %>/fields/file.coffee',
                     '<%= app %>/fields/image.coffee',
@@ -58,17 +59,17 @@ module.exports = function(grunt) {
                     '<%= app %>/fields/enum.coffee',
                     '<%= app %>/fields/markdown.coffee',
                     '<%= app %>/fields/code.coffee',
+                    '<%= app %>/fields/hasOne.coffee',
 
                     // Columns
-                    '<%= app %>/columns/column.coffee',
+                    '<%= app %>/columns/base.coffee',
+                    '<%= app %>/columns/proxy.coffee',
+                    '<%= app %>/columns/computed.coffee',
 
                     // Formatters
                     '<%= app %>/formatters/base.coffee',
                     '<%= app %>/formatters/image.coffee',
                     '<%= app %>/formatters/plain.coffee',
-
-                    // Related
-                    '<%= app %>/related/related.coffee',
 
                     // Entity
                     '<%= app %>/entity/entity.coffee',

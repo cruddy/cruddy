@@ -1,4 +1,6 @@
-<?php namespace Kalnoy\Cruddy;
+<?php
+
+namespace Kalnoy\Cruddy;
 
 use Illuminate\Support\Contracts\ArrayableInterface;
 use Illuminate\Support\Collection;

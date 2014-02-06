@@ -5,7 +5,6 @@ class Cruddy.Entity.Entity extends Backbone.Model
     initialize: (attributes, options) ->
         @fields = @createCollection Cruddy.Fields, attributes.fields
         @columns = @createCollection Cruddy.Columns, attributes.columns
-        @related = @createCollection Cruddy.Related, attributes.related
 
         @set "label", humanize @id if @get("label") is null
 
@@ -21,30 +20,44 @@ class Cruddy.Entity.Entity extends Backbone.Model
     # Create a datasource that will require specified columns and can be filtered
     # by specified filters
     createDataSource: (columns = null) ->
-        data = { order_by: @get("order_by") || @get("primary_column") }
+        data = { order_by: @get("order_by") }
         data.order_dir = if data.order_dir? then @columns.get(data.order_by).get "order_dir" else "asc"
 
         new DataSource data, { entity: this, columns: columns, filter: new Backbone.Model }
 
     # Create filters for specified columns
     createFilters: (columns = @columns) ->
-        filters = (col.createFilter() for col in columns.models when col.get "filterable")
+        filters = (col.createFilter() for col in columns.models when col.get("filter_type") is "complex")
 
         new Backbone.Collection filters
 
     # Create an instance for this entity
-    createInstance: (attributes = {}, relatedData = {}) ->
-        related = {}
-        related[item.id] = item.related.createInstance(relatedData[item.id]) for item in @related.models
+    createInstance: (attributes = {}) ->
+        attributes = _.extend {}, @get("defaults"), attributes.attributes
 
-        new Cruddy.Entity.Instance _.extend({}, @get("defaults"), attributes), { entity: this, related: related }
+        new Cruddy.Entity.Instance attributes, entity: this
+
+    # Get relation field
+    getRelation: (id) ->
+        field = @fields.get id
+
+        if not field
+            console.error "The field #{id} is not found."
+
+            return
+
+        if not field instanceof Cruddy.Fields.BaseRelation
+            console.error "The field #{id} is not a relation."
+
+            return
+
+        field
 
     search: ->
         return @searchDataSource.reset() if @searchDataSource?
 
         @searchDataSource = new SearchDataSource {},
             url: @url "search"
-            primaryColumn: @get "primary_column"
 
         @searchDataSource.next()
 
@@ -60,21 +73,44 @@ class Cruddy.Entity.Entity extends Backbone.Model
         xhr.then (resp) =>
             resp = resp.data
 
-            @createInstance resp.model, resp.related
+            @createInstance resp
 
     # Load a model and set it as current
-    update: (id) ->
-        @load(id).then (instance) =>
+    actionUpdate: (id) -> @load(id).then (instance) =>
             @set "instance", instance
 
             instance
 
+    # Create new model and set it as current
+    actionCreate: -> @set "instance", @createInstance()
+
+    # Get only those attributes are not unique for the model
     getCopyableAttributes: (attributes) ->
         data = {}
-        data[field.id] = attributes[field.id] for field in @fields.models when field.get("copyable") and field.id of attributes
+        data[field.id] = attributes[field.id] for field in @fields.models when not field.get("unique") and field.id of attributes
 
         data
 
+    # Get url that handles syncing
     url: (id) -> entity_url @id, id
 
+    # Get link to this entity or to the item of the entity
     link: (id) -> "#{ @id}" + if id? then "/#{ id }" else ""
+
+    # Get title in plural form
+    getPluralTitle: -> @attributes.title.plural
+
+    # Get title in singular form
+    getSingularTitle: -> @attributes.title.singular
+
+    getPermissions: -> @attributes.permissions
+
+    updatePermitted: -> @attributes.permissions.update
+
+    createPermitted: -> @attributes.permissions.create
+
+    deletePermitted: -> @attributes.permissions.delete
+
+    viewPermitted: -> @attributes.permissions.view
+
+    isSoftDeleting: -> @attributes.soft_deleting

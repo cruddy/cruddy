@@ -23,7 +23,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     initialize: (options) ->
         @multiple = options.multiple if options.multiple?
         @reference = options.reference if options.reference?
-        @allowEdit = options.allowEdit ? yes
+        @allowEdit = options.allowEdit ? yes and @reference.updatePermitted()
         @active = false
 
         super
@@ -48,7 +48,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         target = $(e.currentTarget).prop "disabled", yes
 
-        xhr = Cruddy.app.entity(@reference).then (entity) => entity.load(item.id).done (instance) =>
+        xhr = @reference.load(item.id).done (instance) =>
             @innerForm = new Cruddy.Entity.Form
                 model: instance
                 inner: yes
@@ -87,7 +87,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
             reference: @reference
             allowCreate: @allowEdit
 
-        @selector.render().entity.done => @$el.append @selector.el
+        @$el.append @selector.render().el
 
         @toggleOpenDirection()
 

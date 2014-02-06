@@ -1,19 +1,18 @@
-class Cruddy.Fields.Enum extends Field
-    createEditableInput: (model) ->
-        new Cruddy.Inputs.Select
-            model: model
-            key: @id
-            prompt: @get "prompt"
-            items: @get "items"
+class Cruddy.Fields.Enum extends Cruddy.Fields.Base
 
-    createFilterInput: (model) ->
-        new Cruddy.Inputs.Select
-            model: model
-            key: @id
-            prompt: "Любое значение"
-            items: @get "items"
+    createEditableInput: (model) -> new Cruddy.Inputs.Select
+        model: model
+        key: @id
+        prompt: @attributes.prompt
+        items: @attributes.items
+
+    createFilterInput: (model) -> new Cruddy.Inputs.Select
+        model: model
+        key: @id
+        prompt: "Любое значение"
+        items: @attributes.items
 
     format: (value) ->
-        items = @get "items"
+        items = @attributes.items
 
         if value of items then items[value] else "n/a"

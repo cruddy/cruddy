@@ -1,0 +1,151 @@
+<?php
+
+namespace Kalnoy\Cruddy\Schema\Fields;
+
+use Illuminate\Database\Eloquent\Model as Eloquent;
+use Kalnoy\Cruddy\Schema\Attribute;
+use Kalnoy\Cruddy\Schema\FieldInterface;
+
+abstract class BaseField extends Attribute implements FieldInterface {
+    
+    /**
+     * Get whether the field is required.
+     *
+     * @var bool
+     */
+    public $required = false;
+
+    /**
+     * Whether the field is unique for instance and therefore cannot be copied.
+     *
+     * @var bool
+     */
+    public $unique = false;
+
+    /**
+     * Whether the editing is disabled.
+     * 
+     * @var bool
+     */
+    public $disabled = false;
+
+    /**
+     * @inheritdoc
+     *
+     * @param \Illuminate\Database\Eloquent\Model $model
+     *
+     * @return mixed
+     */
+    public function extract(Eloquent $model)
+    {
+        return $model->getAttribute($this->id);
+    }
+
+    /**
+     * @inheritdoc
+     *
+     * @param mixed $value
+     *
+     * @return mixed
+     */
+    public function process($value)
+    {
+        return $value;
+    }
+
+    /**
+     * @inheritdoc
+     *
+     * @param mixed $value
+     *
+     * @return bool
+     */
+    public function skip($value)
+    {
+        return false;
+    }
+
+    /**
+     * Set required value.
+     *
+     * @param bool $value
+     *
+     * @return $this
+     */
+    public function required($value = true)
+    {
+        $this->required = $value;
+
+        return $this;
+    }
+
+    /**
+     * Set unique value.
+     *
+     * @param bool $value
+     *
+     * @return $this
+     */
+    public function unique($value = true)
+    {
+        $this->unique = $value;
+
+        return $this;
+    }
+
+    /**
+     * Set disabled value.
+     *
+     * @param bool $value
+     *
+     * @return $this
+     */
+    public function disable($value = true)
+    {
+        $this->disabled = $value;
+
+        return $this;
+    }
+
+    /**
+     * Get field label.
+     *
+     * @return string
+     */
+    public function getLabel()
+    {
+        $label = $this->entity->translate("::validation.attributes.{$this->id}");
+
+        if ($label === null) $label = \Kalnoy\Cruddy\prettify_string($this->id);
+
+        return ucfirst($label);
+    }
+
+    /**
+     * @inheritdoc
+     *
+     * @return array
+     */
+    public function toArray()
+    {
+        return
+        [
+            'required' => $this->required,
+            'unique' => $this->unique,
+            'fillable' => $this->isFillable(),
+            'label' => $this->getLabel(),
+
+        ] + parent::toArray();
+    }
+
+    /**
+     * Get whether the field is fillable.
+     *
+     * @return bool
+     */
+    public function isFillable()
+    {
+        return !$this->disabled and $this->entity->getRepository()->isFillable($this->id);
+    }
+
+}

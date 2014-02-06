@@ -9,22 +9,25 @@ $(".navbar").on "click", ".entity", (e) =>
     Cruddy.router.navigate href, trigger: true
 
 class App extends Backbone.Model
-    entities: {}
-
     initialize: ->
         @container = $ "body"
         @loadingRequests = 0
+        @entities = {}
+        @entitiesDfd = {}
+
+        # Create entities
+        @entities[entity.id] = new Cruddy.Entity.Entity entity for entity in Cruddy.entities
 
         @on "change:entity", @displayEntity, this
+
+        this
 
     displayEntity: (model, entity) ->
         @dispose()
 
         @container.append (@page = new Cruddy.Entity.Page model: entity).render().el if entity
 
-    displayError: (xhr) ->
-        error = if not xhr? or xhr.status is 403 then "Ошибка доступа" else "Ошибка"
-
+    displayError: (error) ->
         @dispose()
         @container.html "<p class='alert alert-danger'>#{ error }</p>"
 
@@ -54,26 +57,10 @@ class App extends Backbone.Model
 
         this
 
-    entity: (id, options = {}) ->
-        return @entities[id] if id of @entities
+    entity: (id) ->
+        console.error "Unknown entity #{ id }" if not id of @entities
 
-        options = $.extend {}, {
-            url: entity_url id, "schema"
-            type: "get"
-            dataType: "json"
-            displayLoading: yes
-
-        }, options
-
-        @entities[id] = $.ajax(options).then (resp) =>
-            entity = new Cruddy.Entity.Entity resp.data
-
-            return entity if _.isEmpty entity.related.models
-
-            # Resolve all related entites
-            wait = (related.resolve() for related in entity.related.models)
-
-            $.when.apply($, wait).then -> entity
+        @entities[id]
 
     dispose: ->
         @page?.remove()
@@ -90,22 +77,33 @@ class Router extends Backbone.Router
         ":page/:id": "update"
     }
 
-    loading: (promise) ->
-        Cruddy.app.startLoading()
-        promise.always -> Cruddy.app.doneLoading()
-
     entity: (id) ->
-        promise = Cruddy.app.entity(id).done (entity) ->
+        entity = Cruddy.app.entity(id)
+
+        if entity.viewPermitted()
             entity.set "instance", null
             Cruddy.app.set "entity", entity
 
-        promise.fail -> Cruddy.app.displayError.apply(Cruddy.app, arguments).set "entity", false
+            entity
+        else
+            Cruddy.app.displayError "You are not allowed to view this entity."
+
+            null
 
     page: (page) -> @entity page
 
-    create: (page) -> @entity(page).done (entity) -> entity.set "instance", entity.createInstance()
+    create: (page) ->
+        entity = @entity page
+        entity.actionCreate() if entity
 
-    update: (page, id) -> @entity(page).then (entity) -> entity.update(id)
+        entity
+
+    update: (page, id) ->
+        entity = @entity page
+
+        entity.actionUpdate id if entity
+
+        entity
 
 Cruddy.router = new Router
 

@@ -18,7 +18,10 @@ class AdvFormData
             return
 
         if _.isObject value
-            @append @key(name, key), _value for key, _value of value
+            if value instanceof Cruddy.Entity.Instance
+                @append name, value.attributes
+            else
+                @append @key(name, key), _value for key, _value of value
 
             return
 

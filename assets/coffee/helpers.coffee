@@ -1,13 +1,16 @@
 humanize = (id) => id.replace(/_-/, " ")
 
+# Get url for an entity action
 entity_url = (id, extra) ->
-    url = Cruddy.baseUrl + "/api/v1/entity/" + id;
+    url = Cruddy.baseUrl + "/api/" + id;
     url += "/" + extra if extra
 
     url
 
+# Call callback after browser has taken a breath
 after_break = (callback) -> setTimeout callback, 50
 
+# Get thumb link
 thumb = (src, width, height) ->
     url = "#{ Cruddy.baseUrl }/thumb?src=#{ encodeURIComponent(src) }"
     url += "&amp;width=#{ width }" if width

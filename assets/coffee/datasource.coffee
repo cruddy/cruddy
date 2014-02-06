@@ -65,7 +65,7 @@ class DataSource extends Backbone.Model
             order_dir: @get "order_dir"
             page: @get "current_page"
             per_page: @get "per_page"
-            q: @get "search"
+            keywords: @get "search"
         }
 
         filters = @filterData()

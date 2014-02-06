@@ -1,17 +1,11 @@
-class Cruddy.Fields.Slug extends Field
-    createEditableInput: (model) ->
-        new Cruddy.Inputs.Slug
-            model: model
-            key: @id
-            chars: @get "chars"
-            ref: @get "ref"
-            separator: @get "separator"
-            attributes:
-                placeholder: @get "label"
+class Cruddy.Fields.Slug extends Cruddy.Fields.Base
 
-    createFilterInput: (model, column) ->
-        new Cruddy.Inputs.Text
-            model: model
-            key: @id
-            attributes:
-                placeholder: @get "label"
+    createEditableInput: (model) -> new Cruddy.Inputs.Slug
+        model: model
+        key: @id
+        chars: @attributes.chars
+        ref: @attributes.ref
+        separator: @attributes.separator
+        
+        attributes:
+            placeholder: @attributes.placeholder

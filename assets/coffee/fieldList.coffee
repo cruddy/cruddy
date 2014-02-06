@@ -2,28 +2,22 @@
 class FieldList extends Backbone.View
     className: "field-list"
 
-    initialize: ->
-        @listenTo @model.entity.fields, "add remove", @render
-
-        this
-
+    # Focus first editable field
     focus: ->
         @primary?.focus()
 
         this
 
     render: ->
-        @$el.empty()
+        @dispose()
 
+        @$el.empty()
         @$el.append field.el for field in @createFields()
 
         this
 
     createFields: ->
-        @dispose()
-
         @fields = (field.createView(@model).render() for field in @model.entity.fields.models)
-        @primary = null
 
         for view in @fields when view.field.isEditable @model
             @primary = view
@@ -34,9 +28,12 @@ class FieldList extends Backbone.View
     dispose: ->
         field.remove() for field in @fields if @fields?
 
+        @fields = null
+        @primary = null
+
         this
 
-    stopListening: ->
+    remove: ->
         @dispose()
 
         super

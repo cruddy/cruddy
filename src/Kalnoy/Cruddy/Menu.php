@@ -5,13 +5,13 @@ use Kalnoy\Cruddy\Service\Permissions\PermissionsInterface;
 
 class Menu {
 
-    protected $entities;
+    protected $env;
 
     protected $permissions;
 
-    public function __construct(EntityFactory $entities, PermissionsInterface $permissions)
+    public function __construct(EntityFactory $env, PermissionsInterface $permissions)
     {
-        $this->entities = $entities;
+        $this->env = $env;
         $this->permissions = $permissions;
     }
 
@@ -78,7 +78,7 @@ class Menu {
 
     protected function entity($id)
     {
-        $entity = $this->entities->resolve($id);
+        $entity = $this->env->entity($id);
 
         if (!$this->permissions->canView($entity)) return "";
 

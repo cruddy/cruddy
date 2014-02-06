@@ -1,4 +1,6 @@
-<?php namespace Kalnoy\Cruddy\Service;
+<?php
+
+namespace Kalnoy\Cruddy\Service;
 
 use Carbon\Carbon;
 use Intervention\Image\ImageCache;

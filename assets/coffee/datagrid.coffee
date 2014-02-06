@@ -14,7 +14,7 @@ class DataGrid extends Backbone.View
 
     initialize: (options) ->
         @entity = @model.entity
-        @columns = @entity.columns.models.filter (col) -> col.get "visible"
+        @columns = @entity.columns.models.filter (col) -> col.isVisible()
 
         @listenTo @model, "data", @updateData
         @listenTo @model, "change:order_by change:order_dir", @onOrderChange
@@ -50,6 +50,8 @@ class DataGrid extends Backbone.View
         orderBy = $(e.target).data "id"
         orderDir = @model.get "order_dir"
 
+        console.log orderBy
+
         if orderBy is @model.get "order_by"
             orderDir = if orderDir == 'asc' then 'desc' else 'asc'
         else
@@ -84,7 +86,13 @@ class DataGrid extends Backbone.View
         html += "</tr></thead>"
 
     renderHeadCell: (col) ->
-        """<th class="#{ col.getClass() }" id="col-#{ col.id }">#{ col.renderHeadCell() }</th>"""
+        """<th class="#{ col.getClass() }" id="col-#{ col.id }">#{ @renderHeadCellValue col }</th>"""
+
+    renderHeadCellValue: (col) ->
+        title = col.getHeader()
+        help = col.getHelp()
+        title = "<span class=\"sortable\" data-id=\"#{ col.id }\">#{ title }</span>" if col.canOrder()
+        if help then "<span class=\"glyphicon glyphicon-question-sign\" title=\"#{ help }\"></span> #{ title }" else title
 
     renderBody: (columns, data) ->
         html = "<tbody class=\"items\">"
@@ -105,4 +113,4 @@ class DataGrid extends Backbone.View
         html += "</tr>"
 
     renderCell: (col, item) ->
-        """<td class="#{ col.getClass() }">#{ col.renderCell item[col.id] }</td>"""
+        """<td class="#{ col.getClass() }">#{ col.format item[col.id] }</td>"""

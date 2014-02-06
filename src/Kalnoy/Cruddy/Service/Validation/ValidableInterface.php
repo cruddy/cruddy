@@ -1,24 +1,31 @@
-<?php namespace Kalnoy\Cruddy\Service\Validation;
+<?php
+
+namespace Kalnoy\Cruddy\Service\Validation;
 
 interface ValidableInterface {
 
     /**
-     * Validate input before creating.
+     * Check whether an input is valid for new item.    
      *
      * @param array $input
      *
      * @return void
-     * @throws ValidationException
      */
-    public function beforeCreate(array $input);
+    public function validForCreation(array $input);
 
     /**
-     * Validate input before update.
+     * Check whether an input is valid for update.  
      *
      * @param array $input
      *
      * @return mixed
-     * @throws ValidationException
      */
-    public function beforeUpdate(array $input);
+    public function validForUpdate(array $input);
+
+    /**
+     * Get validation errors.
+     *
+     * @return array
+     */
+    public function errors();
 }

@@ -1,7 +1,9 @@
-<?php namespace Kalnoy\Cruddy\Service\Permissions;
+<?php
+
+namespace Kalnoy\Cruddy\Service\Permissions;
 
 use Cartalyst\Sentry\Sentry;
-use Kalnoy\Cruddy\Entity\Entity;
+use Kalnoy\Cruddy\Entity;
 
 class SentryPermissions implements PermissionsInterface {
 

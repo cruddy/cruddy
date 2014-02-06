@@ -20,14 +20,17 @@ $.extend $.fancybox.defaults,
     openEffect: "elastic"
 humanize = (id) => id.replace(/_-/, " ")
 
+# Get url for an entity action
 entity_url = (id, extra) ->
-    url = Cruddy.baseUrl + "/api/v1/entity/" + id;
+    url = Cruddy.baseUrl + "/api/" + id;
     url += "/" + extra if extra
 
     url
 
+# Call callback after browser has taken a breath
 after_break = (callback) -> setTimeout callback, 50
 
+# Get thumb link
 thumb = (src, width, height) ->
     url = "#{ Cruddy.baseUrl }/thumb?src=#{ encodeURIComponent(src) }"
     url += "&amp;width=#{ width }" if width
@@ -66,7 +69,10 @@ class AdvFormData
             return
 
         if _.isObject value
-            @append @key(name, key), _value for key, _value of value
+            if value instanceof Cruddy.Entity.Instance
+                @append name, value.attributes
+            else
+                @append @key(name, key), _value for key, _value of value
 
             return
 
@@ -89,6 +95,18 @@ class Factory
 
         null
 class Attribute extends Backbone.Model
+
+    # Get field's type (i.e. css class name)
+    getType: -> @attributes.type
+
+    # Get field's help
+    getHelp: -> @attributes.help
+
+    # Get whether a column has complex filter
+    canFilter: -> @attributes.filter_type is "complex"
+
+    # Get whether a column is visible
+    isVisible: -> @attributes.hide is no
 class DataSource extends Backbone.Model
     defaults:
         data: []
@@ -156,7 +174,7 @@ class DataSource extends Backbone.Model
             order_dir: @get "order_dir"
             page: @get "current_page"
             per_page: @get "per_page"
-            q: @get "search"
+            keywords: @get "search"
         }
 
         filters = @filterData()
@@ -180,9 +198,6 @@ class SearchDataSource extends Backbone.Model
         search: ""
 
     initialize: (attributes, options) ->
-        keyName = options.primaryKey ? "id"
-        valueName = options.primaryColumn
-
         @options =
             url: options.url
             type: "get"
@@ -190,13 +205,12 @@ class SearchDataSource extends Backbone.Model
 
             data:
                 page: null
-                q: ""
-                columns: keyName + "," + valueName
+                keywords: ""
 
             success: (resp) =>
                 resp = resp.data
 
-                @data.push { id: item[keyName].toString(), title: item[valueName] } for item in resp.data
+                @data.push item for item in resp.data
 
                 @page = resp.current_page
                 @more = resp.current_page < resp.last_page
@@ -230,7 +244,7 @@ class SearchDataSource extends Backbone.Model
     fetch: (q, page) ->
         @request.abort() if @request?
 
-        $.extend @options.data, { page: page, q: q }
+        $.extend @options.data, { page: page, keywords: q }
 
         @trigger "request", this, @request = $.ajax @options
 
@@ -329,7 +343,7 @@ class DataGrid extends Backbone.View
 
     initialize: (options) ->
         @entity = @model.entity
-        @columns = @entity.columns.models.filter (col) -> col.get "visible"
+        @columns = @entity.columns.models.filter (col) -> col.isVisible()
 
         @listenTo @model, "data", @updateData
         @listenTo @model, "change:order_by change:order_dir", @onOrderChange
@@ -365,6 +379,8 @@ class DataGrid extends Backbone.View
         orderBy = $(e.target).data "id"
         orderDir = @model.get "order_dir"
 
+        console.log orderBy
+
         if orderBy is @model.get "order_by"
             orderDir = if orderDir == 'asc' then 'desc' else 'asc'
         else
@@ -399,7 +415,13 @@ class DataGrid extends Backbone.View
         html += "</tr></thead>"
 
     renderHeadCell: (col) ->
-        """<th class="#{ col.getClass() }" id="col-#{ col.id }">#{ col.renderHeadCell() }</th>"""
+        """<th class="#{ col.getClass() }" id="col-#{ col.id }">#{ @renderHeadCellValue col }</th>"""
+
+    renderHeadCellValue: (col) ->
+        title = col.getHeader()
+        help = col.getHelp()
+        title = "<span class=\"sortable\" data-id=\"#{ col.id }\">#{ title }</span>" if col.canOrder()
+        if help then "<span class=\"glyphicon glyphicon-question-sign\" title=\"#{ help }\"></span> #{ title }" else title
 
     renderBody: (columns, data) ->
         html = "<tbody class=\"items\">"
@@ -420,33 +442,27 @@ class DataGrid extends Backbone.View
         html += "</tr>"
 
     renderCell: (col, item) ->
-        """<td class="#{ col.getClass() }">#{ col.renderCell item[col.id] }</td>"""
+        """<td class="#{ col.getClass() }">#{ col.format item[col.id] }</td>"""
 # Displays a list of entity's fields
 class FieldList extends Backbone.View
     className: "field-list"
 
-    initialize: ->
-        @listenTo @model.entity.fields, "add remove", @render
-
-        this
-
+    # Focus first editable field
     focus: ->
         @primary?.focus()
 
         this
 
     render: ->
-        @$el.empty()
+        @dispose()
 
+        @$el.empty()
         @$el.append field.el for field in @createFields()
 
         this
 
     createFields: ->
-        @dispose()
-
         @fields = (field.createView(@model).render() for field in @model.entity.fields.models)
-        @primary = null
 
         for view in @fields when view.field.isEditable @model
             @primary = view
@@ -457,9 +473,12 @@ class FieldList extends Backbone.View
     dispose: ->
         field.remove() for field in @fields if @fields?
 
+        @fields = null
+        @primary = null
+
         this
 
-    stopListening: ->
+    remove: ->
         @dispose()
 
         super
@@ -479,12 +498,11 @@ class FilterList extends Backbone.View
         @$el.html @template()
         @items = @$ ".filter-list-container"
 
-        @filters = []
-        for col in @entity.columns.models when not col.get("searchable") and col.get("filterable")
-            if input = col.createFilterInput @model
+        for col in @entity.columns.models when col.canFilter()
+            if input = col.createFilter @model
                 @filters.push input
                 @items.append input.render().el
-                input.$el.wrap("""<div class="form-group filter #{ col.getClass() }"><div class="input-wrap"></div></div>""").parent().before "<label>#{ col.get "title" }</label>"
+                input.$el.wrap("""<div class="form-group filter #{ col.getClass() }"><div class="input-wrap"></div></div>""").parent().before "<label>#{ col.getFilterLabel() }</label>"
 
         this
 
@@ -492,6 +510,8 @@ class FilterList extends Backbone.View
 
     dispose: ->
         filter.remove() for filter in @filters if @filters?
+
+        @filters = []
 
         this
 
@@ -703,7 +723,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     initialize: (options) ->
         @multiple = options.multiple if options.multiple?
         @reference = options.reference if options.reference?
-        @allowEdit = options.allowEdit ? yes
+        @allowEdit = options.allowEdit ? yes and @reference.updatePermitted()
         @active = false
 
         super
@@ -728,7 +748,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         target = $(e.currentTarget).prop "disabled", yes
 
-        xhr = Cruddy.app.entity(@reference).then (entity) => entity.load(item.id).done (instance) =>
+        xhr = @reference.load(item.id).done (instance) =>
             @innerForm = new Cruddy.Entity.Form
                 model: instance
                 inner: yes
@@ -767,7 +787,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
             reference: @reference
             allowCreate: @allowEdit
 
-        @selector.render().entity.done => @$el.append @selector.el
+        @$el.append @selector.render().el
 
         @toggleOpenDirection()
 
@@ -892,26 +912,22 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
         @filter = options.filter ? false
         @multiple = options.multiple ? false
+        @reference = options.reference
 
         @allowSearch = options.allowSearch ? yes
-        @allowCreate = options.allowCreate ? yes
+        @allowCreate = options.allowCreate ? yes and @reference.createPermitted()
 
         @data = []
         @buildSelected @model.get @key
 
-        @entity = Cruddy.app.entity(options.reference)
-
-        @entity.done (entity) =>
+        if @reference.viewPermitted()
             @primaryKey = "id"
-            @primaryColumn = entity.get "primary_column"
 
-            @dataSource = entity.search()
+            @dataSource = @reference.search()
 
             @listenTo @dataSource, "request", @loading
             @listenTo @dataSource, "data",    @renderItems
             @listenTo @dataSource, "error",   @displayError
-
-        @entity.fail $.proxy this, "displayError"
 
         this
 
@@ -949,35 +965,24 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         e.preventDefault()
         e.stopPropagation()
 
-        target = $(e.currentTarget).prop "disabled", yes
+        instance = @reference.createInstance()
 
-        @entity.always -> target.prop "disabled", no
+        @innerForm = new Cruddy.Entity.Form
+            model: instance
+            inner: yes
 
-        @entity.done (entity) =>
-            attrs = {}
+        @innerForm.render().$el.appendTo document.body
+        after_break => @innerForm.show()
 
-            # Fill primary column with search data if primary column maps to a field
-            primaryColumn = entity.get "primary_column"
-            attrs[primaryColumn] = @dataSource.get "search" if entity.columns.get(primaryColumn) instanceof Cruddy.columns.Field
+        @listenToOnce @innerForm, "remove", => @innerForm = null
 
-            instance = entity.createInstance(attrs)
+        @listenToOnce instance, "sync", (instance, resp) =>
+            @select
+                id: instance.id
+                title: resp.data.title
 
-            @innerForm = new Cruddy.Entity.Form
-                model: instance
-                inner: yes
-
-            @innerForm.render().$el.appendTo document.body
-            after_break => @innerForm.show()
-
-            @listenToOnce @innerForm, "remove", => @innerForm = null
-
-            @listenToOnce instance, "sync", (instance, resp) =>
-                @select
-                    id: instance.id
-                    title: resp.data.title
-
-                @dataSource.set "search", ""
-                @innerForm.remove()
+            @dataSource.set "search", ""
+            @innerForm.remove()
 
         this
 
@@ -992,13 +997,6 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
             @selected[item.id] = yes for item in data
         else
             @selected[data.id] = yes if data?
-
-        this
-
-    displayError: (xhr) ->
-        return if xhr.status isnt 403
-
-        @$el.html "<span class=error>Ошибка доступа</span>"
 
         this
 
@@ -1033,18 +1031,20 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         """<li class="item #{ className }" data-id="#{ item.id }">#{ item.title }</li>"""
 
     render: ->
-        @dispose()
+        if @reference.viewPermitted()
+            @dispose()
 
-        @$el.html @template()
+            @$el.html @template()
 
-        @items = @$ ".items"
+            @items = @$ ".items"
 
-        @entity.done =>
             @renderItems()
 
             @items.parent().on "scroll", $.proxy this, "checkForMore"
 
             @renderSearch() if @allowSearch
+        else
+            @$el.html "<span class=error>Ошибка доступа</span>"
 
         this
 
@@ -1449,35 +1449,37 @@ class Cruddy.Inputs.Markdown extends Cruddy.Inputs.Base
         this
 Cruddy.Fields = new Factory
 
+# This is basic field view that will render in bootstrap's vertical form style.
 class FieldView extends Backbone.View
     className: "field"
 
     constructor: (options) ->
-        @inputId = options.model.entity.id + "_" + options.field.id
+        field = options.field
+
+        @inputId = options.model.entity.id + "_" + field.id
 
         base = " " + @className + "-"
-        classes = [ options.field.attributes.type, options.field.id, @inputId ]
+        classes = [ field.getType(), field.id, @inputId ]
         @className += base + classes.join base
 
-        @className += " required" if options.field.get "required"
+        @className += " required" if field.isRequired()
 
         super
 
     initialize: (options) ->
         @field = options.field
 
-        @listenTo @field, "change:visible",     @toggleVisibility
-        @listenTo @field, "change:editable",    @render
-
-        @listenTo @model, "sync",       @render
-        @listenTo @model, "request",    @hideError
-        @listenTo @model, "invalid",    @showError
+        @listenTo @model, "sync",    @toggleVisibility
+        @listenTo @model, "request", @hideError
+        @listenTo @model, "invalid", @showError
 
         this
 
     hideError: ->
         @error.hide()
         @inputHolder.removeClass "has-error"
+
+        this
 
     showError: (model, errors) ->
         error = errors[@field.get "id"]
@@ -1486,7 +1488,9 @@ class FieldView extends Backbone.View
             @inputHolder.addClass "has-error"
             @error.text(error).show()
 
-    # Render a field.
+        this
+
+    # Render a field
     render: ->
         @dispose()
 
@@ -1504,13 +1508,13 @@ class FieldView extends Backbone.View
         this
 
     helpTemplate: ->
-        help = @field.get "help"
+        help = @field.getHelp()
         if help then """<span class="glyphicon glyphicon-question-sign field-help" title="#{ help }"></span>""" else ""
 
     errorTemplate: -> """<span class="help-block error"></span>"""
 
     label: (label) ->
-        label ?= @field.get "label"
+        label ?= @field.getLabel()
         """<label for="#{ @inputId }">#{ label }</label>"""
 
     # The default template that is shown when field is editable.
@@ -1522,9 +1526,10 @@ class FieldView extends Backbone.View
         </div>
         """
 
-    # Get whether this field view is visible.
-    isVisible: -> @field.get("visible") and (@field.get("editable") and @field.get("updateable") or not @model.isNew())
+    # Get whether the view is visible
+    isVisible: -> @field.isVisible() and (@field.isEditable() or not @model.isNew())
 
+    # Toggle visibility
     toggleVisibility: -> @$el.toggle @isVisible()
 
     # Focus the input that this field view holds.
@@ -1536,35 +1541,55 @@ class FieldView extends Backbone.View
     dispose: ->
         @input?.remove()
 
+        @input = null
+
         this
 
-    stopListening: ->
+    remove: ->
         @dispose()
 
         super
 
-class Field extends Attribute
+class Cruddy.Fields.Base extends Attribute
     viewConstructor: FieldView
 
+    # Create a view that will represent this field in field list
     createView: (model) -> new @viewConstructor { model: model, field: this }
 
+    # Create an input that is used by default view
     createInput: (model) ->
-        input = @createEditableInput model if @isEditable model
+        input = @createEditableInput model if @isEditable() and model.isSaveable()
 
-        if input? then input else new Cruddy.Inputs.Static { model: model, key: @id, formatter: this }
+        input or new Cruddy.Inputs.Static { model: model, key: @id, formatter: this }
 
+    # Create an input that is used when field is editable
     createEditableInput: (model) -> null
 
-    format: (value) -> if value then value else "n/a"
+    # Create filter input that
+    createFilterInput: (model) -> null
 
-    isEditable: (model) -> @get("editable") and (@get("updateable") or not model.isNew()) and model.isSaveable()
-class Cruddy.Fields.Input extends Field
+    # Get a label for filter input
+    getFilterLabel: -> @attributes.label
+
+    # Format value as static text
+    format: (value) -> value or "n/a"
+
+    # Get field's label
+    getLabel: -> @attributes.label
+
+    # Get whether the field is editable
+    isEditable: -> @attributes.fillable
+
+    # Get whether field is required
+    isRequired: -> @attributes.required
+class Cruddy.Fields.Input extends Cruddy.Fields.Base
+
     createEditableInput: (model) ->
-        attributes = placeholder: @get "label"
-        type = @get "input_type"
+        attributes = placeholder: @attributes.placeholder
+        type = @attributes.input_type
 
         if type is "textarea"
-            attributes.rows = @get "rows"
+            attributes.rows = @attributes.rows
 
             new Cruddy.Inputs.Textarea
                 model: model
@@ -1576,165 +1601,193 @@ class Cruddy.Fields.Input extends Field
             new Cruddy.Inputs.Text
                 model: model
                 key: @id
-                mask: @get "mask"
+                mask: @attributes.mask
                 attributes: attributes
 
-    format: (value) -> if @get("input_type") is "textarea" then "<pre>#{ super }</pre>" else super
-
-    createFilterInput: (model, column) ->
-        new TextInput
-                model: model
-                key: @id
-                attributes:
-                    placeholder: @get "label"
-# DATE AND TIME FIELD TYPE
-
-###
-class Cruddy.Fields.DateTimeView extends Cruddy.Fields.InputView
-    format: (value) -> moment.unix(value).format @field.get "format"
-    unformat: (value) -> moment(value, @field.get "format").unix()
-###
+    format: (value) -> if @attributes.input_type is "textarea" then "<pre>#{ super }</pre>" else super
 
 class Cruddy.Fields.DateTime extends Cruddy.Fields.Input
-    #viewConstructor: Cruddy.Fields.DateTimeView
-
+    
     format: (value) -> if value is null then "никогда" else moment.unix(value).calendar()
-class Cruddy.Fields.Boolean extends Field
-    createEditableInput: (model) -> new Cruddy.Inputs.Boolean { model: model, key: @id }
+class Cruddy.Fields.Boolean extends Cruddy.Fields.Base
+    
+    createEditableInput: (model) -> new Cruddy.Inputs.Boolean
+        model: model
+        key: @id
 
-    createFilterInput: (model) -> new Cruddy.Inputs.Boolean { model: model, key: @id, tripleState: yes }
+    createFilterInput: (model) -> new Cruddy.Inputs.Boolean
+        model: model
+        key: @id
+        tripleState: yes
 
     format: (value) -> if value then "да" else "нет"
-class Cruddy.Fields.Relation extends Field
-    createEditableInput: (model) ->
-        new Cruddy.Inputs.EntityDropdown
-            model: model
-            key: @id
-            multiple: @get "multiple"
-            reference: @get "reference"
+class Cruddy.Fields.BaseRelation extends Cruddy.Fields.Base
 
-    createFilterInput: (model) ->
-        new Cruddy.Inputs.EntityDropdown
-            model: model
-            key: @id
-            reference: @get "reference"
-            allowEdit: no
+    # Get the referenced entity
+    getReference: ->
+        @reference = Cruddy.app.entity @attributes.reference if not @reference
+
+        @reference
+
+    getFilterLabel: -> @getReference().getSingularTitle()
+class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
+
+    createEditableInput: (model) -> new Cruddy.Inputs.EntityDropdown
+        model: model
+        key: @id
+        multiple: @attributes.multiple
+        reference: @getReference()
+
+    createFilterInput: (model) -> new Cruddy.Inputs.EntityDropdown
+        model: model
+        key: @id
+        reference: @getReference()
+        allowEdit: no
 
     format: (value) ->
         return "не указано" if _.isEmpty value
+        
         if @attributes.multiple then _.pluck(value, "title").join ", " else value.title
-class Cruddy.Fields.File extends Field
+
+    isEditable: -> super and @getReference().viewPermitted()
+
+    canFilter: -> super and @getReference().viewPermitted()
+class Cruddy.Fields.File extends Cruddy.Fields.Base
+
     createEditableInput: (model) -> new Cruddy.Inputs.FileList
         model: model
         key: @id
-        multiple: @get "multiple"
-        accepts: @get "accepts"
+        multiple: @attributes.multiple
+        accepts: @attributes.accepts
 
     format: (value) -> if value instanceof File then value.name else value
 class Cruddy.Fields.Image extends Cruddy.Fields.File
+
     createEditableInput: (model) -> new Cruddy.Inputs.ImageList
         model: model
         key: @id
-        width: @get "width"
-        height: @get "height"
-        multiple: @get "multiple"
-        accepts: @get "accepts"
+        width: @attributes.width
+        height: @attributes.height
+        multiple: @attributes.multiple
+        accepts: @attributes.accepts
+class Cruddy.Fields.Slug extends Cruddy.Fields.Base
 
-    format: (value) -> if value instanceof File then value.name else value
-class Cruddy.Fields.Slug extends Field
-    createEditableInput: (model) ->
-        new Cruddy.Inputs.Slug
-            model: model
-            key: @id
-            chars: @get "chars"
-            ref: @get "ref"
-            separator: @get "separator"
-            attributes:
-                placeholder: @get "label"
+    createEditableInput: (model) -> new Cruddy.Inputs.Slug
+        model: model
+        key: @id
+        chars: @attributes.chars
+        ref: @attributes.ref
+        separator: @attributes.separator
+        
+        attributes:
+            placeholder: @attributes.placeholder
+class Cruddy.Fields.Enum extends Cruddy.Fields.Base
 
-    createFilterInput: (model, column) ->
-        new Cruddy.Inputs.Text
-            model: model
-            key: @id
-            attributes:
-                placeholder: @get "label"
-class Cruddy.Fields.Enum extends Field
-    createEditableInput: (model) ->
-        new Cruddy.Inputs.Select
-            model: model
-            key: @id
-            prompt: @get "prompt"
-            items: @get "items"
+    createEditableInput: (model) -> new Cruddy.Inputs.Select
+        model: model
+        key: @id
+        prompt: @attributes.prompt
+        items: @attributes.items
 
-    createFilterInput: (model) ->
-        new Cruddy.Inputs.Select
-            model: model
-            key: @id
-            prompt: "Любое значение"
-            items: @get "items"
+    createFilterInput: (model) -> new Cruddy.Inputs.Select
+        model: model
+        key: @id
+        prompt: "Любое значение"
+        items: @attributes.items
 
     format: (value) ->
-        items = @get "items"
+        items = @attributes.items
 
         if value of items then items[value] else "n/a"
-class Cruddy.Fields.Markdown extends Field
-    createEditableInput: (model) ->
-        new Cruddy.Inputs.Markdown
-            model: model
-            key: @id
-            height: @get "height"
-            theme: @get "theme"
-class Cruddy.Fields.Code extends Field
-    createEditableInput: (model) ->
-        new Cruddy.Inputs.Markdown
-            model: model
-            key: @id
-            height: @get "height"
-            mode: @get "mode"
-            theme: @get "theme"
-Cruddy.Columns = new Factory
+class Cruddy.Fields.Markdown extends Cruddy.Fields.Base
 
-class Cruddy.Columns.Base extends Attribute
+    createEditableInput: (model) -> new Cruddy.Inputs.Markdown
+        model: model
+        key: @id
+        height: @attributes.height
+        theme: @attributes.theme
+class Cruddy.Fields.Code extends Cruddy.Fields.Base
+    
+    createEditableInput: (model) ->
+        new Cruddy.Inputs.Code
+            model: model
+            key: @id
+            height: @attributes.height
+            mode: @attributes.mode
+            theme: @attributes.theme
+class Cruddy.Fields.HasOneView extends Backbone.View
+
     initialize: (options) ->
-        @formatter = Cruddy.formatters.create options.formatter, options.formatterOptions if options.formatter?
+        @field = options.field
+
+        @fieldList = new FieldList
+            model: @model.get @field.id
+            disabled: not @field.isEditable() or not @model.isSaveable()
+
+        this
+
+    render: ->
+        @$el.html @fieldList.render().el
+
+        this
+
+    remove: ->
+        @fieldList.remove()
 
         super
 
-    renderHeadCell: ->
-        title = @get "title"
-        help = @get "help"
-        title = "<span class=\"sortable\" data-id=\"#{ @id }\">#{ title }</span>" if @get "sortable"
-        if help then "<span class=\"glyphicon glyphicon-question-sign\" title=\"#{ help }\"></span> #{ title }" else title
+class Cruddy.Fields.HasOne extends Cruddy.Fields.BaseRelation
+    viewConstructor: Cruddy.Fields.HasOneView
+Cruddy.Columns = new Factory
 
-    renderCell: (value) -> if @formatter? then @formatter.format value else value
+class Cruddy.Columns.Base extends Attribute
+    initialize: (attributes) ->
+        @formatter = Cruddy.formatters.create attributes.formatter, attributes.formatterOptions if attributes.formatter?
 
-    createFilterInput: (model) -> null
+        super
 
+    # Return value's text representation
+    format: (value) -> if @formatter? then @formatter.format value else value
+
+    # Create input that is used for complex filtering
+    createFilter: (model) -> null
+
+    # Get column's header text
+    getHeader: -> @attributes.header
+
+    # Get column's class name
     getClass: -> "col-" + @id
 
+    # Get the label for a filter
+    getFilterLabel: -> @getHeader()
 
-class Cruddy.Columns.Field extends Cruddy.Columns.Base
+    # Get whether a column can order items
+    canOrder: -> @attributes.can_order
+class Cruddy.Columns.Proxy extends Cruddy.Columns.Base
     initialize: (attributes) ->
         field = attributes.field ? attributes.id
         @field = attributes.entity.fields.get field
 
-        @set "title", @field.get "label" if attributes.title is null
+        @set "header", @field.get "label" if attributes.header is null
 
         super
 
-    renderCell: (value) -> if @formatter? then @formatter.format value else @field.format value
+    format: (value) -> if @formatter? then @formatter.format value else @field.format value
 
-    createFilterInput: (model) -> @field.createFilterInput model, this
+    createFilter: (model) -> @field.createFilterInput model, this
+
+    getFilterLabel: -> @field.getFilterLabel()
+
+    canFilter: -> @field.canFilter()
 
     getClass: -> super + " col-" + @field.get "type"
-
 class Cruddy.Columns.Computed extends Cruddy.Columns.Base
-    createFilterInput: (model) ->
-        new Cruddy.Inputs.Text
-            model: model
-            key: @id
-            attributes:
-                placeholder: @get "title"
+
+    createFilter: (model) -> new Cruddy.Inputs.Text
+        model: model
+        key: @id
+        attributes:
+            placeholder: @attributes.header
 
     getClass: -> super + " col-computed"
 Cruddy.formatters = new Factory
@@ -1762,26 +1815,6 @@ class Cruddy.formatters.Image extends BaseFormatter
         """
 class Cruddy.formatters.Plain extends BaseFormatter
     format: (value) -> value
-Cruddy.Related = new Factory
-
-class Cruddy.Related.Base extends Backbone.Model
-    resolve: ->
-        return @resolver if @resolver?
-
-        @resolver = Cruddy.app.entity @get "related"
-        @resolver.done (entity) => @related = entity
-
-class Cruddy.Related.One extends Cruddy.Related.Base
-    associate: (parent, child) ->
-        child.set @get("foreign_key"), parent.id
-
-        this
-
-class Cruddy.Related.MorphOne extends Cruddy.Related.One
-    associate: (parent, child) ->
-        child.set @get("morph_type"), @get("morph_class")
-
-        super
 Cruddy.Entity = {}
 
 class Cruddy.Entity.Entity extends Backbone.Model
@@ -1789,7 +1822,6 @@ class Cruddy.Entity.Entity extends Backbone.Model
     initialize: (attributes, options) ->
         @fields = @createCollection Cruddy.Fields, attributes.fields
         @columns = @createCollection Cruddy.Columns, attributes.columns
-        @related = @createCollection Cruddy.Related, attributes.related
 
         @set "label", humanize @id if @get("label") is null
 
@@ -1805,30 +1837,44 @@ class Cruddy.Entity.Entity extends Backbone.Model
     # Create a datasource that will require specified columns and can be filtered
     # by specified filters
     createDataSource: (columns = null) ->
-        data = { order_by: @get("order_by") || @get("primary_column") }
+        data = { order_by: @get("order_by") }
         data.order_dir = if data.order_dir? then @columns.get(data.order_by).get "order_dir" else "asc"
 
         new DataSource data, { entity: this, columns: columns, filter: new Backbone.Model }
 
     # Create filters for specified columns
     createFilters: (columns = @columns) ->
-        filters = (col.createFilter() for col in columns.models when col.get "filterable")
+        filters = (col.createFilter() for col in columns.models when col.get("filter_type") is "complex")
 
         new Backbone.Collection filters
 
     # Create an instance for this entity
-    createInstance: (attributes = {}, relatedData = {}) ->
-        related = {}
-        related[item.id] = item.related.createInstance(relatedData[item.id]) for item in @related.models
+    createInstance: (attributes = {}) ->
+        attributes = _.extend {}, @get("defaults"), attributes.attributes
 
-        new Cruddy.Entity.Instance _.extend({}, @get("defaults"), attributes), { entity: this, related: related }
+        new Cruddy.Entity.Instance attributes, entity: this
+
+    # Get relation field
+    getRelation: (id) ->
+        field = @fields.get id
+
+        if not field
+            console.error "The field #{id} is not found."
+
+            return
+
+        if not field instanceof Cruddy.Fields.BaseRelation
+            console.error "The field #{id} is not a relation."
+
+            return
+
+        field
 
     search: ->
         return @searchDataSource.reset() if @searchDataSource?
 
         @searchDataSource = new SearchDataSource {},
             url: @url "search"
-            primaryColumn: @get "primary_column"
 
         @searchDataSource.next()
 
@@ -1844,36 +1890,76 @@ class Cruddy.Entity.Entity extends Backbone.Model
         xhr.then (resp) =>
             resp = resp.data
 
-            @createInstance resp.model, resp.related
+            @createInstance resp
 
     # Load a model and set it as current
-    update: (id) ->
-        @load(id).then (instance) =>
+    actionUpdate: (id) -> @load(id).then (instance) =>
             @set "instance", instance
 
             instance
 
+    # Create new model and set it as current
+    actionCreate: -> @set "instance", @createInstance()
+
+    # Get only those attributes are not unique for the model
     getCopyableAttributes: (attributes) ->
         data = {}
-        data[field.id] = attributes[field.id] for field in @fields.models when field.get("copyable") and field.id of attributes
+        data[field.id] = attributes[field.id] for field in @fields.models when not field.get("unique") and field.id of attributes
 
         data
 
+    # Get url that handles syncing
     url: (id) -> entity_url @id, id
 
+    # Get link to this entity or to the item of the entity
     link: (id) -> "#{ @id}" + if id? then "/#{ id }" else ""
+
+    # Get title in plural form
+    getPluralTitle: -> @attributes.title.plural
+
+    # Get title in singular form
+    getSingularTitle: -> @attributes.title.singular
+
+    getPermissions: -> @attributes.permissions
+
+    updatePermitted: -> @attributes.permissions.update
+
+    createPermitted: -> @attributes.permissions.create
+
+    deletePermitted: -> @attributes.permissions.delete
+
+    viewPermitted: -> @attributes.permissions.view
+
+    isSoftDeleting: -> @attributes.soft_deleting
 class Cruddy.Entity.Instance extends Backbone.Model
-    initialize: (attributes, options) ->
+    constructor: (attributes, options) ->
         @entity = options.entity
-        @related = options.related
+        @related = {}
+
+        super
+        
+    initialize: (attributes, options) ->
         @original = _.clone attributes
 
         @on "error", @processError, this
-        @on "sync", => @original = _.clone @attributes
+        @on "sync", @handleSync, this
         @on "destroy", => @set "deleted_at", moment().unix() if @entity.get "soft_deleting"
 
+    handleSync: (model, resp, options) ->
+        @original = _.clone @attributes
+
+        related.trigger "sync", related, resp, options for id, related of @related
+
+        this
+
     processError: (model, xhr) ->
-        @trigger "invalid", this, xhr.responseJSON.data if xhr.responseJSON? and xhr.responseJSON.error is "VALIDATION"
+        if xhr.responseJSON? and xhr.responseJSON.error is "VALIDATION"
+            errors = xhr.responseJSON.data
+
+            @trigger "invalid", this, errors
+
+            # Trigger errors for related models
+            model.trigger "invalid", model, errors[id] for id, model of @related when id of errors
 
     validate: ->
         @set "errors", {}
@@ -1882,6 +1968,26 @@ class Cruddy.Entity.Instance extends Backbone.Model
     link: -> @entity.link if @isNew() then "create" else @id
 
     url: -> @entity.url @id
+
+    set: (key, val) ->
+        if typeof key is "object"
+            attrs = key
+
+            for id in @entity.get "related" when id of attrs
+                relation = @entity.getRelation id
+                relationAttrs = attrs[id]
+
+                if id of @related
+                    related = @related[id]
+                    related.set relationAttrs.attributes if relationAttrs
+                else
+                    related = @related[id] = relation.getReference().createInstance relationAttrs
+                    related.parent = this
+
+                # Attribute will now hold instance
+                attrs[id] = related
+
+        super
 
     sync: (method, model, options) ->
         if method in ["update", "create"]
@@ -1894,27 +2000,27 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
         super
 
-    save: ->
-        xhr = super
+    # save: ->
+    #     xhr = super
 
-        return xhr if _.isEmpty @related
+    #     return xhr if _.isEmpty @related
 
-        queue = (xhr) =>
-            save = []
+    #     queue = (xhr) =>
+    #         save = []
 
-            save.push xhr if xhr?
+    #         save.push xhr if xhr?
 
-            for key, model of @related
-                @entity.related.get(key).associate @, model if model.isNew()
+    #         for key, model of @related
+    #             @entity.related.get(key).associate @, model if model.isNew()
 
-                save.push model.save() if model.hasChangedSinceSync()
+    #             save.push model.save() if model.hasChangedSinceSync()
 
-            $.when.apply $, save
+    #         $.when.apply $, save
 
-        # Create related models after the main model is saved
-        if @isNew() then xhr.then (resp) -> queue() else queue xhr
+    #     # Create related models after the main model is saved
+    #     if @isNew() then xhr.then (resp) -> queue() else queue xhr
 
-    parse: (resp) -> resp.data.instance
+    parse: (resp) -> resp.data.attributes
 
     copy: ->
         copy = @entity.createInstance()
@@ -1927,14 +2033,15 @@ class Cruddy.Entity.Instance extends Backbone.Model
     getCopyableAttributes: -> @entity.getCopyableAttributes @attributes
 
     hasChangedSinceSync: ->
-        return yes for key, value of @attributes when not _.isEqual value, @original[key]
+        return yes for key, value of @attributes when if value instanceof Cruddy.Entity.Instance then value.hasChangedSinceSync() else not _.isEqual value, @original[key]
 
         # Related models do not affect the result unless model is created
-        return yes for key, related of @related when related.hasChangedSinceSync() unless @isNew()
+        # return yes for key, related of @related when related.hasChangedSinceSync() unless @isNew()
 
         no
 
-    isSaveable: -> (@isNew() and @entity.get("can_create")) or (!@isNew() and @entity.get("can_update"))
+    # Get whether is allowed to save instance
+    isSaveable: -> (@isNew() and @entity.createPermitted()) or (!@isNew() and @entity.updatePermitted())
 class Cruddy.Entity.Page extends Backbone.View
     className: "entity-page"
 
@@ -2010,11 +2117,11 @@ class Cruddy.Entity.Page extends Backbone.View
         html = "<div class='entity-page-header'>"
         html += """
         <h1>
-            #{ @model.get "title" }
+            #{ @model.getPluralTitle() }
 
         """
 
-        if @model.get "can_create"
+        if @model.createPermitted()
             html += """
                 <button class="btn btn-default btn-create" type="button">
                     <span class="glyphicon glyphicon-plus"</span>
@@ -2189,7 +2296,7 @@ class Cruddy.Entity.Form extends Backbone.View
         @tabs = []
         @renderTab @model, yes
 
-        @renderTab related for key, related of @model.related
+        # @renderTab related for key, related of @model.related
 
         @update()
 
@@ -2198,22 +2305,24 @@ class Cruddy.Entity.Form extends Backbone.View
 
         id = "tab-" + model.entity.id
         fieldList.render().$el.insertBefore(@footer).wrap $ "<div></div>", { id: id, class: "wrap" + if active then " active" else "" }
-        @nav.append @navTemplate model.entity.get("singular"), id, active
+        @nav.append @navTemplate model.entity.get("title").singular, id, active
 
         this
 
     update: ->
+        permit = @model.entity.getPermissions()
+
         @$el.toggleClass "loading", @request?
 
         @submit.text if @model.isNew() then "Создать" else "Сохранить"
         @submit.attr "disabled", @request? or not @model.hasChangedSinceSync()
-        @submit.toggle @model.entity.get if @model.isNew() then "can_create" else "can_update"
+        @submit.toggle if @model.isNew() then permit.create else permit.update
 
         @destroy.attr "disabled", @request?
-        @destroy.html if @model.entity.get "soft_deleting" and @model.get "deleted_at" then "Восстановить" else "<span class='glyphicon glyphicon-trash' title='Удалить'></span>"
-        @destroy.toggle not @model.isNew() and @model.entity.get "can_delete"
+        @destroy.html if @model.entity.isSoftDeleting() and @model.get "deleted_at" then "Восстановить" else "<span class='glyphicon glyphicon-trash' title='Удалить'></span>"
+        @destroy.toggle not @model.isNew() and permit.delete
         
-        @copy.toggle not @model.isNew() and @model.entity.get "can_create"
+        @copy.toggle not @model.isNew() and permit.create
 
         this
 
@@ -2271,22 +2380,25 @@ $(".navbar").on "click", ".entity", (e) =>
     Cruddy.router.navigate href, trigger: true
 
 class App extends Backbone.Model
-    entities: {}
-
     initialize: ->
         @container = $ "body"
         @loadingRequests = 0
+        @entities = {}
+        @entitiesDfd = {}
+
+        # Create entities
+        @entities[entity.id] = new Cruddy.Entity.Entity entity for entity in Cruddy.entities
 
         @on "change:entity", @displayEntity, this
+
+        this
 
     displayEntity: (model, entity) ->
         @dispose()
 
         @container.append (@page = new Cruddy.Entity.Page model: entity).render().el if entity
 
-    displayError: (xhr) ->
-        error = if not xhr? or xhr.status is 403 then "Ошибка доступа" else "Ошибка"
-
+    displayError: (error) ->
         @dispose()
         @container.html "<p class='alert alert-danger'>#{ error }</p>"
 
@@ -2316,26 +2428,10 @@ class App extends Backbone.Model
 
         this
 
-    entity: (id, options = {}) ->
-        return @entities[id] if id of @entities
+    entity: (id) ->
+        console.error "Unknown entity #{ id }" if not id of @entities
 
-        options = $.extend {}, {
-            url: entity_url id, "schema"
-            type: "get"
-            dataType: "json"
-            displayLoading: yes
-
-        }, options
-
-        @entities[id] = $.ajax(options).then (resp) =>
-            entity = new Cruddy.Entity.Entity resp.data
-
-            return entity if _.isEmpty entity.related.models
-
-            # Resolve all related entites
-            wait = (related.resolve() for related in entity.related.models)
-
-            $.when.apply($, wait).then -> entity
+        @entities[id]
 
     dispose: ->
         @page?.remove()
@@ -2352,22 +2448,33 @@ class Router extends Backbone.Router
         ":page/:id": "update"
     }
 
-    loading: (promise) ->
-        Cruddy.app.startLoading()
-        promise.always -> Cruddy.app.doneLoading()
-
     entity: (id) ->
-        promise = Cruddy.app.entity(id).done (entity) ->
+        entity = Cruddy.app.entity(id)
+
+        if entity.viewPermitted()
             entity.set "instance", null
             Cruddy.app.set "entity", entity
 
-        promise.fail -> Cruddy.app.displayError.apply(Cruddy.app, arguments).set "entity", false
+            entity
+        else
+            Cruddy.app.displayError "You are not allowed to view this entity."
+
+            null
 
     page: (page) -> @entity page
 
-    create: (page) -> @entity(page).done (entity) -> entity.set "instance", entity.createInstance()
+    create: (page) ->
+        entity = @entity page
+        entity.actionCreate() if entity
 
-    update: (page, id) -> @entity(page).then (entity) -> entity.update(id)
+        entity
+
+    update: (page, id) ->
+        entity = @entity page
+
+        entity.actionUpdate id if entity
+
+        entity
 
 Cruddy.router = new Router
 

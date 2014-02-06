@@ -73,11 +73,11 @@ class Cruddy.Entity.Page extends Backbone.View
         html = "<div class='entity-page-header'>"
         html += """
         <h1>
-            #{ @model.get "title" }
+            #{ @model.getPluralTitle() }
 
         """
 
-        if @model.get "can_create"
+        if @model.createPermitted()
             html += """
                 <button class="btn btn-default btn-create" type="button">
                     <span class="glyphicon glyphicon-plus"</span>

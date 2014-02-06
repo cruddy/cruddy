@@ -1,8 +1,9 @@
-class Cruddy.Fields.Code extends Field
+class Cruddy.Fields.Code extends Cruddy.Fields.Base
+    
     createEditableInput: (model) ->
-        new Cruddy.Inputs.Markdown
+        new Cruddy.Inputs.Code
             model: model
             key: @id
-            height: @get "height"
-            mode: @get "mode"
-            theme: @get "theme"
+            height: @attributes.height
+            mode: @attributes.mode
+            theme: @attributes.theme

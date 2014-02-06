@@ -12,26 +12,22 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
         @filter = options.filter ? false
         @multiple = options.multiple ? false
+        @reference = options.reference
 
         @allowSearch = options.allowSearch ? yes
-        @allowCreate = options.allowCreate ? yes
+        @allowCreate = options.allowCreate ? yes and @reference.createPermitted()
 
         @data = []
         @buildSelected @model.get @key
 
-        @entity = Cruddy.app.entity(options.reference)
-
-        @entity.done (entity) =>
+        if @reference.viewPermitted()
             @primaryKey = "id"
-            @primaryColumn = entity.get "primary_column"
 
-            @dataSource = entity.search()
+            @dataSource = @reference.search()
 
             @listenTo @dataSource, "request", @loading
             @listenTo @dataSource, "data",    @renderItems
             @listenTo @dataSource, "error",   @displayError
-
-        @entity.fail $.proxy this, "displayError"
 
         this
 
@@ -69,35 +65,24 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         e.preventDefault()
         e.stopPropagation()
 
-        target = $(e.currentTarget).prop "disabled", yes
+        instance = @reference.createInstance()
 
-        @entity.always -> target.prop "disabled", no
+        @innerForm = new Cruddy.Entity.Form
+            model: instance
+            inner: yes
 
-        @entity.done (entity) =>
-            attrs = {}
+        @innerForm.render().$el.appendTo document.body
+        after_break => @innerForm.show()
 
-            # Fill primary column with search data if primary column maps to a field
-            primaryColumn = entity.get "primary_column"
-            attrs[primaryColumn] = @dataSource.get "search" if entity.columns.get(primaryColumn) instanceof Cruddy.columns.Field
+        @listenToOnce @innerForm, "remove", => @innerForm = null
 
-            instance = entity.createInstance(attrs)
+        @listenToOnce instance, "sync", (instance, resp) =>
+            @select
+                id: instance.id
+                title: resp.data.title
 
-            @innerForm = new Cruddy.Entity.Form
-                model: instance
-                inner: yes
-
-            @innerForm.render().$el.appendTo document.body
-            after_break => @innerForm.show()
-
-            @listenToOnce @innerForm, "remove", => @innerForm = null
-
-            @listenToOnce instance, "sync", (instance, resp) =>
-                @select
-                    id: instance.id
-                    title: resp.data.title
-
-                @dataSource.set "search", ""
-                @innerForm.remove()
+            @dataSource.set "search", ""
+            @innerForm.remove()
 
         this
 
@@ -112,13 +97,6 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
             @selected[item.id] = yes for item in data
         else
             @selected[data.id] = yes if data?
-
-        this
-
-    displayError: (xhr) ->
-        return if xhr.status isnt 403
-
-        @$el.html "<span class=error>Ошибка доступа</span>"
 
         this
 
@@ -153,18 +131,20 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         """<li class="item #{ className }" data-id="#{ item.id }">#{ item.title }</li>"""
 
     render: ->
-        @dispose()
+        if @reference.viewPermitted()
+            @dispose()
 
-        @$el.html @template()
+            @$el.html @template()
 
-        @items = @$ ".items"
+            @items = @$ ".items"
 
-        @entity.done =>
             @renderItems()
 
             @items.parent().on "scroll", $.proxy this, "checkForMore"
 
             @renderSearch() if @allowSearch
+        else
+            @$el.html "<span class=error>Ошибка доступа</span>"
 
         this
 

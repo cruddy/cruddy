@@ -3,9 +3,6 @@ class SearchDataSource extends Backbone.Model
         search: ""
 
     initialize: (attributes, options) ->
-        keyName = options.primaryKey ? "id"
-        valueName = options.primaryColumn
-
         @options =
             url: options.url
             type: "get"
@@ -13,13 +10,12 @@ class SearchDataSource extends Backbone.Model
 
             data:
                 page: null
-                q: ""
-                columns: keyName + "," + valueName
+                keywords: ""
 
             success: (resp) =>
                 resp = resp.data
 
-                @data.push { id: item[keyName].toString(), title: item[valueName] } for item in resp.data
+                @data.push item for item in resp.data
 
                 @page = resp.current_page
                 @more = resp.current_page < resp.last_page
@@ -53,7 +49,7 @@ class SearchDataSource extends Backbone.Model
     fetch: (q, page) ->
         @request.abort() if @request?
 
-        $.extend @options.data, { page: page, q: q }
+        $.extend @options.data, { page: page, keywords: q }
 
         @trigger "request", this, @request = $.ajax @options
 

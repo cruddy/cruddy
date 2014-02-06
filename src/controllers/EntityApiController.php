@@ -1,58 +1,43 @@
-<?php namespace Kalnoy\Cruddy;
+<?php
 
-use Illuminate\Database\Eloquent\ModelNotFoundException;
+namespace Kalnoy\Cruddy;
+
+use Exception;
 use Illuminate\Http\Response;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Config;
-use Exception;
-use Kalnoy\Cruddy\Entity\Entity;
-use Kalnoy\Cruddy\Service\Permissions\PermissionsInterface;
+use Kalnoy\Cruddy\Entity;
 use Kalnoy\Cruddy\Service\Validation\ValidationException;
 
 class EntityApiController extends ApiController {
-
-    const E_MODEL_ERROR = 'MODEL_ERROR';
 
     const E_VALIDATION = 'VALIDATION';
 
     /**
      * The cruddy environment.
      *
-     * @var Environment
+     * @var \Kalnoy\Cruddy\Environment
      */
     protected $cruddy;
 
     /**
-     * @var PermissionsInterface
-     */
-    protected $permissions;
-
-    /**
      * Initialize the controller.
-     *
-     * @param Environment          $cruddy
-     * @param PermissionsInterface $permissions
      */
-    public function __construct(Environment $cruddy, PermissionsInterface $permissions)
+    public function __construct()
     {
-        $this->cruddy = $cruddy;
-        $this->permissions = $permissions;
+        $this->cruddy = app('cruddy');
 
         $this->beforeFilter('cruddy.auth');
-    }
 
-    /**
-     * Get a schema of the specified entity.
-     *
-     * @param string $type
-     *
-     * @return Response
-     */
-    public function schema($type)
-    {
-        return $this->resolve($type, 'view', function ($entity) {
+        $this->beforeFilter(function()
+        {
+            \Event::fire('clockwork.controller.start');
+        });
 
-            return $this->success($entity);
+        $this->afterFilter(function()
+        {
+            \Event::fire('clockwork.controller.end');
         });
     }
 
@@ -67,23 +52,9 @@ class EntityApiController extends ApiController {
     {
         return $this->resolve($type, 'view', function ($entity) {
 
-            $order = array();
+            $options = $this->prepareSearchOptions(Input::all());
 
-            if (Input::has('order_by'))
-            {
-                $order =
-                [
-                    Input::get('order_by') => Input::get('order_dir', 'asc'),
-                ];
-            }
-
-            $filters = Input::get('filters') ?: array();
-            $search = Input::get('q');
-            $columns = extract_list(Input::get('columns'));
-
-            $paginated = $entity->all($search, $filters, $order, $columns);
-
-            return $this->success($paginated);
+            return $this->success($entity->search($options));
         });
     }
 
@@ -98,11 +69,29 @@ class EntityApiController extends ApiController {
     {
         return $this->resolve($type, 'view', function ($entity) {
 
-            $query = Input::get('q');
-            $columns = extract_list(Input::get('columns'));
+            $options = $this->prepareSearchOptions(Input::all());
 
-            return $this->success($entity->search($query, $columns));
+            $options['simple'] = true;
+
+            return $this->success($entity->search($options));
         });
+    }
+
+    /**
+     * Prepare search options that received form the input.
+     *
+     * @param array $options
+     *
+     * @return array
+     */
+    protected function prepareSearchOptions(array $options)
+    {
+        if (isset($options['order_by']) && isset($options['order_dir']))
+        {
+            $options['order'] = [$options['order_by'] => $options['order_dir']];
+        }
+
+        return $options;
     }
 
     /**
@@ -115,14 +104,9 @@ class EntityApiController extends ApiController {
      */
     public function show($type, $id)
     {
-        return $this->resolve($type, 'view', function ($entity) use ($id) {
-
-            $instance = $entity->findOrFail($id);
-
-            $model = $entity->fields()->data($instance);
-            $related = $entity->related()->data($instance);
-
-            return $this->success(compact('model', 'related'));
+        return $this->resolve($type, 'view', function ($entity) use ($id) 
+        {
+            return $this->success($entity->find($id));
         });
     }
 
@@ -135,11 +119,9 @@ class EntityApiController extends ApiController {
      */
     public function create($type)
     {
-        return $this->resolveSafe($type, 'create', function ($entity) {
-
-            $model = $entity->create(Input::all());
-
-            return $this->modelData($entity, $model);
+        return $this->resolveSafe($type, 'create', function ($entity)
+        {
+            return $this->success($entity->create(Input::all()));
         });
     }
 
@@ -153,30 +135,10 @@ class EntityApiController extends ApiController {
      */
     public function update($type, $id)
     {
-        return $this->resolveSafe($type, 'update', function ($entity) use ($id) {
-
-            $model = $entity->findOrFail($id);
-
-            $entity->update($model, Input::all());
-
-            return $this->modelData($entity, $model);
+        return $this->resolveSafe($type, 'update', function ($entity) use ($id)
+        {
+            return $this->success($entity->update($id, Input::all()));
         });
-    }
-
-    /**
-     * Response model data.
-     *
-     * @param   Entity  $entity
-     * @param   mixed   $model
-     *
-     * @return  Response
-     */
-    protected function modelData(Entity $entity, $model)
-    {
-        $instance = $entity->fields()->data($model);
-        $title = $entity->title($model);
-
-        return $this->success(compact('instance', 'title'));
     }
 
     /**
@@ -189,11 +151,9 @@ class EntityApiController extends ApiController {
      */
     public function destroy($type, $id)
     {
-        return $this->resolveSafe($type, 'delete', function ($entity) use ($id) {
-
-            $model = $entity->findOrFail($id);
-
-            return $model->delete() ? $this->success() : $this->failure();
+        return $this->resolveSafe($type, 'delete', function ($entity) use ($id)
+        {
+            return $entity->delete($id) > 0 ? $this->success() : $this->failure();
         });
     }
 
@@ -214,12 +174,11 @@ class EntityApiController extends ApiController {
         {
             $entity = $this->cruddy->entity($id);
 
-            // Check whether current user is allowed to perform specified action
-            if ($this->cant($method, $entity)) return $this->forbidden();
+            if ( ! $this->permitted($method, $entity)) return $this->forbidden();
 
             if ($transaction)
             {
-                $conn = $entity->form()->instance()->getConnection();
+                $conn = $entity->getRepository()->newModel()->getConnection();
 
                 return $conn->transaction(function ($conn) use ($entity, $callback)
                 {
@@ -268,16 +227,17 @@ class EntityApiController extends ApiController {
     }
 
     /**
-     * Get whether authenticated user can't access given action.
+     * Get whether authenticated user is permitted to execute specified action.
      *
-     * @param        $method
-     * @param Entity $entity
+     * @param string                $method
+     * @param \Kalnoy\Cruddy\Entity $entity
+     * 
      * @return bool
      */
-    protected function cant($method, Entity $entity)
+    protected function permitted($method, Entity $entity)
     {
         $method = 'can'.ucfirst($method);
 
-        return !$this->permissions->$method($entity);
+        return $this->cruddy->getPermissions()->$method($entity);
     }
 }

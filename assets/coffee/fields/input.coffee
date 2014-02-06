@@ -1,10 +1,11 @@
-class Cruddy.Fields.Input extends Field
+class Cruddy.Fields.Input extends Cruddy.Fields.Base
+
     createEditableInput: (model) ->
-        attributes = placeholder: @get "label"
-        type = @get "input_type"
+        attributes = placeholder: @attributes.placeholder
+        type = @attributes.input_type
 
         if type is "textarea"
-            attributes.rows = @get "rows"
+            attributes.rows = @attributes.rows
 
             new Cruddy.Inputs.Textarea
                 model: model
@@ -16,14 +17,7 @@ class Cruddy.Fields.Input extends Field
             new Cruddy.Inputs.Text
                 model: model
                 key: @id
-                mask: @get "mask"
+                mask: @attributes.mask
                 attributes: attributes
 
-    format: (value) -> if @get("input_type") is "textarea" then "<pre>#{ super }</pre>" else super
-
-    createFilterInput: (model, column) ->
-        new TextInput
-                model: model
-                key: @id
-                attributes:
-                    placeholder: @get "label"
+    format: (value) -> if @attributes.input_type is "textarea" then "<pre>#{ super }</pre>" else super

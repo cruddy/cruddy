@@ -1,8 +1,9 @@
-class Cruddy.Fields.File extends Field
+class Cruddy.Fields.File extends Cruddy.Fields.Base
+
     createEditableInput: (model) -> new Cruddy.Inputs.FileList
         model: model
         key: @id
-        multiple: @get "multiple"
-        accepts: @get "accepts"
+        multiple: @attributes.multiple
+        accepts: @attributes.accepts
 
     format: (value) -> if value instanceof File then value.name else value

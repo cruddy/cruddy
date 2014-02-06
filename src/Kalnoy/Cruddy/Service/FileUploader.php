@@ -35,14 +35,7 @@ class FileUploader {
      *
      * @var string
      */
-    protected $path;
-
-    /**
-     * Whether it's going to be a few files.
-     *
-     * @var bool
-     */
-    protected $multiple = false;
+    protected $path = 'files';
 
     /**
      * Whether to keep original file names.
@@ -60,18 +53,11 @@ class FileUploader {
 
     /**
      * @param \Illuminate\Filesystem\Filesystem $file
-     * @param                                   $root
-     * @param                                   $path
-     * @param                                   $keepNames
-     * @param                                   $multiple
      */
-    function __construct(Filesystem $file, $root, $path, $keepNames, $multiple)
+    function __construct(Filesystem $file)
     {
         $this->file = $file;
-        $this->root = $root;
-        $this->keepNames = $keepNames;
-        $this->multiple = $multiple;
-        $this->path = $path;
+        $this->root = \public_path();
     }
 
     /**
@@ -86,7 +72,7 @@ class FileUploader {
      */
     public function upload($value)
     {
-        if ($this->multiple) return $this->uploadMany((array)$value);
+        if (is_array($value)) return $this->uploadMany($value);
 
         return is_string($value) ? $value : $this->uploadFile($value);
     }
@@ -128,7 +114,10 @@ class FileUploader {
     {
         if (!$file->isValid()) return null;
 
-        $path = $this->root.'/'.$this->path;
+        $path = $this->root;
+
+        if ($this->path) $path .= '/'.$this->path;
+
         $ext = '.'.$file->getClientOriginalExtension();
         $name = $this->getName($file);
 
@@ -178,19 +167,53 @@ class FileUploader {
     }
 
     /**
+     * Set the path to where files are stored relatively to the root.
+     *
+     * @param string $path
+     *
+     * @return $this
+     */
+    public function to($path)
+    {
+        $this->path = $path;
+
+        return $this;
+    }
+
+    /**
+     * Set the root directory.
+     *
+     * @param string $root
+     *
+     * @return $this
+     */
+    public function relativelyTo($root)
+    {
+        $this->root = $root;
+
+        return $this;
+    }
+
+    /**
+     * Makes uploader to keep original file names.
+     *
+     * @param bool $value
+     *
+     * @return $this
+     */
+    public function keepNames($value = true)
+    {
+        $this->keepNames = $value;
+
+        return $this;
+    }
+
+    /**
      * @return string
      */
     public function getPath()
     {
         return $this->path;
-    }
-
-    /**
-     * @return bool
-     */
-    public function getMultiple()
-    {
-        return $this->multiple;
     }
 
     /**

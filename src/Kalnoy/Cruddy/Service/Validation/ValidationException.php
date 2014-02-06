@@ -1,13 +1,28 @@
-<?php namespace Kalnoy\Cruddy\Service\Validation;
+<?php
+
+namespace Kalnoy\Cruddy\Service\Validation;
 
 use Exception;
 use RuntimeException;
 
 class ValidationException extends RuntimeException {
 
+    /**
+     * The errors.
+     *
+     * @var array
+     */
     protected $errors;
 
-    function __construct(array $errors, $message = "", $code = 0, Exception $previous = null)
+    /**
+     * Init exception.
+     *
+     * @param array  $errors
+     * @param string $message
+     * @param int    $code
+     * @param \Exception $previous
+     */
+    function __construct(array $errors, $message = '', $code = 0, Exception $previous = null)
     {
         parent::__construct($message, $code, $previous);
 

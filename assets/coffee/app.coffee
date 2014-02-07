@@ -82,6 +82,8 @@ class Router extends Backbone.Router
     entity: (id) ->
         entity = Cruddy.app.entity(id)
 
+        return if not entity
+
         if entity.viewPermitted()
             entity.set "instance", null
             Cruddy.app.set "entity", entity

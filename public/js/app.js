@@ -1386,7 +1386,7 @@
       var id;
       id = $(e.target).data("id").toString();
       this.select(_.find(this.dataSource.data, function(item) {
-        return item.id === id;
+        return item.id.toString() === id;
       }));
       return false;
     };
@@ -3547,6 +3547,7 @@
     App.prototype.initialize = function() {
       var entity, _i, _len, _ref42;
       this.container = $("body");
+      this.mainContent = $("#content");
       this.loadingRequests = 0;
       this.entities = {};
       this.entitiesDfd = {};
@@ -3561,6 +3562,7 @@
 
     App.prototype.displayEntity = function(model, entity) {
       this.dispose();
+      this.mainContent.remove();
       if (entity) {
         return this.container.append((this.page = new Cruddy.Entity.Page({
           model: entity
@@ -3639,6 +3641,9 @@
     Router.prototype.entity = function(id) {
       var entity;
       entity = Cruddy.app.entity(id);
+      if (!entity) {
+        return;
+      }
       if (entity.viewPermitted()) {
         entity.set("instance", null);
         Cruddy.app.set("entity", entity);

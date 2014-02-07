@@ -38,7 +38,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
     check: (e) ->
         id = $(e.target).data("id").toString()
-        @select _.find @dataSource.data, (item) -> item.id == id
+        @select _.find @dataSource.data, (item) -> item.id.toString() == id
 
         false
 

@@ -938,7 +938,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
     check: (e) ->
         id = $(e.target).data("id").toString()
-        @select _.find @dataSource.data, (item) -> item.id == id
+        @select _.find @dataSource.data, (item) -> item.id.toString() == id
 
         false
 
@@ -2370,6 +2370,7 @@ $(".navbar").on "click", ".entity", (e) =>
 class App extends Backbone.Model
     initialize: ->
         @container = $ "body"
+        @mainContent = $ "#content"
         @loadingRequests = 0
         @entities = {}
         @entitiesDfd = {}
@@ -2384,6 +2385,7 @@ class App extends Backbone.Model
     displayEntity: (model, entity) ->
         @dispose()
 
+        @mainContent.remove()
         @container.append (@page = new Cruddy.Entity.Page model: entity).render().el if entity
 
     displayError: (error) ->
@@ -2438,6 +2440,8 @@ class Router extends Backbone.Router
 
     entity: (id) ->
         entity = Cruddy.app.entity(id)
+
+        return if not entity
 
         if entity.viewPermitted()
             entity.set "instance", null

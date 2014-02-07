@@ -34,7 +34,7 @@ class BelongsTo extends BasicRelation {
      */
     public function filter(QueryBuilder $builder, $data)
     {
-        $query->where($this->relation->getForeignKey(), '=', $data['id']);
+        $builder->where($this->relation->getForeignKey(), '=', $data['id']);
 
         return $this;
     }

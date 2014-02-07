@@ -11,6 +11,7 @@ $(".navbar").on "click", ".entity", (e) =>
 class App extends Backbone.Model
     initialize: ->
         @container = $ "body"
+        @mainContent = $ "#content"
         @loadingRequests = 0
         @entities = {}
         @entitiesDfd = {}
@@ -25,6 +26,7 @@ class App extends Backbone.Model
     displayEntity: (model, entity) ->
         @dispose()
 
+        @mainContent.remove()
         @container.append (@page = new Cruddy.Entity.Page model: entity).render().el if entity
 
     displayError: (error) ->

@@ -1,9 +1,12 @@
-<?php namespace Kalnoy\Cruddy;
+<?php
+
+namespace Kalnoy\Cruddy;
 
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Input;
+use Illuminate\Support\Facades\Redirect;
 use Intervention\Image\Exception\ImageNotFoundException;
 use Kalnoy\Cruddy\Service\ThumbnailFactory;
 
@@ -45,10 +48,6 @@ class CruddyController extends Controller {
         if ($this->layout !== null)
         {
             $this->layout = View::make($this->layout);
-
-            $this->layout->brand = $this->layout->title = \Kalnoy\Cruddy\try_trans($this->cruddy->config('brand'));
-            $this->layout->cruddy = $this->cruddy;
-            $this->layout->assets = $this->cruddy->config('assets');
         }
     }
 
@@ -57,7 +56,21 @@ class CruddyController extends Controller {
      */
     public function index()
     {
-        $this->layout->content = '';
+        $page = $this->cruddy->config('page');
+
+        if (empty($page)) return;
+
+        if ($page[0] === '@') return Redirect::route('cruddy.show', [ substr($page, 1) ]);
+
+        return Redirect::to($page);
+    }
+
+    /**
+     * Show an entity.
+     */
+    public function show()
+    {
+        $this->layout->content = View::make('cruddy::loading');
     }
 
     /**

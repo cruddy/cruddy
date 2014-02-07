@@ -1,3 +1,4 @@
 <?php return array(
-    "logout" => "Logout",
+    'logout' => 'Logout',
+    'loading' => 'Please, wait until the app is loaded.',
 );

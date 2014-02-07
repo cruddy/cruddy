@@ -3,6 +3,9 @@
     // The title of the application. It can be a translation key.
     'brand' => 'app.title',
 
+    // Initial page url. You can specify entity page using this syntax: `@users`.
+    'page' => null,
+
     // The URI that is prefixed to all routes of Cruddy.
     'uri' => 'backend',
 
@@ -14,9 +17,6 @@
 
     // The default ace theme.
     'ace_theme' => 'chrome',
-
-    // The path to the assets.
-    'assets' => 'packages/kalnoy/cruddy',
 
     // The list of key value pairs where key is the entity id and value is
     // an entity class name. For example:

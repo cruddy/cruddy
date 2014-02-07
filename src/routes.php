@@ -38,11 +38,9 @@ Route::group(['prefix' => Config::get('cruddy::uri')], function () {
         ->where('id', '[0-9]+');
     });
 
-    $index = 'Kalnoy\Cruddy\CruddyController@index';
-
-    Route::get('/', $index);
+    Route::get('/', 'Kalnoy\Cruddy\CruddyController@index');
     Route::get('thumb', 'Kalnoy\Cruddy\CruddyController@thumb');
 
-    Route::get('{model}', ['as' => 'cruddy.index', 'uses' => $index]);
-    Route::get('{model}/{id}', ['as' => 'cruddy.show', 'uses' => $index]);
+    Route::get('{model}', ['as' => 'cruddy.index', 'uses' => 'Kalnoy\Cruddy\CruddyController@show']);
+    Route::get('{model}/{id}', ['as' => 'cruddy.show', 'uses' => 'Kalnoy\Cruddy\CruddyController@show']);
 });

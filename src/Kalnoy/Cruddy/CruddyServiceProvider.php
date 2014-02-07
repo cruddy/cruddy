@@ -25,6 +25,7 @@ class CruddyServiceProvider extends ServiceProvider {
 
         include __DIR__."/../../filters.php";
         include __DIR__."/../../routes.php";
+        include __DIR__."/../../composers.php";
 	}
 
 	/**
@@ -38,6 +39,11 @@ class CruddyServiceProvider extends ServiceProvider {
         $this->registerCruddy();
     }
 
+    /**
+     * Register permissions service.
+     *
+     * @return void
+     */
     public function registerPermissions()
     {
         $this->app['cruddy.permissions'] = $this->app->share(function ($app)
@@ -46,6 +52,11 @@ class CruddyServiceProvider extends ServiceProvider {
         });
     }
 
+    /**
+     * Register cruddy environment.
+     *
+     * @return void
+     */
     protected function registerCruddy()
     {
         $this->app['cruddy'] = $this->app->share(function ($app)
@@ -61,7 +72,74 @@ class CruddyServiceProvider extends ServiceProvider {
 
             $repository = new Schema\Repository($app, $config->get('cruddy::entities', []));
 
-            return new Environment($config, $app['request'], $translator, $repository, $fields, $columns, $permissions);
+            return $this->registerAssets(new Environment($config, $app['request'], $translator, $repository, $fields, $columns, $permissions));
         });
+    }
+
+    /**
+     * Register assets.
+     *
+     * @param \Kalnoy\Cruddy\Environment $env
+     *
+     * @return \Kalnoy\Cruddy\Environment
+     */
+    protected function registerAssets(Environment $env)
+    {
+        $baseDir = $this->app['config']->get('cruddy::assets', 'packages/kalnoy/cruddy');
+
+        return $env->css($this->getCssFiles($baseDir))->js($this->getJsFiles($baseDir));
+    }
+
+    /**
+     * Resolve asset paths.
+     *
+     * @param string $baseDir
+     * @param array  $items
+     *
+     * @return array
+     */
+    protected function assets($baseDir, array $items)
+    {
+        $url = $this->app['url'];
+
+        return array_map(function ($item) use ($url, $baseDir)
+        {
+            return $url->asset("{$baseDir}/{$item}");
+
+        }, $items);
+    }
+
+    /**
+     * Get the list of css files.
+     *
+     * @param string $baseDir
+     *
+     * @return array
+     */
+    protected function getCssFiles($baseDir)
+    {
+        return $this->assets($baseDir.'/css',
+        [
+            'styles.min.css',
+        ]);
+    }
+
+    /**
+     * Get the list of js files.
+     *
+     * @param string $baseDir
+     *
+     * @return array
+     */
+    protected function getJsFiles($baseDir)
+    {
+        $suffix = $this->app['config']->get('app.debug') ? '' : '.min';
+
+        return $this->assets($baseDir.'/js', 
+        [
+            'ace/ace.js', 
+            "vendor{$suffix}.js", 
+            "app{$suffix}.js",
+        ]);
     }
 }

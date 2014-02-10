@@ -5,22 +5,24 @@ namespace Kalnoy\Cruddy\Service\Validation;
 interface ValidableInterface {
 
     /**
-     * Check whether an input is valid for new item.    
-     *
-     * @param array $input
-     *
-     * @return void
+     * Create action.
      */
-    public function validForCreation(array $input);
+    const CREATE = 'create';
 
     /**
-     * Check whether an input is valid for update.  
-     *
-     * @param array $input
-     *
-     * @return mixed
+     * Update action.   
      */
-    public function validForUpdate(array $input);
+    const UPDATE = 'update';
+
+    /**
+     * Validate an input for specific action which is either `create` or `update`.
+     *
+     * @param string $action
+     * @param array  $input
+     *
+     * @return bool
+     */
+    public function validFor($action, array $input);
 
     /**
      * Get validation errors.

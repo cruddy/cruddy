@@ -10,23 +10,22 @@ use Illuminate\Database\Eloquent\Model as Eloquent;
 interface InlineRelationInterface {
 
     /**
-     * Extract inline model attributes from the input.
+     * Process input and return data to save.
+     *
+     * @param array $input
+     *
+     * @return array
+     */
+    public function processInput(array $input);
+
+    /**
+     * Save previously processed data.
      *
      * @param array $data
      *
-     * @return array
+     * @return void
      */
-    public function extractAttributes(array $data);
-
-    /**
-     * Get attributes for related models by which they will be connected to 
-     * the parent model.
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     *
-     * @return array
-     */
-    public function getConnectingAttributes(Eloquent $model);
+    public function save(Eloquent $model, array $data);
 
     /**
      * Get the id of the relation.
@@ -34,12 +33,5 @@ interface InlineRelationInterface {
      * @return string
      */
     public function getId();
-
-    /**
-     * Get the other entity instance.
-     *
-     * @return \Kalnoy\Cruddy\Entity
-     */
-    public function getReference();
 
 }

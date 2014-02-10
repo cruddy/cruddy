@@ -7,7 +7,7 @@ use Kalnoy\Cruddy\Schema\BaseCollection;
 class Collection extends BaseCollection {
 
     /**
-     * Process input.
+     * Process input before validation.
      *
      * @param array $input
      *
@@ -29,7 +29,7 @@ class Collection extends BaseCollection {
     }
 
     /**
-     * Filter input.
+     * Filter input to pass it to the repository.
      *
      * @param array $input
      *

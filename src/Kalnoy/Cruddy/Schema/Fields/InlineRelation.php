@@ -43,16 +43,4 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
         return $this->reference->extract($model->{$this->id});
     }
 
-    /**
-     * @inheritdoc
-     *
-     * @param array $input
-     *
-     * @return array
-     */
-    public function extractAttributes(array $input)
-    {
-        return $input[$this->id];
-    }
-
 }

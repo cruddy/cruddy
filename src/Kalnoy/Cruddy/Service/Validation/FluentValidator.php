@@ -19,6 +19,11 @@ class FluentValidator extends Fluent implements ValidableInterface {
      */
     protected $errors = [];
 
+    /**
+     * Init validator.
+     *
+     * @param \Illuminate\Validation\Factory $validator
+     */
     function __construct($validator = null)
     {
         $this->validator = $validator ?: \app('validator');
@@ -27,16 +32,16 @@ class FluentValidator extends Fluent implements ValidableInterface {
     /**
      * Perform validation with given set of rules.
      *
+     * @param string $action
      * @param array  $input
-     * @param string $ruleSet
      *
      * @throws ValidationException
      */
-    public function validate(array $input, $ruleSet)
+    public function validFor($action, array $input)
     {
         $this->errors = [];
  
-        if ($rules = $this->resolveRules($ruleSet))
+        if ($rules = $this->resolveRules($action))
         {
             $rules = $this->processRules($rules, $input);
             $messages = $this->get('messages', []);
@@ -56,13 +61,13 @@ class FluentValidator extends Fluent implements ValidableInterface {
     /**
      * Resolve rules given rule set name.
      *
-     * @param $ruleSet
+     * @param $action
      *
      * @return mixed
      */
-    public function resolveRules($ruleSet)
+    public function resolveRules($action)
     {
-        $rules = $this->get($ruleSet);
+        $rules = $this->get($action);
         $defaultRules = $this->get('rules');
 
         if ($rules === null) return $defaultRules;
@@ -132,30 +137,6 @@ class FluentValidator extends Fluent implements ValidableInterface {
             return array_key_exists($key, $input) ? $input[$key] : '';
 
         }, $rule);
-    }
-
-    /**
-     * @inheritdoc
-     *
-     * @param array $input
-     *
-     * @return bool
-     */
-    public function validForCreation(array $input)
-    {
-        return $this->validate($input, 'create');
-    }
-
-    /**
-     * @inheritdoc
-     *
-     * @param array $input
-     *
-     * @return bool
-     */
-    public function validForUpdate(array $input)
-    {
-        return $this->validate($input, 'update');
     }
 
     /**

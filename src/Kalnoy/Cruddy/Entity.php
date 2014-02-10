@@ -5,6 +5,7 @@ namespace Kalnoy\Cruddy;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Contracts\JsonableInterface;
 use Illuminate\Support\Contracts\ArrayableInterface;
+use Illuminate\Database\Eloquent\Model as Eloquent;
 use Kalnoy\Cruddy\ModelNotFoundException;
 use Kalnoy\Cruddy\Schema\SchemaInterface;
 use Kalnoy\Cruddy\Schema\InstanceFactory;
@@ -68,13 +69,6 @@ class Entity implements JsonableInterface, ArrayableInterface {
      * @var \Kalnoy\Cruddy\Schema\InlineRelationInterface[]
      */
     protected $related = [];
-
-    /**
-     * The data that is used to save related items.
-     *
-     * @var array
-     */
-    protected $relatedData;
 
     /**
      * Init entity.
@@ -245,9 +239,9 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function create(array $input)
     {
-        return $this->save($input, function ($data)
+        return $this->save('create', $input, function ($data)
         {
-            return $this->repo->create($this->validate('create', $data));
+            return $this->repo->create($data);
         });
     }
 
@@ -264,53 +258,58 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function update($id, array $input)
     {
-        return $this->save($input, function ($data) use ($id)
+        return $this->save('update', $input, function ($data) use ($id)
         {
-            return $this->repo->update($id, $this->validate('update', $data));
+            return $this->repo->update($id, $data);
         });
     }
 
     /**
      * Save an item and all of its related items.
      *
+     * @param string $action
      * @param array   $input
      * @param \Closure $callback
      *
      * @return array
      */
-    protected function save(array $input, \Closure $callback)
+    protected function save($action, array $input, \Closure $callback)
     {
-        $model = $callback($input);
+        list($data, $relatedData) = $this->process($action, $input);
 
-        $this->saveRelated($model);
+        $model = $callback($data);
+
+        $this->saveRelated($model, $relatedData);
 
         return $this->extract($model);
     }
 
     /**
-     * Perform validation for specified action which is either `create` or `update`.
+     * Perform validation and return processed data.
      *
      * @param string $action
      * @param array  $input
      *
      * @return array
+     *
+     * @throws \Kalnoy\Cruddy\Service\Validation\ValidationException
      */
-    protected function validate($action, array $input)
+    public function process($action, array $input)
     {
         $processed = $this->fields->process($input);
         $validator = $this->getValidator();
         $errors = [];
 
-        if ( ! $this->callValidator($validator, $action, $processed))
+        if ( ! $validator->validFor($action, $processed))
         {
             $errors = $validator->errors();
         }
 
-        $this->validateRelated($input, $errors);
+        $relatedData = $this->processRelated($input, $errors);
 
         if ( ! empty($errors)) throw new ValidationException($errors);
 
-        return $this->fields->filterInput($processed);
+        return [ $this->fields->filterInput($processed), $relatedData ];
     }
 
     /**
@@ -319,101 +318,42 @@ class Entity implements JsonableInterface, ArrayableInterface {
      * @param array $input
      * @param array $errors
      *
-     * @return void
+     * @return array
      */
-    protected function validateRelated(array $input, array &$errors)
+    protected function processRelated(array $input, array &$errors)
     {
-        $this->relatedData = [];
+        $data = [];
 
         foreach ($this->related as $id => $item)
         {
-            $attributes = $item->extractAttributes($input);
-            $reference = $item->getReference();
-
-            list($key, $action) = $reference->getKeyAndActionFromAttributes($attributes);
+            if ( ! isset($input[$id])) continue;
 
             try
             {
-                $attributes = $reference->validate($action, $attributes);
+                $data[$id] = $item->processInput($input[$id]);
             } 
             catch (ValidationException $e)
             {
                 $errors[$id] = $e->getErrors();
             }
-
-
-            $this->relatedData[$id] = compact('key', 'action', 'attributes');
-        }
-    }
-
-    /**
-     * Get an action form attributes. If primary key is set on attributes array
-     * the action will be `update` and `create` otherwise.
-     *
-     * @param array $attributes
-     *
-     * @return array
-     */
-    protected function getKeyAndActionFromAttributes(array $attributes)
-    {
-        $keyName = $this->repo->newModel()->getKeyName();
-
-        $key = null;
-        $action = 'create';
-
-        if (isset($attributes[$keyName]) && !empty($attributes[$keyName]))
-        {
-            $key = $attributes[$keyName];
-            $action = 'update';
         }
 
-        return [ $key, $action ];
-    }
-
-    /**
-     * Call validation method based on action.
-     *
-     * @param \Kalnoy\Cruddy\Service\Validation\ValidableInterface $validator
-     * @param string                                               $action
-     * @param array                                                $input
-     *
-     * @return bool
-     */
-    protected function callValidator($validator, $action, array $input)
-    {
-        switch ($action)
-        {
-            case 'create': return $validator->validForCreation($input);
-            case 'update': return $validator->validForUpdate($input);
-        }
+        return $data;
     }
 
     /**
      * Save related items.
      *
      * @param \Illuminate\Database\Eloquent\Model $model
+     * @param array                               $data
      *
      * @return void
      */
-    protected function saveRelated($model)
+    public function saveRelated(Eloquent $model, array $data)
     {
-        foreach ($this->related as $id => $relation)
+        foreach ($data as $id => $itemData)
         {
-            // Will provider $attributes, $key and $action
-            extract($this->relatedData[$id]);
-
-            $attributes += $relation->getConnectingAttributes($model);
-
-            $reference = $relation->getReference();
-
-            switch ($action)
-            {
-                case 'create': $inner = $reference->repo->create($attributes); break;
-                case 'update': $inner = $reference->repo->update($key, $attributes); break;
-            }
-
-            // Process inner models
-            $reference->saveRelated($inner);
+            $this->related[$id]->save($model, $itemData);
         }
     }
 

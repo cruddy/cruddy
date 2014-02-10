@@ -19,7 +19,8 @@ class AdvFormData
 
         if _.isObject value
             if value instanceof Cruddy.Entity.Instance
-                @append name, value.attributes
+                @append @key(name, 'attributes'), value.attributes
+                @append @key(name, 'id'), value.id
             else
                 @append @key(name, key), _value for key, _value of value
 

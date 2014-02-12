@@ -20,50 +20,6 @@ class HasOneInline extends InlineRelation {
     /**
      * @inheritdoc
      *
-     * @param array $input
-     *
-     * @return array
-     */
-    public function processInput(array $input)
-    {
-        extract($input);
-
-        $action = empty($id) ? 'create' : 'update';
-
-        list($attributes, $relatedData) = $this->reference->process($action, $attributes);
-
-        return compact('id', 'action', 'attributes', 'relatedData');
-    }
-
-    /**
-     * @inhertidoc
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     * @param array                               $data
-     *
-     * @return \Illuminate\Database\Eloquent\Model
-     */
-    public function save(Eloquent $model, array $data)
-    {
-        $repo = $this->reference->getRepository();
-
-        extract($data);
-
-        $attributes += $this->getConnectingAttributes($model);
-
-        switch ($action)
-        {
-            case 'create': $innerModel = $repo->create($attributes); break;
-            case 'update': $innerModel = $repo->update($id, $attributes); break;
-        }
-
-        // Save related items for inner model.
-        $this->reference->saveRelated($innerModel, $relatedData);
-    }
-
-    /**
-     * @inheritdoc
-     *
      * @param \Illuminate\Database\Eloquent\Model $model
      *
      * @return array

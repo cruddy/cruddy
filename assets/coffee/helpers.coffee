@@ -18,6 +18,14 @@ thumb = (src, width, height) ->
 
     url
 
+b_icon = (icon) -> "<span class='glyphicon glyphicon-#{ icon }'></span>"
+
+b_btn = (label, icon = null, className = "btn-default", type = 'button') ->
+    label = b_icon(icon) + ' ' + label if icon
+    className = "btn-" + className.join(" btn-") if _.isArray className
+
+    "<button type='#{ type }' class='btn #{ className }'>#{ label.trim() }</button>"
+
 class Alert extends Backbone.View
     tagName: "span"
     className: "alert"

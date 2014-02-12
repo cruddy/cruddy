@@ -32,10 +32,11 @@ class Cruddy.Entity.Entity extends Backbone.Model
         new Backbone.Collection filters
 
     # Create an instance for this entity
-    createInstance: (attributes = {}) ->
+    createInstance: (attributes = {}, options = {}) ->
         attributes = _.extend {}, @get("defaults"), attributes.attributes
+        options.entity = this
 
-        new Cruddy.Entity.Instance attributes, entity: this
+        new Cruddy.Entity.Instance attributes, options
 
     # Get relation field
     getRelation: (id) ->
@@ -90,8 +91,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
         data[field.id] = attributes[field.id] for field in @fields.models when not field.isUnique() and field.id of attributes and not _.contains(@attributes.related, field.id)
 
         for ref in @attributes.related when ref of attributes
-            relation = @getRelation ref
-            data[ref] = if relation.isUnique() then relation.getReference().createInstance() else attributes[ref].copy()
+            data[ref] = @getRelation(ref).copy attributes[ref]
 
         data
 

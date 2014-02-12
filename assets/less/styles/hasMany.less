@@ -1,0 +1,24 @@
+.has-many-view {
+    margin-left: -@modal-inner-padding * 1.5;
+    margin-right: -@modal-inner-padding;
+
+    > .body {
+        padding: 10px 0;
+    }
+
+    > .header {
+        padding-left: @modal-inner-padding * 1.5;
+        font-weight: bold;
+        font-size: @font-size-large;
+    }
+}
+
+.has-many-item-view {
+    padding: 10px @modal-inner-padding;
+    padding-left: @modal-inner-padding * 1.5;
+    border-bottom: 1px solid @gray-lighter;
+
+    &:nth-child(odd) {
+        background: @gray-lighter;
+    }
+}

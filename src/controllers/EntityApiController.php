@@ -174,7 +174,12 @@ class EntityApiController extends ApiController {
         {
             $entity = $this->cruddy->entity($id);
 
-            if ( ! $this->permitted($method, $entity)) return $this->forbidden();
+            if ( ! $this->permitted($method, $entity))
+            {
+                $message = $this->cruddy->translate("cruddy::app.forbidden.{$method}", ['entity' => $id]);
+
+                throw new OperationNotPermittedException($message);
+            }
 
             if ($transaction)
             {
@@ -202,6 +207,11 @@ class EntityApiController extends ApiController {
         catch (ModelNotFoundException $e)
         {
             return $this->notFound('ModelNotFoundException');
+        }
+
+        catch (OperationNotPermittedException $e)
+        {
+            return $this->forbidden($e->getMessage());
         }
 
         catch (Exception $e)

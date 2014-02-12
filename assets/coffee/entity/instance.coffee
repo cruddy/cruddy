@@ -12,12 +12,25 @@ class Cruddy.Entity.Instance extends Backbone.Model
         @on "sync", @handleSync, this
         @on "destroy", => @set "deleted_at", moment().unix() if @entity.get "soft_deleting"
 
-    handleSync: (model, resp, options) ->
-        @original = _.clone @attributes
-
-        related.trigger "sync", related, resp, options for id, related of @related
+        @on event, @triggerRelated(event), this for event in ["sync", "request"]
 
         this
+
+    handleSync: ->
+        @original = _.clone @attributes
+
+        this
+
+    # Get a function handler that passes events to the related models
+    triggerRelated: (event) -> 
+        slice = Array.prototype.slice
+
+        (model) ->
+            for id, related of @related
+                relation = @entity.getRelation id
+                relation.triggerRelated.call relation, event, related, slice.call arguments, 1
+
+            this
 
     processError: (model, xhr) ->
         if xhr.responseJSON? and xhr.responseJSON.error is "VALIDATION"
@@ -26,7 +39,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
             @trigger "invalid", this, errors
 
             # Trigger errors for related models
-            model.trigger "invalid", model, errors[id] for id, model of @related when id of errors
+            @entity.getRelation(id).processErrors model, errors[id] for id, model of @related when id of errors
 
     validate: ->
         @set "errors", {}
@@ -46,9 +59,9 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
                 if id of @related
                     related = @related[id]
-                    related.set relationAttrs.attributes if relationAttrs
+                    relation.applyValues related, relationAttrs if relationAttrs
                 else
-                    related = @related[id] = if relationAttrs instanceof Cruddy.Entity.Instance then relationAttrs else relation.getReference().createInstance relationAttrs
+                    related = @related[id] = relation.createInstance relationAttrs
                     related.parent = this
 
                 # Attribute will now hold instance
@@ -74,14 +87,12 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
         copy.set @getCopyableAttributes(), silent: yes
 
-        console.log copy
-
         copy
 
     getCopyableAttributes: -> @entity.getCopyableAttributes @attributes
 
     hasChangedSinceSync: ->
-        return yes for key, value of @attributes when if value instanceof Cruddy.Entity.Instance then value.hasChangedSinceSync() else not _.isEqual value, @original[key]
+        return yes for key, value of @attributes when if key of @related then @entity.getRelation(key).hasChangedSinceSync value else not _.isEqual value, @original[key]
 
         # Related models do not affect the result unless model is created
         # return yes for key, related of @related when related.hasChangedSinceSync() unless @isNew()

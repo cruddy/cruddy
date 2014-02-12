@@ -1,0 +1,24 @@
+.file-list {
+    .list-group {
+        margin-bottom: @thumbnail-padding;
+    }
+
+    .list-group-item {
+        font-size: @font-size-small;
+        padding: @padding-small-vertical @padding-small-horizontal;
+    }
+
+    &-input-wrap {
+        position: relative;
+        overflow: hidden;
+
+        input {
+            position: absolute;
+            right: 0;
+            top: 0;
+            font-size: 1.3em;
+            .opacity(0);
+            cursor: pointer;
+        }
+    }
+}

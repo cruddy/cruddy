@@ -1,0 +1,68 @@
+.entity-selector {
+    @item-height: 25px;
+
+    .error {
+        display: block;
+        color: @alert-danger-text;
+        padding: 0 @padding-base-vertical;
+        text-align: center;
+    }
+
+    .search-input-container {
+        padding: @padding-base-vertical;
+        padding-top: 0;
+    }
+
+    .items-container {
+        max-height: @item-height * 10;
+        overflow-y: auto;
+    }
+
+    .items {
+        list-style-type: none;
+        margin: 0;
+        padding: 0;
+        font-size: @font-size-small;
+        line-height: @item-height;
+
+        .item {
+            cursor: pointer;
+            color: @dropdown-link-color;
+            padding: 0 @padding-small-horizontal;
+
+            &:hover {
+                color: @dropdown-link-hover-color;
+                background: @dropdown-link-hover-bg;
+            }
+
+            &:before {
+                .glyphicon();
+
+                width: 1.5em;
+                content: '';
+            }
+
+            &.selected:before {
+                content: "\e013";
+            }
+        }
+
+        .empty, .more {
+            text-align: center;
+            font-style: italic;
+        }
+
+        .more {
+            cursor: pointer;
+
+            &.loading {
+                text-indent: -9999px;
+                background: url("../img/loader-bars.gif") center center no-repeat;
+            }
+
+            &:hover {
+                text-decoration: underline;
+            }
+        }
+    }
+}

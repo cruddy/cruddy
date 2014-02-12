@@ -1,0 +1,100 @@
+.entity-dropdown {
+    position: relative;
+
+    .ed-item {
+        .form-control {
+            cursor: pointer;
+            background: @input-bg;
+        }
+
+        .input-group-btn .btn {
+            width: @input-height-base;
+        }
+
+        .input-group-btn > .btn + .btn {
+            margin-left: -1px;
+        }
+    }
+
+
+    > .items {
+        .ed-item {
+            .form-control, .btn {
+                .border-bottom-radius(0);
+            }
+
+            .form-control:focus {
+                position: relative;
+                z-index: 2;
+            }
+
+            + .ed-item {
+                .form-control, .btn {
+                    .border-top-radius(0);
+                    margin-top: -1px;
+                }
+            }
+        }
+
+    }
+
+    >.has-items + .dropdown-toggle {
+        .border-top-radius(0);
+        margin-top: -1px;
+    }
+
+    .btn.dropdown-toggle {
+        position: relative;
+
+        &:hover {
+            z-index: 2;
+        }
+    }
+
+    .entity-selector {
+        display: none;
+        position: absolute;
+        width: 100%;
+        left: 0;
+        z-index: @zindex-dropdown;
+
+        background: @dropdown-bg;
+
+        border: 1px solid @input-border;
+
+        padding-top: @padding-base-vertical;
+    }
+
+    &.open .entity-selector {
+        display: block;
+    }
+
+    &.open.open-down {
+        .ed-dropdown-toggle {
+            &, .btn, .form-control {
+                .border-bottom-radius(0);
+            }
+        }
+
+        .entity-selector {
+            top: 100%;
+            border-top: none;
+            .border-bottom-radius(@border-radius-small);
+            padding-bottom: @border-radius-small;
+        }
+    }
+
+    &.open.open-up {
+        .ed-dropdown-toggle {
+            &, .btn, .form-control {
+                .border-top-radius(0);
+            }
+        }
+
+        .entity-selector {
+            bottom: 26px;
+            border-bottom: none;
+            .border-top-radius(@border-radius-small);
+        }
+    }
+}

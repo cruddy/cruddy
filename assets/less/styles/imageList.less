@@ -1,0 +1,59 @@
+.image-list .image-group {
+    margin: 0;
+    padding: 0;
+    list-style-type: none;
+    margin-left: -5px;
+
+    &-item {
+        &:extend(.thumbnail);
+
+        display: inline-block;
+        margin: 0 0 @thumbnail-padding @thumbnail-padding;
+        position: relative;
+
+        height: 80px;
+        min-width: 80px;
+
+        text-align: center;
+
+        &:hover {
+            border-color: @link-color;
+        }
+
+        img {
+            max-height: 100%;
+        }
+
+        .action-delete {
+            position: absolute;
+            top: 1px;
+            right: 1px;
+
+            padding: 0 3px;
+            background: rgba(0, 0, 0, 0.3);
+
+            border-radius: @border-radius-small;
+
+            color: #fff;
+
+            &:hover {
+                background: #000;
+                color: #fff;
+            }
+        }
+
+        .fancybox {
+            text-decoration: none;
+            display: block;
+            font-size: 0;
+        }
+    }
+}
+
+.image-thumbnail {
+    display: inline-block;
+    -webkit-background-size: cover;
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center center;
+}

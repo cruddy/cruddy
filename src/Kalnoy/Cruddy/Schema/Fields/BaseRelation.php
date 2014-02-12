@@ -4,6 +4,7 @@ namespace Kalnoy\Cruddy\Schema\Fields;
 
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Database\Eloquent\Model as Eloquent;
 use Kalnoy\Cruddy\Entity;
 
 /**
@@ -38,6 +39,37 @@ abstract class BaseRelation extends BaseField {
 
         $this->reference = $reference;
         $this->relation = $relation;
+    }
+
+    /**
+     * @inheritdoc
+     *
+     * @param \Illuminate\Database\Eloquent\Model $model
+     *
+     * @return mixed
+     */
+    public function extract(Eloquent $model)
+    {
+        if ( ! $this->entity->getEnv()->getPermissions()->canView($this->reference))
+        {
+            return null;
+        }
+
+        return parent::extract($model);
+    }
+
+    /**
+     * Start new relational query for specified model.
+     *
+     * @param \Illuminate\Database\Eloquent\Model $model
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\Relation
+     */
+    public function newRelationalQuery(Eloquent $model = null)
+    {
+        $model = $model ?: $this->reference->getRepository()->newModel();
+
+        return $model->{$this->getRelationId()}();
     }
 
     /**

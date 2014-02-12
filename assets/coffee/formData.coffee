@@ -21,6 +21,10 @@ class AdvFormData
             if value instanceof Cruddy.Entity.Instance
                 @append @key(name, 'attributes'), value.attributes
                 @append @key(name, 'id'), value.id
+
+            else if value instanceof Backbone.Collection
+                @append @key(name, item.cid), item for item in value.models
+                
             else
                 @append @key(name, key), _value for key, _value of value
 

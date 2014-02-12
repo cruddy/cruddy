@@ -17,7 +17,7 @@ class FieldList extends Backbone.View
         this
 
     createFields: ->
-        @fields = (field.createView(@model).render() for field in @model.entity.fields.models)
+        @fields = (field.createView(@model).render() for field in @model.entity.fields.models when field.isVisible())
 
         for view in @fields when view.field.isEditable @model
             @primary = view

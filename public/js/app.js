@@ -1,5 +1,5 @@
 (function() {
-  var API_URL, AdvFormData, Alert, App, Attribute, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FieldView, FilterList, Pagination, Router, SearchDataSource, TRANSITIONEND, after_break, entity_url, humanize, thumb, _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref18, _ref19, _ref2, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref26, _ref27, _ref28, _ref29, _ref3, _ref30, _ref31, _ref32, _ref33, _ref34, _ref35, _ref36, _ref37, _ref38, _ref39, _ref4, _ref40, _ref41, _ref42, _ref5, _ref6, _ref7, _ref8, _ref9,
+  var API_URL, AdvFormData, Alert, App, Attribute, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FieldView, FilterList, Pagination, Router, SearchDataSource, TRANSITIONEND, after_break, b_btn, b_icon, entity_url, humanize, thumb, _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref18, _ref19, _ref2, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref26, _ref27, _ref28, _ref29, _ref3, _ref30, _ref31, _ref32, _ref33, _ref34, _ref35, _ref36, _ref37, _ref38, _ref39, _ref4, _ref40, _ref41, _ref42, _ref43, _ref44, _ref45, _ref5, _ref6, _ref7, _ref8, _ref9,
     _this = this,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -61,6 +61,29 @@
     return url;
   };
 
+  b_icon = function(icon) {
+    return "<span class='glyphicon glyphicon-" + icon + "'></span>";
+  };
+
+  b_btn = function(label, icon, className, type) {
+    if (icon == null) {
+      icon = null;
+    }
+    if (className == null) {
+      className = "btn-default";
+    }
+    if (type == null) {
+      type = 'button';
+    }
+    if (icon) {
+      label = b_icon(icon) + ' ' + label;
+    }
+    if (_.isArray(className)) {
+      className = "btn-" + className.join(" btn-");
+    }
+    return "<button type='" + type + "' class='btn " + className + "'>" + (label.trim()) + "</button>";
+  };
+
   Alert = (function(_super) {
     __extends(Alert, _super);
 
@@ -99,7 +122,7 @@
     }
 
     AdvFormData.prototype.append = function(name, value) {
-      var key, _i, _len, _value;
+      var item, key, _i, _j, _len, _len1, _ref2, _value;
       if (value === void 0) {
         value = name;
         name = null;
@@ -119,7 +142,14 @@
       }
       if (_.isObject(value)) {
         if (value instanceof Cruddy.Entity.Instance) {
-          this.append(name, value.attributes);
+          this.append(this.key(name, 'attributes'), value.attributes);
+          this.append(this.key(name, 'id'), value.id);
+        } else if (value instanceof Backbone.Collection) {
+          _ref2 = value.models;
+          for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+            item = _ref2[_j];
+            this.append(this.key(name, item.cid), item);
+          }
         } else {
           for (key in value) {
             _value = value[key];
@@ -531,7 +561,7 @@
 
     DataGrid.prototype.tagName = "table";
 
-    DataGrid.prototype.className = "table table-hover table-condensed data-grid";
+    DataGrid.prototype.className = "table table-hover data-grid";
 
     DataGrid.prototype.events = {
       "click .sortable": "setOrder",
@@ -719,7 +749,9 @@
         _results = [];
         for (_i = 0, _len = _ref7.length; _i < _len; _i++) {
           field = _ref7[_i];
-          _results.push(field.createView(this.model).render());
+          if (field.isVisible()) {
+            _results.push(field.createView(this.model).render());
+          }
         }
         return _results;
       }).call(this);
@@ -2163,7 +2195,7 @@
     };
 
     FieldView.prototype.isVisible = function() {
-      return this.field.isVisible() && (this.field.isEditable() || !this.model.isNew());
+      return this.field.isEditable() || !this.model.isNew();
     };
 
     FieldView.prototype.toggleVisibility = function() {
@@ -2366,6 +2398,10 @@
       _ref25 = BaseRelation.__super__.constructor.apply(this, arguments);
       return _ref25;
     }
+
+    BaseRelation.prototype.isVisible = function() {
+      return this.getReference().viewPermitted() && BaseRelation.__super__.isVisible.apply(this, arguments);
+    };
 
     BaseRelation.prototype.getReference = function() {
       if (!this.reference) {
@@ -2599,6 +2635,8 @@
       return _ref33;
     }
 
+    HasOneView.prototype.className = "has-one-view";
+
     HasOneView.prototype.initialize = function(options) {
       this.field = options.field;
       this.fieldList = new FieldList({
@@ -2632,7 +2670,321 @@
 
     HasOne.prototype.viewConstructor = Cruddy.Fields.HasOneView;
 
+    HasOne.prototype.createInstance = function(attrs) {
+      if (attrs instanceof Cruddy.Entity.Instance) {
+        return attrs;
+      } else {
+        return this.getReference().createInstance(attrs);
+      }
+    };
+
+    HasOne.prototype.applyValues = function(model, data) {
+      return model.set(data.attributes);
+    };
+
+    HasOne.prototype.hasChangedSinceSync = function(model) {
+      return model.hasChangedSinceSync();
+    };
+
+    HasOne.prototype.copy = function(model) {
+      if (this.isUnique()) {
+        return this.getReference().createInstance();
+      } else {
+        return model.copy();
+      }
+    };
+
+    HasOne.prototype.processErrors = function(model, errors) {
+      return model.trigger("invalid", model, errors);
+    };
+
+    HasOne.prototype.triggerRelated = function(event, model, args) {
+      return model.trigger.apply([model, event, model].concat(args));
+    };
+
     return HasOne;
+
+  })(Cruddy.Fields.BaseRelation);
+
+  Cruddy.Fields.HasManyView = (function(_super) {
+    __extends(HasManyView, _super);
+
+    function HasManyView() {
+      _ref35 = HasManyView.__super__.constructor.apply(this, arguments);
+      return _ref35;
+    }
+
+    HasManyView.prototype.className = "has-many-view";
+
+    HasManyView.prototype.events = {
+      "click .btn-create": "create"
+    };
+
+    HasManyView.prototype.initialize = function(options) {
+      this.field = options.field;
+      this.views = {};
+      this.collection = this.model.get(this.field.id);
+      this.listenTo(this.collection, "add", this.add);
+      this.listenTo(this.collection, "remove", this.removeItem);
+      return HasManyView.__super__.initialize.apply(this, arguments);
+    };
+
+    HasManyView.prototype.create = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.collection.add(this.field.getReference().createInstance(), {
+        focus: true
+      });
+      return this;
+    };
+
+    HasManyView.prototype.add = function(model, collection, options) {
+      var view;
+      this.views[model.cid] = view = new Cruddy.Fields.HasManyItemView({
+        model: model,
+        collection: this.collection,
+        disabled: this.field.isEditable()
+      });
+      this.body.append(view.render().el);
+      if (options != null ? options.focus : void 0) {
+        after_break(function() {
+          return view.focus();
+        });
+      }
+      if (!this.focusable) {
+        this.focusable = view;
+      }
+      return this;
+    };
+
+    HasManyView.prototype.removeItem = function(model) {
+      var view;
+      if (view = this.views[model.cid]) {
+        view.remove();
+        delete this.views[model.cid];
+      }
+      return this;
+    };
+
+    HasManyView.prototype.render = function() {
+      var model, _i, _len, _ref36;
+      this.dispose();
+      this.$el.html(this.template());
+      this.body = this.$(".body");
+      _ref36 = this.collection.models;
+      for (_i = 0, _len = _ref36.length; _i < _len; _i++) {
+        model = _ref36[_i];
+        this.add(model);
+      }
+      return this;
+    };
+
+    HasManyView.prototype.template = function() {
+      var buttons, ref;
+      ref = this.field.getReference();
+      buttons = ref.createPermitted() ? b_btn("", "plus", ["default", "create"]) : "";
+      return "<div class='header'>" + (this.field.getReference().getPluralTitle()) + " " + buttons + "</div><div class='body'></div>";
+    };
+
+    HasManyView.prototype.dispose = function() {
+      var cid, view, _ref36;
+      _ref36 = this.views;
+      for (cid in _ref36) {
+        view = _ref36[cid];
+        view.remove();
+      }
+      this.views = {};
+      this.focusable = null;
+      return this;
+    };
+
+    HasManyView.prototype.remove = function() {
+      this.dispose();
+      return HasManyView.__super__.remove.apply(this, arguments);
+    };
+
+    HasManyView.prototype.focus = function() {
+      var _ref36;
+      if ((_ref36 = this.focusable) != null) {
+        _ref36.focus();
+      }
+      return this;
+    };
+
+    return HasManyView;
+
+  })(Backbone.View);
+
+  Cruddy.Fields.HasManyItemView = (function(_super) {
+    __extends(HasManyItemView, _super);
+
+    function HasManyItemView() {
+      _ref36 = HasManyItemView.__super__.constructor.apply(this, arguments);
+      return _ref36;
+    }
+
+    HasManyItemView.prototype.className = "has-many-item-view";
+
+    HasManyItemView.prototype.events = {
+      "click .btn-delete": "deleteItem"
+    };
+
+    HasManyItemView.prototype.initialize = function(options) {
+      var _ref37;
+      this.collection = options.collection;
+      this.disabled = (_ref37 = options.disabled) != null ? _ref37 : true;
+      return HasManyItemView.__super__.initialize.apply(this, arguments);
+    };
+
+    HasManyItemView.prototype.deleteItem = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.collection.remove(this.model);
+      return this;
+    };
+
+    HasManyItemView.prototype.render = function() {
+      this.dispose();
+      this.$el.html(this.template());
+      this.fieldList = new FieldList({
+        model: this.model,
+        disabled: this.disabled || !this.model.isSaveable()
+      });
+      this.$el.prepend(this.fieldList.render().el);
+      return this;
+    };
+
+    HasManyItemView.prototype.template = function() {
+      if (this.model.entity.deletePermitted()) {
+        return b_btn("Удалить", "trash", ["default", "sm", "delete"]);
+      } else {
+        return "";
+      }
+    };
+
+    HasManyItemView.prototype.dispose = function() {
+      var _ref37;
+      if ((_ref37 = this.fieldList) != null) {
+        _ref37.remove();
+      }
+      this.fieldList = null;
+      return this;
+    };
+
+    HasManyItemView.prototype.remove = function() {
+      this.dispose();
+      return HasManyItemView.__super__.remove.apply(this, arguments);
+    };
+
+    HasManyItemView.prototype.focus = function() {
+      var _ref37;
+      if ((_ref37 = this.fieldList) != null) {
+        _ref37.focus();
+      }
+      return this;
+    };
+
+    return HasManyItemView;
+
+  })(Backbone.View);
+
+  Cruddy.Fields.HasMany = (function(_super) {
+    __extends(HasMany, _super);
+
+    function HasMany() {
+      _ref37 = HasMany.__super__.constructor.apply(this, arguments);
+      return _ref37;
+    }
+
+    HasMany.prototype.viewConstructor = Cruddy.Fields.HasManyView;
+
+    HasMany.prototype.createInstance = function(items) {
+      var item, ref;
+      if (items instanceof Backbone.Collection) {
+        return items;
+      }
+      ref = this.getReference();
+      items = (function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = items.length; _i < _len; _i++) {
+          item = items[_i];
+          _results.push(ref.createInstance(item));
+        }
+        return _results;
+      })();
+      return new Backbone.Collection(items);
+    };
+
+    HasMany.prototype.applyValues = function(collection, items) {
+      var item, ref;
+      collection.set(_.pluck(items, "attributes"), {
+        add: false
+      });
+      ref = this.getReference();
+      collection.add((function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = items.length; _i < _len; _i++) {
+          item = items[_i];
+          if (!collection.get(item.id)) {
+            _results.push(ref.createInstance(item));
+          }
+        }
+        return _results;
+      })());
+      return this;
+    };
+
+    HasMany.prototype.hasChangedSinceSync = function(items) {
+      var item, _i, _len, _ref38;
+      _ref38 = items.models;
+      for (_i = 0, _len = _ref38.length; _i < _len; _i++) {
+        item = _ref38[_i];
+        if (item.hasChangedSinceSync()) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    HasMany.prototype.copy = function(items) {
+      var item;
+      return new Backbone.Collection(this.isUnique() ? [] : (function() {
+        var _i, _len, _ref38, _results;
+        _ref38 = items.models;
+        _results = [];
+        for (_i = 0, _len = _ref38.length; _i < _len; _i++) {
+          item = _ref38[_i];
+          _results.push(item.copy());
+        }
+        return _results;
+      })());
+    };
+
+    HasMany.prototype.processErrors = function(collection, errorsCollection) {
+      var cid, errors, model;
+      for (cid in errorsCollection) {
+        errors = errorsCollection[cid];
+        model = collection.get(cid);
+        if (model) {
+          model.trigger("invalid", model, errors);
+        }
+      }
+      return this;
+    };
+
+    HasMany.prototype.triggerRelated = function(event, collection, args) {
+      var model, _i, _len, _ref38;
+      _ref38 = collection.models;
+      for (_i = 0, _len = _ref38.length; _i < _len; _i++) {
+        model = _ref38[_i];
+        model.trigger.apply(model, [event, model].concat(args));
+      }
+      return this;
+    };
+
+    return HasMany;
 
   })(Cruddy.Fields.BaseRelation);
 
@@ -2642,8 +2994,8 @@
     __extends(Base, _super);
 
     function Base() {
-      _ref35 = Base.__super__.constructor.apply(this, arguments);
-      return _ref35;
+      _ref38 = Base.__super__.constructor.apply(this, arguments);
+      return _ref38;
     }
 
     Base.prototype.initialize = function(attributes) {
@@ -2689,13 +3041,13 @@
     __extends(Proxy, _super);
 
     function Proxy() {
-      _ref36 = Proxy.__super__.constructor.apply(this, arguments);
-      return _ref36;
+      _ref39 = Proxy.__super__.constructor.apply(this, arguments);
+      return _ref39;
     }
 
     Proxy.prototype.initialize = function(attributes) {
-      var field, _ref37;
-      field = (_ref37 = attributes.field) != null ? _ref37 : attributes.id;
+      var field, _ref40;
+      field = (_ref40 = attributes.field) != null ? _ref40 : attributes.id;
       this.field = attributes.entity.fields.get(field);
       if (attributes.header === null) {
         this.set("header", this.field.get("label"));
@@ -2735,8 +3087,8 @@
     __extends(Computed, _super);
 
     function Computed() {
-      _ref37 = Computed.__super__.constructor.apply(this, arguments);
-      return _ref37;
+      _ref40 = Computed.__super__.constructor.apply(this, arguments);
+      return _ref40;
     }
 
     Computed.prototype.createFilter = function(model) {
@@ -2782,8 +3134,8 @@
     __extends(Image, _super);
 
     function Image() {
-      _ref38 = Image.__super__.constructor.apply(this, arguments);
-      return _ref38;
+      _ref41 = Image.__super__.constructor.apply(this, arguments);
+      return _ref41;
     }
 
     Image.prototype.defaultOptions = {
@@ -2809,8 +3161,8 @@
     __extends(Plain, _super);
 
     function Plain() {
-      _ref39 = Plain.__super__.constructor.apply(this, arguments);
-      return _ref39;
+      _ref42 = Plain.__super__.constructor.apply(this, arguments);
+      return _ref42;
     }
 
     Plain.prototype.format = function(value) {
@@ -2827,8 +3179,8 @@
     __extends(Entity, _super);
 
     function Entity() {
-      _ref40 = Entity.__super__.constructor.apply(this, arguments);
-      return _ref40;
+      _ref43 = Entity.__super__.constructor.apply(this, arguments);
+      return _ref43;
     }
 
     Entity.prototype.initialize = function(attributes, options) {
@@ -2875,11 +3227,11 @@
         columns = this.columns;
       }
       filters = (function() {
-        var _i, _len, _ref41, _results;
-        _ref41 = columns.models;
+        var _i, _len, _ref44, _results;
+        _ref44 = columns.models;
         _results = [];
-        for (_i = 0, _len = _ref41.length; _i < _len; _i++) {
-          col = _ref41[_i];
+        for (_i = 0, _len = _ref44.length; _i < _len; _i++) {
+          col = _ref44[_i];
           if (col.get("filter_type") === "complex") {
             _results.push(col.createFilter());
           }
@@ -2889,14 +3241,16 @@
       return new Backbone.Collection(filters);
     };
 
-    Entity.prototype.createInstance = function(attributes) {
+    Entity.prototype.createInstance = function(attributes, options) {
       if (attributes == null) {
         attributes = {};
       }
+      if (options == null) {
+        options = {};
+      }
       attributes = _.extend({}, this.get("defaults"), attributes.attributes);
-      return new Cruddy.Entity.Instance(attributes, {
-        entity: this
-      });
+      options.entity = this;
+      return new Cruddy.Entity.Instance(attributes, options);
     };
 
     Entity.prototype.getRelation = function(id) {
@@ -2952,23 +3306,21 @@
     };
 
     Entity.prototype.getCopyableAttributes = function(attributes) {
-      var data, field, ref, relation, _i, _j, _len, _len1, _ref41, _ref42;
+      var data, field, ref, _i, _j, _len, _len1, _ref44, _ref45;
       data = {};
-      _ref41 = this.fields.models;
-      for (_i = 0, _len = _ref41.length; _i < _len; _i++) {
-        field = _ref41[_i];
+      _ref44 = this.fields.models;
+      for (_i = 0, _len = _ref44.length; _i < _len; _i++) {
+        field = _ref44[_i];
         if (!field.isUnique() && field.id in attributes && !_.contains(this.attributes.related, field.id)) {
           data[field.id] = attributes[field.id];
         }
       }
-      _ref42 = this.attributes.related;
-      for (_j = 0, _len1 = _ref42.length; _j < _len1; _j++) {
-        ref = _ref42[_j];
-        if (!(ref in attributes)) {
-          continue;
+      _ref45 = this.attributes.related;
+      for (_j = 0, _len1 = _ref45.length; _j < _len1; _j++) {
+        ref = _ref45[_j];
+        if (ref in attributes) {
+          data[ref] = this.getRelation(ref).copy(attributes[ref]);
         }
-        relation = this.getRelation(ref);
-        data[ref] = relation.isUnique() ? relation.getReference().createInstance() : attributes[ref].copy();
       }
       return data;
     };
@@ -3027,39 +3379,55 @@
     }
 
     Instance.prototype.initialize = function(attributes, options) {
-      var _this = this;
+      var event, _i, _len, _ref44,
+        _this = this;
       this.original = _.clone(attributes);
       this.on("error", this.processError, this);
       this.on("sync", this.handleSync, this);
-      return this.on("destroy", function() {
+      this.on("destroy", function() {
         if (_this.entity.get("soft_deleting")) {
           return _this.set("deleted_at", moment().unix());
         }
       });
-    };
-
-    Instance.prototype.handleSync = function(model, resp, options) {
-      var id, related, _ref41;
-      this.original = _.clone(this.attributes);
-      _ref41 = this.related;
-      for (id in _ref41) {
-        related = _ref41[id];
-        related.trigger("sync", related, resp, options);
+      _ref44 = ["sync", "request"];
+      for (_i = 0, _len = _ref44.length; _i < _len; _i++) {
+        event = _ref44[_i];
+        this.on(event, this.triggerRelated(event), this);
       }
       return this;
     };
 
+    Instance.prototype.handleSync = function() {
+      this.original = _.clone(this.attributes);
+      return this;
+    };
+
+    Instance.prototype.triggerRelated = function(event) {
+      var slice;
+      slice = Array.prototype.slice;
+      return function(model) {
+        var id, related, relation, _ref44;
+        _ref44 = this.related;
+        for (id in _ref44) {
+          related = _ref44[id];
+          relation = this.entity.getRelation(id);
+          relation.triggerRelated.call(relation, event, related, slice.call(arguments, 1));
+        }
+        return this;
+      };
+    };
+
     Instance.prototype.processError = function(model, xhr) {
-      var errors, id, _ref41, _results;
+      var errors, id, _ref44, _results;
       if ((xhr.responseJSON != null) && xhr.responseJSON.error === "VALIDATION") {
         errors = xhr.responseJSON.data;
         this.trigger("invalid", this, errors);
-        _ref41 = this.related;
+        _ref44 = this.related;
         _results = [];
-        for (id in _ref41) {
-          model = _ref41[id];
+        for (id in _ref44) {
+          model = _ref44[id];
           if (id in errors) {
-            _results.push(model.trigger("invalid", model, errors[id]));
+            _results.push(this.entity.getRelation(id).processErrors(model, errors[id]));
           }
         }
         return _results;
@@ -3080,12 +3448,12 @@
     };
 
     Instance.prototype.set = function(key, val) {
-      var attrs, id, related, relation, relationAttrs, _i, _len, _ref41;
+      var attrs, id, related, relation, relationAttrs, _i, _len, _ref44;
       if (typeof key === "object") {
         attrs = key;
-        _ref41 = this.entity.get("related");
-        for (_i = 0, _len = _ref41.length; _i < _len; _i++) {
-          id = _ref41[_i];
+        _ref44 = this.entity.get("related");
+        for (_i = 0, _len = _ref44.length; _i < _len; _i++) {
+          id = _ref44[_i];
           if (!(id in attrs)) {
             continue;
           }
@@ -3094,10 +3462,10 @@
           if (id in this.related) {
             related = this.related[id];
             if (relationAttrs) {
-              related.set(relationAttrs.attributes);
+              relation.applyValues(related, relationAttrs);
             }
           } else {
-            related = this.related[id] = relationAttrs instanceof Cruddy.Entity.Instance ? relationAttrs : relation.getReference().createInstance(relationAttrs);
+            related = this.related[id] = relation.createInstance(relationAttrs);
             related.parent = this;
           }
           attrs[id] = related;
@@ -3107,9 +3475,9 @@
     };
 
     Instance.prototype.sync = function(method, model, options) {
-      var _ref41;
+      var _ref44;
       if (method === "update" || method === "create") {
-        options.data = new AdvFormData((_ref41 = options.attrs) != null ? _ref41 : this.attributes).original;
+        options.data = new AdvFormData((_ref44 = options.attrs) != null ? _ref44 : this.attributes).original;
         options.contentType = false;
         options.processData = false;
       }
@@ -3126,7 +3494,6 @@
       copy.set(this.getCopyableAttributes(), {
         silent: true
       });
-      console.log(copy);
       return copy;
     };
 
@@ -3135,11 +3502,11 @@
     };
 
     Instance.prototype.hasChangedSinceSync = function() {
-      var key, value, _ref41;
-      _ref41 = this.attributes;
-      for (key in _ref41) {
-        value = _ref41[key];
-        if (value instanceof Cruddy.Entity.Instance ? value.hasChangedSinceSync() : !_.isEqual(value, this.original[key])) {
+      var key, value, _ref44;
+      _ref44 = this.attributes;
+      for (key in _ref44) {
+        value = _ref44[key];
+        if (key in this.related ? this.entity.getRelation(key).hasChangedSinceSync(value) : !_.isEqual(value, this.original[key])) {
           return true;
         }
       }
@@ -3293,13 +3660,13 @@
     }
 
     Form.prototype.initialize = function(options) {
-      var key, related, _ref41, _ref42;
-      this.inner = (_ref41 = options.inner) != null ? _ref41 : false;
+      var key, related, _ref44, _ref45;
+      this.inner = (_ref44 = options.inner) != null ? _ref44 : false;
       this.listenTo(this.model, "destroy", this.handleDestroy);
       this.signOn(this.model);
-      _ref42 = this.model.related;
-      for (key in _ref42) {
-        related = _ref42[key];
+      _ref45 = this.model.related;
+      for (key in _ref45) {
+        related = _ref45[key];
         this.signOn(related);
       }
       this.listenTo(this.model, "invalid", this.displayInvalid);
@@ -3357,8 +3724,8 @@
     };
 
     Form.prototype.displayError = function(xhr) {
-      var _ref41;
-      if (((_ref41 = xhr.responseJSON) != null ? _ref41.error : void 0) !== "VALIDATION") {
+      var _ref44;
+      if (((_ref44 = xhr.responseJSON) != null ? _ref44.error : void 0) !== "VALIDATION") {
         return this.displayAlert("Ошибка", "danger");
       }
     };
@@ -3511,11 +3878,11 @@
     };
 
     Form.prototype.dispose = function() {
-      var fieldList, _i, _len, _ref41;
+      var fieldList, _i, _len, _ref44;
       if (this.tabs != null) {
-        _ref41 = this.tabs;
-        for (_i = 0, _len = _ref41.length; _i < _len; _i++) {
-          fieldList = _ref41[_i];
+        _ref44 = this.tabs;
+        for (_i = 0, _len = _ref44.length; _i < _len; _i++) {
+          fieldList = _ref44[_i];
           fieldList.remove();
         }
       }
@@ -3540,20 +3907,20 @@
     __extends(App, _super);
 
     function App() {
-      _ref41 = App.__super__.constructor.apply(this, arguments);
-      return _ref41;
+      _ref44 = App.__super__.constructor.apply(this, arguments);
+      return _ref44;
     }
 
     App.prototype.initialize = function() {
-      var entity, _i, _len, _ref42;
+      var entity, _i, _len, _ref45;
       this.container = $("body");
       this.mainContent = $("#content");
       this.loadingRequests = 0;
       this.entities = {};
       this.entitiesDfd = {};
-      _ref42 = Cruddy.entities;
-      for (_i = 0, _len = _ref42.length; _i < _len; _i++) {
-        entity = _ref42[_i];
+      _ref45 = Cruddy.entities;
+      for (_i = 0, _len = _ref45.length; _i < _len; _i++) {
+        entity = _ref45[_i];
         this.entities[entity.id] = new Cruddy.Entity.Entity(entity);
       }
       this.on("change:entity", this.displayEntity, this);
@@ -3611,9 +3978,9 @@
     };
 
     App.prototype.dispose = function() {
-      var _ref42;
-      if ((_ref42 = this.page) != null) {
-        _ref42.remove();
+      var _ref45;
+      if ((_ref45 = this.page) != null) {
+        _ref45.remove();
       }
       return this;
     };
@@ -3628,8 +3995,8 @@
     __extends(Router, _super);
 
     function Router() {
-      _ref42 = Router.__super__.constructor.apply(this, arguments);
-      return _ref42;
+      _ref45 = Router.__super__.constructor.apply(this, arguments);
+      return _ref45;
     }
 
     Router.prototype.routes = {

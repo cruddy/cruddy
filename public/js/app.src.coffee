@@ -38,6 +38,14 @@ thumb = (src, width, height) ->
 
     url
 
+b_icon = (icon) -> "<span class='glyphicon glyphicon-#{ icon }'></span>"
+
+b_btn = (label, icon = null, className = "btn-default", type = 'button') ->
+    label = b_icon(icon) + ' ' + label if icon
+    className = "btn-" + className.join(" btn-") if _.isArray className
+
+    "<button type='#{ type }' class='btn #{ className }'>#{ label.trim() }</button>"
+
 class Alert extends Backbone.View
     tagName: "span"
     className: "alert"
@@ -70,7 +78,12 @@ class AdvFormData
 
         if _.isObject value
             if value instanceof Cruddy.Entity.Instance
-                @append name, value.attributes
+                @append @key(name, 'attributes'), value.attributes
+                @append @key(name, 'id'), value.id
+
+            else if value instanceof Backbone.Collection
+                @append @key(name, item.cid), item for item in value.models
+                
             else
                 @append @key(name, key), _value for key, _value of value
 
@@ -329,7 +342,7 @@ class Pagination extends Backbone.View
 
 class DataGrid extends Backbone.View
     tagName: "table"
-    className: "table table-hover table-condensed data-grid"
+    className: "table table-hover data-grid"
 
     events: {
         "click .sortable": "setOrder"
@@ -462,7 +475,7 @@ class FieldList extends Backbone.View
         this
 
     createFields: ->
-        @fields = (field.createView(@model).render() for field in @model.entity.fields.models)
+        @fields = (field.createView(@model).render() for field in @model.entity.fields.models when field.isVisible())
 
         for view in @fields when view.field.isEditable @model
             @primary = view
@@ -1527,7 +1540,7 @@ class FieldView extends Backbone.View
         """
 
     # Get whether the view is visible
-    isVisible: -> @field.isVisible() and (@field.isEditable() or not @model.isNew())
+    isVisible: -> @field.isEditable() or not @model.isNew()
 
     # Toggle visibility
     toggleVisibility: -> @$el.toggle @isVisible()
@@ -1626,6 +1639,8 @@ class Cruddy.Fields.Boolean extends Cruddy.Fields.Base
     format: (value) -> if value then "да" else "нет"
 class Cruddy.Fields.BaseRelation extends Cruddy.Fields.Base
 
+    isVisible: -> @getReference().viewPermitted() and super
+
     # Get the referenced entity
     getReference: ->
         @reference = Cruddy.app.entity @attributes.reference if not @reference
@@ -1719,6 +1734,7 @@ class Cruddy.Fields.Code extends Cruddy.Fields.Base
             mode: @attributes.mode
             theme: @attributes.theme
 class Cruddy.Fields.HasOneView extends Backbone.View
+    className: "has-one-view"
 
     initialize: (options) ->
         @field = options.field
@@ -1741,6 +1757,187 @@ class Cruddy.Fields.HasOneView extends Backbone.View
 
 class Cruddy.Fields.HasOne extends Cruddy.Fields.BaseRelation
     viewConstructor: Cruddy.Fields.HasOneView
+
+    createInstance: (attrs) -> if attrs instanceof Cruddy.Entity.Instance then attrs else @getReference().createInstance attrs
+
+    applyValues: (model, data) -> model.set data.attributes
+
+    hasChangedSinceSync: (model) -> model.hasChangedSinceSync()
+
+    copy: (model) -> if @isUnique() then @getReference().createInstance() else model.copy()
+
+    processErrors: (model, errors) -> model.trigger "invalid", model, errors
+
+    triggerRelated: (event, model, args) -> model.trigger.apply [model, event, model].concat args
+class Cruddy.Fields.HasManyView extends Backbone.View
+    className: "has-many-view"
+
+    events:
+        "click .btn-create": "create"
+
+    initialize: (options) ->
+        @field = options.field
+        @views = {}
+        @collection = @model.get @field.id
+
+        @listenTo @collection, "add", @add
+        @listenTo @collection, "remove", @removeItem
+
+        super
+
+    create: (e) ->
+        e.preventDefault()
+        e.stopPropagation()
+
+        @collection.add @field.getReference().createInstance(), focus: yes
+
+        this
+
+    add: (model, collection, options) ->
+        @views[model.cid] = view = new Cruddy.Fields.HasManyItemView
+            model: model
+            collection: @collection
+            disabled: @field.isEditable()
+
+        @body.append view.render().el
+
+        after_break( -> view.focus()) if options?.focus
+
+        @focusable = view if not @focusable
+
+        this
+
+    removeItem: (model) ->
+        if view = @views[model.cid]
+            view.remove()
+            delete @views[model.cid]
+
+        this
+
+    render: ->
+        @dispose()
+
+        @$el.html @template()
+        @body = @$ ".body"
+
+        @add model for model in @collection.models
+
+        this
+
+    template: ->
+        ref = @field.getReference()
+
+        buttons = if ref.createPermitted() then b_btn("", "plus", ["default", "create"]) else ""
+
+        "<div class='header'>#{ @field.getReference().getPluralTitle() } #{ buttons }</div><div class='body'></div>"
+
+    dispose: ->
+        view.remove() for cid, view of @views
+        @views = {}
+        @focusable = null
+
+        this
+
+    remove: ->
+        @dispose()
+
+        super
+
+    focus: ->
+        @focusable?.focus()
+
+        this
+
+class Cruddy.Fields.HasManyItemView extends Backbone.View
+    className: "has-many-item-view"
+
+    events:
+        "click .btn-delete": "deleteItem"
+
+    initialize: (options) ->
+        @collection = options.collection
+        @disabled = options.disabled ? true
+
+        super
+
+    deleteItem: (e) ->
+        e.preventDefault()
+        e.stopPropagation()
+
+        @collection.remove @model
+
+        this
+
+    render: ->
+        @dispose()
+
+        @$el.html @template()
+
+        @fieldList = new FieldList
+            model: @model
+            disabled: @disabled or not @model.isSaveable()
+
+        @$el.prepend @fieldList.render().el
+
+        this
+
+    template: -> if @model.entity.deletePermitted() then b_btn("Удалить", "trash", ["default", "sm", "delete"]) else ""
+
+    dispose: ->
+        @fieldList?.remove()
+        @fieldList = null
+
+        this
+
+    remove: ->
+        @dispose()
+
+        super
+
+    focus: ->
+        @fieldList?.focus()
+
+        this
+
+class Cruddy.Fields.HasMany extends Cruddy.Fields.BaseRelation
+    viewConstructor: Cruddy.Fields.HasManyView
+
+    createInstance: (items) ->
+        return items if items instanceof Backbone.Collection
+
+        ref = @getReference()
+        items = (ref.createInstance item for item in items)
+
+        new Backbone.Collection items
+
+    applyValues: (collection, items) ->
+        collection.set _.pluck(items, "attributes"), add: no
+
+        # Add new items
+        ref = @getReference()
+        collection.add (ref.createInstance item for item in items when not collection.get item.id)
+
+        this
+
+    hasChangedSinceSync: (items) ->
+        return yes for item in items.models when item.hasChangedSinceSync()
+
+        no
+
+    copy: (items) -> new Backbone.Collection if @isUnique() then [] else (item.copy() for item in items.models)
+
+    processErrors: (collection, errorsCollection) ->
+        for cid, errors of errorsCollection
+            model = collection.get cid
+            model.trigger "invalid", model, errors if model
+
+        this
+
+    triggerRelated: (event, collection, args) ->
+        model.trigger.apply model, [ event, model ].concat(args) for model in collection.models
+
+        this
+
 Cruddy.Columns = new Factory
 
 class Cruddy.Columns.Base extends Attribute
@@ -1852,10 +2049,11 @@ class Cruddy.Entity.Entity extends Backbone.Model
         new Backbone.Collection filters
 
     # Create an instance for this entity
-    createInstance: (attributes = {}) ->
+    createInstance: (attributes = {}, options = {}) ->
         attributes = _.extend {}, @get("defaults"), attributes.attributes
+        options.entity = this
 
-        new Cruddy.Entity.Instance attributes, entity: this
+        new Cruddy.Entity.Instance attributes, options
 
     # Get relation field
     getRelation: (id) ->
@@ -1910,8 +2108,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
         data[field.id] = attributes[field.id] for field in @fields.models when not field.isUnique() and field.id of attributes and not _.contains(@attributes.related, field.id)
 
         for ref in @attributes.related when ref of attributes
-            relation = @getRelation ref
-            data[ref] = if relation.isUnique() then relation.getReference().createInstance() else attributes[ref].copy()
+            data[ref] = @getRelation(ref).copy attributes[ref]
 
         data
 
@@ -1952,12 +2149,25 @@ class Cruddy.Entity.Instance extends Backbone.Model
         @on "sync", @handleSync, this
         @on "destroy", => @set "deleted_at", moment().unix() if @entity.get "soft_deleting"
 
-    handleSync: (model, resp, options) ->
-        @original = _.clone @attributes
-
-        related.trigger "sync", related, resp, options for id, related of @related
+        @on event, @triggerRelated(event), this for event in ["sync", "request"]
 
         this
+
+    handleSync: ->
+        @original = _.clone @attributes
+
+        this
+
+    # Get a function handler that passes events to the related models
+    triggerRelated: (event) -> 
+        slice = Array.prototype.slice
+
+        (model) ->
+            for id, related of @related
+                relation = @entity.getRelation id
+                relation.triggerRelated.call relation, event, related, slice.call arguments, 1
+
+            this
 
     processError: (model, xhr) ->
         if xhr.responseJSON? and xhr.responseJSON.error is "VALIDATION"
@@ -1966,7 +2176,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
             @trigger "invalid", this, errors
 
             # Trigger errors for related models
-            model.trigger "invalid", model, errors[id] for id, model of @related when id of errors
+            @entity.getRelation(id).processErrors model, errors[id] for id, model of @related when id of errors
 
     validate: ->
         @set "errors", {}
@@ -1986,9 +2196,9 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
                 if id of @related
                     related = @related[id]
-                    related.set relationAttrs.attributes if relationAttrs
+                    relation.applyValues related, relationAttrs if relationAttrs
                 else
-                    related = @related[id] = if relationAttrs instanceof Cruddy.Entity.Instance then relationAttrs else relation.getReference().createInstance relationAttrs
+                    related = @related[id] = relation.createInstance relationAttrs
                     related.parent = this
 
                 # Attribute will now hold instance
@@ -2014,14 +2224,12 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
         copy.set @getCopyableAttributes(), silent: yes
 
-        console.log copy
-
         copy
 
     getCopyableAttributes: -> @entity.getCopyableAttributes @attributes
 
     hasChangedSinceSync: ->
-        return yes for key, value of @attributes when if value instanceof Cruddy.Entity.Instance then value.hasChangedSinceSync() else not _.isEqual value, @original[key]
+        return yes for key, value of @attributes when if key of @related then @entity.getRelation(key).hasChangedSinceSync value else not _.isEqual value, @original[key]
 
         # Related models do not affect the result unless model is created
         # return yes for key, related of @related when related.hasChangedSinceSync() unless @isNew()

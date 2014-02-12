@@ -56,7 +56,7 @@ class Cruddy.Fields.HasManyView extends Backbone.View
     template: ->
         ref = @field.getReference()
 
-        buttons = if ref.createPermitted() then b_btn("", "plus-sign", ["default", "create"]) else ""
+        buttons = if ref.createPermitted() then b_btn("", "plus", ["default", "create"]) else ""
 
         "<div class='header'>#{ @field.getReference().getPluralTitle() } #{ buttons }</div><div class='body'></div>"
 

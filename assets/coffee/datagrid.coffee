@@ -1,6 +1,6 @@
 class DataGrid extends Backbone.View
     tagName: "table"
-    className: "table table-hover table-condensed data-grid"
+    className: "table table-hover data-grid"
 
     events: {
         "click .sortable": "setOrder"

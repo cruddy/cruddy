@@ -2,7 +2,7 @@
 
 Route::filter('cruddy.auth', function ()
 {
-    if (!app('cruddy')->getPermissions()->hasAccess())
+    if ( ! app('cruddy')->getPermissions()->hasAccess())
     {
         if (Request::ajax()) App::abort(403);
 

@@ -56,13 +56,14 @@ class CruddyController extends Controller {
      */
     public function index()
     {
-        $page = $this->cruddy->config('page');
+        $dashboard = $this->cruddy->config('dashboard');
 
-        if (empty($page)) return;
+        if ( ! empty($dashboard))
+        {
+            if ($dashboard[0] === '@') return Redirect::route('cruddy.index', [ substr($dashboard, 1) ]);
 
-        if ($page[0] === '@') return Redirect::route('cruddy.show', [ substr($page, 1) ]);
-
-        return Redirect::to($page);
+            $this->layout->content = View::make($dashboard, ['cruddy' => $this->cruddy]);
+        }
     }
 
     /**

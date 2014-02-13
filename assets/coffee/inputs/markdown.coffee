@@ -42,8 +42,8 @@ class Cruddy.Inputs.Markdown extends Cruddy.Inputs.Base
         """
         <div class="markdown-editor">
             <ul class="nav nav-tabs">
-                <li class="active"><a href="##{ @cid }-editor" data-toggle="tab" data-tab="editor" tab-index="-1">Исходник</a></li>
-                <li><a href="##{ @cid }-preview" data-toggle="tab" data-tab="preview" tab-index="-1">Результат</a></li>
+                <li class="active"><a href="##{ @cid }-editor" data-toggle="tab" data-tab="editor" tab-index="-1">#{ Cruddy.lang.markdown_source }</a></li>
+                <li><a href="##{ @cid }-preview" data-toggle="tab" data-tab="preview" tab-index="-1">#{ Cruddy.lang.markdown_parsed }</a></li>
             </ul>
 
             <div class="tab-content">

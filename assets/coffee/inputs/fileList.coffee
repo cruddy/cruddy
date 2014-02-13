@@ -44,7 +44,7 @@ class Cruddy.Inputs.FileList extends Cruddy.Inputs.Base
 
         html = @wrapItems html if html
 
-        html += @renderInput if @multiple then "<span class='glyphicon glyphicon-plus'></span> Добавить" else "Выбрать"
+        html += @renderInput if @multiple then "<span class='glyphicon glyphicon-plus'></span> #{ Cruddy.lang.add }" else Cruddy.lang.choose
 
         @$el.html html
 

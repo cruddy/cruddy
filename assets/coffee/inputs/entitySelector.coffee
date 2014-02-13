@@ -113,9 +113,9 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         if @dataSource.data.length or @dataSource.more
             html += @renderItem item for item in @dataSource.data
 
-            html += """<li class="more #{ if @dataSource.inProgress() then "loading" else "" }">еще</li>""" if @dataSource.more
+            html += """<li class="more #{ if @dataSource.inProgress() then "loading" else "" }">#{ Cruddy.lang.more }</li>""" if @dataSource.more
         else
-            html += "<li class='empty'>нет результатов</li>"
+            html += "<li class='empty'>#{ Cruddy.lang.no_results }</li>"
 
         @items.html html
 
@@ -144,7 +144,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
             @renderSearch() if @allowSearch
         else
-            @$el.html "<span class=error>Ошибка доступа</span>"
+            @$el.html "<span class=error>#{ Cruddy.lang.forbidden }</span>"
 
         this
 

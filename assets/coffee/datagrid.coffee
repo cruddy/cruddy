@@ -100,7 +100,7 @@ class DataGrid extends Backbone.View
         if data? and data.length
             html += @renderRow columns, item for item in data
         else
-            html += """<tr><td class="no-items" colspan="#{ columns.length }">Ничего не найдено</td></tr>"""
+            html += """<tr><td class="no-items" colspan="#{ columns.length }">#{ Cruddy.lang.no_results }</td></tr>"""
 
         html += "</tbody>"
 

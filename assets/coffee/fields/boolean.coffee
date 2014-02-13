@@ -9,4 +9,4 @@ class Cruddy.Fields.Boolean extends Cruddy.Fields.Base
         key: @id
         tripleState: yes
 
-    format: (value) -> if value then "да" else "нет"
+    format: (value) -> if value then Cruddy.lang.yes else Cruddy.lang.no

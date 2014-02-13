@@ -71,6 +71,13 @@ class Environment implements JsonableInterface {
     protected $js = [];
 
     /**
+     * Some UI text lines for JavaScript.
+     *
+     * @var array
+     */
+    protected $lang = [];
+
+    /**
      * The list of resolved entities.
      *
      * @var \Kalnoy\Cruddy\Entity[]
@@ -212,6 +219,24 @@ class Environment implements JsonableInterface {
     }
 
     /**
+     * Add some lines for JavaScript ui.
+     *
+     * @param array $items
+     *
+     * @return $this
+     */
+    public function lang(array $items)
+    {
+        $this->lang += array_map(function ($string)
+        {
+            return \Kalnoy\Cruddy\try_trans($string);
+
+        }, $items);
+
+        return $this;
+    }
+
+    /**
      * Render scripts.
      *
      * @return string
@@ -288,6 +313,24 @@ class Environment implements JsonableInterface {
     }
 
     /**
+     * Get built-in UI strings.
+     *
+     * @return array
+     */
+    protected function getDefaultLang()
+    {
+        $keys = array_keys(include __DIR__.'/../../lang/en/js.php');
+
+        $strings = array_map(function ($key)
+        {
+            return $this->translator->trans("cruddy::js.{$key}");
+
+        }, $keys);
+
+        return array_combine($keys, $strings);
+    }
+
+    /**
      * @param int $options
      *
      * @return string
@@ -301,6 +344,7 @@ class Environment implements JsonableInterface {
             'root' => $this->request->root(),
             'ace_theme' => $this->config('ace_theme', 'chrome'),
             'entities' => $this->getAllEntities(),
+            'lang' => $this->getDefaultLang() + $this->lang,
 
         ], $options);
     }

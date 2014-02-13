@@ -110,7 +110,7 @@ class Cruddy.Fields.HasManyItemView extends Backbone.View
 
         this
 
-    template: -> if @model.entity.deletePermitted() then b_btn("Удалить", "trash", ["default", "sm", "delete"]) else ""
+    template: -> if @model.entity.deletePermitted() then b_btn(Cruddy.lang.delete, "trash", ["default", "sm", "delete"]) else ""
 
     dispose: ->
         @fieldList?.remove()

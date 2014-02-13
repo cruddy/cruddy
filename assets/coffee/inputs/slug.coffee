@@ -80,6 +80,6 @@ class Cruddy.Inputs.Slug extends Backbone.View
 
         """
         <div class="input-group-btn">
-            <button type="button" tabindex="-1" class="btn btn-default" title="Синхронизировать"><span class="glyphicon glyphicon-link"></span></button>
+            <button type="button" tabindex="-1" class="btn btn-default" title="#{ Cruddy.lang.slug_sync }"><span class="glyphicon glyphicon-link"></span></button>
         </div>
         """

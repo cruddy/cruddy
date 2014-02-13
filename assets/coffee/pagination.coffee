@@ -56,9 +56,9 @@ class Pagination extends Backbone.View
 
     template: (current, last) ->
         html = ""
-        html += @renderLink current - 1, "&larr; Назад", "previous" + if current > 1 then "" else " disabled"
+        html += @renderLink current - 1, "&larr; #{ Cruddy.lang.prev }", "previous" + if current > 1 then "" else " disabled"
         html += @renderStats() if @model.get("total")?
-        html += @renderLink current + 1, "Вперед &rarr;", "next" + if current < last then "" else " disabled"
+        html += @renderLink current + 1, "#{ Cruddy.lang.next } &rarr;", "next" + if current < last then "" else " disabled"
 
         html
 

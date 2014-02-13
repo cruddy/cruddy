@@ -9,7 +9,7 @@ class Cruddy.Fields.Enum extends Cruddy.Fields.Base
     createFilterInput: (model) -> new Cruddy.Inputs.Select
         model: model
         key: @id
-        prompt: "Любое значение"
+        prompt: Cruddy.lang.any_value
         items: @attributes.items
 
     format: (value) ->

@@ -38,8 +38,8 @@ class Cruddy.Inputs.Boolean extends Cruddy.Inputs.Base
     template: ->
         """
         <div class="btn-group">
-            <button type="button" class="btn btn-info" data-value="1">да</button>
-            <button type="button" class="btn btn-default" data-value="0">нет</button>
+            <button type="button" class="btn btn-info" data-value="1">#{ Cruddy.lang.yes }</button>
+            <button type="button" class="btn btn-default" data-value="0">#{ Cruddy.lang.no }</button>
         </div>
         """
 

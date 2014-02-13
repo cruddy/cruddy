@@ -11,6 +11,7 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         key: @id
         reference: @getReference()
         allowEdit: no
+        placeholder: Cruddy.lang.any_value
 
     format: (value) ->
         return "не указано" if _.isEmpty value

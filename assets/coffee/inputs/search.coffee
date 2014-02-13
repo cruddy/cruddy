@@ -3,7 +3,7 @@ class Cruddy.Inputs.Search extends Cruddy.Inputs.Text
 
     attributes:
         type: "search"
-        placeholder: "поиск"
+        placeholder: Cruddy.lang.search
 
     scheduleChange: ->
         clearTimeout @timeout if @timeout?

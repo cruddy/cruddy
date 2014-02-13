@@ -90,7 +90,7 @@ class Router extends Backbone.Router
 
             entity
         else
-            Cruddy.app.displayError "You are not allowed to view this entity."
+            Cruddy.app.displayError Cruddy.lang.entity_forbidden
 
             null
 

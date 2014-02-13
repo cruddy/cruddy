@@ -65,11 +65,11 @@ class Cruddy.Entity.Form extends Backbone.View
 
         this
 
-    displaySuccess: -> @displayAlert "Получилось!", "success"
+    displaySuccess: -> @displayAlert Cruddy.lang.success, "success"
 
-    displayInvalid: -> @displayAlert "Не получилось...", "warning"
+    displayInvalid: -> @displayAlert Cruddy.lang.invalid, "warning"
 
-    displayError: (xhr) -> @displayAlert "Ошибка", "danger" unless xhr.responseJSON?.error is "VALIDATION"
+    displayError: (xhr) -> @displayAlert Cruddy.lang.failure, "danger" unless xhr.responseJSON?.error is "VALIDATION"
 
     handleDestroy: ->
         if @model.entity.get "soft_deleting"
@@ -100,9 +100,9 @@ class Cruddy.Entity.Form extends Backbone.View
 
     close: ->
         if @request
-            confirmed = confirm "Вы точно хотите закрыть форму и отменить операцию?"
+            confirmed = confirm Cruddy.lang.confirm_abort
         else
-            confirmed = if @model.hasChangedSinceSync() then confirm("Вы точно хотите закрыть форму? Все изменения будут утеряны!") else yes
+            confirmed = if @model.hasChangedSinceSync() then confirm(Cruddy.lang.confirm_discard) else yes
 
         if confirmed
             @request.abort() if @request
@@ -115,7 +115,7 @@ class Cruddy.Entity.Form extends Backbone.View
 
         softDeleting = @model.entity.get "soft_deleting"
 
-        confirmed = if not softDeleting then confirm("Точно удалить? Восстановить не получится!") else yes
+        confirmed = if not softDeleting then confirm(Cruddy.lang.confirm_delete) else yes
 
         if confirmed
             @request = if @softDeleting and @model.get "deleted_at" then @model.restore else @model.destroy wait: true
@@ -162,12 +162,12 @@ class Cruddy.Entity.Form extends Backbone.View
 
         @$el.toggleClass "loading", @request?
 
-        @submit.text if @model.isNew() then "Создать" else "Сохранить"
+        @submit.text if @model.isNew() then Cruddy.lang.create else Cruddy.lang.save
         @submit.attr "disabled", @request? or not @model.hasChangedSinceSync()
         @submit.toggle if @model.isNew() then permit.create else permit.update
 
         @destroy.attr "disabled", @request?
-        @destroy.html if @model.entity.isSoftDeleting() and @model.get "deleted_at" then "Восстановить" else "<span class='glyphicon glyphicon-trash' title='Удалить'></span>"
+        @destroy.html if @model.entity.isSoftDeleting() and @model.get "deleted_at" then "Восстановить" else "<span class='glyphicon glyphicon-trash' title='#{ Cruddy.lang.delete }'></span>"
         @destroy.toggle not @model.isNew() and permit.delete
         
         @copy.toggle not @model.isNew() and permit.create
@@ -177,7 +177,7 @@ class Cruddy.Entity.Form extends Backbone.View
     template: ->
         """
         <div class="navbar navbar-default navbar-static-top" role="navigation">
-            <button type="button" tabindex="-1" class="btn btn-link btn-copy navbar-btn pull-right" title="Копировать">
+            <button type="button" tabindex="-1" class="btn btn-link btn-copy navbar-btn pull-right" title="#{ Cruddy.lang.copy }">
                 <span class="glyphicon glyphicon-book"></span>
             </button>
 
@@ -185,9 +185,9 @@ class Cruddy.Entity.Form extends Backbone.View
         </div>
 
         <footer>
-            <button type="button" class="btn btn-default btn-close btn-sm" type="button">Закрыть</button>
-            <button type="button" class="btn btn-default btn-destroy btn-sm" type="button"></button>
-            <button type="button" class="btn btn-primary btn-save btn-sm" type="button" disabled></button>
+            <button type="button" class="btn btn-default btn-close" type="button">#{ Cruddy.lang.close }</button>
+            <button type="button" class="btn btn-default btn-destroy" type="button"></button>
+            <button type="button" class="btn btn-primary btn-save" type="button" disabled></button>
         </footer>
         """
 

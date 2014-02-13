@@ -25,6 +25,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
         @reference = options.reference if options.reference?
         @allowEdit = options.allowEdit ? yes and @reference.updatePermitted()
         @active = false
+        @placeholder = options.placeholder ? Cruddy.lang.not_selected
 
         super
 
@@ -128,7 +129,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         @$el.append """
             <button type="button" class="btn btn-default btn-block dropdown-toggle ed-dropdown-toggle" data-toggle="dropdown" data-target="##{ @cid }">
-                Выбрать
+                #{ Cruddy.lang.choose }
                 <span class="caret"></span>
             </button>
             """
@@ -154,7 +155,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
     updateItem: ->
         value = @getValue()
-        @itemTitle.val if value then value.title else "Не выбрано"
+        @itemTitle.val if value then value.title else ""
         @itemDelete.toggle !!value
         @itemEdit.toggle !!value
 
@@ -163,7 +164,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     itemTemplate: (value, key = null) ->
         html = """
         <div class="input-group input-group ed-item #{ if not @multiple then "ed-dropdown-toggle" else "" }" data-key="#{ key }">
-            <input type="text" class="form-control" #{ if not @multiple then "data-toggle='dropdown' data-target='##{ @cid }'" else "tab-index='-1'"} value="#{ _.escape value }" readonly>
+            <input type="text" class="form-control" #{ if not @multiple then "data-toggle='dropdown' data-target='##{ @cid }' placeholder='#{ @placeholder }'" else "tab-index='-1'"} value="#{ _.escape value }" readonly>
             <div class="input-group-btn">
         """
 

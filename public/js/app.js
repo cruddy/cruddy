@@ -1,5 +1,5 @@
 (function() {
-  var API_URL, AdvFormData, Alert, App, Attribute, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FieldView, FilterList, Pagination, Router, SearchDataSource, TRANSITIONEND, after_break, b_btn, b_icon, entity_url, humanize, thumb, _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref18, _ref19, _ref2, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref26, _ref27, _ref28, _ref29, _ref3, _ref30, _ref31, _ref32, _ref33, _ref34, _ref35, _ref36, _ref37, _ref38, _ref39, _ref4, _ref40, _ref41, _ref42, _ref43, _ref44, _ref45, _ref5, _ref6, _ref7, _ref8, _ref9,
+  var API_URL, AdvFormData, Alert, App, Attribute, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FieldView, FilterList, Pagination, Router, SearchDataSource, TRANSITIONEND, after_break, b_btn, b_icon, entity_url, humanize, thumb, _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref18, _ref19, _ref2, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref26, _ref27, _ref28, _ref29, _ref3, _ref30, _ref31, _ref32, _ref33, _ref34, _ref35, _ref36, _ref37, _ref38, _ref39, _ref4, _ref40, _ref41, _ref42, _ref43, _ref44, _ref45, _ref46, _ref5, _ref6, _ref7, _ref8, _ref9,
     _this = this,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -533,11 +533,11 @@
     Pagination.prototype.template = function(current, last) {
       var html;
       html = "";
-      html += this.renderLink(current - 1, "&larr; Назад", "previous" + (current > 1 ? "" : " disabled"));
+      html += this.renderLink(current - 1, "&larr; " + Cruddy.lang.prev, "previous" + (current > 1 ? "" : " disabled"));
       if (this.model.get("total") != null) {
         html += this.renderStats();
       }
-      html += this.renderLink(current + 1, "Вперед &rarr;", "next" + (current < last ? "" : " disabled"));
+      html += this.renderLink(current + 1, "" + Cruddy.lang.next + " &rarr;", "next" + (current < last ? "" : " disabled"));
       return html;
     };
 
@@ -686,7 +686,7 @@
           html += this.renderRow(columns, item);
         }
       } else {
-        html += "<tr><td class=\"no-items\" colspan=\"" + columns.length + "\">Ничего не найдено</td></tr>";
+        html += "<tr><td class=\"no-items\" colspan=\"" + columns.length + "\">" + Cruddy.lang.no_results + "</td></tr>";
       }
       return html += "</tbody>";
     };
@@ -1125,7 +1125,7 @@
     };
 
     Boolean.prototype.template = function() {
-      return "<div class=\"btn-group\">\n    <button type=\"button\" class=\"btn btn-info\" data-value=\"1\">да</button>\n    <button type=\"button\" class=\"btn btn-default\" data-value=\"0\">нет</button>\n</div>";
+      return "<div class=\"btn-group\">\n    <button type=\"button\" class=\"btn btn-info\" data-value=\"1\">" + Cruddy.lang.yes + "</button>\n    <button type=\"button\" class=\"btn btn-default\" data-value=\"0\">" + Cruddy.lang.no + "</button>\n</div>";
     };
 
     Boolean.prototype.itemTemplate = function(label, value) {
@@ -1169,7 +1169,7 @@
     EntityDropdown.prototype.reference = null;
 
     EntityDropdown.prototype.initialize = function(options) {
-      var _ref15;
+      var _ref15, _ref16;
       if (options.multiple != null) {
         this.multiple = options.multiple;
       }
@@ -1178,6 +1178,7 @@
       }
       this.allowEdit = ((_ref15 = options.allowEdit) != null ? _ref15 : true) && this.reference.updatePermitted();
       this.active = false;
+      this.placeholder = (_ref16 = options.placeholder) != null ? _ref16 : Cruddy.lang.not_selected;
       return EntityDropdown.__super__.initialize.apply(this, arguments);
     };
 
@@ -1298,7 +1299,7 @@
       this.$el.append(this.items = $("<div>", {
         "class": "items"
       }));
-      this.$el.append("<button type=\"button\" class=\"btn btn-default btn-block dropdown-toggle ed-dropdown-toggle\" data-toggle=\"dropdown\" data-target=\"#" + this.cid + "\">\n    Выбрать\n    <span class=\"caret\"></span>\n</button>");
+      this.$el.append("<button type=\"button\" class=\"btn btn-default btn-block dropdown-toggle ed-dropdown-toggle\" data-toggle=\"dropdown\" data-target=\"#" + this.cid + "\">\n    " + Cruddy.lang.choose + "\n    <span class=\"caret\"></span>\n</button>");
       return this.renderItems();
     };
 
@@ -1326,7 +1327,7 @@
     EntityDropdown.prototype.updateItem = function() {
       var value;
       value = this.getValue();
-      this.itemTitle.val(value ? value.title : "Не выбрано");
+      this.itemTitle.val(value ? value.title : "");
       this.itemDelete.toggle(!!value);
       this.itemEdit.toggle(!!value);
       return this;
@@ -1337,7 +1338,7 @@
       if (key == null) {
         key = null;
       }
-      html = "<div class=\"input-group input-group ed-item " + (!this.multiple ? "ed-dropdown-toggle" : "") + "\" data-key=\"" + key + "\">\n    <input type=\"text\" class=\"form-control\" " + (!this.multiple ? "data-toggle='dropdown' data-target='#" + this.cid + "'" : "tab-index='-1'") + " value=\"" + (_.escape(value)) + "\" readonly>\n    <div class=\"input-group-btn\">";
+      html = "<div class=\"input-group input-group ed-item " + (!this.multiple ? "ed-dropdown-toggle" : "") + "\" data-key=\"" + key + "\">\n    <input type=\"text\" class=\"form-control\" " + (!this.multiple ? "data-toggle='dropdown' data-target='#" + this.cid + "' placeholder='" + this.placeholder + "'" : "tab-index='-1'") + " value=\"" + (_.escape(value)) + "\" readonly>\n    <div class=\"input-group-btn\">";
       if (this.allowEdit) {
         html += "<button type=\"button\" class=\"btn btn-default btn-edit\" tabindex=\"-1\">\n    <span class=\"glyphicon glyphicon-pencil\"></span>\n</button>";
       }
@@ -1516,10 +1517,10 @@
           html += this.renderItem(item);
         }
         if (this.dataSource.more) {
-          html += "<li class=\"more " + (this.dataSource.inProgress() ? "loading" : "") + "\">еще</li>";
+          html += "<li class=\"more " + (this.dataSource.inProgress() ? "loading" : "") + "\">" + Cruddy.lang.more + "</li>";
         }
       } else {
-        html += "<li class='empty'>нет результатов</li>";
+        html += "<li class='empty'>" + Cruddy.lang.no_results + "</li>";
       }
       this.items.html(html);
       if (this.dataSource.more) {
@@ -1546,7 +1547,7 @@
           this.renderSearch();
         }
       } else {
-        this.$el.html("<span class=error>Ошибка доступа</span>");
+        this.$el.html("<span class=error>" + Cruddy.lang.forbidden + "</span>");
       }
       return this;
     };
@@ -1679,7 +1680,7 @@
       if (html) {
         html = this.wrapItems(html);
       }
-      html += this.renderInput(this.multiple ? "<span class='glyphicon glyphicon-plus'></span> Добавить" : "Выбрать");
+      html += this.renderInput(this.multiple ? "<span class='glyphicon glyphicon-plus'></span> " + Cruddy.lang.add : Cruddy.lang.choose);
       this.$el.html(html);
       return this;
     };
@@ -1788,7 +1789,7 @@
 
     Search.prototype.attributes = {
       type: "search",
-      placeholder: "поиск"
+      placeholder: Cruddy.lang.search
     };
 
     Search.prototype.scheduleChange = function() {
@@ -1925,7 +1926,7 @@
       if (this.ref == null) {
         return "";
       }
-      return "<div class=\"input-group-btn\">\n    <button type=\"button\" tabindex=\"-1\" class=\"btn btn-default\" title=\"Синхронизировать\"><span class=\"glyphicon glyphicon-link\"></span></button>\n</div>";
+      return "<div class=\"input-group-btn\">\n    <button type=\"button\" tabindex=\"-1\" class=\"btn btn-default\" title=\"" + Cruddy.lang.slug_sync + "\"><span class=\"glyphicon glyphicon-link\"></span></button>\n</div>";
     };
 
     return Slug;
@@ -2094,7 +2095,7 @@
     };
 
     Markdown.prototype.template = function() {
-      return "<div class=\"markdown-editor\">\n    <ul class=\"nav nav-tabs\">\n        <li class=\"active\"><a href=\"#" + this.cid + "-editor\" data-toggle=\"tab\" data-tab=\"editor\" tab-index=\"-1\">Исходник</a></li>\n        <li><a href=\"#" + this.cid + "-preview\" data-toggle=\"tab\" data-tab=\"preview\" tab-index=\"-1\">Результат</a></li>\n    </ul>\n\n    <div class=\"tab-content\">\n        <div class=\"tab-pane-editor tab-pane active\" id=\"" + this.cid + "-editor\"></div>\n        <div class=\"tab-pane-preview tab-pane\" id=\"" + this.cid + "-preview\" style=\"height:" + this.height + "px\"></div>\n    </div>\n</div>";
+      return "<div class=\"markdown-editor\">\n    <ul class=\"nav nav-tabs\">\n        <li class=\"active\"><a href=\"#" + this.cid + "-editor\" data-toggle=\"tab\" data-tab=\"editor\" tab-index=\"-1\">" + Cruddy.lang.markdown_source + "</a></li>\n        <li><a href=\"#" + this.cid + "-preview\" data-toggle=\"tab\" data-tab=\"preview\" tab-index=\"-1\">" + Cruddy.lang.markdown_parsed + "</a></li>\n    </ul>\n\n    <div class=\"tab-content\">\n        <div class=\"tab-pane-editor tab-pane active\" id=\"" + this.cid + "-editor\"></div>\n        <div class=\"tab-pane-preview tab-pane\" id=\"" + this.cid + "-preview\" style=\"height:" + this.height + "px\"></div>\n    </div>\n</div>";
     };
 
     Markdown.prototype.focus = function() {
@@ -2381,9 +2382,9 @@
 
     Boolean.prototype.format = function(value) {
       if (value) {
-        return "да";
+        return Cruddy.lang.yes;
       } else {
-        return "нет";
+        return Cruddy.lang.no;
       }
     };
 
@@ -2440,7 +2441,8 @@
         model: model,
         key: this.id,
         reference: this.getReference(),
-        allowEdit: false
+        allowEdit: false,
+        placeholder: Cruddy.lang.any_value
       });
     };
 
@@ -2565,7 +2567,7 @@
       return new Cruddy.Inputs.Select({
         model: model,
         key: this.id,
-        prompt: "Любое значение",
+        prompt: Cruddy.lang.any_value,
         items: this.attributes.items
       });
     };
@@ -2670,7 +2672,7 @@
 
     HasOne.prototype.viewConstructor = Cruddy.Fields.HasOneView;
 
-    HasOne.prototype.createInstance = function(attrs) {
+    HasOne.prototype.createInstance = function(owner, attrs) {
       if (attrs instanceof Cruddy.Entity.Instance) {
         return attrs;
       } else {
@@ -2686,7 +2688,7 @@
       return model.hasChangedSinceSync();
     };
 
-    HasOne.prototype.copy = function(model) {
+    HasOne.prototype.copy = function(copy, model) {
       if (this.isUnique()) {
         return this.getReference().createInstance();
       } else {
@@ -2856,7 +2858,7 @@
 
     HasManyItemView.prototype.template = function() {
       if (this.model.entity.deletePermitted()) {
-        return b_btn("Удалить", "trash", ["default", "sm", "delete"]);
+        return b_btn(Cruddy.lang["delete"], "trash", ["default", "sm", "delete"]);
       } else {
         return "";
       }
@@ -2888,17 +2890,78 @@
 
   })(Backbone.View);
 
+  Cruddy.Fields.RelatedCollection = (function(_super) {
+    __extends(RelatedCollection, _super);
+
+    function RelatedCollection() {
+      _ref37 = RelatedCollection.__super__.constructor.apply(this, arguments);
+      return _ref37;
+    }
+
+    RelatedCollection.prototype.initialize = function(items, options) {
+      var _this = this;
+      this.owner = options.owner;
+      this.field = options.field;
+      this.deleted = false;
+      this.listenTo(this.owner, "sync", function() {
+        return _this.deleted = false;
+      });
+      return RelatedCollection.__super__.initialize.apply(this, arguments);
+    };
+
+    RelatedCollection.prototype.remove = function() {
+      this.deleted = true;
+      return RelatedCollection.__super__.remove.apply(this, arguments);
+    };
+
+    RelatedCollection.prototype.hasChangedSinceSync = function() {
+      var item, _i, _len, _ref38;
+      if (this.deleted) {
+        return true;
+      }
+      _ref38 = this.models;
+      for (_i = 0, _len = _ref38.length; _i < _len; _i++) {
+        item = _ref38[_i];
+        if (item.hasChangedSinceSync()) {
+          return true;
+        }
+      }
+      return false;
+    };
+
+    RelatedCollection.prototype.copy = function(copy) {
+      var item, items;
+      items = this.field.isUnique() ? [] : (function() {
+        var _i, _len, _ref38, _results;
+        _ref38 = this.models;
+        _results = [];
+        for (_i = 0, _len = _ref38.length; _i < _len; _i++) {
+          item = _ref38[_i];
+          _results.push(item.copy());
+        }
+        return _results;
+      }).call(this);
+      return new Cruddy.Fields.RelatedCollection(items, {
+        owner: copy,
+        field: this.field
+      });
+    };
+
+    return RelatedCollection;
+
+  })(Backbone.Collection);
+
   Cruddy.Fields.HasMany = (function(_super) {
     __extends(HasMany, _super);
 
     function HasMany() {
-      _ref37 = HasMany.__super__.constructor.apply(this, arguments);
-      return _ref37;
+      _ref38 = HasMany.__super__.constructor.apply(this, arguments);
+      return _ref38;
     }
 
     HasMany.prototype.viewConstructor = Cruddy.Fields.HasManyView;
 
-    HasMany.prototype.createInstance = function(items) {
+    HasMany.prototype.createInstance = function(model, items) {
       var item, ref;
       if (items instanceof Backbone.Collection) {
         return items;
@@ -2913,7 +2976,10 @@
         }
         return _results;
       })();
-      return new Backbone.Collection(items);
+      return new Cruddy.Fields.RelatedCollection(items, {
+        owner: model,
+        field: this
+      });
     };
 
     HasMany.prototype.applyValues = function(collection, items) {
@@ -2937,29 +3003,11 @@
     };
 
     HasMany.prototype.hasChangedSinceSync = function(items) {
-      var item, _i, _len, _ref38;
-      _ref38 = items.models;
-      for (_i = 0, _len = _ref38.length; _i < _len; _i++) {
-        item = _ref38[_i];
-        if (item.hasChangedSinceSync()) {
-          return true;
-        }
-      }
-      return false;
+      return items.hasChangedSinceSync();
     };
 
-    HasMany.prototype.copy = function(items) {
-      var item;
-      return new Backbone.Collection(this.isUnique() ? [] : (function() {
-        var _i, _len, _ref38, _results;
-        _ref38 = items.models;
-        _results = [];
-        for (_i = 0, _len = _ref38.length; _i < _len; _i++) {
-          item = _ref38[_i];
-          _results.push(item.copy());
-        }
-        return _results;
-      })());
+    HasMany.prototype.copy = function(copy, items) {
+      return items.copy(copy);
     };
 
     HasMany.prototype.processErrors = function(collection, errorsCollection) {
@@ -2975,10 +3023,10 @@
     };
 
     HasMany.prototype.triggerRelated = function(event, collection, args) {
-      var model, _i, _len, _ref38;
-      _ref38 = collection.models;
-      for (_i = 0, _len = _ref38.length; _i < _len; _i++) {
-        model = _ref38[_i];
+      var model, _i, _len, _ref39;
+      _ref39 = collection.models;
+      for (_i = 0, _len = _ref39.length; _i < _len; _i++) {
+        model = _ref39[_i];
         model.trigger.apply(model, [event, model].concat(args));
       }
       return this;
@@ -2994,8 +3042,8 @@
     __extends(Base, _super);
 
     function Base() {
-      _ref38 = Base.__super__.constructor.apply(this, arguments);
-      return _ref38;
+      _ref39 = Base.__super__.constructor.apply(this, arguments);
+      return _ref39;
     }
 
     Base.prototype.initialize = function(attributes) {
@@ -3041,13 +3089,13 @@
     __extends(Proxy, _super);
 
     function Proxy() {
-      _ref39 = Proxy.__super__.constructor.apply(this, arguments);
-      return _ref39;
+      _ref40 = Proxy.__super__.constructor.apply(this, arguments);
+      return _ref40;
     }
 
     Proxy.prototype.initialize = function(attributes) {
-      var field, _ref40;
-      field = (_ref40 = attributes.field) != null ? _ref40 : attributes.id;
+      var field, _ref41;
+      field = (_ref41 = attributes.field) != null ? _ref41 : attributes.id;
       this.field = attributes.entity.fields.get(field);
       if (attributes.header === null) {
         this.set("header", this.field.get("label"));
@@ -3087,8 +3135,8 @@
     __extends(Computed, _super);
 
     function Computed() {
-      _ref40 = Computed.__super__.constructor.apply(this, arguments);
-      return _ref40;
+      _ref41 = Computed.__super__.constructor.apply(this, arguments);
+      return _ref41;
     }
 
     Computed.prototype.createFilter = function(model) {
@@ -3134,8 +3182,8 @@
     __extends(Image, _super);
 
     function Image() {
-      _ref41 = Image.__super__.constructor.apply(this, arguments);
-      return _ref41;
+      _ref42 = Image.__super__.constructor.apply(this, arguments);
+      return _ref42;
     }
 
     Image.prototype.defaultOptions = {
@@ -3161,8 +3209,8 @@
     __extends(Plain, _super);
 
     function Plain() {
-      _ref42 = Plain.__super__.constructor.apply(this, arguments);
-      return _ref42;
+      _ref43 = Plain.__super__.constructor.apply(this, arguments);
+      return _ref43;
     }
 
     Plain.prototype.format = function(value) {
@@ -3179,8 +3227,8 @@
     __extends(Entity, _super);
 
     function Entity() {
-      _ref43 = Entity.__super__.constructor.apply(this, arguments);
-      return _ref43;
+      _ref44 = Entity.__super__.constructor.apply(this, arguments);
+      return _ref44;
     }
 
     Entity.prototype.initialize = function(attributes, options) {
@@ -3227,11 +3275,11 @@
         columns = this.columns;
       }
       filters = (function() {
-        var _i, _len, _ref44, _results;
-        _ref44 = columns.models;
+        var _i, _len, _ref45, _results;
+        _ref45 = columns.models;
         _results = [];
-        for (_i = 0, _len = _ref44.length; _i < _len; _i++) {
-          col = _ref44[_i];
+        for (_i = 0, _len = _ref45.length; _i < _len; _i++) {
+          col = _ref45[_i];
           if (col.get("filter_type") === "complex") {
             _results.push(col.createFilter());
           }
@@ -3305,21 +3353,21 @@
       return this.set("instance", this.createInstance());
     };
 
-    Entity.prototype.getCopyableAttributes = function(attributes) {
-      var data, field, ref, _i, _j, _len, _len1, _ref44, _ref45;
+    Entity.prototype.getCopyableAttributes = function(model, attributes) {
+      var data, field, ref, _i, _j, _len, _len1, _ref45, _ref46;
       data = {};
-      _ref44 = this.fields.models;
-      for (_i = 0, _len = _ref44.length; _i < _len; _i++) {
-        field = _ref44[_i];
+      _ref45 = this.fields.models;
+      for (_i = 0, _len = _ref45.length; _i < _len; _i++) {
+        field = _ref45[_i];
         if (!field.isUnique() && field.id in attributes && !_.contains(this.attributes.related, field.id)) {
           data[field.id] = attributes[field.id];
         }
       }
-      _ref45 = this.attributes.related;
-      for (_j = 0, _len1 = _ref45.length; _j < _len1; _j++) {
-        ref = _ref45[_j];
+      _ref46 = this.attributes.related;
+      for (_j = 0, _len1 = _ref46.length; _j < _len1; _j++) {
+        ref = _ref46[_j];
         if (ref in attributes) {
-          data[ref] = this.getRelation(ref).copy(attributes[ref]);
+          data[ref] = this.getRelation(ref).copy(model, attributes[ref]);
         }
       }
       return data;
@@ -3379,7 +3427,7 @@
     }
 
     Instance.prototype.initialize = function(attributes, options) {
-      var event, _i, _len, _ref44,
+      var event, _i, _len, _ref45,
         _this = this;
       this.original = _.clone(attributes);
       this.on("error", this.processError, this);
@@ -3389,9 +3437,9 @@
           return _this.set("deleted_at", moment().unix());
         }
       });
-      _ref44 = ["sync", "request"];
-      for (_i = 0, _len = _ref44.length; _i < _len; _i++) {
-        event = _ref44[_i];
+      _ref45 = ["sync", "request"];
+      for (_i = 0, _len = _ref45.length; _i < _len; _i++) {
+        event = _ref45[_i];
         this.on(event, this.triggerRelated(event), this);
       }
       return this;
@@ -3406,10 +3454,10 @@
       var slice;
       slice = Array.prototype.slice;
       return function(model) {
-        var id, related, relation, _ref44;
-        _ref44 = this.related;
-        for (id in _ref44) {
-          related = _ref44[id];
+        var id, related, relation, _ref45;
+        _ref45 = this.related;
+        for (id in _ref45) {
+          related = _ref45[id];
           relation = this.entity.getRelation(id);
           relation.triggerRelated.call(relation, event, related, slice.call(arguments, 1));
         }
@@ -3418,14 +3466,14 @@
     };
 
     Instance.prototype.processError = function(model, xhr) {
-      var errors, id, _ref44, _results;
+      var errors, id, _ref45, _results;
       if ((xhr.responseJSON != null) && xhr.responseJSON.error === "VALIDATION") {
         errors = xhr.responseJSON.data;
         this.trigger("invalid", this, errors);
-        _ref44 = this.related;
+        _ref45 = this.related;
         _results = [];
-        for (id in _ref44) {
-          model = _ref44[id];
+        for (id in _ref45) {
+          model = _ref45[id];
           if (id in errors) {
             _results.push(this.entity.getRelation(id).processErrors(model, errors[id]));
           }
@@ -3447,25 +3495,29 @@
       return this.entity.url(this.id);
     };
 
-    Instance.prototype.set = function(key, val) {
-      var attrs, id, related, relation, relationAttrs, _i, _len, _ref44;
+    Instance.prototype.set = function(key, val, options) {
+      var attrs, id, is_copy, related, relation, relationAttrs, _i, _len, _ref45;
       if (typeof key === "object") {
         attrs = key;
-        _ref44 = this.entity.get("related");
-        for (_i = 0, _len = _ref44.length; _i < _len; _i++) {
-          id = _ref44[_i];
+        options = val;
+        is_copy = options != null ? options.is_copy : void 0;
+        _ref45 = this.entity.get("related");
+        for (_i = 0, _len = _ref45.length; _i < _len; _i++) {
+          id = _ref45[_i];
           if (!(id in attrs)) {
             continue;
           }
           relation = this.entity.getRelation(id);
           relationAttrs = attrs[id];
-          if (id in this.related) {
+          if (is_copy) {
+            related = this.related[id] = relationAttrs;
+          } else if (id in this.related) {
             related = this.related[id];
             if (relationAttrs) {
               relation.applyValues(related, relationAttrs);
             }
           } else {
-            related = this.related[id] = relation.createInstance(relationAttrs);
+            related = this.related[id] = relation.createInstance(this, relationAttrs);
             related.parent = this;
           }
           attrs[id] = related;
@@ -3475,9 +3527,9 @@
     };
 
     Instance.prototype.sync = function(method, model, options) {
-      var _ref44;
+      var _ref45;
       if (method === "update" || method === "create") {
-        options.data = new AdvFormData((_ref44 = options.attrs) != null ? _ref44 : this.attributes).original;
+        options.data = new AdvFormData((_ref45 = options.attrs) != null ? _ref45 : this.attributes).original;
         options.contentType = false;
         options.processData = false;
       }
@@ -3491,21 +3543,22 @@
     Instance.prototype.copy = function() {
       var copy;
       copy = this.entity.createInstance();
-      copy.set(this.getCopyableAttributes(), {
-        silent: true
+      copy.set(this.getCopyableAttributes(copy), {
+        silent: true,
+        is_copy: true
       });
       return copy;
     };
 
-    Instance.prototype.getCopyableAttributes = function() {
-      return this.entity.getCopyableAttributes(this.attributes);
+    Instance.prototype.getCopyableAttributes = function(copy) {
+      return this.entity.getCopyableAttributes(copy, this.attributes);
     };
 
     Instance.prototype.hasChangedSinceSync = function() {
-      var key, value, _ref44;
-      _ref44 = this.attributes;
-      for (key in _ref44) {
-        value = _ref44[key];
+      var key, value, _ref45;
+      _ref45 = this.attributes;
+      for (key in _ref45) {
+        value = _ref45[key];
         if (key in this.related ? this.entity.getRelation(key).hasChangedSinceSync(value) : !_.isEqual(value, this.original[key])) {
           return true;
         }
@@ -3660,22 +3713,12 @@
     }
 
     Form.prototype.initialize = function(options) {
-      var key, related, _ref44, _ref45;
-      this.inner = (_ref44 = options.inner) != null ? _ref44 : false;
+      var _ref45;
+      this.inner = (_ref45 = options.inner) != null ? _ref45 : false;
       this.listenTo(this.model, "destroy", this.handleDestroy);
-      this.signOn(this.model);
-      _ref45 = this.model.related;
-      for (key in _ref45) {
-        related = _ref45[key];
-        this.signOn(related);
-      }
       this.listenTo(this.model, "invalid", this.displayInvalid);
       this.hotkeys = $(document).on("keydown." + this.cid, "body", $.proxy(this, "hotkeys"));
       return this;
-    };
-
-    Form.prototype.signOn = function(model) {
-      return this.listenTo(model, "change", this.enableSubmit);
     };
 
     Form.prototype.hotkeys = function(e) {
@@ -3690,13 +3733,6 @@
       if (e.keyCode === 27) {
         this.close();
         return false;
-      }
-      return this;
-    };
-
-    Form.prototype.enableSubmit = function() {
-      if (!this.request) {
-        this.submit.attr("disabled", this.model.hasChangedSinceSync() === false);
       }
       return this;
     };
@@ -3716,17 +3752,17 @@
     };
 
     Form.prototype.displaySuccess = function() {
-      return this.displayAlert("Получилось!", "success");
+      return this.displayAlert(Cruddy.lang.success, "success");
     };
 
     Form.prototype.displayInvalid = function() {
-      return this.displayAlert("Не получилось...", "warning");
+      return this.displayAlert(Cruddy.lang.invalid, "warning");
     };
 
     Form.prototype.displayError = function(xhr) {
-      var _ref44;
-      if (((_ref44 = xhr.responseJSON) != null ? _ref44.error : void 0) !== "VALIDATION") {
-        return this.displayAlert("Ошибка", "danger");
+      var _ref45;
+      if (((_ref45 = xhr.responseJSON) != null ? _ref45.error : void 0) !== "VALIDATION") {
+        return this.displayAlert(Cruddy.lang.failure, "danger");
       }
     };
 
@@ -3753,7 +3789,7 @@
 
     Form.prototype.save = function() {
       var _this = this;
-      if ((this.request != null) || !this.model.hasChangedSinceSync()) {
+      if (this.request != null) {
         return;
       }
       this.request = this.model.save({
@@ -3770,9 +3806,9 @@
     Form.prototype.close = function() {
       var confirmed;
       if (this.request) {
-        confirmed = confirm("Вы точно хотите закрыть форму и отменить операцию?");
+        confirmed = confirm(Cruddy.lang.confirm_abort);
       } else {
-        confirmed = this.model.hasChangedSinceSync() ? confirm("Вы точно хотите закрыть форму? Все изменения будут утеряны!") : true;
+        confirmed = this.model.hasChangedSinceSync() ? confirm(Cruddy.lang.confirm_discard) : true;
       }
       if (confirmed) {
         if (this.request) {
@@ -3796,7 +3832,7 @@
         return;
       }
       softDeleting = this.model.entity.get("soft_deleting");
-      confirmed = !softDeleting ? confirm("Точно удалить? Восстановить не получится!") : true;
+      confirmed = !softDeleting ? confirm(Cruddy.lang.confirm_delete) : true;
       if (confirmed) {
         this.request = this.softDeleting && this.model.get("deleted_at") ? this.model.restore : this.model.destroy({
           wait: true
@@ -3846,18 +3882,18 @@
       var permit;
       permit = this.model.entity.getPermissions();
       this.$el.toggleClass("loading", this.request != null);
-      this.submit.text(this.model.isNew() ? "Создать" : "Сохранить");
-      this.submit.attr("disabled", (this.request != null) || !this.model.hasChangedSinceSync());
+      this.submit.text(this.model.isNew() ? Cruddy.lang.create : Cruddy.lang.save);
+      this.submit.attr("disabled", this.request != null);
       this.submit.toggle(this.model.isNew() ? permit.create : permit.update);
       this.destroy.attr("disabled", this.request != null);
-      this.destroy.html(this.model.entity.isSoftDeleting() && this.model.get("deleted_at") ? "Восстановить" : "<span class='glyphicon glyphicon-trash' title='Удалить'></span>");
+      this.destroy.html(this.model.entity.isSoftDeleting() && this.model.get("deleted_at") ? "Восстановить" : "<span class='glyphicon glyphicon-trash' title='" + Cruddy.lang["delete"] + "'></span>");
       this.destroy.toggle(!this.model.isNew() && permit["delete"]);
       this.copy.toggle(!this.model.isNew() && permit.create);
       return this;
     };
 
     Form.prototype.template = function() {
-      return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <button type=\"button\" tabindex=\"-1\" class=\"btn btn-link btn-copy navbar-btn pull-right\" title=\"Копировать\">\n        <span class=\"glyphicon glyphicon-book\"></span>\n    </button>\n\n    <ul class=\"nav navbar-nav\"></ul>\n</div>\n\n<footer>\n    <button type=\"button\" class=\"btn btn-default btn-close btn-sm\" type=\"button\">Закрыть</button>\n    <button type=\"button\" class=\"btn btn-default btn-destroy btn-sm\" type=\"button\"></button>\n    <button type=\"button\" class=\"btn btn-primary btn-save btn-sm\" type=\"button\" disabled></button>\n</footer>";
+      return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <button type=\"button\" tabindex=\"-1\" class=\"btn btn-link btn-copy navbar-btn pull-right\" title=\"" + Cruddy.lang.copy + "\">\n        <span class=\"glyphicon glyphicon-book\"></span>\n    </button>\n\n    <ul class=\"nav navbar-nav\"></ul>\n</div>\n\n<footer>\n    <button type=\"button\" class=\"btn btn-default btn-close\" type=\"button\">" + Cruddy.lang.close + "</button>\n    <button type=\"button\" class=\"btn btn-default btn-destroy\" type=\"button\"></button>\n    <button type=\"button\" class=\"btn btn-primary btn-save\" type=\"button\" disabled></button>\n</footer>";
     };
 
     Form.prototype.navTemplate = function(label, target, active) {
@@ -3878,11 +3914,11 @@
     };
 
     Form.prototype.dispose = function() {
-      var fieldList, _i, _len, _ref44;
+      var fieldList, _i, _len, _ref45;
       if (this.tabs != null) {
-        _ref44 = this.tabs;
-        for (_i = 0, _len = _ref44.length; _i < _len; _i++) {
-          fieldList = _ref44[_i];
+        _ref45 = this.tabs;
+        for (_i = 0, _len = _ref45.length; _i < _len; _i++) {
+          fieldList = _ref45[_i];
           fieldList.remove();
         }
       }
@@ -3907,20 +3943,20 @@
     __extends(App, _super);
 
     function App() {
-      _ref44 = App.__super__.constructor.apply(this, arguments);
-      return _ref44;
+      _ref45 = App.__super__.constructor.apply(this, arguments);
+      return _ref45;
     }
 
     App.prototype.initialize = function() {
-      var entity, _i, _len, _ref45;
+      var entity, _i, _len, _ref46;
       this.container = $("body");
       this.mainContent = $("#content");
       this.loadingRequests = 0;
       this.entities = {};
       this.entitiesDfd = {};
-      _ref45 = Cruddy.entities;
-      for (_i = 0, _len = _ref45.length; _i < _len; _i++) {
-        entity = _ref45[_i];
+      _ref46 = Cruddy.entities;
+      for (_i = 0, _len = _ref46.length; _i < _len; _i++) {
+        entity = _ref46[_i];
         this.entities[entity.id] = new Cruddy.Entity.Entity(entity);
       }
       this.on("change:entity", this.displayEntity, this);
@@ -3978,9 +4014,9 @@
     };
 
     App.prototype.dispose = function() {
-      var _ref45;
-      if ((_ref45 = this.page) != null) {
-        _ref45.remove();
+      var _ref46;
+      if ((_ref46 = this.page) != null) {
+        _ref46.remove();
       }
       return this;
     };
@@ -3995,8 +4031,8 @@
     __extends(Router, _super);
 
     function Router() {
-      _ref45 = Router.__super__.constructor.apply(this, arguments);
-      return _ref45;
+      _ref46 = Router.__super__.constructor.apply(this, arguments);
+      return _ref46;
     }
 
     Router.prototype.routes = {
@@ -4016,7 +4052,7 @@
         Cruddy.app.set("entity", entity);
         return entity;
       } else {
-        Cruddy.app.displayError("You are not allowed to view this entity.");
+        Cruddy.app.displayError(Cruddy.lang.entity_forbidden);
         return null;
       }
     };

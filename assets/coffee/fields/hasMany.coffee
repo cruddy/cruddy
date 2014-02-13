@@ -128,16 +128,48 @@ class Cruddy.Fields.HasManyItemView extends Backbone.View
 
         this
 
+class Cruddy.Fields.RelatedCollection extends Backbone.Collection
+
+    initialize: (items, options) ->
+        @owner = options.owner
+        @field = options.field
+
+        # The flag is set when user has deleted some items
+        @deleted = no
+
+        @listenTo @owner, "sync", => @deleted = false
+
+        super
+
+    remove: ->
+        @deleted = yes
+
+        super
+
+    hasChangedSinceSync: ->
+        return yes if @deleted
+        return yes for item in @models when item.hasChangedSinceSync()
+
+        no
+
+    copy: (copy) ->
+        items = if @field.isUnique() then [] else (item.copy() for item in @models)
+
+        new Cruddy.Fields.RelatedCollection items,
+            owner: copy
+            field: @field
+
 class Cruddy.Fields.HasMany extends Cruddy.Fields.BaseRelation
     viewConstructor: Cruddy.Fields.HasManyView
 
-    createInstance: (items) ->
+    createInstance: (model, items) ->
         return items if items instanceof Backbone.Collection
 
         ref = @getReference()
         items = (ref.createInstance item for item in items)
-
-        new Backbone.Collection items
+        new Cruddy.Fields.RelatedCollection items,
+            owner: model
+            field: this
 
     applyValues: (collection, items) ->
         collection.set _.pluck(items, "attributes"), add: no
@@ -148,12 +180,9 @@ class Cruddy.Fields.HasMany extends Cruddy.Fields.BaseRelation
 
         this
 
-    hasChangedSinceSync: (items) ->
-        return yes for item in items.models when item.hasChangedSinceSync()
+    hasChangedSinceSync: (items) -> items.hasChangedSinceSync()
 
-        no
-
-    copy: (items) -> new Backbone.Collection if @isUnique() then [] else (item.copy() for item in items.models)
+    copy: (copy, items) -> items.copy(copy)
 
     processErrors: (collection, errorsCollection) ->
         for cid, errors of errorsCollection

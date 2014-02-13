@@ -330,9 +330,9 @@ class Pagination extends Backbone.View
 
     template: (current, last) ->
         html = ""
-        html += @renderLink current - 1, "&larr; Назад", "previous" + if current > 1 then "" else " disabled"
+        html += @renderLink current - 1, "&larr; #{ Cruddy.lang.prev }", "previous" + if current > 1 then "" else " disabled"
         html += @renderStats() if @model.get("total")?
-        html += @renderLink current + 1, "Вперед &rarr;", "next" + if current < last then "" else " disabled"
+        html += @renderLink current + 1, "#{ Cruddy.lang.next } &rarr;", "next" + if current < last then "" else " disabled"
 
         html
 
@@ -442,7 +442,7 @@ class DataGrid extends Backbone.View
         if data? and data.length
             html += @renderRow columns, item for item in data
         else
-            html += """<tr><td class="no-items" colspan="#{ columns.length }">Ничего не найдено</td></tr>"""
+            html += """<tr><td class="no-items" colspan="#{ columns.length }">#{ Cruddy.lang.no_results }</td></tr>"""
 
         html += "</tbody>"
 
@@ -700,8 +700,8 @@ class Cruddy.Inputs.Boolean extends Cruddy.Inputs.Base
     template: ->
         """
         <div class="btn-group">
-            <button type="button" class="btn btn-info" data-value="1">да</button>
-            <button type="button" class="btn btn-default" data-value="0">нет</button>
+            <button type="button" class="btn btn-info" data-value="1">#{ Cruddy.lang.yes }</button>
+            <button type="button" class="btn btn-default" data-value="0">#{ Cruddy.lang.no }</button>
         </div>
         """
 
@@ -738,6 +738,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
         @reference = options.reference if options.reference?
         @allowEdit = options.allowEdit ? yes and @reference.updatePermitted()
         @active = false
+        @placeholder = options.placeholder ? Cruddy.lang.not_selected
 
         super
 
@@ -841,7 +842,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         @$el.append """
             <button type="button" class="btn btn-default btn-block dropdown-toggle ed-dropdown-toggle" data-toggle="dropdown" data-target="##{ @cid }">
-                Выбрать
+                #{ Cruddy.lang.choose }
                 <span class="caret"></span>
             </button>
             """
@@ -867,7 +868,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
     updateItem: ->
         value = @getValue()
-        @itemTitle.val if value then value.title else "Не выбрано"
+        @itemTitle.val if value then value.title else ""
         @itemDelete.toggle !!value
         @itemEdit.toggle !!value
 
@@ -876,7 +877,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     itemTemplate: (value, key = null) ->
         html = """
         <div class="input-group input-group ed-item #{ if not @multiple then "ed-dropdown-toggle" else "" }" data-key="#{ key }">
-            <input type="text" class="form-control" #{ if not @multiple then "data-toggle='dropdown' data-target='##{ @cid }'" else "tab-index='-1'"} value="#{ _.escape value }" readonly>
+            <input type="text" class="form-control" #{ if not @multiple then "data-toggle='dropdown' data-target='##{ @cid }' placeholder='#{ @placeholder }'" else "tab-index='-1'"} value="#{ _.escape value }" readonly>
             <div class="input-group-btn">
         """
 
@@ -1026,9 +1027,9 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         if @dataSource.data.length or @dataSource.more
             html += @renderItem item for item in @dataSource.data
 
-            html += """<li class="more #{ if @dataSource.inProgress() then "loading" else "" }">еще</li>""" if @dataSource.more
+            html += """<li class="more #{ if @dataSource.inProgress() then "loading" else "" }">#{ Cruddy.lang.more }</li>""" if @dataSource.more
         else
-            html += "<li class='empty'>нет результатов</li>"
+            html += "<li class='empty'>#{ Cruddy.lang.no_results }</li>"
 
         @items.html html
 
@@ -1057,7 +1058,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
             @renderSearch() if @allowSearch
         else
-            @$el.html "<span class=error>Ошибка доступа</span>"
+            @$el.html "<span class=error>#{ Cruddy.lang.forbidden }</span>"
 
         this
 
@@ -1144,7 +1145,7 @@ class Cruddy.Inputs.FileList extends Cruddy.Inputs.Base
 
         html = @wrapItems html if html
 
-        html += @renderInput if @multiple then "<span class='glyphicon glyphicon-plus'></span> Добавить" else "Выбрать"
+        html += @renderInput if @multiple then "<span class='glyphicon glyphicon-plus'></span> #{ Cruddy.lang.add }" else Cruddy.lang.choose
 
         @$el.html html
 
@@ -1233,7 +1234,7 @@ class Cruddy.Inputs.Search extends Cruddy.Inputs.Text
 
     attributes:
         type: "search"
-        placeholder: "поиск"
+        placeholder: Cruddy.lang.search
 
     scheduleChange: ->
         clearTimeout @timeout if @timeout?
@@ -1333,7 +1334,7 @@ class Cruddy.Inputs.Slug extends Backbone.View
 
         """
         <div class="input-group-btn">
-            <button type="button" tabindex="-1" class="btn btn-default" title="Синхронизировать"><span class="glyphicon glyphicon-link"></span></button>
+            <button type="button" tabindex="-1" class="btn btn-default" title="#{ Cruddy.lang.slug_sync }"><span class="glyphicon glyphicon-link"></span></button>
         </div>
         """
 class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
@@ -1444,8 +1445,8 @@ class Cruddy.Inputs.Markdown extends Cruddy.Inputs.Base
         """
         <div class="markdown-editor">
             <ul class="nav nav-tabs">
-                <li class="active"><a href="##{ @cid }-editor" data-toggle="tab" data-tab="editor" tab-index="-1">Исходник</a></li>
-                <li><a href="##{ @cid }-preview" data-toggle="tab" data-tab="preview" tab-index="-1">Результат</a></li>
+                <li class="active"><a href="##{ @cid }-editor" data-toggle="tab" data-tab="editor" tab-index="-1">#{ Cruddy.lang.markdown_source }</a></li>
+                <li><a href="##{ @cid }-preview" data-toggle="tab" data-tab="preview" tab-index="-1">#{ Cruddy.lang.markdown_parsed }</a></li>
             </ul>
 
             <div class="tab-content">
@@ -1636,7 +1637,7 @@ class Cruddy.Fields.Boolean extends Cruddy.Fields.Base
         key: @id
         tripleState: yes
 
-    format: (value) -> if value then "да" else "нет"
+    format: (value) -> if value then Cruddy.lang.yes else Cruddy.lang.no
 class Cruddy.Fields.BaseRelation extends Cruddy.Fields.Base
 
     isVisible: -> @getReference().viewPermitted() and super
@@ -1661,6 +1662,7 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         key: @id
         reference: @getReference()
         allowEdit: no
+        placeholder: Cruddy.lang.any_value
 
     format: (value) ->
         return "не указано" if _.isEmpty value
@@ -1710,7 +1712,7 @@ class Cruddy.Fields.Enum extends Cruddy.Fields.Base
     createFilterInput: (model) -> new Cruddy.Inputs.Select
         model: model
         key: @id
-        prompt: "Любое значение"
+        prompt: Cruddy.lang.any_value
         items: @attributes.items
 
     format: (value) ->
@@ -1758,13 +1760,13 @@ class Cruddy.Fields.HasOneView extends Backbone.View
 class Cruddy.Fields.HasOne extends Cruddy.Fields.BaseRelation
     viewConstructor: Cruddy.Fields.HasOneView
 
-    createInstance: (attrs) -> if attrs instanceof Cruddy.Entity.Instance then attrs else @getReference().createInstance attrs
+    createInstance: (owner, attrs) -> if attrs instanceof Cruddy.Entity.Instance then attrs else @getReference().createInstance attrs
 
     applyValues: (model, data) -> model.set data.attributes
 
     hasChangedSinceSync: (model) -> model.hasChangedSinceSync()
 
-    copy: (model) -> if @isUnique() then @getReference().createInstance() else model.copy()
+    copy: (copy, model) -> if @isUnique() then @getReference().createInstance() else model.copy()
 
     processErrors: (model, errors) -> model.trigger "invalid", model, errors
 
@@ -1881,7 +1883,7 @@ class Cruddy.Fields.HasManyItemView extends Backbone.View
 
         this
 
-    template: -> if @model.entity.deletePermitted() then b_btn("Удалить", "trash", ["default", "sm", "delete"]) else ""
+    template: -> if @model.entity.deletePermitted() then b_btn(Cruddy.lang.delete, "trash", ["default", "sm", "delete"]) else ""
 
     dispose: ->
         @fieldList?.remove()
@@ -1899,16 +1901,48 @@ class Cruddy.Fields.HasManyItemView extends Backbone.View
 
         this
 
+class Cruddy.Fields.RelatedCollection extends Backbone.Collection
+
+    initialize: (items, options) ->
+        @owner = options.owner
+        @field = options.field
+
+        # The flag is set when user has deleted some items
+        @deleted = no
+
+        @listenTo @owner, "sync", => @deleted = false
+
+        super
+
+    remove: ->
+        @deleted = yes
+
+        super
+
+    hasChangedSinceSync: ->
+        return yes if @deleted
+        return yes for item in @models when item.hasChangedSinceSync()
+
+        no
+
+    copy: (copy) ->
+        items = if @field.isUnique() then [] else (item.copy() for item in @models)
+
+        new Cruddy.Fields.RelatedCollection items,
+            owner: copy
+            field: @field
+
 class Cruddy.Fields.HasMany extends Cruddy.Fields.BaseRelation
     viewConstructor: Cruddy.Fields.HasManyView
 
-    createInstance: (items) ->
+    createInstance: (model, items) ->
         return items if items instanceof Backbone.Collection
 
         ref = @getReference()
         items = (ref.createInstance item for item in items)
-
-        new Backbone.Collection items
+        new Cruddy.Fields.RelatedCollection items,
+            owner: model
+            field: this
 
     applyValues: (collection, items) ->
         collection.set _.pluck(items, "attributes"), add: no
@@ -1919,12 +1953,9 @@ class Cruddy.Fields.HasMany extends Cruddy.Fields.BaseRelation
 
         this
 
-    hasChangedSinceSync: (items) ->
-        return yes for item in items.models when item.hasChangedSinceSync()
+    hasChangedSinceSync: (items) -> items.hasChangedSinceSync()
 
-        no
-
-    copy: (items) -> new Backbone.Collection if @isUnique() then [] else (item.copy() for item in items.models)
+    copy: (copy, items) -> items.copy(copy)
 
     processErrors: (collection, errorsCollection) ->
         for cid, errors of errorsCollection
@@ -2103,12 +2134,12 @@ class Cruddy.Entity.Entity extends Backbone.Model
     actionCreate: -> @set "instance", @createInstance()
 
     # Get only those attributes are not unique for the model
-    getCopyableAttributes: (attributes) ->
+    getCopyableAttributes: (model, attributes) ->
         data = {}
         data[field.id] = attributes[field.id] for field in @fields.models when not field.isUnique() and field.id of attributes and not _.contains(@attributes.related, field.id)
 
         for ref in @attributes.related when ref of attributes
-            data[ref] = @getRelation(ref).copy attributes[ref]
+            data[ref] = @getRelation(ref).copy model, attributes[ref]
 
         data
 
@@ -2186,19 +2217,25 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
     url: -> @entity.url @id
 
-    set: (key, val) ->
+    set: (key, val, options) ->
         if typeof key is "object"
             attrs = key
+            options = val
+            is_copy = options?.is_copy
 
             for id in @entity.get "related" when id of attrs
                 relation = @entity.getRelation id
                 relationAttrs = attrs[id]
 
-                if id of @related
+                if is_copy
+                    related = @related[id] = relationAttrs
+
+                else if id of @related
                     related = @related[id]
                     relation.applyValues related, relationAttrs if relationAttrs
+
                 else
-                    related = @related[id] = relation.createInstance relationAttrs
+                    related = @related[id] = relation.createInstance this, relationAttrs
                     related.parent = this
 
                 # Attribute will now hold instance
@@ -2222,17 +2259,16 @@ class Cruddy.Entity.Instance extends Backbone.Model
     copy: ->
         copy = @entity.createInstance()
 
-        copy.set @getCopyableAttributes(), silent: yes
+        copy.set @getCopyableAttributes(copy),
+            silent: yes
+            is_copy: yes
 
         copy
 
-    getCopyableAttributes: -> @entity.getCopyableAttributes @attributes
+    getCopyableAttributes: (copy) -> @entity.getCopyableAttributes copy, @attributes
 
     hasChangedSinceSync: ->
         return yes for key, value of @attributes when if key of @related then @entity.getRelation(key).hasChangedSinceSync value else not _.isEqual value, @original[key]
-
-        # Related models do not affect the result unless model is created
-        # return yes for key, related of @related when related.hasChangedSinceSync() unless @isNew()
 
         no
 
@@ -2365,17 +2401,11 @@ class Cruddy.Entity.Form extends Backbone.View
         @inner = options.inner ? no
 
         @listenTo @model, "destroy", @handleDestroy
-
-        @signOn @model
-        @signOn related for key, related of @model.related
-
         @listenTo @model, "invalid", @displayInvalid
 
         @hotkeys = $(document).on "keydown." + @cid, "body", $.proxy this, "hotkeys"
 
         this
-
-    signOn: (model) -> @listenTo model, "change", @enableSubmit
 
     hotkeys: (e) ->
         # Ctrl + Z
@@ -2395,11 +2425,6 @@ class Cruddy.Entity.Form extends Backbone.View
 
         this
 
-    enableSubmit: ->
-        @submit.attr "disabled", @model.hasChangedSinceSync() is no if not @request
-
-        this
-
     displayAlert: (message, type) ->
         @alert.remove() if @alert?
 
@@ -2413,11 +2438,11 @@ class Cruddy.Entity.Form extends Backbone.View
 
         this
 
-    displaySuccess: -> @displayAlert "Получилось!", "success"
+    displaySuccess: -> @displayAlert Cruddy.lang.success, "success"
 
-    displayInvalid: -> @displayAlert "Не получилось...", "warning"
+    displayInvalid: -> @displayAlert Cruddy.lang.invalid, "warning"
 
-    displayError: (xhr) -> @displayAlert "Ошибка", "danger" unless xhr.responseJSON?.error is "VALIDATION"
+    displayError: (xhr) -> @displayAlert Cruddy.lang.failure, "danger" unless xhr.responseJSON?.error is "VALIDATION"
 
     handleDestroy: ->
         if @model.entity.get "soft_deleting"
@@ -2434,7 +2459,7 @@ class Cruddy.Entity.Form extends Backbone.View
         this
 
     save: ->
-        return if @request? or not @model.hasChangedSinceSync()
+        return if @request?
 
         @request = @model.save(displayLoading: yes).done($.proxy this, "displaySuccess").fail($.proxy this, "displayError")
 
@@ -2448,9 +2473,9 @@ class Cruddy.Entity.Form extends Backbone.View
 
     close: ->
         if @request
-            confirmed = confirm "Вы точно хотите закрыть форму и отменить операцию?"
+            confirmed = confirm Cruddy.lang.confirm_abort
         else
-            confirmed = if @model.hasChangedSinceSync() then confirm("Вы точно хотите закрыть форму? Все изменения будут утеряны!") else yes
+            confirmed = if @model.hasChangedSinceSync() then confirm(Cruddy.lang.confirm_discard) else yes
 
         if confirmed
             @request.abort() if @request
@@ -2463,7 +2488,7 @@ class Cruddy.Entity.Form extends Backbone.View
 
         softDeleting = @model.entity.get "soft_deleting"
 
-        confirmed = if not softDeleting then confirm("Точно удалить? Восстановить не получится!") else yes
+        confirmed = if not softDeleting then confirm(Cruddy.lang.confirm_delete) else yes
 
         if confirmed
             @request = if @softDeleting and @model.get "deleted_at" then @model.restore else @model.destroy wait: true
@@ -2510,12 +2535,12 @@ class Cruddy.Entity.Form extends Backbone.View
 
         @$el.toggleClass "loading", @request?
 
-        @submit.text if @model.isNew() then "Создать" else "Сохранить"
-        @submit.attr "disabled", @request? or not @model.hasChangedSinceSync()
+        @submit.text if @model.isNew() then Cruddy.lang.create else Cruddy.lang.save
+        @submit.attr "disabled", @request?
         @submit.toggle if @model.isNew() then permit.create else permit.update
 
         @destroy.attr "disabled", @request?
-        @destroy.html if @model.entity.isSoftDeleting() and @model.get "deleted_at" then "Восстановить" else "<span class='glyphicon glyphicon-trash' title='Удалить'></span>"
+        @destroy.html if @model.entity.isSoftDeleting() and @model.get "deleted_at" then "Восстановить" else "<span class='glyphicon glyphicon-trash' title='#{ Cruddy.lang.delete }'></span>"
         @destroy.toggle not @model.isNew() and permit.delete
         
         @copy.toggle not @model.isNew() and permit.create
@@ -2525,7 +2550,7 @@ class Cruddy.Entity.Form extends Backbone.View
     template: ->
         """
         <div class="navbar navbar-default navbar-static-top" role="navigation">
-            <button type="button" tabindex="-1" class="btn btn-link btn-copy navbar-btn pull-right" title="Копировать">
+            <button type="button" tabindex="-1" class="btn btn-link btn-copy navbar-btn pull-right" title="#{ Cruddy.lang.copy }">
                 <span class="glyphicon glyphicon-book"></span>
             </button>
 
@@ -2533,9 +2558,9 @@ class Cruddy.Entity.Form extends Backbone.View
         </div>
 
         <footer>
-            <button type="button" class="btn btn-default btn-close btn-sm" type="button">Закрыть</button>
-            <button type="button" class="btn btn-default btn-destroy btn-sm" type="button"></button>
-            <button type="button" class="btn btn-primary btn-save btn-sm" type="button" disabled></button>
+            <button type="button" class="btn btn-default btn-close" type="button">#{ Cruddy.lang.close }</button>
+            <button type="button" class="btn btn-default btn-destroy" type="button"></button>
+            <button type="button" class="btn btn-primary btn-save" type="button" disabled></button>
         </footer>
         """
 
@@ -2657,7 +2682,7 @@ class Router extends Backbone.Router
 
             entity
         else
-            Cruddy.app.displayError "You are not allowed to view this entity."
+            Cruddy.app.displayError Cruddy.lang.entity_forbidden
 
             null
 

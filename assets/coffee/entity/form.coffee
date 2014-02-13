@@ -17,17 +17,11 @@ class Cruddy.Entity.Form extends Backbone.View
         @inner = options.inner ? no
 
         @listenTo @model, "destroy", @handleDestroy
-
-        @signOn @model
-        @signOn related for key, related of @model.related
-
         @listenTo @model, "invalid", @displayInvalid
 
         @hotkeys = $(document).on "keydown." + @cid, "body", $.proxy this, "hotkeys"
 
         this
-
-    signOn: (model) -> @listenTo model, "change", @enableSubmit
 
     hotkeys: (e) ->
         # Ctrl + Z
@@ -44,11 +38,6 @@ class Cruddy.Entity.Form extends Backbone.View
         if e.keyCode is 27
             @close()
             return false
-
-        this
-
-    enableSubmit: ->
-        @submit.attr "disabled", @model.hasChangedSinceSync() is no if not @request
 
         this
 
@@ -86,7 +75,7 @@ class Cruddy.Entity.Form extends Backbone.View
         this
 
     save: ->
-        return if @request? or not @model.hasChangedSinceSync()
+        return if @request?
 
         @request = @model.save(displayLoading: yes).done($.proxy this, "displaySuccess").fail($.proxy this, "displayError")
 
@@ -163,7 +152,7 @@ class Cruddy.Entity.Form extends Backbone.View
         @$el.toggleClass "loading", @request?
 
         @submit.text if @model.isNew() then Cruddy.lang.create else Cruddy.lang.save
-        @submit.attr "disabled", @request? or not @model.hasChangedSinceSync()
+        @submit.attr "disabled", @request?
         @submit.toggle if @model.isNew() then permit.create else permit.update
 
         @destroy.attr "disabled", @request?

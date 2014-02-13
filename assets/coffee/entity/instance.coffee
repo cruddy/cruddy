@@ -49,19 +49,25 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
     url: -> @entity.url @id
 
-    set: (key, val) ->
+    set: (key, val, options) ->
         if typeof key is "object"
             attrs = key
+            options = val
+            is_copy = options?.is_copy
 
             for id in @entity.get "related" when id of attrs
                 relation = @entity.getRelation id
                 relationAttrs = attrs[id]
 
-                if id of @related
+                if is_copy
+                    related = @related[id] = relationAttrs
+
+                else if id of @related
                     related = @related[id]
                     relation.applyValues related, relationAttrs if relationAttrs
+
                 else
-                    related = @related[id] = relation.createInstance relationAttrs
+                    related = @related[id] = relation.createInstance this, relationAttrs
                     related.parent = this
 
                 # Attribute will now hold instance
@@ -85,17 +91,16 @@ class Cruddy.Entity.Instance extends Backbone.Model
     copy: ->
         copy = @entity.createInstance()
 
-        copy.set @getCopyableAttributes(), silent: yes
+        copy.set @getCopyableAttributes(copy),
+            silent: yes
+            is_copy: yes
 
         copy
 
-    getCopyableAttributes: -> @entity.getCopyableAttributes @attributes
+    getCopyableAttributes: (copy) -> @entity.getCopyableAttributes copy, @attributes
 
     hasChangedSinceSync: ->
         return yes for key, value of @attributes when if key of @related then @entity.getRelation(key).hasChangedSinceSync value else not _.isEqual value, @original[key]
-
-        # Related models do not affect the result unless model is created
-        # return yes for key, related of @related when related.hasChangedSinceSync() unless @isNew()
 
         no
 

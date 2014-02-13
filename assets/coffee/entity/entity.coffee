@@ -86,12 +86,12 @@ class Cruddy.Entity.Entity extends Backbone.Model
     actionCreate: -> @set "instance", @createInstance()
 
     # Get only those attributes are not unique for the model
-    getCopyableAttributes: (attributes) ->
+    getCopyableAttributes: (model, attributes) ->
         data = {}
         data[field.id] = attributes[field.id] for field in @fields.models when not field.isUnique() and field.id of attributes and not _.contains(@attributes.related, field.id)
 
         for ref in @attributes.related when ref of attributes
-            data[ref] = @getRelation(ref).copy attributes[ref]
+            data[ref] = @getRelation(ref).copy model, attributes[ref]
 
         data
 

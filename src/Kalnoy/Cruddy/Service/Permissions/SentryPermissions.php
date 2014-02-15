@@ -7,44 +7,35 @@ use Kalnoy\Cruddy\Entity;
 
 class SentryPermissions implements PermissionsInterface {
 
+    /**
+     * The sentry instance.
+     *
+     * @var \Cartalyst\Sentry\Sentry
+     */
     protected $sentry;
 
+    /**
+     * Init permissions.
+     *
+     * @param Cartalyst\Sentry\Sentry $sentry
+     */
     public function __construct(Sentry $sentry)
     {
         $this->sentry = $sentry;
     }
 
-    public function hasAccess($to = "backend")
-    {
-        $user = $this->sentry->getUser();
-
-        return $user && $user->hasAccess($to);
-    }
-
-    protected function check(Entity $entity, $action)
+    /**
+     * @inhertidoc
+     *
+     * @param string $action
+     * @param \Kalnoy\Cruddy\Entity $entity
+     *
+     * @return bool
+     */
+    public function isPermitted($action, Entity $entity)
     {
         $key = "{$entity->getId()}.{$action}";
 
-        return $this->sentry->check() && $this->sentry->getUser()->hasAccess($key);
-    }
-
-    public function canView(Entity $entity)
-    {
-        return $this->check($entity, 'view');
-    }
-
-    public function canCreate(Entity $entity)
-    {
-        return $this->check($entity, 'create');
-    }
-
-    public function canUpdate(Entity $entity)
-    {
-        return $this->check($entity, 'update');
-    }
-
-    public function canDelete(Entity $entity)
-    {
-        return $this->check($entity, 'delete');
+        return ($user = $this->sentry->getUser()) && $user->hasAccess($key);
     }
 }

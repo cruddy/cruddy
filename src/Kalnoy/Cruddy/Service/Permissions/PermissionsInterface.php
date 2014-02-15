@@ -6,46 +6,21 @@ use Kalnoy\Cruddy\Entity;
 
 interface PermissionsInterface {
 
-    /**
-     * Get whether user has access to the backend.
-     *
-     * @return bool
-     */
-    function hasAccess($to = 'backend');
+    const VIEW = 'view';
+
+    const CREATE = 'create';
+
+    const UPDATE = 'update';
+
+    const DELETE = 'delete';
 
     /**
-     * Get whether an entity can be viewed.
+     * Get whether a user is allowed to perform an action on user.
      *
-     * @param  Entity $entity
-     *
-     * @return bool
-     */
-    function canView(Entity $entity);
-
-    /**
-     * Get whether a new instance of an entity can be created.
-     *
-     * @param  Entity $entity
+     * @param string $action
+     * @param Kalnoy\Cruddy\Entity $entity
      *
      * @return bool
      */
-    function canCreate(Entity $entity);
-
-    /**
-     * Get whether an entity instance can be updated.
-     *
-     * @param  Entity $entity
-     *
-     * @return bool
-     */
-    function canUpdate(Entity $entity);
-
-    /**
-     * Get whether an entity instance can be deleted.
-     *
-     * @param  Entity $entity
-     *
-     * @return bool
-     */
-    function canDelete(Entity $entity);
+    public function isPermitted($action, Entity $entity);
 }

@@ -603,15 +603,13 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function getPermissions()
     {
-        $permissions = $this->env->getPermissions();
-        $components = ['view', 'update', 'create', 'delete'];
+        $permissions = $this->env->getPermissions()->driver();
+        $actions = ['view', 'update', 'create', 'delete'];
         $data = [];
 
-        foreach ($components as $component)
+        foreach ($actions as $action)
         {
-            $method = 'can'.ucfirst($component);
-
-            $data[$component] = $permissions->$method($this);
+            $data[$action] = $permissions->isPermitted($action, $this);
         }
 
         return $data;

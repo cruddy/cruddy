@@ -265,6 +265,19 @@ class Environment implements JsonableInterface {
     }
 
     /**
+     * Get whether the action for an entity is permitted.
+     *
+     * @param string $action
+     * @param \Kalnoy\Cruddy\Entity $entity
+     *
+     * @return bool
+     */
+    public function isPermitted($action, Entity $entity)
+    {
+        return $this->permissions->isPermitted($action, $entity);
+    }
+
+    /**
      * Get field factory.
      *
      * @return \Kalnoy\Cruddy\Schema\Fields\Factory

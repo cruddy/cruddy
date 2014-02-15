@@ -20,6 +20,16 @@ class PermissionsManager extends Manager {
     }
 
     /**
+     * Create stub driver.
+     *
+     * @return \Kalnoy\Cruddy\Service\Permissions\Stub
+     */
+    public function createStubDriver()
+    {
+        return new Stub;
+    }
+
+    /**
      * Get the default driver name.
      *
      * @return string

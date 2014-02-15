@@ -10,8 +10,13 @@
     // The URI that is prefixed to all routes of Cruddy.
     'uri' => 'backend',
 
-    // The permissions type that will be used.
-    'permissions' => 'sentry',
+    // The permissions driver.
+    // Two types available: `stub` and `sentry`.
+    'permissions' => 'stub',
+
+    // The name of the filter that will be used for authentication.
+    // I.e. `auth.basic` or `auth`.
+    'auth_filter' => null,
 
     // The main layout view.
     'layout' => 'cruddy::layout',

@@ -32,7 +32,9 @@ class CruddyController extends Controller {
         $this->cruddy = app('cruddy');
         $this->thumb = $thumb;
 
-        $this->beforeFilter('cruddy.auth', ['except' => ['thumb']]);
+        $authFilter = $this->cruddy->config('auth_filter');
+
+        if ($authFilter) $this->beforeFilter($authFilter, ['except' => ['thumb']]);
     }
 
     /**

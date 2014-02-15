@@ -27,8 +27,9 @@ class EntityApiController extends ApiController {
     public function __construct()
     {
         $this->cruddy = app('cruddy');
+        $authFilter = $this->cruddy->config('auth_filter');
 
-        $this->beforeFilter('cruddy.auth');
+        // if ($authFilter) $this->beforeFilter($authFilter);
 
         $this->beforeFilter(function()
         {
@@ -174,7 +175,7 @@ class EntityApiController extends ApiController {
         {
             $entity = $this->cruddy->entity($id);
 
-            if ( ! $this->permitted($method, $entity))
+            if ( ! $this->cruddy->isPermitted($method, $entity))
             {
                 $message = $this->cruddy->translate("cruddy::app.forbidden.{$method}", ['entity' => $id]);
 
@@ -234,20 +235,5 @@ class EntityApiController extends ApiController {
     protected function resolveSafe($id, $method, Callable $callback)
     {
         return $this->resolve($id, $method, $callback, true);
-    }
-
-    /**
-     * Get whether authenticated user is permitted to execute specified action.
-     *
-     * @param string                $method
-     * @param \Kalnoy\Cruddy\Entity $entity
-     * 
-     * @return bool
-     */
-    protected function permitted($method, Entity $entity)
-    {
-        $method = 'can'.ucfirst($method);
-
-        return $this->cruddy->getPermissions()->$method($entity);
     }
 }

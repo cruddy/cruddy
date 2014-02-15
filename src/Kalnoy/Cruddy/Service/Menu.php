@@ -143,7 +143,7 @@ class Menu {
     {
         $entity = $this->env->entity($id);
 
-        if (!$this->permissions->canView($entity)) return "";
+        if ( ! $this->permissions->isPermitted('view', $entity)) return '';
 
         return $this->custom(
         [

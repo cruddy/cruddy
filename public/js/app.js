@@ -2347,7 +2347,7 @@
 
     DateTime.prototype.format = function(value) {
       if (value === null) {
-        return "никогда";
+        return Cruddy.lang.never;
       } else {
         return moment.unix(value).calendar();
       }
@@ -2448,7 +2448,7 @@
 
     Relation.prototype.format = function(value) {
       if (_.isEmpty(value)) {
-        return "не указано";
+        return Cruddy.lang.not_selected;
       }
       if (this.attributes.multiple) {
         return _.pluck(value, "title").join(", ");

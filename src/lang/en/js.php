@@ -11,6 +11,7 @@
     'not_selected' => 'Not selected',
     'required' => 'required',
     'any_value' => 'Any value',
+    'never' => 'Never',
 
     'no_results' => 'No results',
     'more' => 'More',

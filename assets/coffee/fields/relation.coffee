@@ -14,7 +14,7 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         placeholder: Cruddy.lang.any_value
 
     format: (value) ->
-        return "не указано" if _.isEmpty value
+        return Cruddy.lang.not_selected if _.isEmpty value
         
         if @attributes.multiple then _.pluck(value, "title").join ", " else value.title
 

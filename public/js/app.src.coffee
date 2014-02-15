@@ -1625,7 +1625,7 @@ class Cruddy.Fields.Input extends Cruddy.Fields.Base
 
 class Cruddy.Fields.DateTime extends Cruddy.Fields.Input
     
-    format: (value) -> if value is null then "никогда" else moment.unix(value).calendar()
+    format: (value) -> if value is null then Cruddy.lang.never else moment.unix(value).calendar()
 class Cruddy.Fields.Boolean extends Cruddy.Fields.Base
     
     createEditableInput: (model) -> new Cruddy.Inputs.Boolean
@@ -1665,7 +1665,7 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         placeholder: Cruddy.lang.any_value
 
     format: (value) ->
-        return "не указано" if _.isEmpty value
+        return Cruddy.lang.not_selected if _.isEmpty value
         
         if @attributes.multiple then _.pluck(value, "title").join ", " else value.title
 

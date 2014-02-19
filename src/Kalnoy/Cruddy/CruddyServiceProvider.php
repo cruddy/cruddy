@@ -4,6 +4,7 @@ namespace Kalnoy\Cruddy;
 
 use Illuminate\Support\ServiceProvider;
 use Kalnoy\Cruddy\Service\Permissions\PermissionsManager;
+use Kalnoy\Cruddy\Console\GenerateSchemaCommand;
 
 class CruddyServiceProvider extends ServiceProvider {
 
@@ -36,6 +37,7 @@ class CruddyServiceProvider extends ServiceProvider {
     {
         $this->registerPermissions();
         $this->registerCruddy();
+        $this->registerCommands();
     }
 
     /**
@@ -140,5 +142,20 @@ class CruddyServiceProvider extends ServiceProvider {
             "vendor{$suffix}.js", 
             "app{$suffix}.js",
         ]);
+    }
+
+    /**
+     * Register console commands.
+     *
+     * @return void
+     */
+    protected function registerCommands()
+    {
+        $this->app->bindShared('cruddy.command.schema', function ($app)
+        {
+            return new GenerateSchemaCommand($app['files']);
+        });
+
+        $this->commands('cruddy.command.schema');
     }
 }

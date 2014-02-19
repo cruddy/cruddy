@@ -1,7 +1,7 @@
 <?php return array(
 
     // The title of the application. It can be a translation key.
-    'brand' => 'app.title',
+    'brand' => 'My application',
 
     // The name of the view that is used to render the dashboard.
     // You can specify an entity id prefixing it with `@` like so: `@users`.

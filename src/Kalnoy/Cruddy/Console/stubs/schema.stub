@@ -42,7 +42,7 @@ class {name} extends BaseSchema {
     {
         $schema->col('id');
 
-        $schema->col('updated_at')->orderDir('desc');
+        $schema->col('updated_at')->orderDirection('desc');
     }
 
     /**

@@ -26,12 +26,12 @@ class App extends Backbone.Model
     displayEntity: (model, entity) ->
         @dispose()
 
-        @mainContent.remove()
+        @mainContent.hide()
         @container.append (@page = new Cruddy.Entity.Page model: entity).render().el if entity
 
     displayError: (error) ->
         @dispose()
-        @container.html "<p class='alert alert-danger'>#{ error }</p>"
+        @mainContent.html("<p class='alert alert-danger'>#{ error }</p>").show()
 
         this
 
@@ -82,7 +82,10 @@ class Router extends Backbone.Router
     entity: (id) ->
         entity = Cruddy.app.entity(id)
 
-        return if not entity
+        if not entity
+            Cruddy.app.displayError Cruddy.lang.entity_not_found
+
+            return
 
         if entity.viewPermitted()
             entity.set "instance", null

@@ -104,7 +104,14 @@ class GenerateSchemaCommand extends Command {
 	{
 		$path = $this->option('path');
 
-		return $path ? $this->laravel['path.base'] . '/' . $path : $this->laravel['path'] . '/entities';
+		$path = $path ? $this->laravel['path.base'] . '/' . $path : $this->laravel['path'] . '/entities';
+
+		if ( ! $this->file->isDirectory($path))
+		{
+			$this->file->makeDirectory($path, 0755, true);
+		}
+
+		return rtrim($path, '/\\');
 	}
 
 	/**

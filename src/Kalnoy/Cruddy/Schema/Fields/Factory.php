@@ -20,6 +20,7 @@ class Factory extends BaseFactory {
         'datetime' => 'Kalnoy\Cruddy\Schema\Fields\Types\DateTime',
         'time' => 'Kalnoy\Cruddy\Schema\Fields\Types\Time',
         'date' => 'Kalnoy\Cruddy\Schema\Fields\Types\Date',
+        'boolean' => 'Kalnoy\Cruddy\Schema\Fields\Types\Boolean',
         'bool' => 'Kalnoy\Cruddy\Schema\Fields\Types\Boolean',
         'file' => 'Kalnoy\Cruddy\Schema\Fields\Types\File',
         'image' => 'Kalnoy\Cruddy\Schema\Fields\Types\Image',

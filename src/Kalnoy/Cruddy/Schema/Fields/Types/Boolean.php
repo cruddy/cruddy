@@ -1,6 +1,9 @@
-<?php namespace Kalnoy\Cruddy\Schema\Fields\Types;
+<?php 
+
+namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
 use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Eloquent\Model as Eloquent;
 use Kalnoy\Cruddy\Schema\Fields\BaseField;
 
 class Boolean extends BaseField {
@@ -32,6 +35,18 @@ class Boolean extends BaseField {
      * @var string
      */
     protected $filterType = self::FILTER_COMPLEX;
+
+    /**
+     * @inheritdoc
+     *
+     * @param \Illuminate\Database\Eloquent\Model $model
+     *
+     * @return bool
+     */
+    public function extract(Eloquent $model)
+    {
+        return (bool)parent::extract($model);
+    }
 
     /**
      * @inheritdoc

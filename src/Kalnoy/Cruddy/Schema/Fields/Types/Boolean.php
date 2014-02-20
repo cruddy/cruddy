@@ -82,7 +82,7 @@ class Boolean extends BaseField {
      */
     public function order(Builder $builder, $direction)
     {
-        $builder->order($this->id, $direction);
+        $builder->orderBy($this->id, $direction);
 
         return $this;
     }

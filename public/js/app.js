@@ -3965,7 +3965,7 @@
 
     App.prototype.displayEntity = function(model, entity) {
       this.dispose();
-      this.mainContent.remove();
+      this.mainContent.hide();
       if (entity) {
         return this.container.append((this.page = new Cruddy.Entity.Page({
           model: entity
@@ -3975,7 +3975,7 @@
 
     App.prototype.displayError = function(error) {
       this.dispose();
-      this.container.html("<p class='alert alert-danger'>" + error + "</p>");
+      this.mainContent.html("<p class='alert alert-danger'>" + error + "</p>").show();
       return this;
     };
 
@@ -4045,6 +4045,7 @@
       var entity;
       entity = Cruddy.app.entity(id);
       if (!entity) {
+        Cruddy.app.displayError(Cruddy.lang.entity_not_found);
         return;
       }
       if (entity.viewPermitted()) {

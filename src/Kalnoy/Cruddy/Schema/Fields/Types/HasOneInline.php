@@ -13,13 +13,6 @@ class HasOneInline extends InlineRelation {
     /**
      * @inheritdoc
      *
-     * @var string
-     */
-    protected $class = 'HasOne';
-
-    /**
-     * @inheritdoc
-     *
      * @param \Illuminate\Database\Eloquent\Model $model
      *
      * @return array

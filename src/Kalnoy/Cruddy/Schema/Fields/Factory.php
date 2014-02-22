@@ -102,7 +102,7 @@ class Factory extends BaseFactory {
      *
      * @return \Kalnoy\Cruddy\Schema\Fields\Types\Relation
      */
-    public function inline($entity, $collection, $id, $ref = null)
+    public function embed($entity, $collection, $id, $ref = null)
     {
         return $this->relates($entity, $collection, $id, $ref, true);
     }

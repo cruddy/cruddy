@@ -7,13 +7,6 @@ class HasManyInline extends HasOneInline {
     /**
      * @inheritdoc
      *
-     * @var string
-     */
-    protected $class = 'HasMany';
-
-    /**
-     * @inheritdoc
-     *
      * @var bool
      */
     protected $multiple = true;

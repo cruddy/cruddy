@@ -326,12 +326,11 @@ class Entity implements JsonableInterface, ArrayableInterface {
 
         foreach ($this->related as $id => $item)
         {
-            if ( ! isset($input[$id])) continue;
-
             try
             {
-                $data[$id] = $item->processInput($input[$id]);
+                $data[$id] = $item->processInput(array_get($input, $id, []));
             } 
+
             catch (ValidationException $e)
             {
                 $errors[$id] = $e->getErrors();

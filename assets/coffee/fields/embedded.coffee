@@ -1,4 +1,4 @@
-class Cruddy.Fields.HasManyView extends Backbone.View
+class Cruddy.Fields.EmbeddedView extends Backbone.View
     className: "has-many-view"
 
     events:
@@ -23,7 +23,7 @@ class Cruddy.Fields.HasManyView extends Backbone.View
         this
 
     add: (model, collection, options) ->
-        @views[model.cid] = view = new Cruddy.Fields.HasManyItemView
+        @views[model.cid] = view = new Cruddy.Fields.EmbeddedItemView
             model: model
             collection: @collection
             disabled: @field.isEditable()
@@ -34,12 +34,16 @@ class Cruddy.Fields.HasManyView extends Backbone.View
 
         @focusable = view if not @focusable
 
+        @update()
+
         this
 
     removeItem: (model) ->
         if view = @views[model.cid]
             view.remove()
             delete @views[model.cid]
+
+        @update()
 
         this
 
@@ -48,8 +52,14 @@ class Cruddy.Fields.HasManyView extends Backbone.View
 
         @$el.html @template()
         @body = @$ ".body"
+        @createButton = @$ ".btn-create"
 
         @add model for model in @collection.models
+
+        @update()
+
+    update: ->
+        @createButton.toggle @field.isMultiple() or @collection.isEmpty()
 
         this
 
@@ -58,7 +68,7 @@ class Cruddy.Fields.HasManyView extends Backbone.View
 
         buttons = if ref.createPermitted() then b_btn("", "plus", ["default", "create"]) else ""
 
-        "<div class='header'>#{ @field.getReference().getPluralTitle() } #{ buttons }</div><div class='body'></div>"
+        "<div class='header'>#{ if @field.isMultiple() then ref.getPluralTitle() else ref.getSingularTitle() } #{ buttons }</div><div class='body'></div>"
 
     dispose: ->
         view.remove() for cid, view of @views
@@ -66,6 +76,7 @@ class Cruddy.Fields.HasManyView extends Backbone.View
         @focusable = null
 
         this
+
 
     remove: ->
         @dispose()
@@ -77,7 +88,7 @@ class Cruddy.Fields.HasManyView extends Backbone.View
 
         this
 
-class Cruddy.Fields.HasManyItemView extends Backbone.View
+class Cruddy.Fields.EmbeddedItemView extends Backbone.View
     className: "has-many-item-view"
 
     events:
@@ -159,23 +170,39 @@ class Cruddy.Fields.RelatedCollection extends Backbone.Collection
             owner: copy
             field: @field
 
-class Cruddy.Fields.HasMany extends Cruddy.Fields.BaseRelation
-    viewConstructor: Cruddy.Fields.HasManyView
+    serialize: ->
+        if @field.isMultiple() 
+            data = {}
+
+            data[item.cid] = item for item in @models
+
+            data
+        else
+            @first()
+
+class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
+    viewConstructor: Cruddy.Fields.EmbeddedView
 
     createInstance: (model, items) ->
         return items if items instanceof Backbone.Collection
 
+        items = (if items then [ items ] else []) if not @attributes.multiple
+
         ref = @getReference()
         items = (ref.createInstance item for item in items)
+
         new Cruddy.Fields.RelatedCollection items,
             owner: model
             field: this
 
     applyValues: (collection, items) ->
+        items = [ items ] if not @attributes.multiple
+
         collection.set _.pluck(items, "attributes"), add: no
 
         # Add new items
         ref = @getReference()
+
         collection.add (ref.createInstance item for item in items when not collection.get item.id)
 
         this
@@ -195,3 +222,5 @@ class Cruddy.Fields.HasMany extends Cruddy.Fields.BaseRelation
         model.trigger.apply model, [ event, model ].concat(args) for model in collection.models
 
         this
+
+    isMultiple: -> @attributes.multiple

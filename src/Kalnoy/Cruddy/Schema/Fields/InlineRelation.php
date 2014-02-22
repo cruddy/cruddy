@@ -17,6 +17,13 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
      *
      * @var string
      */
+    protected $class = 'Embedded';
+
+    /**
+     * @inheritdoc
+     *
+     * @var string
+     */
     protected $type = 'inline-relation';
 
     /**
@@ -95,6 +102,8 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
      */
     public function processInputItem(array $item)
     {
+        if (empty($item)) return [];
+
         extract($item);
 
         $action = empty($id) ? 'create' : 'update';
@@ -114,7 +123,7 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
      */
     public function save(Eloquent $model, array $data)
     {
-        if ( ! $this->multiple) $data = [ $data ];
+        if ( ! $this->multiple && ! empty($data)) $data = [ $data ];
 
         $ref    = $this->reference;
         $permit = $ref->getPermissions();
@@ -160,6 +169,20 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     public function extract(Eloquent $model)
     {
         return $this->reference->extract($model->{$this->id});
+    }
+
+    /**
+     * @inheritdoc
+     *
+     * @return array
+     */
+    public function toArray()
+    {
+        return
+        [
+            'multiple' => $this->multiple,
+
+        ] + parent::toArray();
     }
 
 }

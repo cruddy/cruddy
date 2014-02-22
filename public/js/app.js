@@ -1,5 +1,5 @@
 (function() {
-  var API_URL, AdvFormData, Alert, App, Attribute, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FieldView, FilterList, Pagination, Router, SearchDataSource, TRANSITIONEND, after_break, b_btn, b_icon, entity_url, humanize, thumb, _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref18, _ref19, _ref2, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref26, _ref27, _ref28, _ref29, _ref3, _ref30, _ref31, _ref32, _ref33, _ref34, _ref35, _ref36, _ref37, _ref38, _ref39, _ref4, _ref40, _ref41, _ref42, _ref43, _ref44, _ref45, _ref46, _ref5, _ref6, _ref7, _ref8, _ref9,
+  var API_URL, AdvFormData, Alert, App, Attribute, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FieldView, FilterList, Pagination, Router, SearchDataSource, TRANSITIONEND, after_break, b_btn, b_icon, entity_url, humanize, thumb, _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref18, _ref19, _ref2, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref26, _ref27, _ref28, _ref29, _ref3, _ref30, _ref31, _ref32, _ref33, _ref34, _ref35, _ref36, _ref37, _ref38, _ref39, _ref4, _ref40, _ref41, _ref42, _ref43, _ref44, _ref5, _ref6, _ref7, _ref8, _ref9,
     _this = this,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -122,7 +122,7 @@
     }
 
     AdvFormData.prototype.append = function(name, value) {
-      var item, key, _i, _j, _len, _len1, _ref2, _value;
+      var key, _i, _len, _value;
       if (value === void 0) {
         value = name;
         name = null;
@@ -141,15 +141,8 @@
         return;
       }
       if (_.isObject(value)) {
-        if (value instanceof Cruddy.Entity.Instance) {
-          this.append(this.key(name, 'attributes'), value.attributes);
-          this.append(this.key(name, 'id'), value.id);
-        } else if (value instanceof Backbone.Collection) {
-          _ref2 = value.models;
-          for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
-            item = _ref2[_j];
-            this.append(this.key(name, item.cid), item);
-          }
+        if (_.isFunction(value.serialize)) {
+          this.append(name, value.serialize());
         } else {
           for (key in value) {
             _value = value[key];
@@ -2629,109 +2622,30 @@
 
   })(Cruddy.Fields.Base);
 
-  Cruddy.Fields.HasOneView = (function(_super) {
-    __extends(HasOneView, _super);
+  Cruddy.Fields.EmbeddedView = (function(_super) {
+    __extends(EmbeddedView, _super);
 
-    function HasOneView() {
-      _ref33 = HasOneView.__super__.constructor.apply(this, arguments);
+    function EmbeddedView() {
+      _ref33 = EmbeddedView.__super__.constructor.apply(this, arguments);
       return _ref33;
     }
 
-    HasOneView.prototype.className = "has-one-view";
+    EmbeddedView.prototype.className = "has-many-view";
 
-    HasOneView.prototype.initialize = function(options) {
-      this.field = options.field;
-      this.fieldList = new FieldList({
-        model: this.model.get(this.field.id),
-        disabled: !this.field.isEditable() || !this.model.isSaveable()
-      });
-      return this;
-    };
-
-    HasOneView.prototype.render = function() {
-      this.$el.html(this.fieldList.render().el);
-      return this;
-    };
-
-    HasOneView.prototype.remove = function() {
-      this.fieldList.remove();
-      return HasOneView.__super__.remove.apply(this, arguments);
-    };
-
-    return HasOneView;
-
-  })(Backbone.View);
-
-  Cruddy.Fields.HasOne = (function(_super) {
-    __extends(HasOne, _super);
-
-    function HasOne() {
-      _ref34 = HasOne.__super__.constructor.apply(this, arguments);
-      return _ref34;
-    }
-
-    HasOne.prototype.viewConstructor = Cruddy.Fields.HasOneView;
-
-    HasOne.prototype.createInstance = function(owner, attrs) {
-      if (attrs instanceof Cruddy.Entity.Instance) {
-        return attrs;
-      } else {
-        return this.getReference().createInstance(attrs);
-      }
-    };
-
-    HasOne.prototype.applyValues = function(model, data) {
-      return model.set(data.attributes);
-    };
-
-    HasOne.prototype.hasChangedSinceSync = function(model) {
-      return model.hasChangedSinceSync();
-    };
-
-    HasOne.prototype.copy = function(copy, model) {
-      if (this.isUnique()) {
-        return this.getReference().createInstance();
-      } else {
-        return model.copy();
-      }
-    };
-
-    HasOne.prototype.processErrors = function(model, errors) {
-      return model.trigger("invalid", model, errors);
-    };
-
-    HasOne.prototype.triggerRelated = function(event, model, args) {
-      return model.trigger.apply([model, event, model].concat(args));
-    };
-
-    return HasOne;
-
-  })(Cruddy.Fields.BaseRelation);
-
-  Cruddy.Fields.HasManyView = (function(_super) {
-    __extends(HasManyView, _super);
-
-    function HasManyView() {
-      _ref35 = HasManyView.__super__.constructor.apply(this, arguments);
-      return _ref35;
-    }
-
-    HasManyView.prototype.className = "has-many-view";
-
-    HasManyView.prototype.events = {
+    EmbeddedView.prototype.events = {
       "click .btn-create": "create"
     };
 
-    HasManyView.prototype.initialize = function(options) {
+    EmbeddedView.prototype.initialize = function(options) {
       this.field = options.field;
       this.views = {};
       this.collection = this.model.get(this.field.id);
       this.listenTo(this.collection, "add", this.add);
       this.listenTo(this.collection, "remove", this.removeItem);
-      return HasManyView.__super__.initialize.apply(this, arguments);
+      return EmbeddedView.__super__.initialize.apply(this, arguments);
     };
 
-    HasManyView.prototype.create = function(e) {
+    EmbeddedView.prototype.create = function(e) {
       e.preventDefault();
       e.stopPropagation();
       this.collection.add(this.field.getReference().createInstance(), {
@@ -2740,9 +2654,9 @@
       return this;
     };
 
-    HasManyView.prototype.add = function(model, collection, options) {
+    EmbeddedView.prototype.add = function(model, collection, options) {
       var view;
-      this.views[model.cid] = view = new Cruddy.Fields.HasManyItemView({
+      this.views[model.cid] = view = new Cruddy.Fields.EmbeddedItemView({
         model: model,
         collection: this.collection,
         disabled: this.field.isEditable()
@@ -2756,43 +2670,51 @@
       if (!this.focusable) {
         this.focusable = view;
       }
+      this.update();
       return this;
     };
 
-    HasManyView.prototype.removeItem = function(model) {
+    EmbeddedView.prototype.removeItem = function(model) {
       var view;
       if (view = this.views[model.cid]) {
         view.remove();
         delete this.views[model.cid];
       }
+      this.update();
       return this;
     };
 
-    HasManyView.prototype.render = function() {
-      var model, _i, _len, _ref36;
+    EmbeddedView.prototype.render = function() {
+      var model, _i, _len, _ref34;
       this.dispose();
       this.$el.html(this.template());
       this.body = this.$(".body");
-      _ref36 = this.collection.models;
-      for (_i = 0, _len = _ref36.length; _i < _len; _i++) {
-        model = _ref36[_i];
+      this.createButton = this.$(".btn-create");
+      _ref34 = this.collection.models;
+      for (_i = 0, _len = _ref34.length; _i < _len; _i++) {
+        model = _ref34[_i];
         this.add(model);
       }
+      return this.update();
+    };
+
+    EmbeddedView.prototype.update = function() {
+      this.createButton.toggle(this.field.isMultiple() || this.collection.isEmpty());
       return this;
     };
 
-    HasManyView.prototype.template = function() {
+    EmbeddedView.prototype.template = function() {
       var buttons, ref;
       ref = this.field.getReference();
       buttons = ref.createPermitted() ? b_btn("", "plus", ["default", "create"]) : "";
-      return "<div class='header'>" + (this.field.getReference().getPluralTitle()) + " " + buttons + "</div><div class='body'></div>";
+      return "<div class='header'>" + (this.field.isMultiple() ? ref.getPluralTitle() : ref.getSingularTitle()) + " " + buttons + "</div><div class='body'></div>";
     };
 
-    HasManyView.prototype.dispose = function() {
-      var cid, view, _ref36;
-      _ref36 = this.views;
-      for (cid in _ref36) {
-        view = _ref36[cid];
+    EmbeddedView.prototype.dispose = function() {
+      var cid, view, _ref34;
+      _ref34 = this.views;
+      for (cid in _ref34) {
+        view = _ref34[cid];
         view.remove();
       }
       this.views = {};
@@ -2800,52 +2722,52 @@
       return this;
     };
 
-    HasManyView.prototype.remove = function() {
+    EmbeddedView.prototype.remove = function() {
       this.dispose();
-      return HasManyView.__super__.remove.apply(this, arguments);
+      return EmbeddedView.__super__.remove.apply(this, arguments);
     };
 
-    HasManyView.prototype.focus = function() {
-      var _ref36;
-      if ((_ref36 = this.focusable) != null) {
-        _ref36.focus();
+    EmbeddedView.prototype.focus = function() {
+      var _ref34;
+      if ((_ref34 = this.focusable) != null) {
+        _ref34.focus();
       }
       return this;
     };
 
-    return HasManyView;
+    return EmbeddedView;
 
   })(Backbone.View);
 
-  Cruddy.Fields.HasManyItemView = (function(_super) {
-    __extends(HasManyItemView, _super);
+  Cruddy.Fields.EmbeddedItemView = (function(_super) {
+    __extends(EmbeddedItemView, _super);
 
-    function HasManyItemView() {
-      _ref36 = HasManyItemView.__super__.constructor.apply(this, arguments);
-      return _ref36;
+    function EmbeddedItemView() {
+      _ref34 = EmbeddedItemView.__super__.constructor.apply(this, arguments);
+      return _ref34;
     }
 
-    HasManyItemView.prototype.className = "has-many-item-view";
+    EmbeddedItemView.prototype.className = "has-many-item-view";
 
-    HasManyItemView.prototype.events = {
+    EmbeddedItemView.prototype.events = {
       "click .btn-delete": "deleteItem"
     };
 
-    HasManyItemView.prototype.initialize = function(options) {
-      var _ref37;
+    EmbeddedItemView.prototype.initialize = function(options) {
+      var _ref35;
       this.collection = options.collection;
-      this.disabled = (_ref37 = options.disabled) != null ? _ref37 : true;
-      return HasManyItemView.__super__.initialize.apply(this, arguments);
+      this.disabled = (_ref35 = options.disabled) != null ? _ref35 : true;
+      return EmbeddedItemView.__super__.initialize.apply(this, arguments);
     };
 
-    HasManyItemView.prototype.deleteItem = function(e) {
+    EmbeddedItemView.prototype.deleteItem = function(e) {
       e.preventDefault();
       e.stopPropagation();
       this.collection.remove(this.model);
       return this;
     };
 
-    HasManyItemView.prototype.render = function() {
+    EmbeddedItemView.prototype.render = function() {
       this.dispose();
       this.$el.html(this.template());
       this.fieldList = new FieldList({
@@ -2856,7 +2778,7 @@
       return this;
     };
 
-    HasManyItemView.prototype.template = function() {
+    EmbeddedItemView.prototype.template = function() {
       if (this.model.entity.deletePermitted()) {
         return b_btn(Cruddy.lang["delete"], "trash", ["default", "sm", "delete"]);
       } else {
@@ -2864,29 +2786,29 @@
       }
     };
 
-    HasManyItemView.prototype.dispose = function() {
-      var _ref37;
-      if ((_ref37 = this.fieldList) != null) {
-        _ref37.remove();
+    EmbeddedItemView.prototype.dispose = function() {
+      var _ref35;
+      if ((_ref35 = this.fieldList) != null) {
+        _ref35.remove();
       }
       this.fieldList = null;
       return this;
     };
 
-    HasManyItemView.prototype.remove = function() {
+    EmbeddedItemView.prototype.remove = function() {
       this.dispose();
-      return HasManyItemView.__super__.remove.apply(this, arguments);
+      return EmbeddedItemView.__super__.remove.apply(this, arguments);
     };
 
-    HasManyItemView.prototype.focus = function() {
-      var _ref37;
-      if ((_ref37 = this.fieldList) != null) {
-        _ref37.focus();
+    EmbeddedItemView.prototype.focus = function() {
+      var _ref35;
+      if ((_ref35 = this.fieldList) != null) {
+        _ref35.focus();
       }
       return this;
     };
 
-    return HasManyItemView;
+    return EmbeddedItemView;
 
   })(Backbone.View);
 
@@ -2894,8 +2816,8 @@
     __extends(RelatedCollection, _super);
 
     function RelatedCollection() {
-      _ref37 = RelatedCollection.__super__.constructor.apply(this, arguments);
-      return _ref37;
+      _ref35 = RelatedCollection.__super__.constructor.apply(this, arguments);
+      return _ref35;
     }
 
     RelatedCollection.prototype.initialize = function(items, options) {
@@ -2915,13 +2837,13 @@
     };
 
     RelatedCollection.prototype.hasChangedSinceSync = function() {
-      var item, _i, _len, _ref38;
+      var item, _i, _len, _ref36;
       if (this.deleted) {
         return true;
       }
-      _ref38 = this.models;
-      for (_i = 0, _len = _ref38.length; _i < _len; _i++) {
-        item = _ref38[_i];
+      _ref36 = this.models;
+      for (_i = 0, _len = _ref36.length; _i < _len; _i++) {
+        item = _ref36[_i];
         if (item.hasChangedSinceSync()) {
           return true;
         }
@@ -2932,11 +2854,11 @@
     RelatedCollection.prototype.copy = function(copy) {
       var item, items;
       items = this.field.isUnique() ? [] : (function() {
-        var _i, _len, _ref38, _results;
-        _ref38 = this.models;
+        var _i, _len, _ref36, _results;
+        _ref36 = this.models;
         _results = [];
-        for (_i = 0, _len = _ref38.length; _i < _len; _i++) {
-          item = _ref38[_i];
+        for (_i = 0, _len = _ref36.length; _i < _len; _i++) {
+          item = _ref36[_i];
           _results.push(item.copy());
         }
         return _results;
@@ -2947,24 +2869,42 @@
       });
     };
 
+    RelatedCollection.prototype.serialize = function() {
+      var data, item, _i, _len, _ref36;
+      if (this.field.isMultiple()) {
+        data = {};
+        _ref36 = this.models;
+        for (_i = 0, _len = _ref36.length; _i < _len; _i++) {
+          item = _ref36[_i];
+          data[item.cid] = item;
+        }
+        return data;
+      } else {
+        return this.first();
+      }
+    };
+
     return RelatedCollection;
 
   })(Backbone.Collection);
 
-  Cruddy.Fields.HasMany = (function(_super) {
-    __extends(HasMany, _super);
+  Cruddy.Fields.Embedded = (function(_super) {
+    __extends(Embedded, _super);
 
-    function HasMany() {
-      _ref38 = HasMany.__super__.constructor.apply(this, arguments);
-      return _ref38;
+    function Embedded() {
+      _ref36 = Embedded.__super__.constructor.apply(this, arguments);
+      return _ref36;
     }
 
-    HasMany.prototype.viewConstructor = Cruddy.Fields.HasManyView;
+    Embedded.prototype.viewConstructor = Cruddy.Fields.EmbeddedView;
 
-    HasMany.prototype.createInstance = function(model, items) {
+    Embedded.prototype.createInstance = function(model, items) {
       var item, ref;
       if (items instanceof Backbone.Collection) {
         return items;
+      }
+      if (!this.attributes.multiple) {
+        items = (items ? [items] : []);
       }
       ref = this.getReference();
       items = (function() {
@@ -2982,8 +2922,11 @@
       });
     };
 
-    HasMany.prototype.applyValues = function(collection, items) {
+    Embedded.prototype.applyValues = function(collection, items) {
       var item, ref;
+      if (!this.attributes.multiple) {
+        items = [items];
+      }
       collection.set(_.pluck(items, "attributes"), {
         add: false
       });
@@ -3002,15 +2945,15 @@
       return this;
     };
 
-    HasMany.prototype.hasChangedSinceSync = function(items) {
+    Embedded.prototype.hasChangedSinceSync = function(items) {
       return items.hasChangedSinceSync();
     };
 
-    HasMany.prototype.copy = function(copy, items) {
+    Embedded.prototype.copy = function(copy, items) {
       return items.copy(copy);
     };
 
-    HasMany.prototype.processErrors = function(collection, errorsCollection) {
+    Embedded.prototype.processErrors = function(collection, errorsCollection) {
       var cid, errors, model;
       for (cid in errorsCollection) {
         errors = errorsCollection[cid];
@@ -3022,17 +2965,21 @@
       return this;
     };
 
-    HasMany.prototype.triggerRelated = function(event, collection, args) {
-      var model, _i, _len, _ref39;
-      _ref39 = collection.models;
-      for (_i = 0, _len = _ref39.length; _i < _len; _i++) {
-        model = _ref39[_i];
+    Embedded.prototype.triggerRelated = function(event, collection, args) {
+      var model, _i, _len, _ref37;
+      _ref37 = collection.models;
+      for (_i = 0, _len = _ref37.length; _i < _len; _i++) {
+        model = _ref37[_i];
         model.trigger.apply(model, [event, model].concat(args));
       }
       return this;
     };
 
-    return HasMany;
+    Embedded.prototype.isMultiple = function() {
+      return this.attributes.multiple;
+    };
+
+    return Embedded;
 
   })(Cruddy.Fields.BaseRelation);
 
@@ -3042,8 +2989,8 @@
     __extends(Base, _super);
 
     function Base() {
-      _ref39 = Base.__super__.constructor.apply(this, arguments);
-      return _ref39;
+      _ref37 = Base.__super__.constructor.apply(this, arguments);
+      return _ref37;
     }
 
     Base.prototype.initialize = function(attributes) {
@@ -3089,13 +3036,13 @@
     __extends(Proxy, _super);
 
     function Proxy() {
-      _ref40 = Proxy.__super__.constructor.apply(this, arguments);
-      return _ref40;
+      _ref38 = Proxy.__super__.constructor.apply(this, arguments);
+      return _ref38;
     }
 
     Proxy.prototype.initialize = function(attributes) {
-      var field, _ref41;
-      field = (_ref41 = attributes.field) != null ? _ref41 : attributes.id;
+      var field, _ref39;
+      field = (_ref39 = attributes.field) != null ? _ref39 : attributes.id;
       this.field = attributes.entity.fields.get(field);
       if (attributes.header === null) {
         this.set("header", this.field.get("label"));
@@ -3135,8 +3082,8 @@
     __extends(Computed, _super);
 
     function Computed() {
-      _ref41 = Computed.__super__.constructor.apply(this, arguments);
-      return _ref41;
+      _ref39 = Computed.__super__.constructor.apply(this, arguments);
+      return _ref39;
     }
 
     Computed.prototype.createFilter = function(model) {
@@ -3182,8 +3129,8 @@
     __extends(Image, _super);
 
     function Image() {
-      _ref42 = Image.__super__.constructor.apply(this, arguments);
-      return _ref42;
+      _ref40 = Image.__super__.constructor.apply(this, arguments);
+      return _ref40;
     }
 
     Image.prototype.defaultOptions = {
@@ -3209,8 +3156,8 @@
     __extends(Plain, _super);
 
     function Plain() {
-      _ref43 = Plain.__super__.constructor.apply(this, arguments);
-      return _ref43;
+      _ref41 = Plain.__super__.constructor.apply(this, arguments);
+      return _ref41;
     }
 
     Plain.prototype.format = function(value) {
@@ -3227,8 +3174,8 @@
     __extends(Entity, _super);
 
     function Entity() {
-      _ref44 = Entity.__super__.constructor.apply(this, arguments);
-      return _ref44;
+      _ref42 = Entity.__super__.constructor.apply(this, arguments);
+      return _ref42;
     }
 
     Entity.prototype.initialize = function(attributes, options) {
@@ -3275,11 +3222,11 @@
         columns = this.columns;
       }
       filters = (function() {
-        var _i, _len, _ref45, _results;
-        _ref45 = columns.models;
+        var _i, _len, _ref43, _results;
+        _ref43 = columns.models;
         _results = [];
-        for (_i = 0, _len = _ref45.length; _i < _len; _i++) {
-          col = _ref45[_i];
+        for (_i = 0, _len = _ref43.length; _i < _len; _i++) {
+          col = _ref43[_i];
           if (col.get("filter_type") === "complex") {
             _results.push(col.createFilter());
           }
@@ -3354,18 +3301,18 @@
     };
 
     Entity.prototype.getCopyableAttributes = function(model, attributes) {
-      var data, field, ref, _i, _j, _len, _len1, _ref45, _ref46;
+      var data, field, ref, _i, _j, _len, _len1, _ref43, _ref44;
       data = {};
-      _ref45 = this.fields.models;
-      for (_i = 0, _len = _ref45.length; _i < _len; _i++) {
-        field = _ref45[_i];
+      _ref43 = this.fields.models;
+      for (_i = 0, _len = _ref43.length; _i < _len; _i++) {
+        field = _ref43[_i];
         if (!field.isUnique() && field.id in attributes && !_.contains(this.attributes.related, field.id)) {
           data[field.id] = attributes[field.id];
         }
       }
-      _ref46 = this.attributes.related;
-      for (_j = 0, _len1 = _ref46.length; _j < _len1; _j++) {
-        ref = _ref46[_j];
+      _ref44 = this.attributes.related;
+      for (_j = 0, _len1 = _ref44.length; _j < _len1; _j++) {
+        ref = _ref44[_j];
         if (ref in attributes) {
           data[ref] = this.getRelation(ref).copy(model, attributes[ref]);
         }
@@ -3427,7 +3374,7 @@
     }
 
     Instance.prototype.initialize = function(attributes, options) {
-      var event, _i, _len, _ref45,
+      var event, _i, _len, _ref43,
         _this = this;
       this.original = _.clone(attributes);
       this.on("error", this.processError, this);
@@ -3437,9 +3384,9 @@
           return _this.set("deleted_at", moment().unix());
         }
       });
-      _ref45 = ["sync", "request"];
-      for (_i = 0, _len = _ref45.length; _i < _len; _i++) {
-        event = _ref45[_i];
+      _ref43 = ["sync", "request"];
+      for (_i = 0, _len = _ref43.length; _i < _len; _i++) {
+        event = _ref43[_i];
         this.on(event, this.triggerRelated(event), this);
       }
       return this;
@@ -3454,10 +3401,10 @@
       var slice;
       slice = Array.prototype.slice;
       return function(model) {
-        var id, related, relation, _ref45;
-        _ref45 = this.related;
-        for (id in _ref45) {
-          related = _ref45[id];
+        var id, related, relation, _ref43;
+        _ref43 = this.related;
+        for (id in _ref43) {
+          related = _ref43[id];
           relation = this.entity.getRelation(id);
           relation.triggerRelated.call(relation, event, related, slice.call(arguments, 1));
         }
@@ -3466,14 +3413,14 @@
     };
 
     Instance.prototype.processError = function(model, xhr) {
-      var errors, id, _ref45, _results;
+      var errors, id, _ref43, _results;
       if ((xhr.responseJSON != null) && xhr.responseJSON.error === "VALIDATION") {
         errors = xhr.responseJSON.data;
         this.trigger("invalid", this, errors);
-        _ref45 = this.related;
+        _ref43 = this.related;
         _results = [];
-        for (id in _ref45) {
-          model = _ref45[id];
+        for (id in _ref43) {
+          model = _ref43[id];
           if (id in errors) {
             _results.push(this.entity.getRelation(id).processErrors(model, errors[id]));
           }
@@ -3496,14 +3443,14 @@
     };
 
     Instance.prototype.set = function(key, val, options) {
-      var attrs, id, is_copy, related, relation, relationAttrs, _i, _len, _ref45;
+      var attrs, id, is_copy, related, relation, relationAttrs, _i, _len, _ref43;
       if (typeof key === "object") {
         attrs = key;
         options = val;
         is_copy = options != null ? options.is_copy : void 0;
-        _ref45 = this.entity.get("related");
-        for (_i = 0, _len = _ref45.length; _i < _len; _i++) {
-          id = _ref45[_i];
+        _ref43 = this.entity.get("related");
+        for (_i = 0, _len = _ref43.length; _i < _len; _i++) {
+          id = _ref43[_i];
           if (!(id in attrs)) {
             continue;
           }
@@ -3527,9 +3474,9 @@
     };
 
     Instance.prototype.sync = function(method, model, options) {
-      var _ref45;
+      var _ref43;
       if (method === "update" || method === "create") {
-        options.data = new AdvFormData((_ref45 = options.attrs) != null ? _ref45 : this.attributes).original;
+        options.data = new AdvFormData((_ref43 = options.attrs) != null ? _ref43 : this.attributes).original;
         options.contentType = false;
         options.processData = false;
       }
@@ -3555,10 +3502,10 @@
     };
 
     Instance.prototype.hasChangedSinceSync = function() {
-      var key, value, _ref45;
-      _ref45 = this.attributes;
-      for (key in _ref45) {
-        value = _ref45[key];
+      var key, value, _ref43;
+      _ref43 = this.attributes;
+      for (key in _ref43) {
+        value = _ref43[key];
         if (key in this.related ? this.entity.getRelation(key).hasChangedSinceSync(value) : !_.isEqual(value, this.original[key])) {
           return true;
         }
@@ -3568,6 +3515,13 @@
 
     Instance.prototype.isSaveable = function() {
       return (this.isNew() && this.entity.createPermitted()) || (!this.isNew() && this.entity.updatePermitted());
+    };
+
+    Instance.prototype.serialize = function() {
+      return {
+        attributes: this.attributes,
+        id: this.id
+      };
     };
 
     return Instance;
@@ -3713,8 +3667,8 @@
     }
 
     Form.prototype.initialize = function(options) {
-      var _ref45;
-      this.inner = (_ref45 = options.inner) != null ? _ref45 : false;
+      var _ref43;
+      this.inner = (_ref43 = options.inner) != null ? _ref43 : false;
       this.listenTo(this.model, "destroy", this.handleDestroy);
       this.listenTo(this.model, "invalid", this.displayInvalid);
       this.hotkeys = $(document).on("keydown." + this.cid, "body", $.proxy(this, "hotkeys"));
@@ -3760,8 +3714,8 @@
     };
 
     Form.prototype.displayError = function(xhr) {
-      var _ref45;
-      if (((_ref45 = xhr.responseJSON) != null ? _ref45.error : void 0) !== "VALIDATION") {
+      var _ref43;
+      if (((_ref43 = xhr.responseJSON) != null ? _ref43.error : void 0) !== "VALIDATION") {
         return this.displayAlert(Cruddy.lang.failure, "danger");
       }
     };
@@ -3914,11 +3868,11 @@
     };
 
     Form.prototype.dispose = function() {
-      var fieldList, _i, _len, _ref45;
+      var fieldList, _i, _len, _ref43;
       if (this.tabs != null) {
-        _ref45 = this.tabs;
-        for (_i = 0, _len = _ref45.length; _i < _len; _i++) {
-          fieldList = _ref45[_i];
+        _ref43 = this.tabs;
+        for (_i = 0, _len = _ref43.length; _i < _len; _i++) {
+          fieldList = _ref43[_i];
           fieldList.remove();
         }
       }
@@ -3943,20 +3897,20 @@
     __extends(App, _super);
 
     function App() {
-      _ref45 = App.__super__.constructor.apply(this, arguments);
-      return _ref45;
+      _ref43 = App.__super__.constructor.apply(this, arguments);
+      return _ref43;
     }
 
     App.prototype.initialize = function() {
-      var entity, _i, _len, _ref46;
+      var entity, _i, _len, _ref44;
       this.container = $("body");
       this.mainContent = $("#content");
       this.loadingRequests = 0;
       this.entities = {};
       this.entitiesDfd = {};
-      _ref46 = Cruddy.entities;
-      for (_i = 0, _len = _ref46.length; _i < _len; _i++) {
-        entity = _ref46[_i];
+      _ref44 = Cruddy.entities;
+      for (_i = 0, _len = _ref44.length; _i < _len; _i++) {
+        entity = _ref44[_i];
         this.entities[entity.id] = new Cruddy.Entity.Entity(entity);
       }
       this.on("change:entity", this.displayEntity, this);
@@ -4014,9 +3968,9 @@
     };
 
     App.prototype.dispose = function() {
-      var _ref46;
-      if ((_ref46 = this.page) != null) {
-        _ref46.remove();
+      var _ref44;
+      if ((_ref44 = this.page) != null) {
+        _ref44.remove();
       }
       return this;
     };
@@ -4031,8 +3985,8 @@
     __extends(Router, _super);
 
     function Router() {
-      _ref46 = Router.__super__.constructor.apply(this, arguments);
-      return _ref46;
+      _ref44 = Router.__super__.constructor.apply(this, arguments);
+      return _ref44;
     }
 
     Router.prototype.routes = {

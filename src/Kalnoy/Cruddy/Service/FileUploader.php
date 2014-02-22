@@ -112,25 +112,27 @@ class FileUploader {
      */
     protected function uploadFile(UploadedFile $file)
     {
-        if (!$file->isValid()) return null;
+        if ( ! $file->isValid()) return null;
 
         $path = $this->root;
 
         if ($this->path) $path .= '/'.$this->path;
 
-        $ext = '.'.$file->getClientOriginalExtension();
+        $ext = '.' . $file->getClientOriginalExtension();
         $name = $this->getName($file);
 
         // If file already exists, we force random name.
-        if ($this->file->exists($path.'/'.$name.$ext)) $name = $this->getName();
+        if ($this->file->exists($path . '/' . $name . $ext)) $name = $this->getName();
 
-        $this->uploaded[] = $target = $file->move($path, $name.$ext);
+        $this->uploaded[] = $target = $file->move($path, $name . $ext);
 
-        return strtr($target,
+        $target = strtr($target,
         [
             $this->root => '',
             '\\' => '/',
         ]);
+
+        return substr($target, 1);
     }
 
     /**

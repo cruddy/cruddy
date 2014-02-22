@@ -30,6 +30,13 @@ abstract class BaseField extends Attribute implements FieldInterface {
     public $disabled = false;
 
     /**
+     * The label.
+     *
+     * @var string
+     */
+    protected $label;
+
+    /**
      * @inheritdoc
      *
      * @param \Illuminate\Database\Eloquent\Model $model
@@ -108,17 +115,35 @@ abstract class BaseField extends Attribute implements FieldInterface {
     }
 
     /**
+     * Set label.
+     *
+     * @param string $value
+     *
+     * @return $this
+     */
+    public function label($value)
+    {
+        $this->label = $value;
+
+        return $this;
+    }
+
+    /**
      * Get field label.
      *
      * @return string
      */
     public function getLabel()
     {
-        $label = $this->entity->translate("::validation.attributes.{$this->id}");
+        if ($this->label === null)
+        {
+            if (null === $this->label = $this->translate('fields'))
+            {
+                $this->label = \Kalnoy\Cruddy\ucfirst(\Kalnoy\Cruddy\prettify_string($this->id));
+            }
+        }
 
-        if ($label === null) $label = \Kalnoy\Cruddy\prettify_string($this->id);
-
-        return \Kalnoy\Cruddy\ucfirst($label);
+        return $this->label;
     }
 
     /**
@@ -145,7 +170,7 @@ abstract class BaseField extends Attribute implements FieldInterface {
      */
     public function isFillable()
     {
-        return !$this->disabled and $this->entity->getRepository()->isFillable($this->id);
+        return ! $this->disabled and $this->entity->getRepository()->isFillable($this->id);
     }
 
 }

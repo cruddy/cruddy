@@ -297,10 +297,11 @@ class Entity implements JsonableInterface, ArrayableInterface {
     public function process($action, array $input)
     {
         $processed = $this->fields->process($input);
+        $labels    = $this->fields->validationLabels();
         $validator = $this->getValidator();
         $errors = [];
 
-        if ( ! $validator->validFor($action, $processed))
+        if ( ! $validator->validFor($action, $processed, $labels))
         {
             $errors = $validator->errors();
         }
@@ -326,11 +327,12 @@ class Entity implements JsonableInterface, ArrayableInterface {
 
         foreach ($this->related as $id => $item)
         {
+            if ( ! isset($input[$id])) continue;
+
             try
             {
-                $data[$id] = $item->processInput(array_get($input, $id, []));
+                $data[$id] = $item->processInput($input[$id]);
             } 
-
             catch (ValidationException $e)
             {
                 $errors[$id] = $e->getErrors();

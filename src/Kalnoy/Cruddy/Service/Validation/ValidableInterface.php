@@ -19,10 +19,11 @@ interface ValidableInterface {
      *
      * @param string $action
      * @param array  $input
+     * @param array  $labels
      *
      * @return bool
      */
-    public function validFor($action, array $input);
+    public function validFor($action, array $input, array $labels);
 
     /**
      * Get validation errors.

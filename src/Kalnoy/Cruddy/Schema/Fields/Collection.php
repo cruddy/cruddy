@@ -46,4 +46,18 @@ class Collection extends BaseCollection {
 
         return $result;
     }
+
+    /**
+     * Get validation labels.
+     *
+     * @return array
+     */
+    public function validationLabels()
+    {
+        return array_map(function ($item)
+        {
+            return mb_strtolower($item->getLabel());
+
+        }, $this->items);
+    }
 }

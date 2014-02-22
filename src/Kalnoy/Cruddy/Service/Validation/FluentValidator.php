@@ -37,17 +37,17 @@ class FluentValidator extends Fluent implements ValidableInterface {
      *
      * @throws ValidationException
      */
-    public function validFor($action, array $input)
+    public function validFor($action, array $input, array $labels)
     {
         $this->errors = [];
  
         if ($rules = $this->resolveRules($action))
         {
-            $rules = $this->processRules($rules, $input);
+            $rules    = $this->processRules($rules, $input);
             $messages = $this->get('messages', []);
-            $attributes = $this->get('customAttributes', []);
+            $labels   = $this->get('customAttributes', []) + $labels;
 
-            $validator = $this->validator->make($input, $rules, $messages, $attributes);
+            $validator = $this->validator->make($input, $rules, $messages, $labels);
 
             if ($validator->fails())
             {

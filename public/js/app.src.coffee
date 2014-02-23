@@ -1212,7 +1212,7 @@ class Cruddy.Inputs.ImageList extends Cruddy.Inputs.FileList
             image = thumb item, @width, @height
 
         """
-        <a href="#{ if item instanceof File then item.data or "#" else item }" class="fancybox">
+        <a href="#{ if item instanceof File then item.data or "#" else Cruddy.root + '/' + item }" class="fancybox">
             <img src="#{ image }" id="#{ id }">
         </a>
         """
@@ -1459,29 +1459,65 @@ class Cruddy.Inputs.Markdown extends Cruddy.Inputs.Base
         this
 Cruddy.Fields = new Factory
 
-# This is basic field view that will render in bootstrap's vertical form style.
-class FieldView extends Backbone.View
-    className: "field"
+class Cruddy.Fields.BaseView extends Backbone.View
 
     constructor: (options) ->
-        field = options.field
+        @field = field = options.field
 
         @inputId = options.model.entity.id + "_" + field.id
 
-        base = " " + @className + "-"
+        base = " field-"
         classes = [ field.getType(), field.id, @inputId ]
-        @className += base + classes.join base
+        className = "field" + base + classes.join base
 
-        @className += " required" if field.isRequired()
+        className += " required" if field.isRequired()
+
+        @className = if @className then className + " " + @className else className
 
         super
 
     initialize: (options) ->
-        @field = options.field
-
         @listenTo @model, "sync",    @toggleVisibility
         @listenTo @model, "request", @hideError
         @listenTo @model, "invalid", @showError
+
+        this
+
+    toggleVisibility: -> @$el.toggle @isVisible()
+
+    hideError: -> this
+
+    showError: -> this
+
+    focus: -> this
+
+    render: ->
+        @$(".field-help").tooltip
+            container: "body"
+            placement: "left"
+
+        this
+
+    helpTemplate: ->
+        help = @field.getHelp()
+        if help then """<span class="glyphicon glyphicon-question-sign field-help" title="#{ help }"></span>""" else ""
+
+    errorTemplate: -> """<span class="help-block error"></span>"""
+
+    # Get whether the view is visible
+    isVisible: -> @field.isEditable() or not @model.isNew()
+
+    dispose: -> this
+
+    remove: ->
+        @dispose()
+
+        super
+
+# This is basic field view that will render in bootstrap's vertical form style.
+class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
+    initialize: (options) ->
+        @input = options.input
 
         this
 
@@ -1507,64 +1543,47 @@ class FieldView extends Backbone.View
         @$el.html @template()
 
         @inputHolder = @$ ".input-holder"
-
-        @input = @field.createInput @model
-        @inputHolder.append @input.render().el if @input?
+        @inputHolder.append @input.render().el
 
         @inputHolder.append @error = $ @errorTemplate()
 
         @toggleVisibility()
 
-        this
-
-    helpTemplate: ->
-        help = @field.getHelp()
-        if help then """<span class="glyphicon glyphicon-question-sign field-help" title="#{ help }"></span>""" else ""
-
-    errorTemplate: -> """<span class="help-block error"></span>"""
+        super
 
     label: (label) ->
         label ?= @field.getLabel()
-        """<label for="#{ @inputId }">#{ label }</label>"""
+        
+        """
+        <label for="#{ @inputId }" class="field-label">
+            #{ @helpTemplate() }#{ label }
+        </label>
+        """
 
     # The default template that is shown when field is editable.
     template: ->
         """
-        #{ @helpTemplate() }
         <div class="form-group input-holder">
             #{ @label() }
         </div>
         """
 
-    # Get whether the view is visible
-    isVisible: -> @field.isEditable() or not @model.isNew()
-
-    # Toggle visibility
-    toggleVisibility: -> @$el.toggle @isVisible()
-
     # Focus the input that this field view holds.
     focus: ->
-        @input.focus() if @input?
-
-        this
-
-    dispose: ->
-        @input?.remove()
-
-        @input = null
+        @input.focus()
 
         this
 
     remove: ->
-        @dispose()
+        @input.remove()
 
         super
 
 class Cruddy.Fields.Base extends Attribute
-    viewConstructor: FieldView
+    viewConstructor: Cruddy.Fields.InputView
 
     # Create a view that will represent this field in field list
-    createView: (model) -> new @viewConstructor { model: model, field: this }
+    createView: (model) -> new @viewConstructor { model: model, field: this, input: @createInput(model) }
 
     # Create an input that is used by default view
     createInput: (model) ->
@@ -1731,14 +1750,13 @@ class Cruddy.Fields.Code extends Cruddy.Fields.Base
             height: @attributes.height
             mode: @attributes.mode
             theme: @attributes.theme
-class Cruddy.Fields.EmbeddedView extends Backbone.View
+class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
     className: "has-many-view"
 
     events:
         "click .btn-create": "create"
 
     initialize: (options) ->
-        @field = options.field
         @views = {}
         @collection = @model.get @field.id
 
@@ -1791,6 +1809,8 @@ class Cruddy.Fields.EmbeddedView extends Backbone.View
 
         @update()
 
+        super
+
     update: ->
         @createButton.toggle @field.isMultiple() or @collection.isEmpty()
 
@@ -1801,7 +1821,7 @@ class Cruddy.Fields.EmbeddedView extends Backbone.View
 
         buttons = if ref.createPermitted() then b_btn("", "plus", ["default", "create"]) else ""
 
-        "<div class='header'>#{ if @field.isMultiple() then ref.getPluralTitle() else ref.getSingularTitle() } #{ buttons }</div><div class='body'></div>"
+        "<div class='header field-label'>#{ @helpTemplate() }#{ if @field.isMultiple() then ref.getPluralTitle() else ref.getSingularTitle() } #{ buttons }</div><div class='body'></div>"
 
     dispose: ->
         view.remove() for cid, view of @views
@@ -1809,7 +1829,6 @@ class Cruddy.Fields.EmbeddedView extends Backbone.View
         @focusable = null
 
         this
-
 
     remove: ->
         @dispose()
@@ -1919,7 +1938,7 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
     createInstance: (model, items) ->
         return items if items instanceof Backbone.Collection
 
-        items = (if items then [ items ] else []) if not @attributes.multiple
+        items = (if items or @isRequired() then [ items ] else []) if not @attributes.multiple
 
         ref = @getReference()
         items = (ref.createInstance item for item in items)
@@ -2452,13 +2471,31 @@ class Cruddy.Entity.Form extends Backbone.View
     save: ->
         return if @request?
 
-        @request = @model.save(displayLoading: yes).done($.proxy this, "displaySuccess").fail($.proxy this, "displayError")
+        @request = @model.save null,
+            displayLoading: yes
+
+            xhr: =>
+                xhr = $.ajaxSettings.xhr()
+                xhr.upload.addEventListener('progress', $.proxy @, "progressCallback") if xhr.upload
+
+                xhr
+
+        @request.done($.proxy this, "displaySuccess").fail($.proxy this, "displayError")
 
         @request.always =>
             @request = null
+            @progressBar.parent().hide()
             @update()
 
         @update()
+
+        this
+
+    progressCallback: (e) ->
+        if e.lengthComputable
+            width = (e.total * 100) / e.loaded
+
+            @progressBar.width(width + '%').parent().show()
 
         this
 
@@ -2504,6 +2541,7 @@ class Cruddy.Entity.Form extends Backbone.View
         @submit = @$ ".btn-save"
         @destroy = @$ ".btn-destroy"
         @copy = @$ ".btn-copy"
+        @progressBar = @$ ".form-save-progress"
 
         @tabs = []
         @renderTab @model, yes
@@ -2552,6 +2590,8 @@ class Cruddy.Entity.Form extends Backbone.View
             <button type="button" class="btn btn-default btn-close" type="button">#{ Cruddy.lang.close }</button>
             <button type="button" class="btn btn-default btn-destroy" type="button"></button>
             <button type="button" class="btn btn-primary btn-save" type="button" disabled></button>
+
+            <div class="progress"><div class="progress-bar form-save-progress"></div></div>
         </footer>
         """
 

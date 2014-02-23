@@ -89,7 +89,7 @@ class CruddyController extends Controller {
 
         try
         {
-            return $this->thumb->make(public_path().$src, $width, $height)->response();
+            return $this->thumb->make(public_path($src), $width, $height)->response();
         }
 
         catch (ImageNotFoundException $e)

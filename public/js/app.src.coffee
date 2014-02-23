@@ -2492,6 +2492,8 @@ class Cruddy.Entity.Form extends Backbone.View
         this
 
     progressCallback: (e) ->
+        console.log e
+        
         if e.lengthComputable
             width = (e.total * 100) / e.loaded
 

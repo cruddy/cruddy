@@ -38,15 +38,28 @@ class HasMany extends BasicRelation {
 
         $query->whereExists(function ($q) use ($data)
         {
-            $connection = $q->getConnection();
-            $keyName = $connection->raw($this->relation->getParent()->getQualifiedKeyName());
-
-            $q
-                ->from($this->relation->getBaseQuery()->from)
-                ->select($connection->raw('1'))
-                ->where($this->relation->getForeignKey(), $keyName);
+            $this->filterInnerQuery($q, $data);
         });
 
         return $this;
+    }
+
+    /**
+     * Setup inner query for filtering.
+     *
+     * @param $q
+     * @param $data
+     *
+     * @return void
+     */
+    protected function filterInnerQuery($q, $data)
+    {
+        $connection = $q->getConnection();
+        $keyName = $connection->raw($this->relation->getParent()->getQualifiedKeyName());
+
+        $q
+            ->from($this->relation->getBaseQuery()->from)
+            ->select($connection->raw('1'))
+            ->where($this->relation->getForeignKey(), $keyName);
     }
 }

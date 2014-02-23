@@ -3800,6 +3800,7 @@
 
     Form.prototype.progressCallback = function(e) {
       var width;
+      console.log(e);
       if (e.lengthComputable) {
         width = (e.total * 100) / e.loaded;
         this.progressBar.width(width + '%').parent().show();

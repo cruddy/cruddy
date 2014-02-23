@@ -42,7 +42,7 @@ class Cruddy.Inputs.ImageList extends Cruddy.Inputs.FileList
             image = thumb item, @width, @height
 
         """
-        <a href="#{ if item instanceof File then item.data or "#" else item }" class="fancybox">
+        <a href="#{ if item instanceof File then item.data or "#" else Cruddy.root + '/' + item }" class="fancybox">
             <img src="#{ image }" id="#{ id }">
         </a>
         """

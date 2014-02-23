@@ -77,13 +77,31 @@ class Cruddy.Entity.Form extends Backbone.View
     save: ->
         return if @request?
 
-        @request = @model.save(displayLoading: yes).done($.proxy this, "displaySuccess").fail($.proxy this, "displayError")
+        @request = @model.save null,
+            displayLoading: yes
+
+            xhr: =>
+                xhr = $.ajaxSettings.xhr()
+                xhr.upload.addEventListener('progress', $.proxy @, "progressCallback") if xhr.upload
+
+                xhr
+
+        @request.done($.proxy this, "displaySuccess").fail($.proxy this, "displayError")
 
         @request.always =>
             @request = null
+            @progressBar.parent().hide()
             @update()
 
         @update()
+
+        this
+
+    progressCallback: (e) ->
+        if e.lengthComputable
+            width = (e.total * 100) / e.loaded
+
+            @progressBar.width(width + '%').parent().show()
 
         this
 
@@ -129,6 +147,7 @@ class Cruddy.Entity.Form extends Backbone.View
         @submit = @$ ".btn-save"
         @destroy = @$ ".btn-destroy"
         @copy = @$ ".btn-copy"
+        @progressBar = @$ ".form-save-progress"
 
         @tabs = []
         @renderTab @model, yes
@@ -177,6 +196,8 @@ class Cruddy.Entity.Form extends Backbone.View
             <button type="button" class="btn btn-default btn-close" type="button">#{ Cruddy.lang.close }</button>
             <button type="button" class="btn btn-default btn-destroy" type="button"></button>
             <button type="button" class="btn btn-primary btn-save" type="button" disabled></button>
+
+            <div class="progress"><div class="progress-bar form-save-progress"></div></div>
         </footer>
         """
 

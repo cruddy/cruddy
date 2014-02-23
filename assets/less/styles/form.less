@@ -89,24 +89,25 @@
     }
 
     .field {
-        position: relative;
 
-        &.required .form-group > label:after {
+        &.required .field-label:after {
             content: '*';
-            position: relative;
             margin-left: 0.5em;
             color: red;
             font-weight: normal;
-            font-size: @font-size-small;
+            font-size: @font-size-base;
         }
 
         &-help {
-            position: absolute;
-            left: -@font-size-base * 1.5;
-            top: @font-size-base * 0.3;
-            font-size: @font-size-small;
+            margin-left: -20px;
+            margin-right: 8px;
+            font-size: 12px;
             color: @gray-light;
             cursor: pointer;
+
+            &:hover {
+                color: @link-hover-color;
+            }
         }
     }
 }

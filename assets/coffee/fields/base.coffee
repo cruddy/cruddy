@@ -1,28 +1,64 @@
 Cruddy.Fields = new Factory
 
-# This is basic field view that will render in bootstrap's vertical form style.
-class FieldView extends Backbone.View
-    className: "field"
+class Cruddy.Fields.BaseView extends Backbone.View
 
     constructor: (options) ->
-        field = options.field
+        @field = field = options.field
 
         @inputId = options.model.entity.id + "_" + field.id
 
-        base = " " + @className + "-"
+        base = " field-"
         classes = [ field.getType(), field.id, @inputId ]
-        @className += base + classes.join base
+        className = "field" + base + classes.join base
 
-        @className += " required" if field.isRequired()
+        className += " required" if field.isRequired()
+
+        @className = if @className then className + " " + @className else className
 
         super
 
     initialize: (options) ->
-        @field = options.field
-
         @listenTo @model, "sync",    @toggleVisibility
         @listenTo @model, "request", @hideError
         @listenTo @model, "invalid", @showError
+
+        this
+
+    toggleVisibility: -> @$el.toggle @isVisible()
+
+    hideError: -> this
+
+    showError: -> this
+
+    focus: -> this
+
+    render: ->
+        @$(".field-help").tooltip
+            container: "body"
+            placement: "left"
+
+        this
+
+    helpTemplate: ->
+        help = @field.getHelp()
+        if help then """<span class="glyphicon glyphicon-question-sign field-help" title="#{ help }"></span>""" else ""
+
+    errorTemplate: -> """<span class="help-block error"></span>"""
+
+    # Get whether the view is visible
+    isVisible: -> @field.isEditable() or not @model.isNew()
+
+    dispose: -> this
+
+    remove: ->
+        @dispose()
+
+        super
+
+# This is basic field view that will render in bootstrap's vertical form style.
+class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
+    initialize: (options) ->
+        @input = options.input
 
         this
 
@@ -48,64 +84,47 @@ class FieldView extends Backbone.View
         @$el.html @template()
 
         @inputHolder = @$ ".input-holder"
-
-        @input = @field.createInput @model
-        @inputHolder.append @input.render().el if @input?
+        @inputHolder.append @input.render().el
 
         @inputHolder.append @error = $ @errorTemplate()
 
         @toggleVisibility()
 
-        this
-
-    helpTemplate: ->
-        help = @field.getHelp()
-        if help then """<span class="glyphicon glyphicon-question-sign field-help" title="#{ help }"></span>""" else ""
-
-    errorTemplate: -> """<span class="help-block error"></span>"""
+        super
 
     label: (label) ->
         label ?= @field.getLabel()
-        """<label for="#{ @inputId }">#{ label }</label>"""
+        
+        """
+        <label for="#{ @inputId }" class="field-label">
+            #{ @helpTemplate() }#{ label }
+        </label>
+        """
 
     # The default template that is shown when field is editable.
     template: ->
         """
-        #{ @helpTemplate() }
         <div class="form-group input-holder">
             #{ @label() }
         </div>
         """
 
-    # Get whether the view is visible
-    isVisible: -> @field.isEditable() or not @model.isNew()
-
-    # Toggle visibility
-    toggleVisibility: -> @$el.toggle @isVisible()
-
     # Focus the input that this field view holds.
     focus: ->
-        @input.focus() if @input?
-
-        this
-
-    dispose: ->
-        @input?.remove()
-
-        @input = null
+        @input.focus()
 
         this
 
     remove: ->
-        @dispose()
+        @input.remove()
 
         super
 
 class Cruddy.Fields.Base extends Attribute
-    viewConstructor: FieldView
+    viewConstructor: Cruddy.Fields.InputView
 
     # Create a view that will represent this field in field list
-    createView: (model) -> new @viewConstructor { model: model, field: this }
+    createView: (model) -> new @viewConstructor { model: model, field: this, input: @createInput(model) }
 
     # Create an input that is used by default view
     createInput: (model) ->

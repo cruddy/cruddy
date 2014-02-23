@@ -1,11 +1,10 @@
-class Cruddy.Fields.EmbeddedView extends Backbone.View
+class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
     className: "has-many-view"
 
     events:
         "click .btn-create": "create"
 
     initialize: (options) ->
-        @field = options.field
         @views = {}
         @collection = @model.get @field.id
 
@@ -58,6 +57,8 @@ class Cruddy.Fields.EmbeddedView extends Backbone.View
 
         @update()
 
+        super
+
     update: ->
         @createButton.toggle @field.isMultiple() or @collection.isEmpty()
 
@@ -68,7 +69,7 @@ class Cruddy.Fields.EmbeddedView extends Backbone.View
 
         buttons = if ref.createPermitted() then b_btn("", "plus", ["default", "create"]) else ""
 
-        "<div class='header'>#{ if @field.isMultiple() then ref.getPluralTitle() else ref.getSingularTitle() } #{ buttons }</div><div class='body'></div>"
+        "<div class='header field-label'>#{ @helpTemplate() }#{ if @field.isMultiple() then ref.getPluralTitle() else ref.getSingularTitle() } #{ buttons }</div><div class='body'></div>"
 
     dispose: ->
         view.remove() for cid, view of @views
@@ -76,7 +77,6 @@ class Cruddy.Fields.EmbeddedView extends Backbone.View
         @focusable = null
 
         this
-
 
     remove: ->
         @dispose()
@@ -186,7 +186,7 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
     createInstance: (model, items) ->
         return items if items instanceof Backbone.Collection
 
-        items = (if items then [ items ] else []) if not @attributes.multiple
+        items = (if items or @isRequired() then [ items ] else []) if not @attributes.multiple
 
         ref = @getReference()
         items = (ref.createInstance item for item in items)

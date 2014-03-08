@@ -121,7 +121,7 @@ class Cruddy.Fields.EmbeddedItemView extends Backbone.View
 
         this
 
-    template: -> if @model.entity.deletePermitted() then b_btn(Cruddy.lang.delete, "trash", ["default", "sm", "delete"]) else ""
+    template: -> if @model.entity.deletePermitted() or @model.isNew() then b_btn(Cruddy.lang.delete, "trash", ["default", "sm", "delete"]) else ""
 
     dispose: ->
         @fieldList?.remove()

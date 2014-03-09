@@ -37,3 +37,15 @@ class Alert extends Backbone.View
         setTimeout (=> @remove()), options.timeout if options.timeout?
 
         this
+
+    render: ->
+        after_break => @$el.addClass "show"
+
+        this
+
+    remove: ->
+        @$el.one TRANSITIONEND, => super
+
+        @$el.removeClass "show"
+
+        this

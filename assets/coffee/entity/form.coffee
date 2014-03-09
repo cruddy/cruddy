@@ -49,24 +49,24 @@ class Cruddy.Entity.Form extends Backbone.View
 
         this
 
-    displayAlert: (message, type) ->
+    displayAlert: (message, type, timeout) ->
         @alert.remove() if @alert?
 
         @alert = new Alert
             message: message
             className: "flash"
             type: type
-            timeout: 3000
+            timeout: timeout
 
         @footer.prepend @alert.render().el
 
         this
 
-    displaySuccess: -> @displayAlert Cruddy.lang.success, "success"
+    displaySuccess: -> @displayAlert Cruddy.lang.success, "success", 3000
 
-    displayInvalid: -> @displayAlert Cruddy.lang.invalid, "warning"
+    displayInvalid: -> @displayAlert Cruddy.lang.invalid, "warning", 5000
 
-    displayError: (xhr) -> @displayAlert Cruddy.lang.failure, "danger" unless xhr.responseJSON?.error is "VALIDATION"
+    displayError: (xhr) -> @displayAlert Cruddy.lang.failure, "danger", 5000 unless xhr.responseJSON?.error is "VALIDATION"
 
     handleDestroy: ->
         if @model.entity.get "soft_deleting"

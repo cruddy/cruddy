@@ -22,18 +22,47 @@
     .flash {
         display: block;
         float: left;
-        .button-size(@padding-small-vertical; @padding-small-horizontal; @font-size-small; @line-height-small; 0);
+        font-size: @font-size-large;
+        font-weight: bold;
+        height: @footer-height;
+        line-height: @footer-height;
+        vertical-align: middle;
+        margin-left: -15px;
+        margin-top: -10px;
+        padding: 0 15px;
+
+        .opacity(0);
+
+        .transition(opacity 200ms ease-out);
+
+        &.show {
+            .opacity(1);
+        }
+
+        &:before {
+            &:extend(.glyphicon all);
+            margin-right: 5px;
+        }
 
         &-success {
+            background-color: @alert-success-bg;
             color: @alert-success-text;
+
+            &:before { content: "\e084"; }
         }
 
         &-danger {
+            background-color: @alert-danger-bg;
             color: @alert-danger-text;
+            
+            &:before { content: "\e090"; }
         }
 
         &-warning {
+            background-color: @alert-warning-bg;
             color: @alert-warning-text;
+
+            &:before { content: "\e101"; }
         }
     }
 

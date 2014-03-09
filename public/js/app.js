@@ -109,6 +109,23 @@
       return this;
     };
 
+    Alert.prototype.render = function() {
+      var _this = this;
+      after_break(function() {
+        return _this.$el.addClass("show");
+      });
+      return this;
+    };
+
+    Alert.prototype.remove = function() {
+      var _this = this;
+      this.$el.one(TRANSITIONEND, function() {
+        return Alert.__super__.remove.apply(_this, arguments);
+      });
+      this.$el.removeClass("show");
+      return this;
+    };
+
     return Alert;
 
   })(Backbone.View);
@@ -406,7 +423,7 @@
         }
       };
       if (options.ajaxOptions != null) {
-        $.extend(this.options, options.ajaxOptions);
+        $.extend(true, this.options, options.ajaxOptions);
       }
       this.reset();
       this.on("change:search", function() {
@@ -1246,7 +1263,8 @@
         key: this.key,
         multiple: this.multiple,
         reference: this.reference,
-        allowCreate: this.allowEdit
+        allowCreate: this.allowEdit,
+        owner: this.model.entity.id + "." + this.key
       });
       this.$el.append(this.selector.render().el);
       return this.toggleOpenDirection();
@@ -1393,7 +1411,13 @@
       this.buildSelected(this.model.get(this.key));
       if (this.reference.viewPermitted()) {
         this.primaryKey = "id";
-        this.dataSource = this.reference.search();
+        this.dataSource = this.reference.search({
+          ajaxOptions: {
+            data: {
+              owner: options.owner
+            }
+          }
+        });
         this.listenTo(this.dataSource, "request", this.loading);
         this.listenTo(this.dataSource, "data", this.renderItems);
         this.listenTo(this.dataSource, "error", this.displayError);
@@ -2810,7 +2834,7 @@
     };
 
     EmbeddedItemView.prototype.template = function() {
-      if (this.model.entity.deletePermitted()) {
+      if (this.model.entity.deletePermitted() || this.model.isNew()) {
         return b_btn(Cruddy.lang["delete"], "trash", ["default", "sm", "delete"]);
       } else {
         return "";
@@ -3293,14 +3317,15 @@
       return field;
     };
 
-    Entity.prototype.search = function() {
-      if (this.searchDataSource != null) {
-        return this.searchDataSource.reset();
+    Entity.prototype.search = function(options) {
+      var dataSource;
+      if (options == null) {
+        options = {};
       }
-      this.searchDataSource = new SearchDataSource({}, {
+      dataSource = new SearchDataSource({}, $.extend({
         url: this.url("search")
-      });
-      return this.searchDataSource.next();
+      }, options));
+      return dataSource.next();
     };
 
     Entity.prototype.load = function(id) {
@@ -3698,10 +3723,16 @@
     }
 
     Form.prototype.initialize = function(options) {
-      var _ref44;
+      var key, model, _ref44, _ref45;
       this.inner = (_ref44 = options.inner) != null ? _ref44 : false;
       this.listenTo(this.model, "destroy", this.handleDestroy);
       this.listenTo(this.model, "invalid", this.displayInvalid);
+      this.listenTo(this.model, "change", this.handleChange);
+      _ref45 = this.model.related;
+      for (key in _ref45) {
+        model = _ref45[key];
+        this.listenTo(model, "change", this.handleChange);
+      }
       this.hotkeys = $(document).on("keydown." + this.cid, "body", $.proxy(this, "hotkeys"));
       return this;
     };
@@ -3722,7 +3753,11 @@
       return this;
     };
 
-    Form.prototype.displayAlert = function(message, type) {
+    Form.prototype.handleChange = function() {
+      return this;
+    };
+
+    Form.prototype.displayAlert = function(message, type, timeout) {
       if (this.alert != null) {
         this.alert.remove();
       }
@@ -3730,24 +3765,24 @@
         message: message,
         className: "flash",
         type: type,
-        timeout: 3000
+        timeout: timeout
       });
       this.footer.prepend(this.alert.render().el);
       return this;
     };
 
     Form.prototype.displaySuccess = function() {
-      return this.displayAlert(Cruddy.lang.success, "success");
+      return this.displayAlert(Cruddy.lang.success, "success", 3000);
     };
 
     Form.prototype.displayInvalid = function() {
-      return this.displayAlert(Cruddy.lang.invalid, "warning");
+      return this.displayAlert(Cruddy.lang.invalid, "warning", 5000);
     };
 
     Form.prototype.displayError = function(xhr) {
       var _ref44;
       if (((_ref44 = xhr.responseJSON) != null ? _ref44.error : void 0) !== "VALIDATION") {
-        return this.displayAlert(Cruddy.lang.failure, "danger");
+        return this.displayAlert(Cruddy.lang.failure, "danger", 5000);
       }
     };
 
@@ -3898,7 +3933,7 @@
     };
 
     Form.prototype.template = function() {
-      return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <button type=\"button\" tabindex=\"-1\" class=\"btn btn-link btn-copy navbar-btn pull-right\" title=\"" + Cruddy.lang.copy + "\">\n        <span class=\"glyphicon glyphicon-book\"></span>\n    </button>\n\n    <ul class=\"nav navbar-nav\"></ul>\n</div>\n\n<footer>\n    <button type=\"button\" class=\"btn btn-default btn-close\" type=\"button\">" + Cruddy.lang.close + "</button>\n    <button type=\"button\" class=\"btn btn-default btn-destroy\" type=\"button\"></button>\n    <button type=\"button\" class=\"btn btn-primary btn-save\" type=\"button\" disabled></button>\n\n    <div class=\"progress\"><div class=\"progress-bar form-save-progress\"></div></div>\n</footer>";
+      return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n        <button type=\"button\" class=\"btn btn-link btn-destroy navbar-btn pull-right\" type=\"button\"></button>\n        \n        <button type=\"button\" tabindex=\"-1\" class=\"btn btn-link btn-copy navbar-btn pull-right\" title=\"" + Cruddy.lang.copy + "\">\n            <span class=\"glyphicon glyphicon-book\"></span>\n        </button>\n        \n        <ul class=\"nav navbar-nav\"></ul>\n    </div>\n</div>\n\n<footer>\n    <button type=\"button\" class=\"btn btn-default btn-close\" type=\"button\">" + Cruddy.lang.close + "</button>\n    <button type=\"button\" class=\"btn btn-primary btn-save\" type=\"button\" disabled></button>\n\n    <div class=\"progress\"><div class=\"progress-bar form-save-progress\"></div></div>\n</footer>";
     };
 
     Form.prototype.navTemplate = function(label, target, active) {

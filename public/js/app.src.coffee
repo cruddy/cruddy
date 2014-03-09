@@ -57,6 +57,18 @@ class Alert extends Backbone.View
         setTimeout (=> @remove()), options.timeout if options.timeout?
 
         this
+
+    render: ->
+        after_break => @$el.addClass "show"
+
+        this
+
+    remove: ->
+        @$el.one TRANSITIONEND, => super
+
+        @$el.removeClass "show"
+
+        this
 class AdvFormData
     constructor: (data) ->
         @original = new FormData
@@ -235,7 +247,7 @@ class SearchDataSource extends Backbone.Model
 
                 this
 
-        $.extend @options, options.ajaxOptions if options.ajaxOptions?
+        $.extend yes, @options, options.ajaxOptions if options.ajaxOptions?
 
         @reset()
 
@@ -796,6 +808,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
             multiple: @multiple
             reference: @reference
             allowCreate: @allowEdit
+            owner: @model.entity.id + "." + @key
 
         @$el.append @selector.render().el
 
@@ -933,7 +946,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         if @reference.viewPermitted()
             @primaryKey = "id"
 
-            @dataSource = @reference.search()
+            @dataSource = @reference.search ajaxOptions: data: owner: options.owner
 
             @listenTo @dataSource, "request", @loading
             @listenTo @dataSource, "data",    @renderItems
@@ -1873,7 +1886,7 @@ class Cruddy.Fields.EmbeddedItemView extends Backbone.View
 
         this
 
-    template: -> if @model.entity.deletePermitted() then b_btn(Cruddy.lang.delete, "trash", ["default", "sm", "delete"]) else ""
+    template: -> if @model.entity.deletePermitted() or @model.isNew() then b_btn(Cruddy.lang.delete, "trash", ["default", "sm", "delete"]) else ""
 
     dispose: ->
         @fieldList?.remove()
@@ -2110,13 +2123,10 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
         field
 
-    search: ->
-        return @searchDataSource.reset() if @searchDataSource?
+    search: (options = {}) ->
+        dataSource = new SearchDataSource {}, $.extend { url: @url "search" }, options
 
-        @searchDataSource = new SearchDataSource {},
-            url: @url "search"
-
-        @searchDataSource.next()
+        dataSource.next()
 
     # Load a model
     load: (id) ->
@@ -2412,6 +2422,9 @@ class Cruddy.Entity.Form extends Backbone.View
 
         @listenTo @model, "destroy", @handleDestroy
         @listenTo @model, "invalid", @displayInvalid
+        @listenTo @model, "change",  @handleChange
+
+        @listenTo model, "change",  @handleChange for key, model of @model.related
 
         @hotkeys = $(document).on "keydown." + @cid, "body", $.proxy this, "hotkeys"
 
@@ -2435,24 +2448,29 @@ class Cruddy.Entity.Form extends Backbone.View
 
         this
 
-    displayAlert: (message, type) ->
+    handleChange: -> 
+        # @$el.toggleClass "dirty", @model.hasChangedSinceSync()
+
+        this
+
+    displayAlert: (message, type, timeout) ->
         @alert.remove() if @alert?
 
         @alert = new Alert
             message: message
             className: "flash"
             type: type
-            timeout: 3000
+            timeout: timeout
 
         @footer.prepend @alert.render().el
 
         this
 
-    displaySuccess: -> @displayAlert Cruddy.lang.success, "success"
+    displaySuccess: -> @displayAlert Cruddy.lang.success, "success", 3000
 
-    displayInvalid: -> @displayAlert Cruddy.lang.invalid, "warning"
+    displayInvalid: -> @displayAlert Cruddy.lang.invalid, "warning", 5000
 
-    displayError: (xhr) -> @displayAlert Cruddy.lang.failure, "danger" unless xhr.responseJSON?.error is "VALIDATION"
+    displayError: (xhr) -> @displayAlert Cruddy.lang.failure, "danger", 5000 unless xhr.responseJSON?.error is "VALIDATION"
 
     handleDestroy: ->
         if @model.entity.get "soft_deleting"
@@ -2579,16 +2597,19 @@ class Cruddy.Entity.Form extends Backbone.View
     template: ->
         """
         <div class="navbar navbar-default navbar-static-top" role="navigation">
-            <button type="button" tabindex="-1" class="btn btn-link btn-copy navbar-btn pull-right" title="#{ Cruddy.lang.copy }">
-                <span class="glyphicon glyphicon-book"></span>
-            </button>
-
-            <ul class="nav navbar-nav"></ul>
+            <div class="container-fluid">
+                <button type="button" class="btn btn-link btn-destroy navbar-btn pull-right" type="button"></button>
+                
+                <button type="button" tabindex="-1" class="btn btn-link btn-copy navbar-btn pull-right" title="#{ Cruddy.lang.copy }">
+                    <span class="glyphicon glyphicon-book"></span>
+                </button>
+                
+                <ul class="nav navbar-nav"></ul>
+            </div>
         </div>
 
         <footer>
             <button type="button" class="btn btn-default btn-close" type="button">#{ Cruddy.lang.close }</button>
-            <button type="button" class="btn btn-default btn-destroy" type="button"></button>
             <button type="button" class="btn btn-primary btn-save" type="button" disabled></button>
 
             <div class="progress"><div class="progress-bar form-save-progress"></div></div>

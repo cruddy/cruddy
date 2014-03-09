@@ -31,7 +31,7 @@ class SearchDataSource extends Backbone.Model
 
                 this
 
-        $.extend @options, options.ajaxOptions if options.ajaxOptions?
+        $.extend yes, @options, options.ajaxOptions if options.ajaxOptions?
 
         @reset()
 

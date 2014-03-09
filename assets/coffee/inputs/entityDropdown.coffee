@@ -87,6 +87,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
             multiple: @multiple
             reference: @reference
             allowCreate: @allowEdit
+            owner: @model.entity.id + "." + @key
 
         @$el.append @selector.render().el
 

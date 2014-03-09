@@ -54,13 +54,10 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
         field
 
-    search: ->
-        return @searchDataSource.reset() if @searchDataSource?
+    search: (options = {}) ->
+        dataSource = new SearchDataSource {}, $.extend { url: @url "search" }, options
 
-        @searchDataSource = new SearchDataSource {},
-            url: @url "search"
-
-        @searchDataSource.next()
+        dataSource.next()
 
     # Load a model
     load: (id) ->

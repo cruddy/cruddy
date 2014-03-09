@@ -2,12 +2,14 @@
 
 namespace Kalnoy\Cruddy\Schema\Fields;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model as Eloquent;
+use Kalnoy\Cruddy\Repo\SearchProcessorInterface;
 
 /**
  * The base class for relation that will be selectable in drop down list.
  */
-abstract class BasicRelation extends BaseRelation {
+abstract class BasicRelation extends BaseRelation implements SearchProcessorInterface {
 
     /**
      * @inheritdoc
@@ -29,6 +31,27 @@ abstract class BasicRelation extends BaseRelation {
      * @var bool
      */
     protected $multiple;
+
+    /**
+     * The filter that will be applied to the query builder.
+     *
+     * @var mixed
+     */
+    public $filter;
+
+    /**
+     * Set the query filter.
+     *
+     * @param mixed $filter
+     *
+     * @return $this
+     */
+    public function filterOptions($filter)
+    {
+        $this->filter = $filter;
+
+        return $this;
+    }
 
     /**
      * @inheritdoc
@@ -63,6 +86,22 @@ abstract class BasicRelation extends BaseRelation {
         if (empty($data)) return null;
 
         return $this->multiple ? array_pluck($data, 'id') : $data['id'];
+    }
+
+    /**
+     * @inheritdoc
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param array                                 $options
+     *
+     * @return void
+     */
+    public function search(Builder $query, array $options)
+    {
+        if (isset($this->filter))
+        {
+            call_user_func($this->filter, $query, $options);
+        }
     }
 
     /**

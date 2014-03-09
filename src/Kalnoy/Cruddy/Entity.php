@@ -2,6 +2,7 @@
 
 namespace Kalnoy\Cruddy;
 
+use RuntimeException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Contracts\JsonableInterface;
 use Illuminate\Support\Contracts\ArrayableInterface;
@@ -11,6 +12,8 @@ use Kalnoy\Cruddy\Schema\SchemaInterface;
 use Kalnoy\Cruddy\Schema\InstanceFactory;
 use Kalnoy\Cruddy\Schema\InlineRelationInterface;
 use Kalnoy\Cruddy\Service\Validation\ValidationException;
+use Kalnoy\Cruddy\Repo\SearchProcessorInterface;
+use Kalnoy\Cruddy\Repo\ChainedSearchProcessor;
 
 class Entity implements JsonableInterface, ArrayableInterface {
 
@@ -171,6 +174,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
      * - `simple` -- whether to return simple result set that includes only two
      *     values per item: `id` that is primary key and `title` that is an item converted
      *     to the string.
+     * - `owner` -- the id of the field that is used to process query.
      *
      * @param array $options
      *
@@ -178,9 +182,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function search(array $options)
     {
-        $this->getColumns();
-        
-        $results = $this->repo->search($options, $this->columns);
+        $results = $this->repo->search($options, $this->getSearchProcessor($options));
 
         if (array_get($options, 'simple'))
         {
@@ -188,10 +190,36 @@ class Entity implements JsonableInterface, ArrayableInterface {
         }
         else
         {
-            $results->setItems($this->columns->extractAll($results->getItems()));
+            $results->setItems($this->getColumns()->extractAll($results->getItems()));
         }
 
         return $results;
+    }
+
+    /**
+     * Get a search processor for a repo.
+     *
+     * @param array $options
+     *
+     * @return \Kalnoy\Cruddy\Repo\SearchProcessorInterface
+     */
+    protected function getSearchProcessor(array $options)
+    {
+        $processor = $this->getColumns();
+
+        if (isset($options['owner']))
+        {
+            $field = $this->env->field($options['owner']);
+
+            if ( ! $field instanceof SearchProcessorInterface)
+            {
+                throw new RuntimeException("The field [{$options['owner']}] is not a search processor.");
+            }
+
+            return new ChainedSearchProcessor([ $processor, $field ]);
+        }
+
+        return $processor;
     }
 
     /**

@@ -164,11 +164,30 @@ class Environment implements JsonableInterface {
      *
      * @return $this
      */
-    public function field($macro, $callback)
+    public function registerField($macro, $callback)
     {
         $this->fields->register($macro, $callback);
 
         return $this;
+    }
+
+    /**
+     * Find a field with given id.
+     *
+     * @param string $id
+     *
+     * @return \Kalnoy\Cruddy\Schema\Fields\BaseField
+     */
+    public function field($id)
+    {
+        list($entity, $field) = explode('.', $id, 2);
+
+        $entity = $this->entity($entity);
+        $field = $entity->getFields()->get($field);
+
+        if ( ! $field) throw new RuntimeException("The field with an id of [{$id}] is not found.");
+
+        return $field;
     }
 
     /**
@@ -179,7 +198,7 @@ class Environment implements JsonableInterface {
      *
      * @return $this
      */
-    public function column($macro, $callback)
+    public function registerColumn($macro, $callback)
     {
         $this->columns->register($macro, $callback);
 

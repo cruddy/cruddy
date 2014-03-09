@@ -23,7 +23,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         if @reference.viewPermitted()
             @primaryKey = "id"
 
-            @dataSource = @reference.search()
+            @dataSource = @reference.search ajaxOptions: data: owner: options.owner
 
             @listenTo @dataSource, "request", @loading
             @listenTo @dataSource, "data",    @renderItems

@@ -117,6 +117,11 @@ class Factory
         null
 class Attribute extends Backbone.Model
 
+    initialize: (options) ->
+        @entity = options.entity
+
+        this
+
     # Get field's type (i.e. css class name)
     getType: -> @attributes.type
 
@@ -744,6 +749,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     initialize: (options) ->
         @multiple = options.multiple if options.multiple?
         @reference = options.reference if options.reference?
+        @owner = options.owner if options.owner?
         @allowEdit = options.allowEdit ? yes and @reference.updatePermitted()
         @active = false
         @placeholder = options.placeholder ? Cruddy.lang.not_selected
@@ -808,7 +814,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
             multiple: @multiple
             reference: @reference
             allowCreate: @allowEdit
-            owner: @model.entity.id + "." + @key
+            owner: @owner
 
         @$el.append @selector.render().el
 
@@ -1684,6 +1690,7 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         key: @id
         multiple: @attributes.multiple
         reference: @getReference()
+        owner: @entity.id + "." + @id
 
     createFilterInput: (model) -> new Cruddy.Inputs.EntityDropdown
         model: model
@@ -1691,6 +1698,7 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         reference: @getReference()
         allowEdit: no
         placeholder: Cruddy.lang.any_value
+        owner: @entity.id + "." + @id
 
     format: (value) ->
         return Cruddy.lang.not_selected if _.isEmpty value

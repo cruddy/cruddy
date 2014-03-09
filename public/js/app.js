@@ -221,6 +221,11 @@
       return _ref2;
     }
 
+    Attribute.prototype.initialize = function(options) {
+      this.entity = options.entity;
+      return this;
+    };
+
     Attribute.prototype.getType = function() {
       return this.attributes.type;
     };
@@ -1186,6 +1191,9 @@
       if (options.reference != null) {
         this.reference = options.reference;
       }
+      if (options.owner != null) {
+        this.owner = options.owner;
+      }
       this.allowEdit = ((_ref15 = options.allowEdit) != null ? _ref15 : true) && this.reference.updatePermitted();
       this.active = false;
       this.placeholder = (_ref16 = options.placeholder) != null ? _ref16 : Cruddy.lang.not_selected;
@@ -1264,7 +1272,7 @@
         multiple: this.multiple,
         reference: this.reference,
         allowCreate: this.allowEdit,
-        owner: this.model.entity.id + "." + this.key
+        owner: this.owner
       });
       this.$el.append(this.selector.render().el);
       return this.toggleOpenDirection();
@@ -2480,7 +2488,8 @@
         model: model,
         key: this.id,
         multiple: this.attributes.multiple,
-        reference: this.getReference()
+        reference: this.getReference(),
+        owner: this.entity.id + "." + this.id
       });
     };
 
@@ -2490,7 +2499,8 @@
         key: this.id,
         reference: this.getReference(),
         allowEdit: false,
-        placeholder: Cruddy.lang.any_value
+        placeholder: Cruddy.lang.any_value,
+        owner: this.entity.id + "." + this.id
       });
     };
 

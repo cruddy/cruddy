@@ -23,6 +23,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     initialize: (options) ->
         @multiple = options.multiple if options.multiple?
         @reference = options.reference if options.reference?
+        @owner = options.owner if options.owner?
         @allowEdit = options.allowEdit ? yes and @reference.updatePermitted()
         @active = false
         @placeholder = options.placeholder ? Cruddy.lang.not_selected
@@ -87,7 +88,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
             multiple: @multiple
             reference: @reference
             allowCreate: @allowEdit
-            owner: @model.entity.id + "." + @key
+            owner: @owner
 
         @$el.append @selector.render().el
 

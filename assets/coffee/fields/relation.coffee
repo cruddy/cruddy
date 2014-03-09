@@ -5,6 +5,7 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         key: @id
         multiple: @attributes.multiple
         reference: @getReference()
+        owner: @entity.id + "." + @id
 
     createFilterInput: (model) -> new Cruddy.Inputs.EntityDropdown
         model: model
@@ -12,6 +13,7 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         reference: @getReference()
         allowEdit: no
         placeholder: Cruddy.lang.any_value
+        owner: @entity.id + "." + @id
 
     format: (value) ->
         return Cruddy.lang.not_selected if _.isEmpty value

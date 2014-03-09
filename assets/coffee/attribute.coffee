@@ -1,5 +1,10 @@
 class Attribute extends Backbone.Model
 
+    initialize: (options) ->
+        @entity = options.entity
+
+        this
+
     # Get field's type (i.e. css class name)
     getType: -> @attributes.type
 

@@ -18,6 +18,9 @@ class Cruddy.Entity.Form extends Backbone.View
 
         @listenTo @model, "destroy", @handleDestroy
         @listenTo @model, "invalid", @displayInvalid
+        @listenTo @model, "change",  @handleChange
+
+        @listenTo model, "change",  @handleChange for key, model of @model.related
 
         @hotkeys = $(document).on "keydown." + @cid, "body", $.proxy this, "hotkeys"
 
@@ -38,6 +41,11 @@ class Cruddy.Entity.Form extends Backbone.View
         if e.keyCode is 27
             @close()
             return false
+
+        this
+
+    handleChange: -> 
+        # @$el.toggleClass "dirty", @model.hasChangedSinceSync()
 
         this
 
@@ -185,16 +193,19 @@ class Cruddy.Entity.Form extends Backbone.View
     template: ->
         """
         <div class="navbar navbar-default navbar-static-top" role="navigation">
-            <button type="button" tabindex="-1" class="btn btn-link btn-copy navbar-btn pull-right" title="#{ Cruddy.lang.copy }">
-                <span class="glyphicon glyphicon-book"></span>
-            </button>
-
-            <ul class="nav navbar-nav"></ul>
+            <div class="container-fluid">
+                <button type="button" class="btn btn-link btn-destroy navbar-btn pull-right" type="button"></button>
+                
+                <button type="button" tabindex="-1" class="btn btn-link btn-copy navbar-btn pull-right" title="#{ Cruddy.lang.copy }">
+                    <span class="glyphicon glyphicon-book"></span>
+                </button>
+                
+                <ul class="nav navbar-nav"></ul>
+            </div>
         </div>
 
         <footer>
             <button type="button" class="btn btn-default btn-close" type="button">#{ Cruddy.lang.close }</button>
-            <button type="button" class="btn btn-default btn-destroy" type="button"></button>
             <button type="button" class="btn btn-primary btn-save" type="button" disabled></button>
 
             <div class="progress"><div class="progress-bar form-save-progress"></div></div>

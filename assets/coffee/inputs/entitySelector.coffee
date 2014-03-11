@@ -17,6 +17,8 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         @allowSearch = options.allowSearch ? yes
         @allowCreate = options.allowCreate ? yes and @reference.createPermitted()
 
+        @createAttributes = {}
+
         @data = []
         @buildSelected @model.get @key
 
@@ -65,7 +67,9 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         e.preventDefault()
         e.stopPropagation()
 
-        instance = @reference.createInstance()
+        instance = @reference.createInstance attributes: @createAttributes
+
+        console.log instance
 
         @innerForm = new Cruddy.Entity.Form
             model: instance

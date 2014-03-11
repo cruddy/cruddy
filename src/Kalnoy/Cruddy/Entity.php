@@ -95,7 +95,8 @@ class Entity implements JsonableInterface, ArrayableInterface {
     public function init()
     {
         $this->repo = $this->schema->repository();
-        $this->fields = $this->createFields();
+
+        $this->createFields();
 
         return $this;
     }
@@ -452,18 +453,18 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Create field collection.
      *
-     * @return \Kalnoy\Cruddy\Schema\Fields\Collection
+     * @return $this
      */
     protected function createFields()
     {
         $factory = $this->env->getFieldFactory();
-        $collection = new Schema\Fields\Collection;
+        $collection = $this->fields = new Schema\Fields\Collection;
 
         $schema = new InstanceFactory($factory, $this, $collection);
 
         $this->schema->fields($schema);
 
-        return $collection;
+        return $this;
     }
 
     /**

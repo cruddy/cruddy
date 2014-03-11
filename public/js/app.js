@@ -399,14 +399,12 @@
 
     SearchDataSource.prototype.initialize = function(attributes, options) {
       var _this = this;
+      this.filters = new Backbone.Model;
       this.options = {
         url: options.url,
         type: "get",
         dataType: "json",
-        data: {
-          page: null,
-          keywords: ""
-        },
+        data: {},
         success: function(resp) {
           var item, _i, _len, _ref5;
           resp = resp.data;
@@ -431,10 +429,13 @@
         $.extend(true, this.options, options.ajaxOptions);
       }
       this.reset();
-      this.on("change:search", function() {
-        return _this.reset().next();
-      });
+      this.on("change:search", this.refresh, this);
+      this.listenTo(this.filters, "change", this.refresh);
       return this;
+    };
+
+    SearchDataSource.prototype.refresh = function() {
+      return this.reset().next();
     };
 
     SearchDataSource.prototype.reset = function() {
@@ -444,13 +445,14 @@
       return this;
     };
 
-    SearchDataSource.prototype.fetch = function(q, page) {
+    SearchDataSource.prototype.fetch = function(q, page, filters) {
       if (this.request != null) {
         this.request.abort();
       }
       $.extend(this.options.data, {
         page: page,
-        keywords: q
+        keywords: q,
+        filters: filters
       });
       this.trigger("request", this, this.request = $.ajax(this.options));
       return this.request;
@@ -460,7 +462,7 @@
       var page;
       if (this.more) {
         page = this.page != null ? this.page + 1 : 1;
-        this.fetch(this.get("search"), page);
+        this.fetch(this.get("search"), page, this.filters.attributes);
       }
       return this;
     };
@@ -1197,6 +1199,13 @@
       this.allowEdit = ((_ref15 = options.allowEdit) != null ? _ref15 : true) && this.reference.updatePermitted();
       this.active = false;
       this.placeholder = (_ref16 = options.placeholder) != null ? _ref16 : Cruddy.lang.not_selected;
+      this.disableDropdown = false;
+      if (options.constraint) {
+        this.constraint = options.constraint;
+        this.listenTo(this.model, "change:" + this.constraint.field, function() {
+          return this.checkToDisable().applyConstraint(true);
+        });
+      }
       return EntityDropdown.__super__.initialize.apply(this, arguments);
     };
 
@@ -1261,20 +1270,82 @@
       }
     };
 
-    EntityDropdown.prototype.renderDropdown = function() {
-      this.opened = true;
-      if (this.selector != null) {
-        return this.toggleOpenDirection();
+    EntityDropdown.prototype.applyConstraint = function(reset) {
+      var value, _ref15;
+      if (reset == null) {
+        reset = false;
       }
-      this.selector = new Cruddy.Inputs.EntitySelector({
-        model: this.model,
-        key: this.key,
-        multiple: this.multiple,
-        reference: this.reference,
-        allowCreate: this.allowEdit,
-        owner: this.owner
-      });
-      this.$el.append(this.selector.render().el);
+      value = this.model.get(this.constraint.field);
+      if ((_ref15 = this.selector.dataSource) != null) {
+        _ref15.filters.set(this.constraint.otherField, value);
+      }
+      this.selector.createAttributes[this.constraint.otherField] = value;
+      if (reset) {
+        this.model.set(this.key, this.multiple ? [] : null);
+      }
+      return this;
+    };
+
+    EntityDropdown.prototype.checkToDisable = function() {
+      if (this.constraint) {
+        if (_.isEmpty(this.model.get(this.constraint.field))) {
+          this.disable();
+        } else {
+          this.enable();
+        }
+      }
+      return this;
+    };
+
+    EntityDropdown.prototype.disable = function() {
+      if (this.disableDropdown) {
+        return this;
+      }
+      this.disableDropdown = true;
+      return this.toggleDisableControls();
+    };
+
+    EntityDropdown.prototype.enable = function() {
+      if (!this.disableDropdown) {
+        return this;
+      }
+      this.disableDropdown = false;
+      return this.toggleDisableControls();
+    };
+
+    EntityDropdown.prototype.toggleDisableControls = function() {
+      this.dropdownBtn.prop("disabled", this.disableDropdown);
+      if (!this.multiple) {
+        this.itemTitle.prop("disabled", this.disableDropdown);
+      }
+      return this;
+    };
+
+    EntityDropdown.prototype.renderDropdown = function(e) {
+      var dataSource;
+      if (this.disableDropdown) {
+        e.preventDefault();
+        return;
+      }
+      this.opened = true;
+      if (!this.selector) {
+        this.selector = new Cruddy.Inputs.EntitySelector({
+          model: this.model,
+          key: this.key,
+          multiple: this.multiple,
+          reference: this.reference,
+          allowCreate: this.allowEdit,
+          owner: this.owner
+        });
+        if (this.constraint) {
+          this.applyConstraint();
+        }
+        this.$el.append(this.selector.render().el);
+      }
+      dataSource = this.selector.dataSource;
+      if (!dataSource.inProgress()) {
+        dataSource.refresh();
+      }
       return this.toggleOpenDirection();
     };
 
@@ -1310,7 +1381,9 @@
       } else {
         this.renderSingle();
       }
+      this.dropdownBtn = this.$("#" + this.cid + "-dropdown");
       this.$el.attr("id", this.cid);
+      this.checkToDisable();
       return this;
     };
 
@@ -1318,7 +1391,7 @@
       this.$el.append(this.items = $("<div>", {
         "class": "items"
       }));
-      this.$el.append("<button type=\"button\" class=\"btn btn-default btn-block dropdown-toggle ed-dropdown-toggle\" data-toggle=\"dropdown\" data-target=\"#" + this.cid + "\">\n    " + Cruddy.lang.choose + "\n    <span class=\"caret\"></span>\n</button>");
+      this.$el.append("<button type=\"button\" class=\"btn btn-default btn-block dropdown-toggle ed-dropdown-toggle\" data-toggle=\"dropdown\" id=\"" + this.cid + "-dropdown\" data-target=\"#" + this.cid + "\">\n    " + Cruddy.lang.choose + "\n    <span class=\"caret\"></span>\n</button>");
       return this.renderItems();
     };
 
@@ -1363,7 +1436,7 @@
       }
       html += "<button type=\"button\" class=\"btn btn-default btn-remove\" tabindex=\"-1\">\n    <span class=\"glyphicon glyphicon-remove\"></span>\n</button>";
       if (!this.multiple) {
-        html += "<button type=\"button\" class=\"btn btn-default btn-dropdown dropdown-toggle\" data-toggle=\"dropdown\" data-target=\"#" + this.cid + "\" tab-index=\"1\">\n    <span class=\"glyphicon glyphicon-search\"></span>\n</button>";
+        html += "<button type=\"button\" class=\"btn btn-default btn-dropdown dropdown-toggle\" data-toggle=\"dropdown\" id=\"" + this.cid + "-dropdown\" data-target=\"#" + this.cid + "\" tab-index=\"1\">\n    <span class=\"glyphicon glyphicon-search\"></span>\n</button>";
       }
       return html += "</div></div>";
     };
@@ -1415,6 +1488,7 @@
       this.reference = options.reference;
       this.allowSearch = (_ref18 = options.allowSearch) != null ? _ref18 : true;
       this.allowCreate = ((_ref19 = options.allowCreate) != null ? _ref19 : true) && this.reference.createPermitted();
+      this.createAttributes = {};
       this.data = [];
       this.buildSelected(this.model.get(this.key));
       if (this.reference.viewPermitted()) {
@@ -1479,7 +1553,10 @@
         _this = this;
       e.preventDefault();
       e.stopPropagation();
-      instance = this.reference.createInstance();
+      instance = this.reference.createInstance({
+        attributes: this.createAttributes
+      });
+      console.log(instance);
       this.innerForm = new Cruddy.Entity.Form({
         model: instance,
         inner: true
@@ -2489,7 +2566,8 @@
         key: this.id,
         multiple: this.attributes.multiple,
         reference: this.getReference(),
-        owner: this.entity.id + "." + this.id
+        owner: this.entity.id + "." + this.id,
+        constraint: this.attributes.constraint
       });
     };
 
@@ -3328,14 +3406,12 @@
     };
 
     Entity.prototype.search = function(options) {
-      var dataSource;
       if (options == null) {
         options = {};
       }
-      dataSource = new SearchDataSource({}, $.extend({
+      return new SearchDataSource({}, $.extend({
         url: this.url("search")
       }, options));
-      return dataSource.next();
     };
 
     Entity.prototype.load = function(id) {

@@ -6,6 +6,7 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         multiple: @attributes.multiple
         reference: @getReference()
         owner: @entity.id + "." + @id
+        constraint: @attributes.constraint
 
     createFilterInput: (model) -> new Cruddy.Inputs.EntityDropdown
         model: model

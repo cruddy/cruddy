@@ -224,14 +224,14 @@ class SearchDataSource extends Backbone.Model
         search: ""
 
     initialize: (attributes, options) ->
+        @filters = new Backbone.Model
+
         @options =
             url: options.url
             type: "get"
             dataType: "json"
 
-            data:
-                page: null
-                keywords: ""
+            data: {}
 
             success: (resp) =>
                 resp = resp.data
@@ -256,9 +256,12 @@ class SearchDataSource extends Backbone.Model
 
         @reset()
 
-        @on "change:search", => @reset().next()
+        @on "change:search", @refresh, this
+        @listenTo @filters, "change", @refresh
 
         this
+
+    refresh: -> @reset().next()
 
     reset: ->
         @data = []
@@ -267,10 +270,13 @@ class SearchDataSource extends Backbone.Model
 
         this
 
-    fetch: (q, page) ->
+    fetch: (q, page, filters) ->
         @request.abort() if @request?
 
-        $.extend @options.data, { page: page, keywords: q }
+        $.extend @options.data, 
+            page: page
+            keywords: q
+            filters: filters
 
         @trigger "request", this, @request = $.ajax @options
 
@@ -280,7 +286,7 @@ class SearchDataSource extends Backbone.Model
         if @more
             page = if @page? then @page + 1 else 1
 
-            @fetch @get("search"), page
+            @fetch @get("search"), page, @filters.attributes
 
         this
 
@@ -753,6 +759,11 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
         @allowEdit = options.allowEdit ? yes and @reference.updatePermitted()
         @active = false
         @placeholder = options.placeholder ? Cruddy.lang.not_selected
+        @disableDropdown = false
+
+        if options.constraint
+            @constraint = options.constraint
+            @listenTo @model, "change:" + @constraint.field, -> @checkToDisable().applyConstraint yes
 
         super
 
@@ -803,20 +814,66 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
             @$el.dropdown "toggle"
             return false
 
-    renderDropdown: ->
+    applyConstraint: (reset = no) ->
+        value = @model.get @constraint.field
+        @selector.dataSource?.filters.set @constraint.otherField, value
+
+        @selector.createAttributes[@constraint.otherField] = value
+
+        @model.set(@key, if @multiple then [] else null) if reset
+
+        this
+
+    checkToDisable: ->
+        (if _.isEmpty @model.get @constraint.field then @disable() else @enable()) if @constraint
+
+        this
+
+
+    disable: ->
+        return this if @disableDropdown
+
+        @disableDropdown = yes
+
+        @toggleDisableControls()
+
+    enable: ->
+        return this if not @disableDropdown
+
+        @disableDropdown = no
+
+        @toggleDisableControls()
+
+    toggleDisableControls: ->
+        @dropdownBtn.prop "disabled", @disableDropdown
+        @itemTitle.prop "disabled", @disableDropdown if not @multiple
+
+        this
+
+    renderDropdown: (e) ->
+        if @disableDropdown
+            e.preventDefault()
+
+            return
+
         @opened = yes
 
-        return @toggleOpenDirection() if @selector?
+        if not @selector
+            @selector = new Cruddy.Inputs.EntitySelector
+                model: @model
+                key: @key
+                multiple: @multiple
+                reference: @reference
+                allowCreate: @allowEdit
+                owner: @owner
 
-        @selector = new Cruddy.Inputs.EntitySelector
-            model: @model
-            key: @key
-            multiple: @multiple
-            reference: @reference
-            allowCreate: @allowEdit
-            owner: @owner
+            @applyConstraint() if @constraint
 
-        @$el.append @selector.render().el
+            @$el.append @selector.render().el
+
+        dataSource = @selector.dataSource
+
+        dataSource.refresh() if not dataSource.inProgress()
 
         @toggleOpenDirection()
 
@@ -848,7 +905,11 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         if @multiple then @renderMultiple() else @renderSingle()
 
+        @dropdownBtn = @$ "##{ @cid }-dropdown"
+
         @$el.attr "id", @cid
+
+        @checkToDisable()
 
         this
 
@@ -856,7 +917,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
         @$el.append @items = $ "<div>", class: "items"
 
         @$el.append """
-            <button type="button" class="btn btn-default btn-block dropdown-toggle ed-dropdown-toggle" data-toggle="dropdown" data-target="##{ @cid }">
+            <button type="button" class="btn btn-default btn-block dropdown-toggle ed-dropdown-toggle" data-toggle="dropdown" id="#{ @cid }-dropdown" data-target="##{ @cid }">
                 #{ Cruddy.lang.choose }
                 <span class="caret"></span>
             </button>
@@ -910,7 +971,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         if not @multiple
             html += """
-                <button type="button" class="btn btn-default btn-dropdown dropdown-toggle" data-toggle="dropdown" data-target="##{ @cid }" tab-index="1">
+                <button type="button" class="btn btn-default btn-dropdown dropdown-toggle" data-toggle="dropdown" id="#{ @cid }-dropdown" data-target="##{ @cid }" tab-index="1">
                     <span class="glyphicon glyphicon-search"></span>
                 </button>
                 """
@@ -945,6 +1006,8 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
         @allowSearch = options.allowSearch ? yes
         @allowCreate = options.allowCreate ? yes and @reference.createPermitted()
+
+        @createAttributes = {}
 
         @data = []
         @buildSelected @model.get @key
@@ -994,7 +1057,9 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         e.preventDefault()
         e.stopPropagation()
 
-        instance = @reference.createInstance()
+        instance = @reference.createInstance attributes: @createAttributes
+
+        console.log instance
 
         @innerForm = new Cruddy.Entity.Form
             model: instance
@@ -1691,6 +1756,7 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         multiple: @attributes.multiple
         reference: @getReference()
         owner: @entity.id + "." + @id
+        constraint: @attributes.constraint
 
     createFilterInput: (model) -> new Cruddy.Inputs.EntityDropdown
         model: model
@@ -2131,10 +2197,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
         field
 
-    search: (options = {}) ->
-        dataSource = new SearchDataSource {}, $.extend { url: @url "search" }, options
-
-        dataSource.next()
+    search: (options = {}) -> new SearchDataSource {}, $.extend { url: @url "search" }, options
 
     # Load a model
     load: (id) ->

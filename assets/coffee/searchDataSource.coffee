@@ -3,14 +3,14 @@ class SearchDataSource extends Backbone.Model
         search: ""
 
     initialize: (attributes, options) ->
+        @filters = new Backbone.Model
+
         @options =
             url: options.url
             type: "get"
             dataType: "json"
 
-            data:
-                page: null
-                keywords: ""
+            data: {}
 
             success: (resp) =>
                 resp = resp.data
@@ -35,9 +35,12 @@ class SearchDataSource extends Backbone.Model
 
         @reset()
 
-        @on "change:search", => @reset().next()
+        @on "change:search", @refresh, this
+        @listenTo @filters, "change", @refresh
 
         this
+
+    refresh: -> @reset().next()
 
     reset: ->
         @data = []
@@ -46,10 +49,13 @@ class SearchDataSource extends Backbone.Model
 
         this
 
-    fetch: (q, page) ->
+    fetch: (q, page, filters) ->
         @request.abort() if @request?
 
-        $.extend @options.data, { page: page, keywords: q }
+        $.extend @options.data, 
+            page: page
+            keywords: q
+            filters: filters
 
         @trigger "request", this, @request = $.ajax @options
 
@@ -59,7 +65,7 @@ class SearchDataSource extends Backbone.Model
         if @more
             page = if @page? then @page + 1 else 1
 
-            @fetch @get("search"), page
+            @fetch @get("search"), page, @filters.attributes
 
         this
 

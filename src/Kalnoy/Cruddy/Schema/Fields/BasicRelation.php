@@ -6,7 +6,7 @@ use RuntimeException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Kalnoy\Cruddy\Repo\SearchProcessorInterface;
-use Kalnoy\Cruddy\Schema\AttributeInterface;
+use Kalnoy\Cruddy\Schema\FieldInterface;
 
 /**
  * The base class for relation that will be selectable in drop down list.
@@ -80,6 +80,11 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessorInte
         if (get_class($fieldInstance) !== get_class($otherFieldInstance))
         {
             throw new RuntimeException("Fields on current and related entity must be of same type in order to enable constraint.");
+        }
+
+        if ($fieldInstance->getFilterType() === FieldInterface::FILTER_NONE)
+        {
+            throw new RuntimeException("Cannot set up constraint with a field that is not able to apply filter.");
         }
 
         $this->constraint = compact('field', 'otherField');

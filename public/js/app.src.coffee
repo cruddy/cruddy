@@ -369,12 +369,12 @@ class DataGrid extends Backbone.View
     }
 
     constructor: (options) ->
-        @className += " data-grid-" + options.model.entity.id
+        @className += " data-grid-" + options.entity.id
 
         super
 
     initialize: (options) ->
-        @entity = @model.entity
+        @entity = options.entity
         @columns = @entity.columns.models.filter (col) -> col.isVisible()
 
         @listenTo @model, "data", @updateData
@@ -410,8 +410,6 @@ class DataGrid extends Backbone.View
     setOrder: (e) ->
         orderBy = $(e.target).data "id"
         orderDir = @model.get "order_dir"
-
-        console.log orderBy
 
         if orderBy is @model.get "order_by"
             orderDir = if orderDir == 'asc' then 'desc' else 'asc'
@@ -521,6 +519,7 @@ class FilterList extends Backbone.View
 
     initialize: (options) ->
         @entity = options.entity
+        @availableFilters = options.filters
 
         this
 
@@ -530,11 +529,10 @@ class FilterList extends Backbone.View
         @$el.html @template()
         @items = @$ ".filter-list-container"
 
-        for col in @entity.columns.models when col.canFilter()
-            if input = col.createFilter @model
-                @filters.push input
-                @items.append input.render().el
-                input.$el.wrap("""<div class="form-group filter #{ col.getClass() }"><div class="input-wrap"></div></div>""").parent().before "<label>#{ col.getFilterLabel() }</label>"
+        for filter in @availableFilters when (field = @entity.fields.get filter) and field.canFilter() and (input = field.createFilterInput @model)
+            @filters.push input
+            @items.append input.render().el
+            input.$el.wrap("""<div class="form-group filter filter-#{ field.id }"><div class="input-wrap"></div></div>""").parent().before "<label>#{ field.getFilterLabel() }</label>"
 
         this
 
@@ -815,10 +813,10 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
             return false
 
     applyConstraint: (reset = no) ->
-        value = @model.get @constraint.field
-        @selector.dataSource?.filters.set @constraint.otherField, value
-
-        @selector.createAttributes[@constraint.otherField] = value
+        if @selector
+            value = @model.get @constraint.field
+            @selector.dataSource?.filters.set @constraint.otherField, value
+            @selector.createAttributes[@constraint.otherField] = value
 
         @model.set(@key, if @multiple then [] else null) if reset
 
@@ -1603,7 +1601,7 @@ class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
     initialize: (options) ->
         @input = options.input
 
-        this
+        super
 
     hideError: ->
         @error.hide()
@@ -1612,11 +1610,9 @@ class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
         this
 
     showError: (model, errors) ->
-        error = errors[@field.get "id"]
-
-        if error
+        if @field.id of errors
             @inputHolder.addClass "has-error"
-            @error.text(error).show()
+            @error.text(_.first errors[@field.id]).show()
 
         this
 
@@ -1765,6 +1761,7 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         allowEdit: no
         placeholder: Cruddy.lang.any_value
         owner: @entity.id + "." + @id
+        constraint: @attributes.constraint
 
     format: (value) ->
         return Cruddy.lang.not_selected if _.isEmpty value
@@ -2051,6 +2048,12 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
     copy: (copy, items) -> items.copy(copy)
 
     processErrors: (collection, errorsCollection) ->
+        if not @attributes.multiple
+            model = collection.first()
+            model.trigger "invalid", model, errorsCollection
+
+            return this
+
         for cid, errors of errorsCollection
             model = collection.get cid
             model.trigger "invalid", model, errors if model
@@ -2075,17 +2078,11 @@ class Cruddy.Columns.Base extends Attribute
     # Return value's text representation
     format: (value) -> if @formatter? then @formatter.format value else value
 
-    # Create input that is used for complex filtering
-    createFilter: (model) -> null
-
     # Get column's header text
     getHeader: -> @attributes.header
 
     # Get column's class name
     getClass: -> "col-" + @id
-
-    # Get the label for a filter
-    getFilterLabel: -> @getHeader()
 
     # Get whether a column can order items
     canOrder: -> @attributes.can_order
@@ -2100,21 +2097,8 @@ class Cruddy.Columns.Proxy extends Cruddy.Columns.Base
 
     format: (value) -> if @formatter? then @formatter.format value else @field.format value
 
-    createFilter: (model) -> @field.createFilterInput model, this
-
-    getFilterLabel: -> @field.getFilterLabel()
-
-    canFilter: -> @field.canFilter()
-
     getClass: -> super + " col-" + @field.get "type"
 class Cruddy.Columns.Computed extends Cruddy.Columns.Base
-
-    createFilter: (model) -> new Cruddy.Inputs.Text
-        model: model
-        key: @id
-        attributes:
-            placeholder: @attributes.header
-
     getClass: -> super + " col-computed"
 Cruddy.formatters = new Factory
 
@@ -2290,7 +2274,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
             this
 
     processError: (model, xhr) ->
-        if xhr.responseJSON? and xhr.responseJSON.error is "VALIDATION"
+        if xhr.responseJSON?.error is "VALIDATION"
             errors = xhr.responseJSON.data
 
             @trigger "invalid", this, errors
@@ -2412,29 +2396,46 @@ class Cruddy.Entity.Page extends Backbone.View
         @footer = @$ ".entity-page-footer"
 
         @dataSource = @model.createDataSource()
-
-        @dataGrid = new DataGrid
-            model: @dataSource
-
-        @pagination = new Pagination
-            model: @dataSource
-
-        @filterList = new FilterList
-            model: @dataSource.filter
-            entity: @dataSource.entity
-
-        @search = new Cruddy.Inputs.Search
-            model: @dataSource
-            key: "search"
-
+        
         @dataSource.fetch()
 
+        # Search input
+        @search = @createSearchInput @dataSource
+
         @$(".col-search").append @search.render().el
-        @$(".col-filters").append @filterList.render().el
-        @content.append @dataGrid.render().el
+
+        # Filters
+        if not _.isEmpty filters = @dataSource.entity.get "filters"
+            @filterList = @createFilterList @dataSource.filter, filters
+
+            @$(".col-filters").append @filterList.render().el
+
+        # Data grid
+        @dataGrid = @createDataGrid @dataSource
+        
+        @content.append @dataGrid.render().el        
+        
+        # Pagination
+        @pagination = @createPagination @dataSource
+        
         @footer.append @pagination.render().el
 
         this
+
+    createDataGrid: (dataSource) -> new DataGrid
+        model: dataSource
+        entity: @model
+
+    createPagination: (dataSource) -> new Pagination model: dataSource
+
+    createFilterList: (model, filters) -> new FilterList
+        model: model
+        entity: @model
+        filters: filters
+
+    createSearchInput: (dataSource) -> new Cruddy.Inputs.Search
+        model: dataSource
+        key: "search"
 
     template: ->
         html = "<div class='entity-page-header'>"
@@ -2460,12 +2461,12 @@ class Cruddy.Entity.Page extends Backbone.View
         html += "<div class='entity-page-footer'></div>"
 
     dispose: ->
-        @form.remove() if @form?
-        @filterList.remove() if @filterList?
-        @dataGrid.remove() if @dataGrid?
-        @pagination.remove() if @pagination?
-        @search.remove() if @search?
-        @dataSource.stopListening() if @dataSource?
+        @form?.remove()
+        @filterList?.remove()
+        @dataGrid?.remove()
+        @pagination?.remove()
+        @search?.remove()
+        @dataSource?.stopListening()
 
         this
 

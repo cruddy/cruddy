@@ -60,7 +60,7 @@ class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
     initialize: (options) ->
         @input = options.input
 
-        this
+        super
 
     hideError: ->
         @error.hide()
@@ -69,11 +69,9 @@ class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
         this
 
     showError: (model, errors) ->
-        error = errors[@field.get "id"]
-
-        if error
+        if @field.id of errors
             @inputHolder.addClass "has-error"
-            @error.text(error).show()
+            @error.text(_.first errors[@field.id]).show()
 
         this
 

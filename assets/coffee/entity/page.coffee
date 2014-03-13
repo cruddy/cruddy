@@ -45,29 +45,46 @@ class Cruddy.Entity.Page extends Backbone.View
         @footer = @$ ".entity-page-footer"
 
         @dataSource = @model.createDataSource()
-
-        @dataGrid = new DataGrid
-            model: @dataSource
-
-        @pagination = new Pagination
-            model: @dataSource
-
-        @filterList = new FilterList
-            model: @dataSource.filter
-            entity: @dataSource.entity
-
-        @search = new Cruddy.Inputs.Search
-            model: @dataSource
-            key: "search"
-
+        
         @dataSource.fetch()
 
+        # Search input
+        @search = @createSearchInput @dataSource
+
         @$(".col-search").append @search.render().el
-        @$(".col-filters").append @filterList.render().el
-        @content.append @dataGrid.render().el
+
+        # Filters
+        if not _.isEmpty filters = @dataSource.entity.get "filters"
+            @filterList = @createFilterList @dataSource.filter, filters
+
+            @$(".col-filters").append @filterList.render().el
+
+        # Data grid
+        @dataGrid = @createDataGrid @dataSource
+        
+        @content.append @dataGrid.render().el        
+        
+        # Pagination
+        @pagination = @createPagination @dataSource
+        
         @footer.append @pagination.render().el
 
         this
+
+    createDataGrid: (dataSource) -> new DataGrid
+        model: dataSource
+        entity: @model
+
+    createPagination: (dataSource) -> new Pagination model: dataSource
+
+    createFilterList: (model, filters) -> new FilterList
+        model: model
+        entity: @model
+        filters: filters
+
+    createSearchInput: (dataSource) -> new Cruddy.Inputs.Search
+        model: dataSource
+        key: "search"
 
     template: ->
         html = "<div class='entity-page-header'>"
@@ -93,12 +110,12 @@ class Cruddy.Entity.Page extends Backbone.View
         html += "<div class='entity-page-footer'></div>"
 
     dispose: ->
-        @form.remove() if @form?
-        @filterList.remove() if @filterList?
-        @dataGrid.remove() if @dataGrid?
-        @pagination.remove() if @pagination?
-        @search.remove() if @search?
-        @dataSource.stopListening() if @dataSource?
+        @form?.remove()
+        @filterList?.remove()
+        @dataGrid?.remove()
+        @pagination?.remove()
+        @search?.remove()
+        @dataSource?.stopListening()
 
         this
 

@@ -15,6 +15,7 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         allowEdit: no
         placeholder: Cruddy.lang.any_value
         owner: @entity.id + "." + @id
+        constraint: @attributes.constraint
 
     format: (value) ->
         return Cruddy.lang.not_selected if _.isEmpty value

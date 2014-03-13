@@ -74,19 +74,37 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessorInte
     {
         if ($otherField === null) $otherField = $field;
 
-        if ( ! $this->entity->getFields()->get($field))
-        {
-            throw new RuntimeException("The field [{$this->entity->getId()}.{$field}] is not defined.");
-        }
+        $fieldInstance = $this->findField($this->entity, $field);
+        $otherFieldInstance = $this->findField($this->reference, $otherField);
 
-        if ( ! $this->reference->getColumns()->get($otherField))
+        if (get_class($fieldInstance) !== get_class($otherFieldInstance))
         {
-            throw new RuntimeException("The column [{$this->reference->getId()}.{$otherField}] is not defined.");
+            throw new RuntimeException("Fields on current and related entity must be of same type in order to enable constraint.");
         }
 
         $this->constraint = compact('field', 'otherField');
 
         return $this;
+    }
+
+    /**
+     * Get a field of given entity.
+     *
+     * @param \Kalnoy\Cruddy\Entity $entity
+     * @param string                $fieldId
+     *
+     * @return \Kalnoy\Cruddy\Schema\FieldInterface
+     */
+    protected function findField($entity, $fieldId)
+    {
+        $field = $entity->getFields()->get($fieldId);
+
+        if ( ! $field)
+        {
+            throw new RuntimeException("The field [{$entity->getId()}.{$fieldId}] is not defined.");
+        }
+
+        return $field;
     }
 
     /**

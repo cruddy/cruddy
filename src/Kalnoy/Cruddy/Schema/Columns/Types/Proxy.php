@@ -93,36 +93,11 @@ class Proxy extends BaseColumn {
     /**
      * @inheritdoc
      *
-     * @param \Illuminate\Database\Query\Builder $builder
-     * @param mixed                              $data
-     *
-     * @return $this
-     */
-    public function filter(QueryBuilder $builder, $data)
-    {
-        $this->field->filter($builder, $data);
-
-        return $this;
-    }
-
-    /**
-     * @inheritdoc
-     *
      * @return bool
      */
     public function canOrder()
     {
         return $this->field->canOrder();
-    }
-
-    /**
-     * @inheritdoc
-     *
-     * @return string
-     */
-    public function getFilterType()
-    {
-        return $this->field->getFilterType();
     }
 
     /**

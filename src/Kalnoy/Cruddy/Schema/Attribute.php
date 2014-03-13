@@ -44,13 +44,6 @@ abstract class Attribute implements AttributeInterface {
     protected $canOrder = false;
 
     /**
-     * The filter type.
-     *
-     * @var string
-     */
-    protected $filterType = self::FILTER_NONE;
-
-    /**
      * Whether to hide this attribute.
      *
      * @var bool
@@ -107,19 +100,6 @@ abstract class Attribute implements AttributeInterface {
     {
         $builder->orderBy($this->id, $direction);
         
-        return $this;
-    }
-
-    /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Query\Builder $builder
-     * @param mixed                              $data
-     *
-     * @return $this
-     */
-    public function filter(QueryBuilder $builder, $data)
-    {
         return $this;
     }
 
@@ -193,16 +173,6 @@ abstract class Attribute implements AttributeInterface {
     /**
      * @inheritdoc
      *
-     * @return string
-     */
-    public function getFilterType()
-    {
-        return $this->filterType;
-    }
-
-    /**
-     * @inheritdoc
-     *
      * @return array
      */
     public function toArray()
@@ -215,7 +185,6 @@ abstract class Attribute implements AttributeInterface {
             'hide' => $this->hide,
             'help' => $this->getHelp(),
             'can_order' => $this->canOrder(),
-            'filter_type' => $this->getFilterType(),
         ];
     }
 

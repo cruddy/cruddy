@@ -33,7 +33,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
             this
 
     processError: (model, xhr) ->
-        if xhr.responseJSON? and xhr.responseJSON.error is "VALIDATION"
+        if xhr.responseJSON?.error is "VALIDATION"
             errors = xhr.responseJSON.data
 
             @trigger "invalid", this, errors

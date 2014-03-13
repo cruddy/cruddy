@@ -19,6 +19,16 @@ class ChainedSearchProcessor implements SearchProcessorInterface {
     }
 
     /**
+     * Add a processor to the queue.
+     *
+     * @param \Kalnoy\Cruddy\Repo\SearchProcessorInterface $processor
+     */
+    public function add(SearchProcessorInterface $processor)
+    {
+        $this->processors[] = $processor;
+    }
+
+    /**
      * @inheritdoc
      *
      * @param \Illuminate\Database\Eloquent\Builder $query
@@ -33,5 +43,4 @@ class ChainedSearchProcessor implements SearchProcessorInterface {
             $processor->search($query, $options);
         }
     }
-
 }

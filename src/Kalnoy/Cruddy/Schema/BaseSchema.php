@@ -29,6 +29,13 @@ abstract class BaseSchema implements SchemaInterface {
     protected $defaults = [];
 
     /**
+     * The list of complex filters.
+     *
+     * @var array
+     */
+    protected $filters = [];
+
+    /**
      * The attribute that is used to convert model to a string.
      *
      * @var string
@@ -140,6 +147,7 @@ abstract class BaseSchema implements SchemaInterface {
         [
             'order_by' => $this->defaultOrder,
             'template' => $this->template,
+            'filters' => $this->filters,
         ];
     }
 }

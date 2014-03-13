@@ -3,6 +3,7 @@
 namespace Kalnoy\Cruddy\Schema\Fields;
 
 use Illuminate\Database\Eloquent\Model as Eloquent;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 use Kalnoy\Cruddy\Schema\Attribute;
 use Kalnoy\Cruddy\Schema\FieldInterface;
 
@@ -35,6 +36,13 @@ abstract class BaseField extends Attribute implements FieldInterface {
      * @var string
      */
     protected $label;
+
+    /**
+     * The filter type.
+     *
+     * @var string
+     */
+    protected $filterType = self::FILTER_NONE;
 
     /**
      * @inheritdoc
@@ -149,6 +157,29 @@ abstract class BaseField extends Attribute implements FieldInterface {
     /**
      * @inheritdoc
      *
+     * @param \Illuminate\Database\Query\Builder $builder
+     * @param mixed                              $data
+     *
+     * @return $this
+     */
+    public function filter(QueryBuilder $builder, $data)
+    {
+        return $this;
+    }
+
+    /**
+     * @inheritdoc
+     *
+     * @return string
+     */
+    public function getFilterType()
+    {
+        return $this->filterType;
+    }
+
+    /**
+     * @inheritdoc
+     *
      * @return array
      */
     public function toArray()
@@ -159,6 +190,7 @@ abstract class BaseField extends Attribute implements FieldInterface {
             'unique' => $this->unique,
             'fillable' => $this->isFillable(),
             'label' => $this->getLabel(),
+            'filter_type' => $this->getFilterType(),
 
         ] + parent::toArray();
     }

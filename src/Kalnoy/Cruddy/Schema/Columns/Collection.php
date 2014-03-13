@@ -50,52 +50,6 @@ class Collection extends BaseCollection implements SearchProcessorInterface {
     }
 
     /**
-     * Filter by keywords.
-     *
-     * @param QueryBuilder $builder
-     * @param string       $keywords
-     *
-     * @return void
-     */
-    public function filterByKeywords(QueryBuilder $builder, $keywords)
-    {
-        $builder->whereNested(function ($q) use ($keywords)
-        {
-            foreach ($this->items as $item)
-            {
-                if ($item->getFilterType() === AttributeInterface::FILTER_STRING)
-                {
-                    $item->filter($q, $keywords);
-                }
-            } 
-        });
-    }
-
-    /**
-     * Apply complex filters.
-     *
-     * @param QueryBuilder $builder
-     * @param array        $data
-     *
-     * @return void
-     */
-    public function filterByData(QueryBuilder $builder, array $data)
-    {
-        foreach ($data as $key => $value)
-        {
-            if (!empty($value) && $this->has($key))
-            {
-                $item = $this->get($key);
-
-                if ($item->getFilterType() === AttributeInterface::FILTER_COMPLEX)
-                {
-                    $item->filter($builder, $value);
-                }
-            }
-        }
-    }
-
-    /**
      * @inheritdoc
      *
      * @param \Illuminate\Database\Eloquent\Builder $builder
@@ -112,16 +66,6 @@ class Collection extends BaseCollection implements SearchProcessorInterface {
         if ($value = \array_get($options, 'order'))
         {
             $this->order($query, $value);
-        }
-
-        if ($value = \array_get($options, 'keywords'))
-        {
-            $this->filterByKeywords($query, $value);
-        }
-
-        if ($value = \array_get($options, 'filters'))
-        {
-            $this->filterByData($query, $value);
         }
     }
 

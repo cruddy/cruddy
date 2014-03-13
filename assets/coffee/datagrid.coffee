@@ -8,12 +8,12 @@ class DataGrid extends Backbone.View
     }
 
     constructor: (options) ->
-        @className += " data-grid-" + options.model.entity.id
+        @className += " data-grid-" + options.entity.id
 
         super
 
     initialize: (options) ->
-        @entity = @model.entity
+        @entity = options.entity
         @columns = @entity.columns.models.filter (col) -> col.isVisible()
 
         @listenTo @model, "data", @updateData
@@ -49,8 +49,6 @@ class DataGrid extends Backbone.View
     setOrder: (e) ->
         orderBy = $(e.target).data "id"
         orderDir = @model.get "order_dir"
-
-        console.log orderBy
 
         if orderBy is @model.get "order_by"
             orderDir = if orderDir == 'asc' then 'desc' else 'asc'

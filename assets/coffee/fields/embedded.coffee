@@ -212,6 +212,12 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
     copy: (copy, items) -> items.copy(copy)
 
     processErrors: (collection, errorsCollection) ->
+        if not @attributes.multiple
+            model = collection.first()
+            model.trigger "invalid", model, errorsCollection
+
+            return this
+
         for cid, errors of errorsCollection
             model = collection.get cid
             model.trigger "invalid", model, errors if model

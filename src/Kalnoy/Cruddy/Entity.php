@@ -206,7 +206,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     protected function getSearchProcessor(array $options)
     {
-        $processor = $this->getColumns();
+        $processor = new ChainedSearchProcessor([ $this->getFields(), $this->getColumns() ]);
 
         if (isset($options['owner']))
         {
@@ -217,7 +217,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
                 throw new RuntimeException("The field [{$options['owner']}] is not a search processor.");
             }
 
-            return new ChainedSearchProcessor([ $processor, $field ]);
+            $processor->add($field);
         }
 
         return $processor;

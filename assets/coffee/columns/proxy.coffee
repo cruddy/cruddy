@@ -9,10 +9,4 @@ class Cruddy.Columns.Proxy extends Cruddy.Columns.Base
 
     format: (value) -> if @formatter? then @formatter.format value else @field.format value
 
-    createFilter: (model) -> @field.createFilterInput model, this
-
-    getFilterLabel: -> @field.getFilterLabel()
-
-    canFilter: -> @field.canFilter()
-
     getClass: -> super + " col-" + @field.get "type"

@@ -3,6 +3,7 @@
 namespace Kalnoy\Cruddy\Schema;
 
 use Illuminate\Database\Eloquent\Model as Eloquent;
+use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /**
  * FieldInterface
@@ -10,7 +11,22 @@ use Illuminate\Database\Eloquent\Model as Eloquent;
 interface FieldInterface extends AttributeInterface {
 
     /**
-     * Process input value and convert it to a valid format.
+     * No filtering is supported.
+     */
+    const FILTER_NONE = 'none';
+
+    /**
+     * Filtering is based on string value.
+     */
+    const FILTER_STRING = 'string';
+
+    /**
+     * Filtering is more complex and requires additional data.
+     */
+    const FILTER_COMPLEX = 'complex';
+
+    /**
+     * Process an input value and convert it to a valid format.
      *
      * @param mixed $value
      *
@@ -19,12 +35,29 @@ interface FieldInterface extends AttributeInterface {
     public function process($value);
 
     /**
-     * Whether to skip value.
+     * Get whether to exclude value from an input before validation.
      *
      * @param mixed $value
      *
      * @return bool
      */
     public function skip($value);
+
+    /**
+     * Apply constraints to the query builder.
+     *
+     * @param \Illuminate\Database\Query\Builder $query
+     * @param mixed                              $data
+     *
+     * @return $this
+     */
+    public function filter(QueryBuilder $query, $data);
+
+    /**
+     * Get filter type.
+     *
+     * @return string
+     */
+    public function getFilterType();
 
 }

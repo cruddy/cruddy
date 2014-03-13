@@ -95,38 +95,10 @@ class Computed extends BaseColumn {
     /**
      * @inheritdoc
      *
-     * @param \Illuminate\Database\Query\Builder $builder
-     * @param mixed                              $data
-     *
-     * @return $this
-     */
-    public function filter(Builder $builder, $data)
-    {
-        if ($this->columnClause !== null)
-        {
-            $builder->orWhere($this->columnClause, 'like', "%{$data}%");
-        }
-
-        return $this;
-    }
-
-    /**
-     * @inheritdoc
-     *
      * @return bool
      */
     public function canOrder()
     {
         return isset($this->columnClause);
-    }
-
-    /**
-     * @inheritdoc
-     *
-     * @return string
-     */
-    public function getFilterType()
-    {
-        return isset($this->columnClause) ? self::FILTER_STRING : self::FILTER_NONE;
     }
 }

@@ -586,12 +586,12 @@
     };
 
     function DataGrid(options) {
-      this.className += " data-grid-" + options.model.entity.id;
+      this.className += " data-grid-" + options.entity.id;
       DataGrid.__super__.constructor.apply(this, arguments);
     }
 
     DataGrid.prototype.initialize = function(options) {
-      this.entity = this.model.entity;
+      this.entity = options.entity;
       this.columns = this.entity.columns.models.filter(function(col) {
         return col.isVisible();
       });
@@ -633,7 +633,6 @@
       var orderBy, orderDir;
       orderBy = $(e.target).data("id");
       orderDir = this.model.get("order_dir");
-      console.log(orderBy);
       if (orderBy === this.model.get("order_by")) {
         orderDir = orderDir === 'asc' ? 'desc' : 'asc';
       } else {
@@ -821,24 +820,24 @@
 
     FilterList.prototype.initialize = function(options) {
       this.entity = options.entity;
+      this.availableFilters = options.filters;
       return this;
     };
 
     FilterList.prototype.render = function() {
-      var col, input, _i, _len, _ref8;
+      var field, filter, input, _i, _len, _ref8;
       this.dispose();
       this.$el.html(this.template());
       this.items = this.$(".filter-list-container");
-      _ref8 = this.entity.columns.models;
+      _ref8 = this.availableFilters;
       for (_i = 0, _len = _ref8.length; _i < _len; _i++) {
-        col = _ref8[_i];
-        if (col.canFilter()) {
-          if (input = col.createFilter(this.model)) {
-            this.filters.push(input);
-            this.items.append(input.render().el);
-            input.$el.wrap("<div class=\"form-group filter " + (col.getClass()) + "\"><div class=\"input-wrap\"></div></div>").parent().before("<label>" + (col.getFilterLabel()) + "</label>");
-          }
+        filter = _ref8[_i];
+        if (!((field = this.entity.fields.get(filter)) && field.canFilter() && (input = field.createFilterInput(this.model)))) {
+          continue;
         }
+        this.filters.push(input);
+        this.items.append(input.render().el);
+        input.$el.wrap("<div class=\"form-group filter filter-" + field.id + "\"><div class=\"input-wrap\"></div></div>").parent().before("<label>" + (field.getFilterLabel()) + "</label>");
       }
       return this;
     };
@@ -1275,11 +1274,13 @@
       if (reset == null) {
         reset = false;
       }
-      value = this.model.get(this.constraint.field);
-      if ((_ref15 = this.selector.dataSource) != null) {
-        _ref15.filters.set(this.constraint.otherField, value);
+      if (this.selector) {
+        value = this.model.get(this.constraint.field);
+        if ((_ref15 = this.selector.dataSource) != null) {
+          _ref15.filters.set(this.constraint.otherField, value);
+        }
+        this.selector.createAttributes[this.constraint.otherField] = value;
       }
-      this.selector.createAttributes[this.constraint.otherField] = value;
       if (reset) {
         this.model.set(this.key, this.multiple ? [] : null);
       }
@@ -2306,7 +2307,7 @@
 
     InputView.prototype.initialize = function(options) {
       this.input = options.input;
-      return this;
+      return InputView.__super__.initialize.apply(this, arguments);
     };
 
     InputView.prototype.hideError = function() {
@@ -2316,11 +2317,9 @@
     };
 
     InputView.prototype.showError = function(model, errors) {
-      var error;
-      error = errors[this.field.get("id")];
-      if (error) {
+      if (this.field.id in errors) {
         this.inputHolder.addClass("has-error");
-        this.error.text(error).show();
+        this.error.text(_.first(errors[this.field.id])).show();
       }
       return this;
     };
@@ -2578,7 +2577,8 @@
         reference: this.getReference(),
         allowEdit: false,
         placeholder: Cruddy.lang.any_value,
-        owner: this.entity.id + "." + this.id
+        owner: this.entity.id + "." + this.id,
+        constraint: this.attributes.constraint
       });
     };
 
@@ -3098,6 +3098,11 @@
 
     Embedded.prototype.processErrors = function(collection, errorsCollection) {
       var cid, errors, model;
+      if (!this.attributes.multiple) {
+        model = collection.first();
+        model.trigger("invalid", model, errorsCollection);
+        return this;
+      }
       for (cid in errorsCollection) {
         errors = errorsCollection[cid];
         model = collection.get(cid);
@@ -3151,20 +3156,12 @@
       }
     };
 
-    Base.prototype.createFilter = function(model) {
-      return null;
-    };
-
     Base.prototype.getHeader = function() {
       return this.attributes.header;
     };
 
     Base.prototype.getClass = function() {
       return "col-" + this.id;
-    };
-
-    Base.prototype.getFilterLabel = function() {
-      return this.getHeader();
     };
 
     Base.prototype.canOrder = function() {
@@ -3201,18 +3198,6 @@
       }
     };
 
-    Proxy.prototype.createFilter = function(model) {
-      return this.field.createFilterInput(model, this);
-    };
-
-    Proxy.prototype.getFilterLabel = function() {
-      return this.field.getFilterLabel();
-    };
-
-    Proxy.prototype.canFilter = function() {
-      return this.field.canFilter();
-    };
-
     Proxy.prototype.getClass = function() {
       return Proxy.__super__.getClass.apply(this, arguments) + " col-" + this.field.get("type");
     };
@@ -3228,16 +3213,6 @@
       _ref40 = Computed.__super__.constructor.apply(this, arguments);
       return _ref40;
     }
-
-    Computed.prototype.createFilter = function(model) {
-      return new Cruddy.Inputs.Text({
-        model: model,
-        key: this.id,
-        attributes: {
-          placeholder: this.attributes.header
-        }
-      });
-    };
 
     Computed.prototype.getClass = function() {
       return Computed.__super__.getClass.apply(this, arguments) + " col-computed";
@@ -3555,14 +3530,14 @@
     };
 
     Instance.prototype.processError = function(model, xhr) {
-      var errors, id, _ref44, _results;
-      if ((xhr.responseJSON != null) && xhr.responseJSON.error === "VALIDATION") {
+      var errors, id, _ref44, _ref45, _results;
+      if (((_ref44 = xhr.responseJSON) != null ? _ref44.error : void 0) === "VALIDATION") {
         errors = xhr.responseJSON.data;
         this.trigger("invalid", this, errors);
-        _ref44 = this.related;
+        _ref45 = this.related;
         _results = [];
-        for (id in _ref44) {
-          model = _ref44[id];
+        for (id in _ref45) {
+          model = _ref45[id];
           if (id in errors) {
             _results.push(this.entity.getRelation(id).processErrors(model, errors[id]));
           }
@@ -3718,32 +3693,53 @@
     };
 
     Page.prototype.render = function() {
+      var filters;
       this.dispose();
       this.$el.html(this.template());
       this.header = this.$(".entity-page-header");
       this.content = this.$(".entity-page-content");
       this.footer = this.$(".entity-page-footer");
       this.dataSource = this.model.createDataSource();
-      this.dataGrid = new DataGrid({
-        model: this.dataSource
-      });
-      this.pagination = new Pagination({
-        model: this.dataSource
-      });
-      this.filterList = new FilterList({
-        model: this.dataSource.filter,
-        entity: this.dataSource.entity
-      });
-      this.search = new Cruddy.Inputs.Search({
-        model: this.dataSource,
-        key: "search"
-      });
       this.dataSource.fetch();
+      this.search = this.createSearchInput(this.dataSource);
       this.$(".col-search").append(this.search.render().el);
-      this.$(".col-filters").append(this.filterList.render().el);
+      if (!_.isEmpty(filters = this.dataSource.entity.get("filters"))) {
+        this.filterList = this.createFilterList(this.dataSource.filter, filters);
+        this.$(".col-filters").append(this.filterList.render().el);
+      }
+      this.dataGrid = this.createDataGrid(this.dataSource);
       this.content.append(this.dataGrid.render().el);
+      this.pagination = this.createPagination(this.dataSource);
       this.footer.append(this.pagination.render().el);
       return this;
+    };
+
+    Page.prototype.createDataGrid = function(dataSource) {
+      return new DataGrid({
+        model: dataSource,
+        entity: this.model
+      });
+    };
+
+    Page.prototype.createPagination = function(dataSource) {
+      return new Pagination({
+        model: dataSource
+      });
+    };
+
+    Page.prototype.createFilterList = function(model, filters) {
+      return new FilterList({
+        model: model,
+        entity: this.model,
+        filters: filters
+      });
+    };
+
+    Page.prototype.createSearchInput = function(dataSource) {
+      return new Cruddy.Inputs.Search({
+        model: dataSource,
+        key: "search"
+      });
     };
 
     Page.prototype.template = function() {
@@ -3761,23 +3757,24 @@
     };
 
     Page.prototype.dispose = function() {
-      if (this.form != null) {
-        this.form.remove();
+      var _ref44, _ref45, _ref46, _ref47, _ref48, _ref49;
+      if ((_ref44 = this.form) != null) {
+        _ref44.remove();
       }
-      if (this.filterList != null) {
-        this.filterList.remove();
+      if ((_ref45 = this.filterList) != null) {
+        _ref45.remove();
       }
-      if (this.dataGrid != null) {
-        this.dataGrid.remove();
+      if ((_ref46 = this.dataGrid) != null) {
+        _ref46.remove();
       }
-      if (this.pagination != null) {
-        this.pagination.remove();
+      if ((_ref47 = this.pagination) != null) {
+        _ref47.remove();
       }
-      if (this.search != null) {
-        this.search.remove();
+      if ((_ref48 = this.search) != null) {
+        _ref48.remove();
       }
-      if (this.dataSource != null) {
-        this.dataSource.stopListening();
+      if ((_ref49 = this.dataSource) != null) {
+        _ref49.stopListening();
       }
       return this;
     };

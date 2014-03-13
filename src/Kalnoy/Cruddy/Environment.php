@@ -151,6 +151,7 @@ class Environment implements JsonableInterface {
      */
     public function translate($key, $default = null)
     {
+        $key = "cruddy::{$key}";
         $line = $this->translator->trans($key);
 
         return $line === $key ? $default : $line;

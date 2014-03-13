@@ -103,7 +103,7 @@ class Collection extends BaseCollection implements SearchProcessorInterface {
             {
                 $item = $this->get($key);
 
-                if ($item->getFilterType() === FieldInterface::FILTER_COMPLEX)
+                if ($item->getFilterType() !== FieldInterface::FILTER_NONE)
                 {
                     $item->filter($builder, $value);
                 }

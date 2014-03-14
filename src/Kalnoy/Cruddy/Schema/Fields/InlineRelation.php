@@ -168,7 +168,63 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
      */
     public function extract(Eloquent $model)
     {
-        return $this->reference->extract($model->{$this->id});
+        $items = $model->{$this->id};
+
+        $this->loadRelations($items);
+
+        return $this->reference->extract($items);
+    }
+
+    /**
+     * @inheritdoc
+     *
+     * @param array  $items
+     * @param string $key
+     *
+     * @return void
+     */
+    protected function appendPreloadableRelations(array &$items, $key = null)
+    {
+        $relationId = $this->getKeyedRelationId($key);
+
+        $items[] = $relationId;
+
+        $this->appendReferenceRelations($items, $relationId);
+    }
+
+    /**
+     * Append preloadables from reference entity.
+     *
+     * @param array  $items
+     * @param string $key
+     *
+     * @return void
+     */
+    protected function appendReferenceRelations(array &$items, $key = null)
+    {
+        foreach ($this->reference->getFields() as $field)
+        {
+            if ($field instanceof BaseRelation)
+            {
+                $field->appendPreloadableRelations($items, $key);
+            }
+        }
+    }
+
+    /**
+     * Find inner relations and load them on target model.
+     *
+     * @param mixed $loadee
+     *
+     * @return void
+     */
+    protected function loadRelations($loadee)
+    {
+        $relations = [];
+
+        $this->appendReferenceRelations($relations);
+
+        if ($relations) $loadee->load($relations);
     }
 
     /**

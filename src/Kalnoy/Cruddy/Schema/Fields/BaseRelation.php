@@ -87,6 +87,31 @@ abstract class BaseRelation extends BaseField {
     }
 
     /**
+     * @param array  $relations
+     * @param string $key
+     *
+     * @return void
+     */
+    protected function appendPreloadableRelations(array &$relations, $key = null)
+    {
+        $relations[] = $this->getKeyedRelationId($key);
+    }
+
+    /**
+     * Get relation id prefixed with key if one is provided.
+     *
+     * @param string $key
+     *
+     * @return string
+     */
+    protected function getKeyedRelationId($key)
+    {
+        $relationId = $this->getRelationId();
+
+        return $key ? $key . '.' . $relationId : $relationId;
+    }
+
+    /**
      * Get references entity instance.
      *
      * @return \Kalnoy\Cruddy\Entity

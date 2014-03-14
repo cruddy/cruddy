@@ -145,13 +145,25 @@ abstract class BaseField extends Attribute implements FieldInterface {
     {
         if ($this->label === null)
         {
-            if (null === $this->label = $this->translate('fields'))
-            {
-                $this->label = \Kalnoy\Cruddy\ucfirst(\Kalnoy\Cruddy\prettify_string($this->id));
-            }
+            $this->label = $this->generateLabel();
         }
 
         return $this->label;
+    }
+
+    /**
+     * Generate a label.
+     *
+     * @return string
+     */
+    protected function generateLabel()
+    {
+        if (null === $label = $this->translate('fields'))
+        {
+            $label = \Kalnoy\Cruddy\ucfirst(\Kalnoy\Cruddy\prettify_string($this->id));
+        }
+
+        return $label;
     }
 
     /**

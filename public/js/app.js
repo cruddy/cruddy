@@ -2850,7 +2850,7 @@
       var buttons, ref;
       ref = this.field.getReference();
       buttons = ref.createPermitted() ? b_btn("", "plus", ["default", "create"]) : "";
-      return "<div class='header field-label'>" + (this.helpTemplate()) + (this.field.isMultiple() ? ref.getPluralTitle() : ref.getSingularTitle()) + " " + buttons + "</div><div class='body'></div>";
+      return "<div class='header field-label'>" + (this.helpTemplate()) + (this.field.getLabel()) + " " + buttons + "</div><div class='body'></div>";
     };
 
     EmbeddedView.prototype.dispose = function() {

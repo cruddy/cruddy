@@ -1905,7 +1905,7 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
 
         buttons = if ref.createPermitted() then b_btn("", "plus", ["default", "create"]) else ""
 
-        "<div class='header field-label'>#{ @helpTemplate() }#{ if @field.isMultiple() then ref.getPluralTitle() else ref.getSingularTitle() } #{ buttons }</div><div class='body'></div>"
+        "<div class='header field-label'>#{ @helpTemplate() }#{ @field.getLabel() } #{ buttons }</div><div class='body'></div>"
 
     dispose: ->
         view.remove() for cid, view of @views

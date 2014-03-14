@@ -230,6 +230,18 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     /**
      * @inheritdoc
      *
+     * @return string
+     */
+    protected function generateLabel()
+    {
+        if ($label = $this->translate('fields')) return $label;
+
+        return $this->multiple ? $this->reference->getPluralTitle() : $this->reference->getSingularTitle();
+    }
+
+    /**
+     * @inheritdoc
+     *
      * @return array
      */
     public function toArray()

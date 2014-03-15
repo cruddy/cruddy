@@ -231,7 +231,8 @@ class SearchDataSource extends Backbone.Model
             type: "get"
             dataType: "json"
 
-            data: {}
+            data:
+                simple: 1
 
             success: (resp) =>
                 resp = resp.data
@@ -2181,7 +2182,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
         field
 
-    search: (options = {}) -> new SearchDataSource {}, $.extend { url: @url "search" }, options
+    search: (options = {}) -> new SearchDataSource {}, $.extend { url: @url() }, options
 
     # Load a model
     load: (id) ->

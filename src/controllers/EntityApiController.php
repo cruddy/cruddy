@@ -29,7 +29,7 @@ class EntityApiController extends ApiController {
         $this->cruddy = app('cruddy');
         $authFilter = $this->cruddy->config('auth_filter');
 
-        // if ($authFilter) $this->beforeFilter($authFilter);
+        if ($authFilter) $this->beforeFilter($authFilter);
 
         $this->beforeFilter(function()
         {
@@ -54,25 +54,6 @@ class EntityApiController extends ApiController {
         return $this->resolve($type, 'view', function ($entity) {
 
             $options = $this->prepareSearchOptions(Input::all());
-
-            return $this->success($entity->search($options));
-        });
-    }
-
-    /**
-     * Search models of specified entity.
-     *
-     * @param $type
-     *
-     * @return Response
-     */
-    public function search($type)
-    {
-        return $this->resolve($type, 'view', function ($entity) {
-
-            $options = $this->prepareSearchOptions(Input::all());
-
-            $options['simple'] = true;
 
             return $this->success($entity->search($options));
         });

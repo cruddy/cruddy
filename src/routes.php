@@ -10,12 +10,6 @@ Route::group(['prefix' => Config::get('cruddy::uri')], function ()
             'uses' => 'Kalnoy\Cruddy\EntityApiController@index',
         ]);
 
-        Route::get('{model}/search',
-        [
-            'as' => 'cruddy.api.entity.search',
-            'uses' => 'Kalnoy\Cruddy\EntityApiController@search',
-        ]);
-
         Route::post('{model}',
         [
             'as' => 'cruddy.api.entity.create',
@@ -26,27 +20,42 @@ Route::group(['prefix' => Config::get('cruddy::uri')], function ()
         [
             'as' => 'cruddy.api.entity.show',
             'uses' => 'Kalnoy\Cruddy\EntityApiController@show',
-        ])
-        ->where('id', '[0-9]+');
+        ]);
 
         Route::put('{model}/{id}',
         [
             'as' => 'cruddy.api.entity.update',
             'uses' => 'Kalnoy\Cruddy\EntityApiController@update',
-        ])
-        ->where('id', '[0-9]+');
+        ]);
 
         Route::delete('{model}/{id}',
         [
             'as' => 'cruddy.api.entity.destroy',
             'uses' => 'Kalnoy\Cruddy\EntityApiController@destroy',
-        ])
-        ->where('id', '[0-9]+');
+        ]);
     });
 
     Route::get('/', 'Kalnoy\Cruddy\CruddyController@index');
     Route::get('thumb', 'Kalnoy\Cruddy\CruddyController@thumb');
 
-    Route::get('{model}', ['as' => 'cruddy.index', 'uses' => 'Kalnoy\Cruddy\CruddyController@show']);
-    Route::get('{model}/{id}', ['as' => 'cruddy.show', 'uses' => 'Kalnoy\Cruddy\CruddyController@show']);
+    Route::get('{model}',
+    [
+        'as' => 'cruddy.index', 
+        'uses' => 'Kalnoy\Cruddy\CruddyController@show'
+    ])
+    ->where('model', '\w+');
+
+    Route::get('{model}/create',
+    [
+        'as' => 'cruddy.create',
+        'uses' => 'Kalnoy\Cruddy\CruddyController@show',
+    ])
+    ->where('model', '\w+');
+
+    Route::get('{model}/{id}',
+    [
+        'as' => 'cruddy.show', 
+        'uses' => 'Kalnoy\Cruddy\CruddyController@show'
+    ])
+    ->where('model', '\w+');
 });

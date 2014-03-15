@@ -54,7 +54,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
         field
 
-    search: (options = {}) -> new SearchDataSource {}, $.extend { url: @url "search" }, options
+    search: (options = {}) -> new SearchDataSource {}, $.extend { url: @url() }, options
 
     # Load a model
     load: (id) ->

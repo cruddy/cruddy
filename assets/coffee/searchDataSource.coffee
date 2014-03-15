@@ -10,7 +10,8 @@ class SearchDataSource extends Backbone.Model
             type: "get"
             dataType: "json"
 
-            data: {}
+            data:
+                simple: 1
 
             success: (resp) =>
                 resp = resp.data

@@ -404,7 +404,9 @@
         url: options.url,
         type: "get",
         dataType: "json",
-        data: {},
+        data: {
+          simple: 1
+        },
         success: function(resp) {
           var item, _i, _len, _ref5;
           resp = resp.data;
@@ -3385,7 +3387,7 @@
         options = {};
       }
       return new SearchDataSource({}, $.extend({
-        url: this.url("search")
+        url: this.url()
       }, options));
     };
 

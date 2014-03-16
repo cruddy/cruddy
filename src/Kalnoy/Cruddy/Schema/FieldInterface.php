@@ -35,7 +35,7 @@ interface FieldInterface extends AttributeInterface {
     public function process($value);
 
     /**
-     * Get whether to exclude value from an input before validation.
+     * Get whether to exclude value from an input before save.
      *
      * @param mixed $value
      *

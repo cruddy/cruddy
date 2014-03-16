@@ -2240,7 +2240,7 @@
     BaseView.prototype.initialize = function(options) {
       this.listenTo(this.model, "sync", this.toggleVisibility);
       this.listenTo(this.model, "request", this.hideError);
-      this.listenTo(this.model, "invalid", this.showError);
+      this.listenTo(this.model, "invalid", this.handleInvalid);
       return this;
     };
 
@@ -2249,10 +2249,21 @@
     };
 
     BaseView.prototype.hideError = function() {
+      this.error.hide();
       return this;
     };
 
-    BaseView.prototype.showError = function() {
+    BaseView.prototype.handleInvalid = function(model, errors) {
+      var error;
+      if (this.field.id in errors) {
+        error = errors[this.field.id];
+        this.showError(_.isArray(error) ? _.first(error) : error);
+      }
+      return this;
+    };
+
+    BaseView.prototype.showError = function(message) {
+      this.error.text(message).show();
       return this;
     };
 
@@ -2265,6 +2276,7 @@
         container: "body",
         placement: "left"
       });
+      this.error = this.$("#" + this.cid + "-error");
       return this;
     };
 
@@ -2279,7 +2291,7 @@
     };
 
     BaseView.prototype.errorTemplate = function() {
-      return "<span class=\"help-block error\"></span>";
+      return "<span class=\"help-block error\" id=\"" + this.cid + "-error\"></span>";
     };
 
     BaseView.prototype.isVisible = function() {
@@ -2313,17 +2325,13 @@
     };
 
     InputView.prototype.hideError = function() {
-      this.error.hide();
       this.inputHolder.removeClass("has-error");
-      return this;
+      return InputView.__super__.hideError.apply(this, arguments);
     };
 
-    InputView.prototype.showError = function(model, errors) {
-      if (this.field.id in errors) {
-        this.inputHolder.addClass("has-error");
-        this.error.text(_.first(errors[this.field.id])).show();
-      }
-      return this;
+    InputView.prototype.showError = function() {
+      this.inputHolder.addClass("has-error");
+      return InputView.__super__.showError.apply(this, arguments);
     };
 
     InputView.prototype.render = function() {
@@ -2331,7 +2339,7 @@
       this.$el.html(this.template());
       this.inputHolder = this.$(".input-holder");
       this.inputHolder.append(this.input.render().el);
-      this.inputHolder.append(this.error = $(this.errorTemplate()));
+      this.inputHolder.append(this.errorTemplate());
       this.toggleVisibility();
       return InputView.__super__.render.apply(this, arguments);
     };
@@ -2789,6 +2797,13 @@
       return EmbeddedView.__super__.initialize.apply(this, arguments);
     };
 
+    EmbeddedView.prototype.handleInvalid = function(model, errors) {
+      if (this.field.id in errors && errors[this.field.id].length) {
+        EmbeddedView.__super__.handleInvalid.apply(this, arguments);
+      }
+      return this;
+    };
+
     EmbeddedView.prototype.create = function(e) {
       e.preventDefault();
       e.stopPropagation();
@@ -2832,7 +2847,7 @@
       var model, _i, _len, _ref35;
       this.dispose();
       this.$el.html(this.template());
-      this.body = this.$(".body");
+      this.body = this.$("#" + this.cid + "-body");
       this.createButton = this.$(".btn-create");
       _ref35 = this.collection.models;
       for (_i = 0, _len = _ref35.length; _i < _len; _i++) {
@@ -2852,7 +2867,7 @@
       var buttons, ref;
       ref = this.field.getReference();
       buttons = ref.createPermitted() ? b_btn("", "plus", ["default", "create"]) : "";
-      return "<div class='header field-label'>" + (this.helpTemplate()) + (this.field.getLabel()) + " " + buttons + "</div><div class='body'></div>";
+      return "<div class='header field-label'>\n    " + (this.helpTemplate()) + (this.field.getLabel()) + " " + buttons + "\n</div>\n<div class=\"error-container has-error\">" + (this.errorTemplate()) + "</div>\n<div class='body' id='" + this.cid + "-body'></div>";
     };
 
     EmbeddedView.prototype.dispose = function() {
@@ -3100,9 +3115,14 @@
 
     Embedded.prototype.processErrors = function(collection, errorsCollection) {
       var cid, errors, model;
+      if (!_.isObject(errorsCollection)) {
+        return;
+      }
       if (!this.attributes.multiple) {
         model = collection.first();
-        model.trigger("invalid", model, errorsCollection);
+        if (model) {
+          model.trigger("invalid", model, errorsCollection);
+        }
         return this;
       }
       for (cid in errorsCollection) {

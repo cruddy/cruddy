@@ -34,6 +34,23 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     protected $multiple = false;
 
     /**
+     * @inheritdoc
+     *
+     * @param mixed $data
+     *
+     * @return mixed
+     */
+    public function process($data)
+    {
+        if ($this->multiple) return array_map(function ($item)
+        {
+            return $item['attributes'];
+        });
+
+        return $data['attributes'];
+    }
+
+    /**
      * @inhertidoc
      *
      * Inline relation skips value since it is passed to the other repository.

@@ -1562,15 +1562,29 @@ class Cruddy.Fields.BaseView extends Backbone.View
     initialize: (options) ->
         @listenTo @model, "sync",    @toggleVisibility
         @listenTo @model, "request", @hideError
-        @listenTo @model, "invalid", @showError
+        @listenTo @model, "invalid", @handleInvalid
 
         this
 
     toggleVisibility: -> @$el.toggle @isVisible()
 
-    hideError: -> this
+    hideError: ->
+        @error.hide()
 
-    showError: -> this
+        this
+
+    handleInvalid: (model, errors) ->
+        if @field.id of errors
+            error = errors[@field.id]
+
+            @showError if _.isArray error then _.first error else error
+
+        this
+
+    showError: (message) ->
+        @error.text(message).show()
+
+        this
 
     focus: -> this
 
@@ -1579,13 +1593,15 @@ class Cruddy.Fields.BaseView extends Backbone.View
             container: "body"
             placement: "left"
 
+        @error = @$ "##{ @cid }-error"
+
         this
 
     helpTemplate: ->
         help = @field.getHelp()
         if help then """<span class="glyphicon glyphicon-question-sign field-help" title="#{ help }"></span>""" else ""
 
-    errorTemplate: -> """<span class="help-block error"></span>"""
+    errorTemplate: -> """<span class="help-block error" id="#{ @cid }-error"></span>"""
 
     # Get whether the view is visible
     isVisible: -> @field.isEditable() or not @model.isNew()
@@ -1605,17 +1621,14 @@ class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
         super
 
     hideError: ->
-        @error.hide()
         @inputHolder.removeClass "has-error"
 
-        this
+        super
 
-    showError: (model, errors) ->
-        if @field.id of errors
-            @inputHolder.addClass "has-error"
-            @error.text(_.first errors[@field.id]).show()
+    showError: ->
+        @inputHolder.addClass "has-error"
 
-        this
+        super
 
     # Render a field
     render: ->
@@ -1626,7 +1639,7 @@ class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
         @inputHolder = @$ ".input-holder"
         @inputHolder.append @input.render().el
 
-        @inputHolder.append @error = $ @errorTemplate()
+        @inputHolder.append @errorTemplate()
 
         @toggleVisibility()
 
@@ -1850,6 +1863,11 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
 
         super
 
+    handleInvalid: (model, errors) ->
+        super if @field.id of errors and errors[@field.id].length
+
+        this
+
     create: (e) ->
         e.preventDefault()
         e.stopPropagation()
@@ -1887,7 +1905,7 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
         @dispose()
 
         @$el.html @template()
-        @body = @$ ".body"
+        @body = @$ "##{ @cid }-body"
         @createButton = @$ ".btn-create"
 
         @add model for model in @collection.models
@@ -1906,7 +1924,13 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
 
         buttons = if ref.createPermitted() then b_btn("", "plus", ["default", "create"]) else ""
 
-        "<div class='header field-label'>#{ @helpTemplate() }#{ @field.getLabel() } #{ buttons }</div><div class='body'></div>"
+        """
+        <div class='header field-label'>
+            #{ @helpTemplate() }#{ @field.getLabel() } #{ buttons }
+        </div>
+        <div class="error-container has-error">#{ @errorTemplate() }</div>
+        <div class='body' id='#{ @cid }-body'></div>
+        """
 
     dispose: ->
         view.remove() for cid, view of @views
@@ -2049,9 +2073,11 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
     copy: (copy, items) -> items.copy(copy)
 
     processErrors: (collection, errorsCollection) ->
+        return if not _.isObject errorsCollection
+
         if not @attributes.multiple
             model = collection.first()
-            model.trigger "invalid", model, errorsCollection
+            model.trigger "invalid", model, errorsCollection if model
 
             return this
 

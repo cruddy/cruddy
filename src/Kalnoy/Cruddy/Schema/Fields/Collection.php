@@ -23,9 +23,9 @@ class Collection extends BaseCollection implements SearchProcessorInterface {
 
         foreach ($this->items as $key => $field)
         {
-            if (isset($input[$key]) && !$field->skip($value = $input[$key]))
+            if (isset($input[$key]))
             {
-                $result[$key] = $field->process($value);
+                $result[$key] = $field->process($input[$key]);
             }
         }
 
@@ -45,7 +45,7 @@ class Collection extends BaseCollection implements SearchProcessorInterface {
 
         foreach ($input as $key => $value)
         {
-            if ($this->items[$key]->isFillable()) $result[$key] = $value;
+            if ( ! $this->items[$key]->skip($value)) $result[$key] = $value;
         }
 
         return $result;
@@ -99,7 +99,7 @@ class Collection extends BaseCollection implements SearchProcessorInterface {
     {
         foreach ($data as $key => $value)
         {
-            if (!empty($value) && $this->has($key))
+            if ( ! empty($value) && $this->has($key))
             {
                 $item = $this->get($key);
 

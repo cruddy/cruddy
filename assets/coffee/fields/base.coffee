@@ -20,15 +20,29 @@ class Cruddy.Fields.BaseView extends Backbone.View
     initialize: (options) ->
         @listenTo @model, "sync",    @toggleVisibility
         @listenTo @model, "request", @hideError
-        @listenTo @model, "invalid", @showError
+        @listenTo @model, "invalid", @handleInvalid
 
         this
 
     toggleVisibility: -> @$el.toggle @isVisible()
 
-    hideError: -> this
+    hideError: ->
+        @error.hide()
 
-    showError: -> this
+        this
+
+    handleInvalid: (model, errors) ->
+        if @field.id of errors
+            error = errors[@field.id]
+
+            @showError if _.isArray error then _.first error else error
+
+        this
+
+    showError: (message) ->
+        @error.text(message).show()
+
+        this
 
     focus: -> this
 
@@ -37,13 +51,15 @@ class Cruddy.Fields.BaseView extends Backbone.View
             container: "body"
             placement: "left"
 
+        @error = @$ "##{ @cid }-error"
+
         this
 
     helpTemplate: ->
         help = @field.getHelp()
         if help then """<span class="glyphicon glyphicon-question-sign field-help" title="#{ help }"></span>""" else ""
 
-    errorTemplate: -> """<span class="help-block error"></span>"""
+    errorTemplate: -> """<span class="help-block error" id="#{ @cid }-error"></span>"""
 
     # Get whether the view is visible
     isVisible: -> @field.isEditable() or not @model.isNew()
@@ -63,17 +79,14 @@ class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
         super
 
     hideError: ->
-        @error.hide()
         @inputHolder.removeClass "has-error"
 
-        this
+        super
 
-    showError: (model, errors) ->
-        if @field.id of errors
-            @inputHolder.addClass "has-error"
-            @error.text(_.first errors[@field.id]).show()
+    showError: ->
+        @inputHolder.addClass "has-error"
 
-        this
+        super
 
     # Render a field
     render: ->
@@ -84,7 +97,7 @@ class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
         @inputHolder = @$ ".input-holder"
         @inputHolder.append @input.render().el
 
-        @inputHolder.append @error = $ @errorTemplate()
+        @inputHolder.append @errorTemplate()
 
         @toggleVisibility()
 

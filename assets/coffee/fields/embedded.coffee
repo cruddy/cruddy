@@ -13,6 +13,11 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
 
         super
 
+    handleInvalid: (model, errors) ->
+        super if @field.id of errors and errors[@field.id].length
+
+        this
+
     create: (e) ->
         e.preventDefault()
         e.stopPropagation()
@@ -50,7 +55,7 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
         @dispose()
 
         @$el.html @template()
-        @body = @$ ".body"
+        @body = @$ "##{ @cid }-body"
         @createButton = @$ ".btn-create"
 
         @add model for model in @collection.models
@@ -69,7 +74,13 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
 
         buttons = if ref.createPermitted() then b_btn("", "plus", ["default", "create"]) else ""
 
-        "<div class='header field-label'>#{ @helpTemplate() }#{ @field.getLabel() } #{ buttons }</div><div class='body'></div>"
+        """
+        <div class='header field-label'>
+            #{ @helpTemplate() }#{ @field.getLabel() } #{ buttons }
+        </div>
+        <div class="error-container has-error">#{ @errorTemplate() }</div>
+        <div class='body' id='#{ @cid }-body'></div>
+        """
 
     dispose: ->
         view.remove() for cid, view of @views
@@ -212,9 +223,11 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
     copy: (copy, items) -> items.copy(copy)
 
     processErrors: (collection, errorsCollection) ->
+        return if not _.isObject errorsCollection
+
         if not @attributes.multiple
             model = collection.first()
-            model.trigger "invalid", model, errorsCollection
+            model.trigger "invalid", model, errorsCollection if model
 
             return this
 

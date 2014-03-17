@@ -73,19 +73,26 @@ Cruddy.app = new App
 
 class Router extends Backbone.Router
 
-    routes: {
-        ":page": "page"
-        ":page/create": "create"
-        ":page/:id": "update"
-    }
+    initialize: ->
+        entities = (_.map Cruddy.entities, (entity) -> entity.id).join "|"
 
-    entity: (id) ->
+        @addRoute "index", entities
+        @addRoute "create", entities, "create"
+        @addRoute "update", entities, "([^/]+)"
+
+        this
+
+    addRoute: (name, entities, appendage = null) ->
+        route = "^(#{ entities })"
+        route += "/" + appendage if appendage
+        route += "$"
+
+        @route new RegExp(route), name
+
+        this
+
+    resolveEntity: (id) ->
         entity = Cruddy.app.entity(id)
-
-        if not entity
-            Cruddy.app.displayError Cruddy.lang.entity_not_found
-
-            return
 
         if entity.viewPermitted()
             entity.set "instance", null
@@ -97,16 +104,16 @@ class Router extends Backbone.Router
 
             null
 
-    page: (page) -> @entity page
+    index: (entity) -> @resolveEntity entity
 
-    create: (page) ->
-        entity = @entity page
+    create: (entity) ->
+        entity = @resolveEntity entity
         entity.actionCreate() if entity
 
         entity
 
-    update: (page, id) ->
-        entity = @entity page
+    update: (entity, id) ->
+        entity = @resolveEntity entity
 
         entity.actionUpdate id if entity
 

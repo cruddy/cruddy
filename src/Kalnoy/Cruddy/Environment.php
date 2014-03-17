@@ -327,6 +327,16 @@ class Environment implements JsonableInterface {
     }
 
     /**
+     * Get schema's repository.
+     *
+     * @return \Kalnoy\Cruddy\Schema\Repository
+     */
+    public function getSchemaRepository()
+    {
+        return $this->schemas;
+    }
+
+    /**
      * Resolve and convert all entities to array.
      *
      * @return array

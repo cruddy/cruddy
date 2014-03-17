@@ -1,7 +1,7 @@
 Cruddy.Inputs = {}
 
 # Base class for input that will be bound to a model's attribute.
-class Cruddy.Inputs.Base extends Backbone.View
+class Cruddy.Inputs.Base extends Cruddy.View
     constructor: (options) ->
         @key = options.key
 
@@ -26,7 +26,9 @@ class Cruddy.Inputs.Base extends Backbone.View
     getValue: -> @model.get @key
 
     # Set current value.
-    setValue: (value) ->
-        @model.set @key, value, input: this
+    setValue: (value, options = {}) ->
+        options.input = this
+
+        @model.set @key, value, options
 
         this

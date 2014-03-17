@@ -20,6 +20,7 @@ module.exports = function(grunt) {
                     '<%= app %>/init.coffee',
 
                     '<%= app %>/helpers.coffee',
+                    '<%= app %>/view.coffee',
                     '<%= app %>/formData.coffee',
                     '<%= app %>/factory.coffee',
                     '<%= app %>/attribute.coffee',
@@ -45,6 +46,7 @@ module.exports = function(grunt) {
                     '<%= app %>/inputs/select.coffee',
                     '<%= app %>/inputs/code.coffee',
                     '<%= app %>/inputs/markdown.coffee',
+                    '<%= app %>/inputs/numberFilter.coffee',
 
                     // Fields
                     '<%= app %>/fields/base.coffee',
@@ -61,6 +63,7 @@ module.exports = function(grunt) {
                     '<%= app %>/fields/code.coffee',
                     // '<%= app %>/fields/hasOne.coffee',
                     '<%= app %>/fields/embedded.coffee',
+                    '<%= app %>/fields/number.coffee',
 
                     // Columns
                     '<%= app %>/columns/base.coffee',

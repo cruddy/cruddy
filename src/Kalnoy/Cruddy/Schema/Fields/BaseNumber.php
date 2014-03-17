@@ -6,16 +6,16 @@ use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /**
- * Base text field.
+ * Base number class.
  */
-abstract class BaseTextField extends BaseField {
+abstract class BaseNumber extends BaseField {
 
     /**
      * @inheritdoc
      *
      * @var string
      */
-    protected $class = 'Input';
+    protected $class = 'Number';
 
     /**
      * @inheritdoc
@@ -29,26 +29,14 @@ abstract class BaseTextField extends BaseField {
      *
      * @var string
      */
-    protected $filterType = self::FILTER_STRING;
+    protected $filterType = self::FILTER_COMPLEX;
 
     /**
-     * The HTML <input> type attribute value.
+     * Whether the number is decimal.
      *
-     * @var string
+     * @var bool
      */
-    protected $inputType = 'text';
-
-    /**
-     * Process value.
-     *
-     * @param  string $value
-     *
-     * @return string
-     */
-    public function process($value)
-    {
-        return trim($value);
-    }
+    protected $isDecimal = false;
 
     /**
      * @inheritdoc
@@ -75,7 +63,9 @@ abstract class BaseTextField extends BaseField {
      */
     public function filter(QueryBuilder $builder, $data)
     {
-        $builder->orWhere($this->id, 'like', '%'.$data.'%');
+        extract($data);
+
+        if ($val !== '') $builder->where($this->id, $op, $val);
 
         return $this;
     }
@@ -89,7 +79,7 @@ abstract class BaseTextField extends BaseField {
     {
         return
         [
-            'input_type' => $this->inputType,
+            'is_decimal' => $this->isDecimal,
 
         ] + parent::toArray();
     }

@@ -45,7 +45,8 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
         if ($this->multiple) return array_map(function ($item)
         {
             return $item['attributes'];
-        });
+
+        }, $data);
 
         return $data['attributes'];
     }

@@ -26,6 +26,8 @@ class Factory extends BaseFactory {
         'image' => 'Kalnoy\Cruddy\Schema\Fields\Types\Image',
         'markdown' => 'Kalnoy\Cruddy\Schema\Fields\Types\Markdown',
         'code' => 'Kalnoy\Cruddy\Schema\Fields\Types\Code',
+        'integer' => 'Kalnoy\Cruddy\Schema\Fields\Types\Integer',
+        'float' => 'Kalnoy\Cruddy\Schema\Fields\Types\Float',
     ];
 
     /**

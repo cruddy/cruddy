@@ -16,10 +16,10 @@
     "tests"
   ],
   "dependencies": {
-    "backbone": "~1.1.0",
+    "backbone": "~1.1.2",
     "jquery": "~2.0.3",
     "moment": "~2.5.0",
-    "underscore": "~1.5.2",
+    "underscore": "~1.6.0",
     "bootstrap": "~3.1.0",
     "fancybox": "~2.1.5",
     "jquery-maskedinput": "~1.3.1",

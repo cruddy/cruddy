@@ -3,6 +3,9 @@
     // The title of the application. It can be a translation key.
     'brand' => 'My application',
 
+    // The link to the main page
+    'brand_url' => url('/'),
+
     // The name of the view that is used to render the dashboard.
     // You can specify an entity id prefixing it with `@` like so: `@users`.
     'dashboard' => 'cruddy::dashboard',
@@ -17,6 +20,9 @@
     // The name of the filter that will be used for authentication.
     // I.e. `auth.basic` or `auth`.
     'auth_filter' => null,
+
+    // The url that is used to log out a user
+    'logout_url' => null,
 
     // The main layout view.
     'layout' => 'cruddy::layout',

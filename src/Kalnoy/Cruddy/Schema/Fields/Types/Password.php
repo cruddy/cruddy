@@ -1,4 +1,6 @@
-<?php namespace Kalnoy\Cruddy\Schema\Fields\Types;
+<?php
+
+namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Kalnoy\Cruddy\Schema\Fields\BaseTextField;
@@ -42,6 +44,6 @@ class Password extends BaseTextField {
      */
     public function skip($value)
     {
-        return empty($value);
+        return empty($value) or parent::skip($value);
     }
 }

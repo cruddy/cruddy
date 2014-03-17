@@ -1,5 +1,5 @@
 (function() {
-  var API_URL, AdvFormData, Alert, App, Attribute, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, Pagination, Router, SearchDataSource, TRANSITIONEND, after_break, b_btn, b_icon, entity_url, humanize, thumb, _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref18, _ref19, _ref2, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref26, _ref27, _ref28, _ref29, _ref3, _ref30, _ref31, _ref32, _ref33, _ref34, _ref35, _ref36, _ref37, _ref38, _ref39, _ref4, _ref40, _ref41, _ref42, _ref43, _ref44, _ref45, _ref5, _ref6, _ref7, _ref8, _ref9,
+  var API_URL, AdvFormData, Alert, App, Attribute, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, Pagination, Router, SearchDataSource, TRANSITIONEND, after_break, b_btn, b_icon, entity_url, humanize, thumb, _ref, _ref1, _ref10, _ref11, _ref12, _ref13, _ref14, _ref15, _ref16, _ref17, _ref18, _ref19, _ref2, _ref20, _ref21, _ref22, _ref23, _ref24, _ref25, _ref26, _ref27, _ref28, _ref29, _ref3, _ref30, _ref31, _ref32, _ref33, _ref34, _ref35, _ref36, _ref37, _ref38, _ref39, _ref4, _ref40, _ref41, _ref42, _ref43, _ref44, _ref45, _ref46, _ref47, _ref48, _ref5, _ref6, _ref7, _ref8, _ref9,
     _this = this,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
@@ -130,6 +130,26 @@
 
   })(Backbone.View);
 
+  Cruddy.View = (function(_super) {
+    __extends(View, _super);
+
+    function View() {
+      _ref2 = View.__super__.constructor.apply(this, arguments);
+      return _ref2;
+    }
+
+    View.prototype.componentId = function(component) {
+      return this.cid + "-" + component;
+    };
+
+    View.prototype.$component = function(component) {
+      return this.$("#" + this.componentId(component));
+    };
+
+    return View;
+
+  })(Backbone.View);
+
   AdvFormData = (function() {
     function AdvFormData(data) {
       this.original = new FormData;
@@ -217,8 +237,8 @@
     __extends(Attribute, _super);
 
     function Attribute() {
-      _ref2 = Attribute.__super__.constructor.apply(this, arguments);
-      return _ref2;
+      _ref3 = Attribute.__super__.constructor.apply(this, arguments);
+      return _ref3;
     }
 
     Attribute.prototype.initialize = function(options) {
@@ -250,8 +270,8 @@
     __extends(DataSource, _super);
 
     function DataSource() {
-      _ref3 = DataSource.__super__.constructor.apply(this, arguments);
-      return _ref3;
+      _ref4 = DataSource.__super__.constructor.apply(this, arguments);
+      return _ref4;
     }
 
     DataSource.prototype.defaults = {
@@ -366,14 +386,14 @@
     };
 
     DataSource.prototype.filterData = function() {
-      var data, key, value, _ref4;
+      var data, key, value, _ref5;
       if (this.filter == null) {
         return null;
       }
       data = {};
-      _ref4 = this.filter.attributes;
-      for (key in _ref4) {
-        value = _ref4[key];
+      _ref5 = this.filter.attributes;
+      for (key in _ref5) {
+        value = _ref5[key];
         if (!(value === null || value === "")) {
           data[key] = value;
         }
@@ -389,8 +409,8 @@
     __extends(SearchDataSource, _super);
 
     function SearchDataSource() {
-      _ref4 = SearchDataSource.__super__.constructor.apply(this, arguments);
-      return _ref4;
+      _ref5 = SearchDataSource.__super__.constructor.apply(this, arguments);
+      return _ref5;
     }
 
     SearchDataSource.prototype.defaults = {
@@ -408,11 +428,11 @@
           simple: 1
         },
         success: function(resp) {
-          var item, _i, _len, _ref5;
+          var item, _i, _len, _ref6;
           resp = resp.data;
-          _ref5 = resp.data;
-          for (_i = 0, _len = _ref5.length; _i < _len; _i++) {
-            item = _ref5[_i];
+          _ref6 = resp.data;
+          for (_i = 0, _len = _ref6.length; _i < _len; _i++) {
+            item = _ref6[_i];
             _this.data.push(item);
           }
           _this.page = resp.current_page;
@@ -481,8 +501,8 @@
     __extends(Pagination, _super);
 
     function Pagination() {
-      _ref5 = Pagination.__super__.constructor.apply(this, arguments);
-      return _ref5;
+      _ref6 = Pagination.__super__.constructor.apply(this, arguments);
+      return _ref6;
     }
 
     Pagination.prototype.tagName = "ul";
@@ -733,49 +753,49 @@
     __extends(FieldList, _super);
 
     function FieldList() {
-      _ref6 = FieldList.__super__.constructor.apply(this, arguments);
-      return _ref6;
+      _ref7 = FieldList.__super__.constructor.apply(this, arguments);
+      return _ref7;
     }
 
     FieldList.prototype.className = "field-list";
 
     FieldList.prototype.focus = function() {
-      var _ref7;
-      if ((_ref7 = this.primary) != null) {
-        _ref7.focus();
+      var _ref8;
+      if ((_ref8 = this.primary) != null) {
+        _ref8.focus();
       }
       return this;
     };
 
     FieldList.prototype.render = function() {
-      var field, _i, _len, _ref7;
+      var field, _i, _len, _ref8;
       this.dispose();
       this.$el.empty();
-      _ref7 = this.createFields();
-      for (_i = 0, _len = _ref7.length; _i < _len; _i++) {
-        field = _ref7[_i];
+      _ref8 = this.createFields();
+      for (_i = 0, _len = _ref8.length; _i < _len; _i++) {
+        field = _ref8[_i];
         this.$el.append(field.el);
       }
       return this;
     };
 
     FieldList.prototype.createFields = function() {
-      var field, view, _i, _len, _ref7;
+      var field, view, _i, _len, _ref8;
       this.fields = (function() {
-        var _i, _len, _ref7, _results;
-        _ref7 = this.model.entity.fields.models;
+        var _i, _len, _ref8, _results;
+        _ref8 = this.model.entity.fields.models;
         _results = [];
-        for (_i = 0, _len = _ref7.length; _i < _len; _i++) {
-          field = _ref7[_i];
+        for (_i = 0, _len = _ref8.length; _i < _len; _i++) {
+          field = _ref8[_i];
           if (field.isVisible()) {
             _results.push(field.createView(this.model).render());
           }
         }
         return _results;
       }).call(this);
-      _ref7 = this.fields;
-      for (_i = 0, _len = _ref7.length; _i < _len; _i++) {
-        view = _ref7[_i];
+      _ref8 = this.fields;
+      for (_i = 0, _len = _ref8.length; _i < _len; _i++) {
+        view = _ref8[_i];
         if (!(view.field.isEditable(this.model))) {
           continue;
         }
@@ -786,11 +806,11 @@
     };
 
     FieldList.prototype.dispose = function() {
-      var field, _i, _len, _ref7;
+      var field, _i, _len, _ref8;
       if (this.fields != null) {
-        _ref7 = this.fields;
-        for (_i = 0, _len = _ref7.length; _i < _len; _i++) {
-          field = _ref7[_i];
+        _ref8 = this.fields;
+        for (_i = 0, _len = _ref8.length; _i < _len; _i++) {
+          field = _ref8[_i];
           field.remove();
         }
       }
@@ -812,8 +832,8 @@
     __extends(FilterList, _super);
 
     function FilterList() {
-      _ref7 = FilterList.__super__.constructor.apply(this, arguments);
-      return _ref7;
+      _ref8 = FilterList.__super__.constructor.apply(this, arguments);
+      return _ref8;
     }
 
     FilterList.prototype.className = "filter-list";
@@ -827,13 +847,13 @@
     };
 
     FilterList.prototype.render = function() {
-      var field, filter, input, _i, _len, _ref8;
+      var field, filter, input, _i, _len, _ref9;
       this.dispose();
       this.$el.html(this.template());
       this.items = this.$(".filter-list-container");
-      _ref8 = this.availableFilters;
-      for (_i = 0, _len = _ref8.length; _i < _len; _i++) {
-        filter = _ref8[_i];
+      _ref9 = this.availableFilters;
+      for (_i = 0, _len = _ref9.length; _i < _len; _i++) {
+        filter = _ref9[_i];
         if (!((field = this.entity.fields.get(filter)) && field.canFilter() && (input = field.createFilterInput(this.model)))) {
           continue;
         }
@@ -849,11 +869,11 @@
     };
 
     FilterList.prototype.dispose = function() {
-      var filter, _i, _len, _ref8;
+      var filter, _i, _len, _ref9;
       if (this.filters != null) {
-        _ref8 = this.filters;
-        for (_i = 0, _len = _ref8.length; _i < _len; _i++) {
-          filter = _ref8[_i];
+        _ref9 = this.filters;
+        for (_i = 0, _len = _ref9.length; _i < _len; _i++) {
+          filter = _ref9[_i];
           filter.remove();
         }
       }
@@ -903,23 +923,25 @@
       return this.model.get(this.key);
     };
 
-    Base.prototype.setValue = function(value) {
-      this.model.set(this.key, value, {
-        input: this
-      });
+    Base.prototype.setValue = function(value, options) {
+      if (options == null) {
+        options = {};
+      }
+      options.input = this;
+      this.model.set(this.key, value, options);
       return this;
     };
 
     return Base;
 
-  })(Backbone.View);
+  })(Cruddy.View);
 
   Cruddy.Inputs.Static = (function(_super) {
     __extends(Static, _super);
 
     function Static() {
-      _ref8 = Static.__super__.constructor.apply(this, arguments);
-      return _ref8;
+      _ref9 = Static.__super__.constructor.apply(this, arguments);
+      return _ref9;
     }
 
     Static.prototype.tagName = "p";
@@ -955,8 +977,8 @@
     __extends(BaseText, _super);
 
     function BaseText() {
-      _ref9 = BaseText.__super__.constructor.apply(this, arguments);
-      return _ref9;
+      _ref10 = BaseText.__super__.constructor.apply(this, arguments);
+      return _ref10;
     }
 
     BaseText.prototype.className = "form-control";
@@ -1008,8 +1030,8 @@
     __extends(Text, _super);
 
     function Text() {
-      _ref10 = Text.__super__.constructor.apply(this, arguments);
-      return _ref10;
+      _ref11 = Text.__super__.constructor.apply(this, arguments);
+      return _ref11;
     }
 
     Text.prototype.tagName = "input";
@@ -1027,8 +1049,8 @@
     __extends(Textarea, _super);
 
     function Textarea() {
-      _ref11 = Textarea.__super__.constructor.apply(this, arguments);
-      return _ref11;
+      _ref12 = Textarea.__super__.constructor.apply(this, arguments);
+      return _ref12;
     }
 
     Textarea.prototype.tagName = "textarea";
@@ -1041,8 +1063,8 @@
     __extends(Checkbox, _super);
 
     function Checkbox() {
-      _ref12 = Checkbox.__super__.constructor.apply(this, arguments);
-      return _ref12;
+      _ref13 = Checkbox.__super__.constructor.apply(this, arguments);
+      return _ref13;
     }
 
     Checkbox.prototype.tagName = "label";
@@ -1091,8 +1113,8 @@
     __extends(Boolean, _super);
 
     function Boolean() {
-      _ref13 = Boolean.__super__.constructor.apply(this, arguments);
-      return _ref13;
+      _ref14 = Boolean.__super__.constructor.apply(this, arguments);
+      return _ref14;
     }
 
     Boolean.prototype.tripleState = false;
@@ -1158,8 +1180,8 @@
     __extends(EntityDropdown, _super);
 
     function EntityDropdown() {
-      _ref14 = EntityDropdown.__super__.constructor.apply(this, arguments);
-      return _ref14;
+      _ref15 = EntityDropdown.__super__.constructor.apply(this, arguments);
+      return _ref15;
     }
 
     EntityDropdown.prototype.className = "entity-dropdown";
@@ -1187,7 +1209,7 @@
     EntityDropdown.prototype.reference = null;
 
     EntityDropdown.prototype.initialize = function(options) {
-      var _ref15, _ref16;
+      var _ref16, _ref17;
       if (options.multiple != null) {
         this.multiple = options.multiple;
       }
@@ -1197,9 +1219,9 @@
       if (options.owner != null) {
         this.owner = options.owner;
       }
-      this.allowEdit = ((_ref15 = options.allowEdit) != null ? _ref15 : true) && this.reference.updatePermitted();
+      this.allowEdit = ((_ref16 = options.allowEdit) != null ? _ref16 : true) && this.reference.updatePermitted();
       this.active = false;
-      this.placeholder = (_ref16 = options.placeholder) != null ? _ref16 : Cruddy.lang.not_selected;
+      this.placeholder = (_ref17 = options.placeholder) != null ? _ref17 : Cruddy.lang.not_selected;
       this.disableDropdown = false;
       if (options.constraint) {
         this.constraint = options.constraint;
@@ -1272,14 +1294,14 @@
     };
 
     EntityDropdown.prototype.applyConstraint = function(reset) {
-      var value, _ref15;
+      var value, _ref16;
       if (reset == null) {
         reset = false;
       }
       if (this.selector) {
         value = this.model.get(this.constraint.field);
-        if ((_ref15 = this.selector.dataSource) != null) {
-          _ref15.filters.set(this.constraint.otherField, value);
+        if ((_ref16 = this.selector.dataSource) != null) {
+          _ref16.filters.set(this.constraint.otherField, value);
         }
         this.selector.createAttributes[this.constraint.otherField] = value;
       }
@@ -1399,11 +1421,11 @@
     };
 
     EntityDropdown.prototype.renderItems = function() {
-      var html, key, value, _i, _len, _ref15;
+      var html, key, value, _i, _len, _ref16;
       html = "";
-      _ref15 = this.getValue();
-      for (key = _i = 0, _len = _ref15.length; _i < _len; key = ++_i) {
-        value = _ref15[key];
+      _ref16 = this.getValue();
+      for (key = _i = 0, _len = _ref16.length; _i < _len; key = ++_i) {
+        value = _ref16[key];
         html += this.itemTemplate(value.title, key);
       }
       this.items.html(html);
@@ -1445,12 +1467,12 @@
     };
 
     EntityDropdown.prototype.dispose = function() {
-      var _ref15, _ref16;
-      if ((_ref15 = this.selector) != null) {
-        _ref15.remove();
-      }
-      if ((_ref16 = this.innerForm) != null) {
+      var _ref16, _ref17;
+      if ((_ref16 = this.selector) != null) {
         _ref16.remove();
+      }
+      if ((_ref17 = this.innerForm) != null) {
+        _ref17.remove();
       }
       return this;
     };
@@ -1468,8 +1490,8 @@
     __extends(EntitySelector, _super);
 
     function EntitySelector() {
-      _ref15 = EntitySelector.__super__.constructor.apply(this, arguments);
-      return _ref15;
+      _ref16 = EntitySelector.__super__.constructor.apply(this, arguments);
+      return _ref16;
     }
 
     EntitySelector.prototype.className = "entity-selector";
@@ -1484,13 +1506,13 @@
     };
 
     EntitySelector.prototype.initialize = function(options) {
-      var _ref16, _ref17, _ref18, _ref19;
+      var _ref17, _ref18, _ref19, _ref20;
       EntitySelector.__super__.initialize.apply(this, arguments);
-      this.filter = (_ref16 = options.filter) != null ? _ref16 : false;
-      this.multiple = (_ref17 = options.multiple) != null ? _ref17 : false;
+      this.filter = (_ref17 = options.filter) != null ? _ref17 : false;
+      this.multiple = (_ref18 = options.multiple) != null ? _ref18 : false;
       this.reference = options.reference;
-      this.allowSearch = (_ref18 = options.allowSearch) != null ? _ref18 : true;
-      this.allowCreate = ((_ref19 = options.allowCreate) != null ? _ref19 : true) && this.reference.createPermitted();
+      this.allowSearch = (_ref19 = options.allowSearch) != null ? _ref19 : true;
+      this.allowCreate = ((_ref20 = options.allowCreate) != null ? _ref20 : true) && this.reference.createPermitted();
       this.createAttributes = {};
       this.data = [];
       this.buildSelected(this.model.get(this.key));
@@ -1604,21 +1626,21 @@
     };
 
     EntitySelector.prototype.loading = function() {
-      var _ref16;
-      if ((_ref16 = this.moreElement) != null) {
-        _ref16.addClass("loading");
+      var _ref17;
+      if ((_ref17 = this.moreElement) != null) {
+        _ref17.addClass("loading");
       }
       return this;
     };
 
     EntitySelector.prototype.renderItems = function() {
-      var html, item, _i, _len, _ref16;
+      var html, item, _i, _len, _ref17;
       this.moreElement = null;
       html = "";
       if (this.dataSource.data.length || this.dataSource.more) {
-        _ref16 = this.dataSource.data;
-        for (_i = 0, _len = _ref16.length; _i < _len; _i++) {
-          item = _ref16[_i];
+        _ref17 = this.dataSource.data;
+        for (_i = 0, _len = _ref17.length; _i < _len; _i++) {
+          item = _ref17[_i];
           html += this.renderItem(item);
         }
         if (this.dataSource.more) {
@@ -1675,21 +1697,21 @@
     };
 
     EntitySelector.prototype.focus = function() {
-      var _ref16,
+      var _ref17,
         _this = this;
-      ((_ref16 = this.searchInput) != null ? _ref16.focus() : void 0) || this.entity.done(function() {
+      ((_ref17 = this.searchInput) != null ? _ref17.focus() : void 0) || this.entity.done(function() {
         return _this.searchInput.focus();
       });
       return this;
     };
 
     EntitySelector.prototype.dispose = function() {
-      var _ref16, _ref17;
-      if ((_ref16 = this.searchInput) != null) {
-        _ref16.remove();
-      }
-      if ((_ref17 = this.innerForm) != null) {
+      var _ref17, _ref18;
+      if ((_ref17 = this.searchInput) != null) {
         _ref17.remove();
+      }
+      if ((_ref18 = this.innerForm) != null) {
+        _ref18.remove();
       }
       return this;
     };
@@ -1707,8 +1729,8 @@
     __extends(FileList, _super);
 
     function FileList() {
-      _ref16 = FileList.__super__.constructor.apply(this, arguments);
-      return _ref16;
+      _ref17 = FileList.__super__.constructor.apply(this, arguments);
+      return _ref17;
     }
 
     FileList.prototype.className = "file-list";
@@ -1719,9 +1741,9 @@
     };
 
     FileList.prototype.initialize = function(options) {
-      var _ref17, _ref18, _ref19;
-      this.multiple = (_ref17 = options.multiple) != null ? _ref17 : false;
-      this.formatter = (_ref18 = options.formatter) != null ? _ref18 : {
+      var _ref18, _ref19, _ref20;
+      this.multiple = (_ref18 = options.multiple) != null ? _ref18 : false;
+      this.formatter = (_ref19 = options.formatter) != null ? _ref19 : {
         format: function(value) {
           if (value instanceof File) {
             return value.name;
@@ -1730,7 +1752,7 @@
           }
         }
       };
-      this.accepts = (_ref19 = options.accepts) != null ? _ref19 : "";
+      this.accepts = (_ref20 = options.accepts) != null ? _ref20 : "";
       return FileList.__super__.initialize.apply(this, arguments);
     };
 
@@ -1747,15 +1769,15 @@
     };
 
     FileList.prototype.appendFiles = function(e) {
-      var file, value, _i, _len, _ref17;
+      var file, value, _i, _len, _ref18;
       if (e.target.files.length === 0) {
         return;
       }
       if (this.multiple) {
         value = _.clone(this.model.get(this.key));
-        _ref17 = e.target.files;
-        for (_i = 0, _len = _ref17.length; _i < _len; _i++) {
-          file = _ref17[_i];
+        _ref18 = e.target.files;
+        for (_i = 0, _len = _ref18.length; _i < _len; _i++) {
+          file = _ref18[_i];
           value.push(file);
         }
       } else {
@@ -1822,18 +1844,18 @@
     }
 
     ImageList.prototype.initialize = function(options) {
-      var _ref17, _ref18;
-      this.width = (_ref17 = options.width) != null ? _ref17 : 0;
-      this.height = (_ref18 = options.height) != null ? _ref18 : 80;
+      var _ref18, _ref19;
+      this.width = (_ref18 = options.width) != null ? _ref18 : 0;
+      this.height = (_ref19 = options.height) != null ? _ref19 : 80;
       return ImageList.__super__.initialize.apply(this, arguments);
     };
 
     ImageList.prototype.render = function() {
-      var reader, _i, _len, _ref17;
+      var reader, _i, _len, _ref18;
       ImageList.__super__.render.apply(this, arguments);
-      _ref17 = this.readers;
-      for (_i = 0, _len = _ref17.length; _i < _len; _i++) {
-        reader = _ref17[_i];
+      _ref18 = this.readers;
+      for (_i = 0, _len = _ref18.length; _i < _len; _i++) {
+        reader = _ref18[_i];
         reader.readAsDataURL(reader.item);
       }
       this.readers = [];
@@ -1888,8 +1910,8 @@
     __extends(Search, _super);
 
     function Search() {
-      _ref17 = Search.__super__.constructor.apply(this, arguments);
-      return _ref17;
+      _ref18 = Search.__super__.constructor.apply(this, arguments);
+      return _ref18;
     }
 
     Search.prototype.attributes = {
@@ -1940,10 +1962,10 @@
     }
 
     Slug.prototype.initialize = function(options) {
-      var chars, _ref18, _ref19;
-      chars = (_ref18 = options.chars) != null ? _ref18 : "a-z0-9\-_";
+      var chars, _ref19, _ref20;
+      chars = (_ref19 = options.chars) != null ? _ref19 : "a-z0-9\-_";
       this.regexp = new RegExp("[^" + chars + "]+", "g");
-      this.separator = (_ref19 = options.separator) != null ? _ref19 : "-";
+      this.separator = (_ref20 = options.separator) != null ? _ref20 : "-";
       this.key = options.key;
       this.ref = _.isArray(options.ref) ? options.ref : options.ref ? [options.ref] : void 0;
       return Slug.__super__.initialize.apply(this, arguments);
@@ -1998,11 +2020,11 @@
     };
 
     Slug.prototype.getValue = function() {
-      var components, key, refValue, _i, _len, _ref18;
+      var components, key, refValue, _i, _len, _ref19;
       components = [];
-      _ref18 = this.ref;
-      for (_i = 0, _len = _ref18.length; _i < _len; _i++) {
-        key = _ref18[_i];
+      _ref19 = this.ref;
+      for (_i = 0, _len = _ref19.length; _i < _len; _i++) {
+        key = _ref19[_i];
         refValue = this.model.get(key);
         if (refValue) {
           components.push(refValue);
@@ -2042,16 +2064,16 @@
     __extends(Select, _super);
 
     function Select() {
-      _ref18 = Select.__super__.constructor.apply(this, arguments);
-      return _ref18;
+      _ref19 = Select.__super__.constructor.apply(this, arguments);
+      return _ref19;
     }
 
     Select.prototype.tagName = "select";
 
     Select.prototype.initialize = function(options) {
-      var _ref19, _ref20;
-      this.items = (_ref19 = options.items) != null ? _ref19 : {};
-      this.prompt = (_ref20 = options.prompt) != null ? _ref20 : null;
+      var _ref20, _ref21;
+      this.items = (_ref20 = options.items) != null ? _ref20 : {};
+      this.prompt = (_ref21 = options.prompt) != null ? _ref21 : null;
       return Select.__super__.initialize.apply(this, arguments);
     };
 
@@ -2068,12 +2090,12 @@
     };
 
     Select.prototype.template = function() {
-      var html, key, value, _ref19, _ref20;
+      var html, key, value, _ref20, _ref21;
       html = "";
-      html += this.optionTemplate("", (_ref19 = this.prompt) != null ? _ref19 : "");
-      _ref20 = this.items;
-      for (key in _ref20) {
-        value = _ref20[key];
+      html += this.optionTemplate("", (_ref20 = this.prompt) != null ? _ref20 : "");
+      _ref21 = this.items;
+      for (key in _ref21) {
+        value = _ref21[key];
         html += this.optionTemplate(key, value);
       }
       return html;
@@ -2091,15 +2113,15 @@
     __extends(Code, _super);
 
     function Code() {
-      _ref19 = Code.__super__.constructor.apply(this, arguments);
-      return _ref19;
+      _ref20 = Code.__super__.constructor.apply(this, arguments);
+      return _ref20;
     }
 
     Code.prototype.initialize = function(options) {
-      var session, _ref20, _ref21;
-      this.$el.height(((_ref20 = options.height) != null ? _ref20 : 100) + "px");
+      var session, _ref21, _ref22;
+      this.$el.height(((_ref21 = options.height) != null ? _ref21 : 100) + "px");
       this.editor = ace.edit(this.el);
-      this.editor.setTheme("ace/theme/" + ((_ref21 = options.theme) != null ? _ref21 : Cruddy.ace_theme));
+      this.editor.setTheme("ace/theme/" + ((_ref22 = options.theme) != null ? _ref22 : Cruddy.ace_theme));
       session = this.editor.getSession();
       if (options.mode) {
         session.setMode("ace/mode/" + options.mode);
@@ -2128,18 +2150,18 @@
     };
 
     Code.prototype.remove = function() {
-      var _ref20;
-      if ((_ref20 = this.editor) != null) {
-        _ref20.destroy();
+      var _ref21;
+      if ((_ref21 = this.editor) != null) {
+        _ref21.destroy();
       }
       this.editor = null;
       return Code.__super__.remove.apply(this, arguments);
     };
 
     Code.prototype.focus = function() {
-      var _ref20;
-      if ((_ref20 = this.editor) != null) {
-        _ref20.focus();
+      var _ref21;
+      if ((_ref21 = this.editor) != null) {
+        _ref21.focus();
       }
       return this;
     };
@@ -2152,8 +2174,8 @@
     __extends(Markdown, _super);
 
     function Markdown() {
-      _ref20 = Markdown.__super__.constructor.apply(this, arguments);
-      return _ref20;
+      _ref21 = Markdown.__super__.constructor.apply(this, arguments);
+      return _ref21;
     }
 
     Markdown.prototype.events = {
@@ -2162,8 +2184,8 @@
     };
 
     Markdown.prototype.initialize = function(options) {
-      var _ref21;
-      this.height = (_ref21 = options.height) != null ? _ref21 : 200;
+      var _ref22;
+      this.height = (_ref22 = options.height) != null ? _ref22 : 200;
       this.editorInput = new Cruddy.Inputs.Code({
         model: this.model,
         key: this.key,
@@ -2215,6 +2237,82 @@
     };
 
     return Markdown;
+
+  })(Cruddy.Inputs.Base);
+
+  Cruddy.Inputs.NumberFilter = (function(_super) {
+    __extends(NumberFilter, _super);
+
+    function NumberFilter() {
+      _ref22 = NumberFilter.__super__.constructor.apply(this, arguments);
+      return _ref22;
+    }
+
+    NumberFilter.prototype.className = "input-group number-filter";
+
+    NumberFilter.prototype.events = {
+      "click .dropdown-menu a": "changeOperator",
+      "change": "changeValue"
+    };
+
+    NumberFilter.prototype.initialize = function() {
+      this.defaultOp = "=";
+      if (!this.getValue()) {
+        this.setValue(this.makeValue(this.defaultOp, ""), {
+          silent: true
+        });
+      }
+      return NumberFilter.__super__.initialize.apply(this, arguments);
+    };
+
+    NumberFilter.prototype.changeOperator = function(e) {
+      var op, value;
+      e.preventDefault();
+      op = $(e.currentTarget).data("op");
+      value = this.getValue();
+      if (value.op !== op) {
+        this.setValue(this.makeValue(op, value.val));
+      }
+      return this;
+    };
+
+    NumberFilter.prototype.changeValue = function(e) {
+      var value;
+      value = this.getValue();
+      this.setValue(this.makeValue(value.op, e.target.value));
+      return this;
+    };
+
+    NumberFilter.prototype.applyChanges = function(value, external) {
+      this.$(".dropdown-menu li").removeClass("active");
+      this.$(".dropdown-menu a[data-op='" + value.op + "']").parent().addClass("active");
+      this.op.text(value.op);
+      if (external) {
+        this.input.val(value.val);
+      }
+      return this;
+    };
+
+    NumberFilter.prototype.render = function() {
+      this.$el.html(this.template());
+      this.op = this.$component("op");
+      this.input = this.$component("input");
+      this.reset = this.$component("reset");
+      return NumberFilter.__super__.render.apply(this, arguments);
+    };
+
+    NumberFilter.prototype.template = function() {
+      return "<div class=\"input-group-btn\">\n    <button type=\"button\" class=\"btn btn-default dropdown-toggle\" data-toggle=\"dropdown\">\n        <span id=\"" + (this.componentId("op")) + "\" class=\"value\">=</span>\n        <span class=\"caret\"></span>\n    </button>\n\n    <ul class=\"dropdown-menu\">\n        <li><a href=\"#\" data-op=\"=\">=</a></li>\n        <li><a href=\"#\" data-op=\"&gt;\">&gt;</a></li>\n        <li><a href=\"#\" data-op=\"&lt;\">&lt;</a></li>\n    </ul>\n</div>\n\n<input type=\"text\" class=\"form-control\" id=\"" + (this.componentId("input")) + "\">";
+    };
+
+    NumberFilter.prototype.makeValue = function(op, val) {
+      return {
+        op: op,
+        val: val
+      };
+    };
+
+    return NumberFilter;
 
   })(Cruddy.Inputs.Base);
 
@@ -2315,8 +2413,8 @@
     __extends(InputView, _super);
 
     function InputView() {
-      _ref21 = InputView.__super__.constructor.apply(this, arguments);
-      return _ref21;
+      _ref23 = InputView.__super__.constructor.apply(this, arguments);
+      return _ref23;
     }
 
     InputView.prototype.initialize = function(options) {
@@ -2373,8 +2471,8 @@
     __extends(Base, _super);
 
     function Base() {
-      _ref22 = Base.__super__.constructor.apply(this, arguments);
-      return _ref22;
+      _ref24 = Base.__super__.constructor.apply(this, arguments);
+      return _ref24;
     }
 
     Base.prototype.viewConstructor = Cruddy.Fields.InputView;
@@ -2439,8 +2537,8 @@
     __extends(Input, _super);
 
     function Input() {
-      _ref23 = Input.__super__.constructor.apply(this, arguments);
-      return _ref23;
+      _ref25 = Input.__super__.constructor.apply(this, arguments);
+      return _ref25;
     }
 
     Input.prototype.createEditableInput = function(model) {
@@ -2483,8 +2581,8 @@
     __extends(DateTime, _super);
 
     function DateTime() {
-      _ref24 = DateTime.__super__.constructor.apply(this, arguments);
-      return _ref24;
+      _ref26 = DateTime.__super__.constructor.apply(this, arguments);
+      return _ref26;
     }
 
     DateTime.prototype.format = function(value) {
@@ -2503,8 +2601,8 @@
     __extends(Boolean, _super);
 
     function Boolean() {
-      _ref25 = Boolean.__super__.constructor.apply(this, arguments);
-      return _ref25;
+      _ref27 = Boolean.__super__.constructor.apply(this, arguments);
+      return _ref27;
     }
 
     Boolean.prototype.createEditableInput = function(model) {
@@ -2538,8 +2636,8 @@
     __extends(BaseRelation, _super);
 
     function BaseRelation() {
-      _ref26 = BaseRelation.__super__.constructor.apply(this, arguments);
-      return _ref26;
+      _ref28 = BaseRelation.__super__.constructor.apply(this, arguments);
+      return _ref28;
     }
 
     BaseRelation.prototype.isVisible = function() {
@@ -2565,8 +2663,8 @@
     __extends(Relation, _super);
 
     function Relation() {
-      _ref27 = Relation.__super__.constructor.apply(this, arguments);
-      return _ref27;
+      _ref29 = Relation.__super__.constructor.apply(this, arguments);
+      return _ref29;
     }
 
     Relation.prototype.createEditableInput = function(model) {
@@ -2619,8 +2717,8 @@
     __extends(File, _super);
 
     function File() {
-      _ref28 = File.__super__.constructor.apply(this, arguments);
-      return _ref28;
+      _ref30 = File.__super__.constructor.apply(this, arguments);
+      return _ref30;
     }
 
     File.prototype.createEditableInput = function(model) {
@@ -2648,8 +2746,8 @@
     __extends(Image, _super);
 
     function Image() {
-      _ref29 = Image.__super__.constructor.apply(this, arguments);
-      return _ref29;
+      _ref31 = Image.__super__.constructor.apply(this, arguments);
+      return _ref31;
     }
 
     Image.prototype.createEditableInput = function(model) {
@@ -2671,8 +2769,8 @@
     __extends(Slug, _super);
 
     function Slug() {
-      _ref30 = Slug.__super__.constructor.apply(this, arguments);
-      return _ref30;
+      _ref32 = Slug.__super__.constructor.apply(this, arguments);
+      return _ref32;
     }
 
     Slug.prototype.createEditableInput = function(model) {
@@ -2696,8 +2794,8 @@
     __extends(Enum, _super);
 
     function Enum() {
-      _ref31 = Enum.__super__.constructor.apply(this, arguments);
-      return _ref31;
+      _ref33 = Enum.__super__.constructor.apply(this, arguments);
+      return _ref33;
     }
 
     Enum.prototype.createEditableInput = function(model) {
@@ -2736,8 +2834,8 @@
     __extends(Markdown, _super);
 
     function Markdown() {
-      _ref32 = Markdown.__super__.constructor.apply(this, arguments);
-      return _ref32;
+      _ref34 = Markdown.__super__.constructor.apply(this, arguments);
+      return _ref34;
     }
 
     Markdown.prototype.createEditableInput = function(model) {
@@ -2757,8 +2855,8 @@
     __extends(Code, _super);
 
     function Code() {
-      _ref33 = Code.__super__.constructor.apply(this, arguments);
-      return _ref33;
+      _ref35 = Code.__super__.constructor.apply(this, arguments);
+      return _ref35;
     }
 
     Code.prototype.createEditableInput = function(model) {
@@ -2779,8 +2877,8 @@
     __extends(EmbeddedView, _super);
 
     function EmbeddedView() {
-      _ref34 = EmbeddedView.__super__.constructor.apply(this, arguments);
-      return _ref34;
+      _ref36 = EmbeddedView.__super__.constructor.apply(this, arguments);
+      return _ref36;
     }
 
     EmbeddedView.prototype.className = "has-many-view";
@@ -2844,14 +2942,14 @@
     };
 
     EmbeddedView.prototype.render = function() {
-      var model, _i, _len, _ref35;
+      var model, _i, _len, _ref37;
       this.dispose();
       this.$el.html(this.template());
       this.body = this.$("#" + this.cid + "-body");
       this.createButton = this.$(".btn-create");
-      _ref35 = this.collection.models;
-      for (_i = 0, _len = _ref35.length; _i < _len; _i++) {
-        model = _ref35[_i];
+      _ref37 = this.collection.models;
+      for (_i = 0, _len = _ref37.length; _i < _len; _i++) {
+        model = _ref37[_i];
         this.add(model);
       }
       this.update();
@@ -2871,10 +2969,10 @@
     };
 
     EmbeddedView.prototype.dispose = function() {
-      var cid, view, _ref35;
-      _ref35 = this.views;
-      for (cid in _ref35) {
-        view = _ref35[cid];
+      var cid, view, _ref37;
+      _ref37 = this.views;
+      for (cid in _ref37) {
+        view = _ref37[cid];
         view.remove();
       }
       this.views = {};
@@ -2888,9 +2986,9 @@
     };
 
     EmbeddedView.prototype.focus = function() {
-      var _ref35;
-      if ((_ref35 = this.focusable) != null) {
-        _ref35.focus();
+      var _ref37;
+      if ((_ref37 = this.focusable) != null) {
+        _ref37.focus();
       }
       return this;
     };
@@ -2903,8 +3001,8 @@
     __extends(EmbeddedItemView, _super);
 
     function EmbeddedItemView() {
-      _ref35 = EmbeddedItemView.__super__.constructor.apply(this, arguments);
-      return _ref35;
+      _ref37 = EmbeddedItemView.__super__.constructor.apply(this, arguments);
+      return _ref37;
     }
 
     EmbeddedItemView.prototype.className = "has-many-item-view";
@@ -2914,9 +3012,9 @@
     };
 
     EmbeddedItemView.prototype.initialize = function(options) {
-      var _ref36;
+      var _ref38;
       this.collection = options.collection;
-      this.disabled = (_ref36 = options.disabled) != null ? _ref36 : true;
+      this.disabled = (_ref38 = options.disabled) != null ? _ref38 : true;
       return EmbeddedItemView.__super__.initialize.apply(this, arguments);
     };
 
@@ -2947,9 +3045,9 @@
     };
 
     EmbeddedItemView.prototype.dispose = function() {
-      var _ref36;
-      if ((_ref36 = this.fieldList) != null) {
-        _ref36.remove();
+      var _ref38;
+      if ((_ref38 = this.fieldList) != null) {
+        _ref38.remove();
       }
       this.fieldList = null;
       return this;
@@ -2961,9 +3059,9 @@
     };
 
     EmbeddedItemView.prototype.focus = function() {
-      var _ref36;
-      if ((_ref36 = this.fieldList) != null) {
-        _ref36.focus();
+      var _ref38;
+      if ((_ref38 = this.fieldList) != null) {
+        _ref38.focus();
       }
       return this;
     };
@@ -2976,8 +3074,8 @@
     __extends(RelatedCollection, _super);
 
     function RelatedCollection() {
-      _ref36 = RelatedCollection.__super__.constructor.apply(this, arguments);
-      return _ref36;
+      _ref38 = RelatedCollection.__super__.constructor.apply(this, arguments);
+      return _ref38;
     }
 
     RelatedCollection.prototype.initialize = function(items, options) {
@@ -2997,13 +3095,13 @@
     };
 
     RelatedCollection.prototype.hasChangedSinceSync = function() {
-      var item, _i, _len, _ref37;
+      var item, _i, _len, _ref39;
       if (this.deleted) {
         return true;
       }
-      _ref37 = this.models;
-      for (_i = 0, _len = _ref37.length; _i < _len; _i++) {
-        item = _ref37[_i];
+      _ref39 = this.models;
+      for (_i = 0, _len = _ref39.length; _i < _len; _i++) {
+        item = _ref39[_i];
         if (item.hasChangedSinceSync()) {
           return true;
         }
@@ -3014,11 +3112,11 @@
     RelatedCollection.prototype.copy = function(copy) {
       var item, items;
       items = this.field.isUnique() ? [] : (function() {
-        var _i, _len, _ref37, _results;
-        _ref37 = this.models;
+        var _i, _len, _ref39, _results;
+        _ref39 = this.models;
         _results = [];
-        for (_i = 0, _len = _ref37.length; _i < _len; _i++) {
-          item = _ref37[_i];
+        for (_i = 0, _len = _ref39.length; _i < _len; _i++) {
+          item = _ref39[_i];
           _results.push(item.copy());
         }
         return _results;
@@ -3030,12 +3128,12 @@
     };
 
     RelatedCollection.prototype.serialize = function() {
-      var data, item, _i, _len, _ref37;
+      var data, item, _i, _len, _ref39;
       if (this.field.isMultiple()) {
         data = {};
-        _ref37 = this.models;
-        for (_i = 0, _len = _ref37.length; _i < _len; _i++) {
-          item = _ref37[_i];
+        _ref39 = this.models;
+        for (_i = 0, _len = _ref39.length; _i < _len; _i++) {
+          item = _ref39[_i];
           data[item.cid] = item;
         }
         return data;
@@ -3052,8 +3150,8 @@
     __extends(Embedded, _super);
 
     function Embedded() {
-      _ref37 = Embedded.__super__.constructor.apply(this, arguments);
-      return _ref37;
+      _ref39 = Embedded.__super__.constructor.apply(this, arguments);
+      return _ref39;
     }
 
     Embedded.prototype.viewConstructor = Cruddy.Fields.EmbeddedView;
@@ -3136,10 +3234,10 @@
     };
 
     Embedded.prototype.triggerRelated = function(event, collection, args) {
-      var model, _i, _len, _ref38;
-      _ref38 = collection.models;
-      for (_i = 0, _len = _ref38.length; _i < _len; _i++) {
-        model = _ref38[_i];
+      var model, _i, _len, _ref40;
+      _ref40 = collection.models;
+      for (_i = 0, _len = _ref40.length; _i < _len; _i++) {
+        model = _ref40[_i];
         model.trigger.apply(model, [event, model].concat(args));
       }
       return this;
@@ -3153,14 +3251,43 @@
 
   })(Cruddy.Fields.BaseRelation);
 
+  Cruddy.Fields.Number = (function(_super) {
+    __extends(Number, _super);
+
+    function Number() {
+      _ref40 = Number.__super__.constructor.apply(this, arguments);
+      return _ref40;
+    }
+
+    Number.prototype.createEditableInput = function(model) {
+      return new Cruddy.Inputs.Text({
+        model: model,
+        key: this.id,
+        attributes: {
+          type: "text"
+        }
+      });
+    };
+
+    Number.prototype.createFilterInput = function(model) {
+      return new Cruddy.Inputs.NumberFilter({
+        model: model,
+        key: this.id
+      });
+    };
+
+    return Number;
+
+  })(Cruddy.Fields.Base);
+
   Cruddy.Columns = new Factory;
 
   Cruddy.Columns.Base = (function(_super) {
     __extends(Base, _super);
 
     function Base() {
-      _ref38 = Base.__super__.constructor.apply(this, arguments);
-      return _ref38;
+      _ref41 = Base.__super__.constructor.apply(this, arguments);
+      return _ref41;
     }
 
     Base.prototype.initialize = function(attributes) {
@@ -3198,13 +3325,13 @@
     __extends(Proxy, _super);
 
     function Proxy() {
-      _ref39 = Proxy.__super__.constructor.apply(this, arguments);
-      return _ref39;
+      _ref42 = Proxy.__super__.constructor.apply(this, arguments);
+      return _ref42;
     }
 
     Proxy.prototype.initialize = function(attributes) {
-      var field, _ref40;
-      field = (_ref40 = attributes.field) != null ? _ref40 : attributes.id;
+      var field, _ref43;
+      field = (_ref43 = attributes.field) != null ? _ref43 : attributes.id;
       this.field = attributes.entity.fields.get(field);
       if (attributes.header === null) {
         this.set("header", this.field.get("label"));
@@ -3232,8 +3359,8 @@
     __extends(Computed, _super);
 
     function Computed() {
-      _ref40 = Computed.__super__.constructor.apply(this, arguments);
-      return _ref40;
+      _ref43 = Computed.__super__.constructor.apply(this, arguments);
+      return _ref43;
     }
 
     Computed.prototype.getClass = function() {
@@ -3269,8 +3396,8 @@
     __extends(Image, _super);
 
     function Image() {
-      _ref41 = Image.__super__.constructor.apply(this, arguments);
-      return _ref41;
+      _ref44 = Image.__super__.constructor.apply(this, arguments);
+      return _ref44;
     }
 
     Image.prototype.defaultOptions = {
@@ -3296,8 +3423,8 @@
     __extends(Plain, _super);
 
     function Plain() {
-      _ref42 = Plain.__super__.constructor.apply(this, arguments);
-      return _ref42;
+      _ref45 = Plain.__super__.constructor.apply(this, arguments);
+      return _ref45;
     }
 
     Plain.prototype.format = function(value) {
@@ -3314,8 +3441,8 @@
     __extends(Entity, _super);
 
     function Entity() {
-      _ref43 = Entity.__super__.constructor.apply(this, arguments);
-      return _ref43;
+      _ref46 = Entity.__super__.constructor.apply(this, arguments);
+      return _ref46;
     }
 
     Entity.prototype.initialize = function(attributes, options) {
@@ -3362,11 +3489,11 @@
         columns = this.columns;
       }
       filters = (function() {
-        var _i, _len, _ref44, _results;
-        _ref44 = columns.models;
+        var _i, _len, _ref47, _results;
+        _ref47 = columns.models;
         _results = [];
-        for (_i = 0, _len = _ref44.length; _i < _len; _i++) {
-          col = _ref44[_i];
+        for (_i = 0, _len = _ref47.length; _i < _len; _i++) {
+          col = _ref47[_i];
           if (col.get("filter_type") === "complex") {
             _results.push(col.createFilter());
           }
@@ -3440,18 +3567,18 @@
     };
 
     Entity.prototype.getCopyableAttributes = function(model, attributes) {
-      var data, field, ref, _i, _j, _len, _len1, _ref44, _ref45;
+      var data, field, ref, _i, _j, _len, _len1, _ref47, _ref48;
       data = {};
-      _ref44 = this.fields.models;
-      for (_i = 0, _len = _ref44.length; _i < _len; _i++) {
-        field = _ref44[_i];
+      _ref47 = this.fields.models;
+      for (_i = 0, _len = _ref47.length; _i < _len; _i++) {
+        field = _ref47[_i];
         if (!field.isUnique() && field.id in attributes && !_.contains(this.attributes.related, field.id)) {
           data[field.id] = attributes[field.id];
         }
       }
-      _ref45 = this.attributes.related;
-      for (_j = 0, _len1 = _ref45.length; _j < _len1; _j++) {
-        ref = _ref45[_j];
+      _ref48 = this.attributes.related;
+      for (_j = 0, _len1 = _ref48.length; _j < _len1; _j++) {
+        ref = _ref48[_j];
         if (ref in attributes) {
           data[ref] = this.getRelation(ref).copy(model, attributes[ref]);
         }
@@ -3513,7 +3640,7 @@
     }
 
     Instance.prototype.initialize = function(attributes, options) {
-      var event, _i, _len, _ref44,
+      var event, _i, _len, _ref47,
         _this = this;
       this.original = _.clone(attributes);
       this.on("error", this.processError, this);
@@ -3523,9 +3650,9 @@
           return _this.set("deleted_at", moment().unix());
         }
       });
-      _ref44 = ["sync", "request"];
-      for (_i = 0, _len = _ref44.length; _i < _len; _i++) {
-        event = _ref44[_i];
+      _ref47 = ["sync", "request"];
+      for (_i = 0, _len = _ref47.length; _i < _len; _i++) {
+        event = _ref47[_i];
         this.on(event, this.triggerRelated(event), this);
       }
       return this;
@@ -3540,10 +3667,10 @@
       var slice;
       slice = Array.prototype.slice;
       return function(model) {
-        var id, related, relation, _ref44;
-        _ref44 = this.related;
-        for (id in _ref44) {
-          related = _ref44[id];
+        var id, related, relation, _ref47;
+        _ref47 = this.related;
+        for (id in _ref47) {
+          related = _ref47[id];
           relation = this.entity.getRelation(id);
           relation.triggerRelated.call(relation, event, related, slice.call(arguments, 1));
         }
@@ -3552,14 +3679,14 @@
     };
 
     Instance.prototype.processError = function(model, xhr) {
-      var errors, id, _ref44, _ref45, _results;
-      if (((_ref44 = xhr.responseJSON) != null ? _ref44.error : void 0) === "VALIDATION") {
+      var errors, id, _ref47, _ref48, _results;
+      if (((_ref47 = xhr.responseJSON) != null ? _ref47.error : void 0) === "VALIDATION") {
         errors = xhr.responseJSON.data;
         this.trigger("invalid", this, errors);
-        _ref45 = this.related;
+        _ref48 = this.related;
         _results = [];
-        for (id in _ref45) {
-          model = _ref45[id];
+        for (id in _ref48) {
+          model = _ref48[id];
           if (id in errors) {
             _results.push(this.entity.getRelation(id).processErrors(model, errors[id]));
           }
@@ -3582,14 +3709,14 @@
     };
 
     Instance.prototype.set = function(key, val, options) {
-      var attrs, id, is_copy, related, relation, relationAttrs, _i, _len, _ref44;
+      var attrs, id, is_copy, related, relation, relationAttrs, _i, _len, _ref47;
       if (typeof key === "object") {
         attrs = key;
         options = val;
         is_copy = options != null ? options.is_copy : void 0;
-        _ref44 = this.entity.get("related");
-        for (_i = 0, _len = _ref44.length; _i < _len; _i++) {
-          id = _ref44[_i];
+        _ref47 = this.entity.get("related");
+        for (_i = 0, _len = _ref47.length; _i < _len; _i++) {
+          id = _ref47[_i];
           if (!(id in attrs)) {
             continue;
           }
@@ -3613,9 +3740,9 @@
     };
 
     Instance.prototype.sync = function(method, model, options) {
-      var _ref44;
+      var _ref47;
       if (method === "update" || method === "create") {
-        options.data = new AdvFormData((_ref44 = options.attrs) != null ? _ref44 : this.attributes).original;
+        options.data = new AdvFormData((_ref47 = options.attrs) != null ? _ref47 : this.attributes).original;
         options.contentType = false;
         options.processData = false;
       }
@@ -3641,10 +3768,10 @@
     };
 
     Instance.prototype.hasChangedSinceSync = function() {
-      var key, value, _ref44;
-      _ref44 = this.attributes;
-      for (key in _ref44) {
-        value = _ref44[key];
+      var key, value, _ref47;
+      _ref47 = this.attributes;
+      for (key in _ref47) {
+        value = _ref47[key];
         if (key in this.related ? this.entity.getRelation(key).hasChangedSinceSync(value) : !_.isEqual(value, this.original[key])) {
           return true;
         }
@@ -3779,24 +3906,24 @@
     };
 
     Page.prototype.dispose = function() {
-      var _ref44, _ref45, _ref46, _ref47, _ref48, _ref49;
-      if ((_ref44 = this.form) != null) {
-        _ref44.remove();
-      }
-      if ((_ref45 = this.filterList) != null) {
-        _ref45.remove();
-      }
-      if ((_ref46 = this.dataGrid) != null) {
-        _ref46.remove();
-      }
-      if ((_ref47 = this.pagination) != null) {
+      var _ref47, _ref48, _ref49, _ref50, _ref51, _ref52;
+      if ((_ref47 = this.form) != null) {
         _ref47.remove();
       }
-      if ((_ref48 = this.search) != null) {
+      if ((_ref48 = this.filterList) != null) {
         _ref48.remove();
       }
-      if ((_ref49 = this.dataSource) != null) {
-        _ref49.stopListening();
+      if ((_ref49 = this.dataGrid) != null) {
+        _ref49.remove();
+      }
+      if ((_ref50 = this.pagination) != null) {
+        _ref50.remove();
+      }
+      if ((_ref51 = this.search) != null) {
+        _ref51.remove();
+      }
+      if ((_ref52 = this.dataSource) != null) {
+        _ref52.stopListening();
       }
       return this;
     };
@@ -3828,14 +3955,14 @@
     }
 
     Form.prototype.initialize = function(options) {
-      var key, model, _ref44, _ref45;
-      this.inner = (_ref44 = options.inner) != null ? _ref44 : false;
+      var key, model, _ref47, _ref48;
+      this.inner = (_ref47 = options.inner) != null ? _ref47 : false;
       this.listenTo(this.model, "destroy", this.handleDestroy);
       this.listenTo(this.model, "invalid", this.displayInvalid);
       this.listenTo(this.model, "change", this.handleChange);
-      _ref45 = this.model.related;
-      for (key in _ref45) {
-        model = _ref45[key];
+      _ref48 = this.model.related;
+      for (key in _ref48) {
+        model = _ref48[key];
         this.listenTo(model, "change", this.handleChange);
       }
       this.hotkeys = $(document).on("keydown." + this.cid, "body", $.proxy(this, "hotkeys"));
@@ -3885,8 +4012,8 @@
     };
 
     Form.prototype.displayError = function(xhr) {
-      var _ref44;
-      if (((_ref44 = xhr.responseJSON) != null ? _ref44.error : void 0) !== "VALIDATION") {
+      var _ref47;
+      if (((_ref47 = xhr.responseJSON) != null ? _ref47.error : void 0) !== "VALIDATION") {
         return this.displayAlert(Cruddy.lang.failure, "danger", 5000);
       }
     };
@@ -4059,11 +4186,11 @@
     };
 
     Form.prototype.dispose = function() {
-      var fieldList, _i, _len, _ref44;
+      var fieldList, _i, _len, _ref47;
       if (this.tabs != null) {
-        _ref44 = this.tabs;
-        for (_i = 0, _len = _ref44.length; _i < _len; _i++) {
-          fieldList = _ref44[_i];
+        _ref47 = this.tabs;
+        for (_i = 0, _len = _ref47.length; _i < _len; _i++) {
+          fieldList = _ref47[_i];
           fieldList.remove();
         }
       }
@@ -4088,20 +4215,20 @@
     __extends(App, _super);
 
     function App() {
-      _ref44 = App.__super__.constructor.apply(this, arguments);
-      return _ref44;
+      _ref47 = App.__super__.constructor.apply(this, arguments);
+      return _ref47;
     }
 
     App.prototype.initialize = function() {
-      var entity, _i, _len, _ref45;
+      var entity, _i, _len, _ref48;
       this.container = $("body");
       this.mainContent = $("#content");
       this.loadingRequests = 0;
       this.entities = {};
       this.entitiesDfd = {};
-      _ref45 = Cruddy.entities;
-      for (_i = 0, _len = _ref45.length; _i < _len; _i++) {
-        entity = _ref45[_i];
+      _ref48 = Cruddy.entities;
+      for (_i = 0, _len = _ref48.length; _i < _len; _i++) {
+        entity = _ref48[_i];
         this.entities[entity.id] = new Cruddy.Entity.Entity(entity);
       }
       this.on("change:entity", this.displayEntity, this);
@@ -4159,9 +4286,9 @@
     };
 
     App.prototype.dispose = function() {
-      var _ref45;
-      if ((_ref45 = this.page) != null) {
-        _ref45.remove();
+      var _ref48;
+      if ((_ref48 = this.page) != null) {
+        _ref48.remove();
       }
       return this;
     };
@@ -4176,23 +4303,38 @@
     __extends(Router, _super);
 
     function Router() {
-      _ref45 = Router.__super__.constructor.apply(this, arguments);
-      return _ref45;
+      _ref48 = Router.__super__.constructor.apply(this, arguments);
+      return _ref48;
     }
 
-    Router.prototype.routes = {
-      ":page": "page",
-      ":page/create": "create",
-      ":page/:id": "update"
+    Router.prototype.initialize = function() {
+      var entities;
+      entities = (_.map(Cruddy.entities, function(entity) {
+        return entity.id;
+      })).join("|");
+      this.addRoute("index", entities);
+      this.addRoute("create", entities, "create");
+      this.addRoute("update", entities, "([^/]+)");
+      return this;
     };
 
-    Router.prototype.entity = function(id) {
+    Router.prototype.addRoute = function(name, entities, appendage) {
+      var route;
+      if (appendage == null) {
+        appendage = null;
+      }
+      route = "^(" + entities + ")";
+      if (appendage) {
+        route += "/" + appendage;
+      }
+      route += "$";
+      this.route(new RegExp(route), name);
+      return this;
+    };
+
+    Router.prototype.resolveEntity = function(id) {
       var entity;
       entity = Cruddy.app.entity(id);
-      if (!entity) {
-        Cruddy.app.displayError(Cruddy.lang.entity_not_found);
-        return;
-      }
       if (entity.viewPermitted()) {
         entity.set("instance", null);
         Cruddy.app.set("entity", entity);
@@ -4203,22 +4345,20 @@
       }
     };
 
-    Router.prototype.page = function(page) {
-      return this.entity(page);
+    Router.prototype.index = function(entity) {
+      return this.resolveEntity(entity);
     };
 
-    Router.prototype.create = function(page) {
-      var entity;
-      entity = this.entity(page);
+    Router.prototype.create = function(entity) {
+      entity = this.resolveEntity(entity);
       if (entity) {
         entity.actionCreate();
       }
       return entity;
     };
 
-    Router.prototype.update = function(page, id) {
-      var entity;
-      entity = this.entity(page);
+    Router.prototype.update = function(entity, id) {
+      entity = this.resolveEntity(entity);
       if (entity) {
         entity.actionUpdate(id);
       }

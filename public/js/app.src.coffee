@@ -69,6 +69,10 @@ class Alert extends Backbone.View
         @$el.removeClass "show"
 
         this
+class Cruddy.View extends Backbone.View
+    componentId: (component) -> @cid + "-" + component
+
+    $component: (component) -> @$ "#" + @componentId(component)
 class AdvFormData
     constructor: (data) ->
         @original = new FormData
@@ -553,7 +557,7 @@ class FilterList extends Backbone.View
 Cruddy.Inputs = {}
 
 # Base class for input that will be bound to a model's attribute.
-class Cruddy.Inputs.Base extends Backbone.View
+class Cruddy.Inputs.Base extends Cruddy.View
     constructor: (options) ->
         @key = options.key
 
@@ -578,8 +582,10 @@ class Cruddy.Inputs.Base extends Backbone.View
     getValue: -> @model.get @key
 
     # Set current value.
-    setValue: (value) ->
-        @model.set @key, value, input: this
+    setValue: (value, options = {}) ->
+        options.input = this
+
+        @model.set @key, value, options
 
         this
 # Renders formatted text and doesn't have any editing features.
@@ -1540,6 +1546,73 @@ class Cruddy.Inputs.Markdown extends Cruddy.Inputs.Base
         if tab.hasClass "active" then @editorInput.focus() else tab.tab "show"
 
         this
+class Cruddy.Inputs.NumberFilter extends Cruddy.Inputs.Base
+    className: "input-group number-filter"
+
+    events:
+        "click .dropdown-menu a": "changeOperator"
+        "change": "changeValue"
+
+    initialize: ->
+        @defaultOp = "="
+
+        @setValue @makeValue(@defaultOp, ""), silent: yes if not @getValue()
+
+        super
+
+    changeOperator: (e) ->
+        e.preventDefault()
+
+        op = $(e.currentTarget).data "op"
+        value = @getValue()
+
+        @setValue @makeValue op, value.val if value.op isnt op
+
+        this
+
+    changeValue: (e) ->
+        value = @getValue()
+
+        @setValue @makeValue value.op, e.target.value
+
+        this
+
+    applyChanges: (value, external) ->
+        @$(".dropdown-menu li").removeClass "active"
+        @$(".dropdown-menu a[data-op='#{ value.op }']").parent().addClass "active"
+
+        @op.text value.op
+        @input.val value.val if external
+
+        this
+
+    render: ->
+        @$el.html @template()
+
+        @op = @$component "op"
+        @input = @$component "input"
+        @reset = @$component "reset"
+
+        super
+
+    template: -> """
+        <div class="input-group-btn">
+            <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
+                <span id="#{ @componentId("op") }" class="value">=</span>
+                <span class="caret"></span>
+            </button>
+
+            <ul class="dropdown-menu">
+                <li><a href="#" data-op="=">=</a></li>
+                <li><a href="#" data-op="&gt;">&gt;</a></li>
+                <li><a href="#" data-op="&lt;">&lt;</a></li>
+            </ul>
+        </div>
+
+        <input type="text" class="form-control" id="#{ @componentId "input" }">
+    """
+
+    makeValue: (op, val) -> { op: op, val: val }
 Cruddy.Fields = new Factory
 
 class Cruddy.Fields.BaseView extends Backbone.View
@@ -2094,6 +2167,16 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
 
     isMultiple: -> @attributes.multiple
 
+class Cruddy.Fields.Number extends Cruddy.Fields.Base
+    createEditableInput: (model) -> new Cruddy.Inputs.Text
+        model: model
+        key: @id
+        attributes:
+            type: "text"
+
+    createFilterInput: (model) -> new Cruddy.Inputs.NumberFilter
+        model: model
+        key: @id
 Cruddy.Columns = new Factory
 
 class Cruddy.Columns.Base extends Attribute
@@ -2816,19 +2899,26 @@ Cruddy.app = new App
 
 class Router extends Backbone.Router
 
-    routes: {
-        ":page": "page"
-        ":page/create": "create"
-        ":page/:id": "update"
-    }
+    initialize: ->
+        entities = (_.map Cruddy.entities, (entity) -> entity.id).join "|"
 
-    entity: (id) ->
+        @addRoute "index", entities
+        @addRoute "create", entities, "create"
+        @addRoute "update", entities, "([^/]+)"
+
+        this
+
+    addRoute: (name, entities, appendage = null) ->
+        route = "^(#{ entities })"
+        route += "/" + appendage if appendage
+        route += "$"
+
+        @route new RegExp(route), name
+
+        this
+
+    resolveEntity: (id) ->
         entity = Cruddy.app.entity(id)
-
-        if not entity
-            Cruddy.app.displayError Cruddy.lang.entity_not_found
-
-            return
 
         if entity.viewPermitted()
             entity.set "instance", null
@@ -2840,16 +2930,16 @@ class Router extends Backbone.Router
 
             null
 
-    page: (page) -> @entity page
+    index: (entity) -> @resolveEntity entity
 
-    create: (page) ->
-        entity = @entity page
+    create: (entity) ->
+        entity = @resolveEntity entity
         entity.actionCreate() if entity
 
         entity
 
-    update: (page, id) ->
-        entity = @entity page
+    update: (entity, id) ->
+        entity = @resolveEntity entity
 
         entity.actionUpdate id if entity
 

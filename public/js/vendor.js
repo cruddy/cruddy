@@ -13242,9 +13242,10 @@ $.fn.extend({
         }
 
         // Do not add multiple models with the same `id`.
-        model = existing || model;
-        if (order && (model.isNew() || !modelMap[model.id])) order.push(model);
-        modelMap[model.id] = true;
+        if (model = existing || model) {
+          if (order && (model.isNew() || !modelMap[model.id])) order.push(model);
+          modelMap[model.id] = true;
+        }
       }
 
       // Remove nonexistent models if appropriate.

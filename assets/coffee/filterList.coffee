@@ -18,7 +18,7 @@ class FilterList extends Backbone.View
         for filter in @availableFilters when (field = @entity.fields.get filter) and field.canFilter() and (input = field.createFilterInput @model)
             @filters.push input
             @items.append input.render().el
-            input.$el.wrap("""<div class="form-group filter filter-#{ field.id }"><div class="input-wrap"></div></div>""").parent().before "<label>#{ field.getFilterLabel() }</label>"
+            input.$el.wrap("""<div class="form-group filter filter-#{ field.id }"></div>""").parent().before "<label>#{ field.getFilterLabel() }</label>"
 
         this
 

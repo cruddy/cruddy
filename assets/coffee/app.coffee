@@ -77,8 +77,8 @@ class Router extends Backbone.Router
         entities = (_.map Cruddy.entities, (entity) -> entity.id).join "|"
 
         @addRoute "index", entities
-        @addRoute "create", entities, "create"
         @addRoute "update", entities, "([^/]+)"
+        @addRoute "create", entities, "create"
 
         this
 
@@ -86,6 +86,8 @@ class Router extends Backbone.Router
         route = "^(#{ entities })"
         route += "/" + appendage if appendage
         route += "$"
+
+        console.log route
 
         @route new RegExp(route), name
 
@@ -107,6 +109,8 @@ class Router extends Backbone.Router
     index: (entity) -> @resolveEntity entity
 
     create: (entity) ->
+        console.log 'create'
+
         entity = @resolveEntity entity
         entity.actionCreate() if entity
 

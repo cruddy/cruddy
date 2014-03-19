@@ -859,7 +859,7 @@
         }
         this.filters.push(input);
         this.items.append(input.render().el);
-        input.$el.wrap("<div class=\"form-group filter filter-" + field.id + "\"><div class=\"input-wrap\"></div></div>").parent().before("<label>" + (field.getFilterLabel()) + "</label>");
+        input.$el.wrap("<div class=\"form-group filter filter-" + field.id + "\"></div>").parent().before("<label>" + (field.getFilterLabel()) + "</label>");
       }
       return this;
     };
@@ -3797,14 +3797,14 @@
   Cruddy.Entity.Page = (function(_super) {
     __extends(Page, _super);
 
-    Page.prototype.className = "entity-page";
+    Page.prototype.className = "page entity-page";
 
     Page.prototype.events = {
       "click .btn-create": "create"
     };
 
     function Page(options) {
-      this.className += " " + this.className + "-" + options.model.id;
+      this.className += " entity-page-" + options.model.id;
       Page.__super__.constructor.apply(this, arguments);
     }
 
@@ -3845,21 +3845,17 @@
       var filters;
       this.dispose();
       this.$el.html(this.template());
-      this.header = this.$(".entity-page-header");
-      this.content = this.$(".entity-page-content");
-      this.footer = this.$(".entity-page-footer");
       this.dataSource = this.model.createDataSource();
       this.dataSource.fetch();
       this.search = this.createSearchInput(this.dataSource);
-      this.$(".col-search").append(this.search.render().el);
+      this.$component("search").append(this.search.render().el);
       if (!_.isEmpty(filters = this.dataSource.entity.get("filters"))) {
         this.filterList = this.createFilterList(this.dataSource.filter, filters);
-        this.$(".col-filters").append(this.filterList.render().el);
+        this.$component("filters").append(this.filterList.render().el);
       }
       this.dataGrid = this.createDataGrid(this.dataSource);
-      this.content.append(this.dataGrid.render().el);
       this.pagination = this.createPagination(this.dataSource);
-      this.footer.append(this.pagination.render().el);
+      this.$component("body").append(this.dataGrid.render().el).append(this.pagination.render().el);
       return this;
     };
 
@@ -3893,16 +3889,15 @@
 
     Page.prototype.template = function() {
       var html;
-      html = "<div class='entity-page-header'>";
-      html += "<h1>\n    " + (this.model.getPluralTitle()) + "\n";
+      return html = "<div class=\"content-header\">\n    <div class=\"column column-main\">\n        <h1 class=\"entity-title\">" + (this.model.getPluralTitle()) + "</h1>\n\n        <div class=\"entity-title-buttons\">\n            " + (this.buttonsTemplate()) + "\n        </div>\n    </div>\n\n    <div class=\"column column-extra\">\n        <div class=\"entity-search-box\" id=\"" + (this.componentId("search")) + "\"></div>\n    </div>\n</div>\n\n<div class=\"content-body\">\n    <div class=\"column column-main\" id=\"" + (this.componentId("body")) + "\"></div>\n    <div class=\"column column-extra\" id=\"" + (this.componentId("filters")) + "\"></div>\n</div>";
+    };
+
+    Page.prototype.buttonsTemplate = function() {
       if (this.model.createPermitted()) {
-        html += "<button class=\"btn btn-default btn-create\" type=\"button\">\n    <span class=\"glyphicon glyphicon-plus\"</span>\n</button>";
+        return b_btn(Cruddy.lang.entity_new + this.model.getSingularTitle(), "plus", ["default", "create"]);
+      } else {
+        return "";
       }
-      html += "</h1>";
-      html += "<div class=\"row row-search\"><div class=\"col-xs-2 col-search\"></div><div class=\"col-xs-10 col-filters\"></div></div>";
-      html += "</div>";
-      html += "<div class='entity-page-content-wrap'><div class='entity-page-content'></div></div>";
-      return html += "<div class='entity-page-footer'></div>";
     };
 
     Page.prototype.dispose = function() {
@@ -3935,7 +3930,7 @@
 
     return Page;
 
-  })(Backbone.View);
+  })(Cruddy.View);
 
   Cruddy.Entity.Form = (function(_super) {
     __extends(Form, _super);
@@ -4313,8 +4308,8 @@
         return entity.id;
       })).join("|");
       this.addRoute("index", entities);
-      this.addRoute("create", entities, "create");
       this.addRoute("update", entities, "([^/]+)");
+      this.addRoute("create", entities, "create");
       return this;
     };
 
@@ -4328,6 +4323,7 @@
         route += "/" + appendage;
       }
       route += "$";
+      console.log(route);
       this.route(new RegExp(route), name);
       return this;
     };
@@ -4350,6 +4346,7 @@
     };
 
     Router.prototype.create = function(entity) {
+      console.log('create');
       entity = this.resolveEntity(entity);
       if (entity) {
         entity.actionCreate();

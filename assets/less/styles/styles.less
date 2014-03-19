@@ -46,65 +46,8 @@ body.loading:before {
     min-width: @container-md;
 }
 
-.entity-page {
-    @footer-height: 35px;
-    margin-top: (@navbar-height + 1px);
-    padding: 0 (@grid-gutter-width / 2);
-    
-    @media (min-width: @grid-float-breakpoint)
-    {
-        margin-top: 0;
-        height: 100%;
-        padding: 0;
-
-        &-header, &-footer {
-            position: fixed;
-            z-index: @zindex-navbar;
-            padding: 0 (@grid-gutter-width / 2);
-            background: @body-bg;
-            width: 100%;
-        }
-
-        &-header {
-            top: (@navbar-height + 1px);
-            left: 0;
-        }
-
-        &-content {
-            overflow-y: auto;
-            height: 100%;
-            padding: 0 (@grid-gutter-width / 2);
-
-            &-wrap {
-                padding: (@navbar-height + 1px + 111px) 0 @footer-height 0;
-                height: 100%;
-            }
-        }
-
-        &-footer {
-            bottom: 0;
-            height: @footer-height;
-
-            .pager {
-                margin: 0;
-            }
-        }
-    }
-
-    .page-header {
-        // text-transform: capitalize;
-        margin-top: 0;
-    }
-
-    .row-search {
-        margin-bottom: 15px;
-    }
-}
-
-// .form-group>label {
-//     text-transform: capitalize;
-// }
-
+@import "layout.less";
+@import "entity-page.less";
 @import "inputs.less";
 @import "form.less";
 @import "datagrid.less";

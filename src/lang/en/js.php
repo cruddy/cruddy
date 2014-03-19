@@ -34,6 +34,7 @@
 
     'entity_forbidden' => 'You are not allowed to view this entity.',
     'entity_not_found' => 'Sorry, but this entity is not found.',
+    'entity_new' => 'New ',
 
     'confirm_discard' => 'Are you shure you want to discard all changes?',
     'confirm_abort' => 'Are you shure you want to abort request?',

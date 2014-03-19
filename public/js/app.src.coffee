@@ -537,7 +537,7 @@ class FilterList extends Backbone.View
         for filter in @availableFilters when (field = @entity.fields.get filter) and field.canFilter() and (input = field.createFilterInput @model)
             @filters.push input
             @items.append input.render().el
-            input.$el.wrap("""<div class="form-group filter filter-#{ field.id }"><div class="input-wrap"></div></div>""").parent().before "<label>#{ field.getFilterLabel() }</label>"
+            input.$el.wrap("""<div class="form-group filter filter-#{ field.id }"></div>""").parent().before "<label>#{ field.getFilterLabel() }</label>"
 
         this
 
@@ -2459,15 +2459,15 @@ class Cruddy.Entity.Instance extends Backbone.Model
     isSaveable: -> (@isNew() and @entity.createPermitted()) or (!@isNew() and @entity.updatePermitted())
 
     serialize: -> { attributes: @attributes, id: @id }
-class Cruddy.Entity.Page extends Backbone.View
-    className: "entity-page"
+class Cruddy.Entity.Page extends Cruddy.View
+    className: "page entity-page"
 
     events: {
         "click .btn-create": "create"
     }
 
     constructor: (options) ->
-        @className += " " + @className + "-" + options.model.id
+        @className += " entity-page-" + options.model.id
 
         super
 
@@ -2501,10 +2501,6 @@ class Cruddy.Entity.Page extends Backbone.View
 
         @$el.html @template()
 
-        @header = @$ ".entity-page-header"
-        @content = @$ ".entity-page-content"
-        @footer = @$ ".entity-page-footer"
-
         @dataSource = @model.createDataSource()
         
         @dataSource.fetch()
@@ -2512,23 +2508,19 @@ class Cruddy.Entity.Page extends Backbone.View
         # Search input
         @search = @createSearchInput @dataSource
 
-        @$(".col-search").append @search.render().el
+        @$component("search").append @search.render().el
 
         # Filters
         if not _.isEmpty filters = @dataSource.entity.get "filters"
             @filterList = @createFilterList @dataSource.filter, filters
 
-            @$(".col-filters").append @filterList.render().el
+            @$component("filters").append @filterList.render().el
 
         # Data grid
         @dataGrid = @createDataGrid @dataSource
-        
-        @content.append @dataGrid.render().el        
-        
-        # Pagination
         @pagination = @createPagination @dataSource
         
-        @footer.append @pagination.render().el
+        @$component("body").append(@dataGrid.render().el).append(@pagination.render().el)
 
         this
 
@@ -2548,27 +2540,28 @@ class Cruddy.Entity.Page extends Backbone.View
         key: "search"
 
     template: ->
-        html = "<div class='entity-page-header'>"
-        html += """
-        <h1>
-            #{ @model.getPluralTitle() }
+        html = """
+            <div class="content-header">
+                <div class="column column-main">
+                    <h1 class="entity-title">#{ @model.getPluralTitle() }</h1>
 
+                    <div class="entity-title-buttons">
+                        #{ @buttonsTemplate() }
+                    </div>
+                </div>
+
+                <div class="column column-extra">
+                    <div class="entity-search-box" id="#{ @componentId "search" }"></div>
+                </div>
+            </div>
+            
+            <div class="content-body">
+                <div class="column column-main" id="#{ @componentId "body" }"></div>
+                <div class="column column-extra" id="#{ @componentId "filters" }"></div>
+            </div>
         """
 
-        if @model.createPermitted()
-            html += """
-                <button class="btn btn-default btn-create" type="button">
-                    <span class="glyphicon glyphicon-plus"</span>
-                </button>
-            """
-
-        html += "</h1>"
-
-        html += """<div class="row row-search"><div class="col-xs-2 col-search"></div><div class="col-xs-10 col-filters"></div></div>"""
-        html += "</div>"
-        
-        html += "<div class='entity-page-content-wrap'><div class='entity-page-content'></div></div>"
-        html += "<div class='entity-page-footer'></div>"
+    buttonsTemplate: -> if @model.createPermitted() then b_btn Cruddy.lang.entity_new + @model.getSingularTitle(), "plus", [ "default", "create" ] else ""
 
     dispose: ->
         @form?.remove()
@@ -2903,8 +2896,8 @@ class Router extends Backbone.Router
         entities = (_.map Cruddy.entities, (entity) -> entity.id).join "|"
 
         @addRoute "index", entities
-        @addRoute "create", entities, "create"
         @addRoute "update", entities, "([^/]+)"
+        @addRoute "create", entities, "create"
 
         this
 
@@ -2912,6 +2905,8 @@ class Router extends Backbone.Router
         route = "^(#{ entities })"
         route += "/" + appendage if appendage
         route += "$"
+
+        console.log route
 
         @route new RegExp(route), name
 
@@ -2933,6 +2928,8 @@ class Router extends Backbone.Router
     index: (entity) -> @resolveEntity entity
 
     create: (entity) ->
+        console.log 'create'
+
         entity = @resolveEntity entity
         entity.actionCreate() if entity
 

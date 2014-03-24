@@ -1,13 +1,13 @@
 {
     "name": "kalnoy/cruddy",
-    "description": "Cruddy -- CRUD without a line of code",
+    "description": "Backend interface for handling CRUD operations on your Laravel Eloquent models.",
     "authors": [
         {
             "name": "Alexander Kalnoy",
             "email": "lazychaser@gmail.com"
         }
     ],
-    "keywords": ["dashboard", "crud", "administrator", "admin", "backend", "laravel", "cms"],
+    "keywords": ["dashboard", "crud", "administrator", "admin", "backend", "laravel", "eloquent", "cms"],
     "require": {
         "php": ">=5.4.0",
         "laravel/framework": "~4.1.18",

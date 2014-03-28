@@ -100,7 +100,7 @@ module.exports = function(grunt) {
                     '<%= vendor %>/backbone/backbone.js',
                     '<%= vendor %>/moment/moment.js',
                     '<%= vendor %>/moment/lang/ru.js',
-                    '<%= vendor %>/markdown/lib/markdown.js',
+                    '<%= vendor %>/marked/lib/marked.js',
 
                     // Ace
                     // '<%= vendor %>/ace-builds/src-noconflict/ace.js',

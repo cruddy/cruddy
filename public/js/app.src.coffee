@@ -1522,13 +1522,15 @@ class Cruddy.Inputs.Markdown extends Cruddy.Inputs.Base
         this
 
     renderPreview: ->
-        @preview.html markdown.toHTML @getValue()
+        @preview.html marked @getValue()
 
         this
 
     template: ->
         """
         <div class="markdown-editor">
+            <a href="https://help.github.com/articles/github-flavored-markdown" target="_blank" class="hint">GitHub flavored markdown</a>
+
             <ul class="nav nav-tabs">
                 <li class="active"><a href="##{ @cid }-editor" data-toggle="tab" data-tab="editor" tab-index="-1">#{ Cruddy.lang.markdown_source }</a></li>
                 <li><a href="##{ @cid }-preview" data-toggle="tab" data-tab="preview" tab-index="-1">#{ Cruddy.lang.markdown_parsed }</a></li>

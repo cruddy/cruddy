@@ -12,7 +12,7 @@ module.exports = function(grunt) {
         coffee: {
 
             options: {
-                sourceMap: true,
+                sourceMap: true
             },
 
             app: {
@@ -102,11 +102,6 @@ module.exports = function(grunt) {
                     '<%= vendor %>/moment/lang/ru.js',
                     '<%= vendor %>/marked/lib/marked.js',
 
-                    // Ace
-                    // '<%= vendor %>/ace-builds/src-noconflict/ace.js',
-                    // '<%= vendor %>/ace-builds/src-noconflict/mode-markdown.js',
-                    // '<%= vendor %>/ace-builds/src-noconflict/theme-<%= ace_theme %>.js',
-
                     // Bootstrap components
                     '<%= bootstrap %>/js/tab.js',
                     '<%= bootstrap %>/js/dropdown.js',
@@ -120,18 +115,7 @@ module.exports = function(grunt) {
         uglify: {
             all: {
                 options: {
-                    sourceMap: function (name) {
-                        return name + '.map';
-                    },
-
-                    sourceMappingURL: function (name) {
-                        return name.replace("public/js/", "") + '.map';
-                    },
-
-                    sourceMapIn: function (name) {
-                        name += '.map';
-                        return grunt.file.exists(name) && name || undefined;
-                    },
+                    sourceMap: true
                 },
 
                 expand: true,
@@ -155,6 +139,7 @@ module.exports = function(grunt) {
                     outputSourceFiles: true,
 
                     compress: true,
+                    // cleancss: true
                 },
 
                 files: {

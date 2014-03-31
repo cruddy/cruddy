@@ -2388,7 +2388,7 @@
       var help;
       help = this.field.getHelp();
       if (help) {
-        return "<span class=\"glyphicon glyphicon-question-sign field-help\" title=\"" + help + "\"></span>";
+        return "<span class=\"glyphicon glyphicon-question-sign field-help\" title=\"" + (_.escape(help)) + "\"></span>";
       } else {
         return "";
       }
@@ -2451,7 +2451,7 @@
       if (label == null) {
         label = this.field.getLabel();
       }
-      return "<label for=\"" + this.inputId + "\" class=\"field-label\">\n    " + (this.helpTemplate()) + label + "\n</label>";
+      return "<label for=\"" + this.inputId + "\" class=\"field-label\">\n    " + (this.helpTemplate()) + (_.escape(label)) + "\n</label>";
     };
 
     InputView.prototype.template = function() {
@@ -2957,7 +2957,7 @@
       var buttons, ref;
       ref = this.field.getReference();
       buttons = ref.createPermitted() ? b_btn("", "plus", ["default", "create"]) : "";
-      return "<div class='header field-label'>\n    " + (this.helpTemplate()) + (this.field.getLabel()) + " " + buttons + "\n</div>\n<div class=\"error-container has-error\">" + (this.errorTemplate()) + "</div>\n<div class='body' id='" + this.cid + "-body'></div>";
+      return "<div class='header field-label'>\n    " + (this.helpTemplate()) + (_.escape(this.field.getLabel())) + " " + buttons + "\n</div>\n<div class=\"error-container has-error\">" + (this.errorTemplate()) + "</div>\n<div class='body' id='" + this.cid + "-body'></div>";
     };
 
     EmbeddedView.prototype.dispose = function() {

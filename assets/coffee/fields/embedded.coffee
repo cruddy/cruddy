@@ -76,7 +76,7 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
 
         """
         <div class='header field-label'>
-            #{ @helpTemplate() }#{ @field.getLabel() } #{ buttons }
+            #{ @helpTemplate() }#{ _.escape @field.getLabel() } #{ buttons }
         </div>
         <div class="error-container has-error">#{ @errorTemplate() }</div>
         <div class='body' id='#{ @cid }-body'></div>

@@ -57,7 +57,7 @@ class Cruddy.Fields.BaseView extends Backbone.View
 
     helpTemplate: ->
         help = @field.getHelp()
-        if help then """<span class="glyphicon glyphicon-question-sign field-help" title="#{ help }"></span>""" else ""
+        if help then """<span class="glyphicon glyphicon-question-sign field-help" title="#{ _.escape help }"></span>""" else ""
 
     errorTemplate: -> """<span class="help-block error" id="#{ @cid }-error"></span>"""
 
@@ -108,7 +108,7 @@ class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
         
         """
         <label for="#{ @inputId }" class="field-label">
-            #{ @helpTemplate() }#{ label }
+            #{ @helpTemplate() }#{ _.escape label }
         </label>
         """
 

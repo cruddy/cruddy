@@ -1,11 +1,9 @@
 class Cruddy.Inputs.Boolean extends Cruddy.Inputs.Base
-    tripleState: false
-
     events:
         "click .btn": "check"
 
     initialize: (options) ->
-        @tripleState = options.tripleState if options.tripleState?
+        @tripleState = options.tripleState ? false
 
         super
 
@@ -38,14 +36,7 @@ class Cruddy.Inputs.Boolean extends Cruddy.Inputs.Base
     template: ->
         """
         <div class="btn-group">
-            <button type="button" class="btn btn-info" data-value="1">#{ Cruddy.lang.yes }</button>
+            <button type="button" class="btn btn-default" data-value="1">#{ Cruddy.lang.yes }</button>
             <button type="button" class="btn btn-default" data-value="0">#{ Cruddy.lang.no }</button>
         </div>
-        """
-
-    itemTemplate: (label, value) -> """
-        <label class="radio-inline">
-            <input type="radio" name="#{ @cid }" value="#{ value }">
-            #{ label }
-        </label>
         """

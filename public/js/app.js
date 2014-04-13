@@ -1121,16 +1121,13 @@
       return Boolean.__super__.constructor.apply(this, arguments);
     }
 
-    Boolean.prototype.tripleState = false;
-
     Boolean.prototype.events = {
       "click .btn": "check"
     };
 
     Boolean.prototype.initialize = function(options) {
-      if (options.tripleState != null) {
-        this.tripleState = options.tripleState;
-      }
+      var _ref1;
+      this.tripleState = (_ref1 = options.tripleState) != null ? _ref1 : false;
       return Boolean.__super__.initialize.apply(this, arguments);
     };
 
@@ -1169,11 +1166,7 @@
     };
 
     Boolean.prototype.template = function() {
-      return "<div class=\"btn-group\">\n    <button type=\"button\" class=\"btn btn-info\" data-value=\"1\">" + Cruddy.lang.yes + "</button>\n    <button type=\"button\" class=\"btn btn-default\" data-value=\"0\">" + Cruddy.lang.no + "</button>\n</div>";
-    };
-
-    Boolean.prototype.itemTemplate = function(label, value) {
-      return "<label class=\"radio-inline\">\n    <input type=\"radio\" name=\"" + this.cid + "\" value=\"" + value + "\">\n    " + label + "\n</label>";
+      return "<div class=\"btn-group\">\n    <button type=\"button\" class=\"btn btn-default\" data-value=\"1\">" + Cruddy.lang.yes + "</button>\n    <button type=\"button\" class=\"btn btn-default\" data-value=\"0\">" + Cruddy.lang.no + "</button>\n</div>";
     };
 
     return Boolean;
@@ -3786,7 +3779,8 @@
     Page.prototype.className = "page entity-page";
 
     Page.prototype.events = {
-      "click .btn-create": "create"
+      "click .btn-create": "create",
+      "click .btn-refresh": "refresh"
     };
 
     function Page(options) {
@@ -3824,6 +3818,16 @@
     Page.prototype.create = function() {
       Cruddy.router.navigate(this.model.link("create"), {
         trigger: true
+      });
+      return this;
+    };
+
+    Page.prototype.refresh = function(e) {
+      var btn;
+      btn = $(e.currentTarget);
+      btn.prop("disabled", true);
+      this.dataSource.fetch().always(function() {
+        return btn.prop("disabled", false);
       });
       return this;
     };
@@ -3880,11 +3884,10 @@
     };
 
     Page.prototype.buttonsTemplate = function() {
-      if (this.model.createPermitted()) {
-        return b_btn(Cruddy.lang.entity_new + this.model.getSingularTitle(), "plus", ["default", "create"]);
-      } else {
-        return "";
-      }
+      var html;
+      html = "<button type=\"button\" class=\"btn btn-default btn-refresh\" title=\"" + Cruddy.lang.refresh + "\">" + (b_icon("refresh")) + "</button>";
+      html += " <button type=\"button\" class=\"btn btn-primary btn-create\" title=\"" + Cruddy.lang.add + "\">" + (b_icon("plus")) + "</button>";
+      return html;
     };
 
     Page.prototype.dispose = function() {

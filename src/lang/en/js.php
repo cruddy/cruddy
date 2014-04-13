@@ -12,6 +12,7 @@
     'required' => 'required',
     'any_value' => 'Any value',
     'never' => 'Never',
+    'refresh' => 'Refresh',
 
     'no_results' => 'No results',
     'more' => 'More',

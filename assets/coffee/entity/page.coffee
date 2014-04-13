@@ -3,6 +3,7 @@ class Cruddy.Entity.Page extends Cruddy.View
 
     events: {
         "click .btn-create": "create"
+        "click .btn-refresh": "refresh"
     }
 
     constructor: (options) ->
@@ -32,6 +33,14 @@ class Cruddy.Entity.Page extends Cruddy.View
 
     create: ->
         Cruddy.router.navigate @model.link("create"), trigger: true
+
+        this
+
+    refresh: (e) ->
+        btn = $ e.currentTarget
+        btn.prop "disabled", yes
+
+        @dataSource.fetch().always -> btn.prop "disabled", no
 
         this
 
@@ -100,7 +109,11 @@ class Cruddy.Entity.Page extends Cruddy.View
             </div>
         """
 
-    buttonsTemplate: -> if @model.createPermitted() then b_btn Cruddy.lang.entity_new + @model.getSingularTitle(), "plus", [ "default", "create" ] else ""
+    buttonsTemplate: ->
+        html = """<button type="button" class="btn btn-default btn-refresh" title="#{ Cruddy.lang.refresh }">#{ b_icon "refresh" }</button>"""
+        html += """ <button type="button" class="btn btn-primary btn-create" title="#{ Cruddy.lang.add }">#{ b_icon "plus" }</button>"""
+
+        html
 
     dispose: ->
         @form?.remove()

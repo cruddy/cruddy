@@ -12,6 +12,7 @@ class Cruddy.Fields.BaseView extends Backbone.View
         className = "field" + base + classes.join base
 
         className += " required" if field.isRequired()
+        className += " form-group"
 
         @className = if @className then className + " " + @className else className
 
@@ -79,12 +80,12 @@ class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
         super
 
     hideError: ->
-        @inputHolder.removeClass "has-error"
+        @$el.removeClass "has-error"
 
         super
 
     showError: ->
-        @inputHolder.addClass "has-error"
+        @$el.addClass "has-error"
 
         super
 
@@ -94,10 +95,9 @@ class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
 
         @$el.html @template()
 
-        @inputHolder = @$ ".input-holder"
-        @inputHolder.append @input.render().el
+        @$el.append @input.render().el
 
-        @inputHolder.append @errorTemplate()
+        @$el.append @errorTemplate()
 
         @toggleVisibility()
 
@@ -113,12 +113,7 @@ class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
         """
 
     # The default template that is shown when field is editable.
-    template: ->
-        """
-        <div class="form-group input-holder">
-            #{ @label() }
-        </div>
-        """
+    template: -> @label()
 
     # Focus the input that this field view holds.
     focus: ->

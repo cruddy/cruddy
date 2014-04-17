@@ -38,16 +38,29 @@ class BelongsToMany extends BasicRelation {
 
         $builder->whereExists(function ($q) use ($data)
         {
-            $connection = $q->getConnection();
-            $keyName = $connection->raw($this->relation->getParent()->getQualifiedKeyName());
-
-            $q
-                ->from($this->relation->getTable())
-                ->select($connection->raw('1'))
-                ->where($this->relation->getForeignKey(), $keyName)
-                ->where($this->relation->getOtherKey(), $data);
+            $this->initNestedQuery($q, $data);
         });
 
         return $this;
+    }
+
+    /**
+     * Init nested query for filter.
+     *
+     * @param \Illuminate\Database\Query\Builder $query
+     * @param mixed                              $data
+     *
+     * @return void
+     */
+    protected function initNestedQuery(QueryBuilder $query, $data)
+    {
+        $connection = $query->getConnection();
+        $keyName = $connection->raw($this->relation->getParent()->getQualifiedKeyName());
+
+        $query
+            ->from($this->relation->getTable())
+            ->select($connection->raw('1'))
+            ->where($this->relation->getForeignKey(), $keyName)
+            ->where($this->relation->getOtherKey(), $data);
     }
 }

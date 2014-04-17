@@ -52,20 +52,6 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     }
 
     /**
-     * @inhertidoc
-     *
-     * Inline relation skips value since it is passed to the other repository.
-     *
-     * @param mixed $value
-     *
-     * @return bool
-     */
-    public function skip($value)
-    {
-        return true;
-    }
-
-    /**
      * @inheritdoc
      *
      * @param array $input

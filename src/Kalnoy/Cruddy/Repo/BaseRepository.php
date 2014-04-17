@@ -66,7 +66,30 @@ abstract class BaseRepository implements RepositoryInterface {
      */
     protected function fill(Eloquent $model, array $input)
     {
-        return $model->fill($input);
+        $this->uploadFiles($input);
+
+        return $model->fill($this->cleanInput($input));
+    }
+
+    /**
+     * Clean input from unwanted keys. Default implementation just removes
+     * relations from the input.
+     *
+     * @param array $input
+     *
+     * @return array
+     */
+    protected function cleanInput(array $input)
+    {
+        foreach ($input as $key => $value)
+        {
+            if ($this->isRelation($key))
+            {
+                unset($input[$key]);
+            }
+        }
+
+        return $input;
     }
 
     /**
@@ -165,15 +188,14 @@ abstract class BaseRepository implements RepositoryInterface {
      */
     protected function save(Eloquent $instance, array $input)
     {
-        $this->sync($instance, $input)->upload($input);
-        
-        // This is needed to ensure that all needed attributes are set even for
-        // related models. Don't worry, attributes are cleaned.
+        $this->resetPostSaveCallbacks();
+
+        $this->syncRelations($instance, $input);
+
         Eloquent::unguard();
 
         try
         {
-
             if (false === $this->fill($instance, $input)->save())
             {
                 throw new ModelNotSavedException("Could not save instance of {get_class($instance)}.");
@@ -188,10 +210,13 @@ abstract class BaseRepository implements RepositoryInterface {
 
             throw $e;
         }
-
+        
         Eloquent::reguard();
 
-        return $this->fireAfterSave($instance);
+        // Now when the instance is saved, we can run post-save events
+        $this->firePostSaveCallbacks($instance);
+
+        return $instance;
     }
 
     /**
@@ -202,23 +227,13 @@ abstract class BaseRepository implements RepositoryInterface {
      *
      * @return $this
      */
-    protected function sync(Eloquent $instance, array &$input)
+    protected function syncRelations(Eloquent $instance, array &$input)
     {
         foreach ($input as $key => $value)
         {
-            $relationId = \camel_case($key);
-
-            if (!method_exists($instance, $relationId)) continue;
-
-            $relation = $instance->$relationId();
-
-            if ($relation instanceof Relation)
+            if ($relation = $this->getRelation($instance, $key))
             {
-                $this->syncRelation($instance, $relation, $relationId, $key, $value);
-
-                // Unset this attribute to prevent sending non-attribute values to the database
-                // when user did not set $fillable attribute on the model.
-                unset($input[$key]);
+                $this->syncRelation($instance, $relation, $key, $value);
             }
         }
 
@@ -226,21 +241,52 @@ abstract class BaseRepository implements RepositoryInterface {
     }
 
     /**
+     * Get relationship query.
+     *
+     * @param Eloquent $instance
+     * @param string   $key
+     *
+     * @return null|\Illuminate\Database\Eloquent\Relations\Relation
+     */
+    protected function getRelation(Eloquent $instance, $key)
+    {
+        if ( ! method_exists($instance, $key)) return null;
+
+        $relation = $instance->$key();
+
+        if ( ! $relation instanceof Relation) return null;
+
+        return $relation;
+    }
+
+    /**
+     * Get whether an attribute on model is a relation.
+     *
+     * @param Eloquent $instance
+     * @param string   $key
+     *
+     * @return bool
+     */
+    protected function isRelation($key)
+    {
+        return $this->getRelation($this->model, $key) !== null;
+    }
+
+    /**
      * Sync one given relationship.
      *
      * @param Eloquent $instance
      * @param Relation $relation
-     * @param string   $relationId
      * @param string   $key
      * @param array    $data
      */
-    protected function syncRelation(Eloquent $instance, Relation $relation, $relationId, $key, $data)
+    protected function syncRelation(Eloquent $instance, Relation $relation, $key, $data)
     {
-        $method = "sync".class_basename($relation);
+        $method = 'sync'.class_basename($relation);
 
         if (method_exists($this, $method))
         {
-            $this->$method($instance, $relationId, $key, $data);
+            $this->$method($instance, $key, $data);
         }
     }
 
@@ -248,20 +294,20 @@ abstract class BaseRepository implements RepositoryInterface {
      * Sync BelongsToMany relationship.
      *
      * @param Eloquent $instance
-     * @param string   $relationId
      * @param string   $key
      * @param array    $data
      *
      * @return $this
      */
-    protected function syncBelongsToMany(Eloquent $instance, $relationId, $key, $data)
+    protected function syncBelongsToMany(Eloquent $instance, $key, $data)
     {
         $data = is_array($data) ? $data : [];
 
-        return $this->afterSave(function ($instance) use ($relationId, $key, $data)
+        return $this->addPostSaveCallback(function ($instance) use ($key, $data)
         {
-            $instance->$relationId()->sync($data);
+            $instance->$key()->sync($data);
 
+            // We'll unset the relation since it might be outdated
             unset($instance->$key);
         });
     }
@@ -270,30 +316,28 @@ abstract class BaseRepository implements RepositoryInterface {
      * Sync MorphToMany relationship.
      *
      * @param   Eloquent  $instance
-     * @param   string    $relationId
      * @param   string    $key
      * @param   array     $data
      *
      * @return  $this
      */
-    protected function syncMorphToMany(Eloquent $instance, $relationId, $key, $data)
+    protected function syncMorphToMany(Eloquent $instance, $key, $data)
     {
-        return $this->syncBelongsToMany($instance, $relationId, $key, $data);
+        return $this->syncBelongsToMany($instance, $key, $data);
     }
 
     /**
      * Sync BelongsTo relationship.
      *
      * @param Eloquent $instance
-     * @param string   $relationId
      * @param string   $key
      * @param int      $data
      *
      * @return $this
      */
-    protected function syncBelongsTo(Eloquent $instance, $relationId, $key, $data)
+    protected function syncBelongsTo(Eloquent $instance, $key, $data)
     {
-        $foreignKey = $instance->$relationId()->getForeignKey();
+        $foreignKey = $instance->$key()->getForeignKey();
 
         $instance->setAttribute($foreignKey, $data ?: null);
 
@@ -303,95 +347,13 @@ abstract class BaseRepository implements RepositoryInterface {
     }
 
     /**
-     * Sync HasOne relationship.
-     *
-     * @param Eloquent $instance
-     * @param string   $relationId
-     * @param string   $key
-     * @param int      $data
-     *
-     * @return $this
-     */
-    protected function syncHasOne(Eloquent $instance, $relationId, $key, $data)
-    {
-        return $this->syncHasOneOrMany($instance, $relationId, $key, $data);
-    }
-
-    /**
-     * Sync HasMany relationship.
-     *
-     * @param Eloquent $instance
-     * @param string   $relationId
-     * @param string   $key
-     * @param array    $data
-     *
-     * @return $this
-     */
-    protected function syncHasMany(Eloquent $instance, $relationId, $key, $data)
-    {
-        return $this->syncHasOneOrMany($instance, $relationId, $key, $data);
-    }
-
-    /**
-     * Sync HasOneOrMany relationship.
-     *
-     * TODO: Consider removing this entirely since HasOne and HasMany are supported by related properties.
-     *
-     * @param Eloquent $instance
-     * @param string   $relationId
-     * @param string   $key
-     * @param mixed    $ids
-     *
-     * @return $this
-     */
-    protected function syncHasOneOrMany(Eloquent $instance, $relationId, $key, $ids)
-    {
-        $exists = $instance->exists;
-
-        return $this->afterSave(function ($instance) use ($relationId, $key, $ids, $exists)
-        {
-            $relation = $instance->$relationId();
-            $related = $relation->getRelated();
-            $foreignKey = $relation->getPlainForeignKey();
-            $relatedKey = $related->getKeyName();
-
-            $ids = is_array($ids) ? $ids : [];
-
-            if ($exists)
-            {
-                $attached = $relation->lists($relatedKey);
-
-                $attach = array_diff($ids, $attached);
-                $detach = array_diff($attached, $ids);
-
-                if (count($detach) > 0)
-                {
-                    $relation->whereIn($relatedKey, $detach)->update([ $foreignKey => null ]);
-                }
-            }
-            else
-            {
-                $attach = $ids;
-            }
-
-            if (count($attach) > 0)
-            {
-                $related->newQuery()->whereIn($relatedKey, $attach)
-                                    ->update([ $foreignKey => $relation->getParentKey() ]);
-            }
-
-            unset($instance->$key);
-        });
-    }
-
-    /**
      * Add a callback that will be fired after model is saved.
      *
      * @param callable $callback
      *
      * @return $this
      */
-    protected function afterSave(Callable $callback)
+    protected function addPostSaveCallback(Callable $callback)
     {
         $this->postSave[] = $callback;
 
@@ -405,16 +367,22 @@ abstract class BaseRepository implements RepositoryInterface {
      *
      * @return Eloquent
      */
-    protected function fireAfterSave(Eloquent $instance)
+    protected function firePostSaveCallbacks(Eloquent $instance)
     {
         foreach ($this->postSave as $callback)
         {
             $callback($instance);
         }
+    }
 
+    /**
+     * Reset post save events.
+     *
+     * @return void
+     */
+    protected function resetPostSaveCallbacks()
+    {
         $this->postSave = [];
-
-        return $instance;
     }
 
     /**
@@ -436,11 +404,14 @@ abstract class BaseRepository implements RepositoryInterface {
      *
      * @return $this
      */
-    protected function upload(array &$input)
+    protected function uploadFiles(array &$input)
     {
         foreach ($this->files as $attr => $file)
         {
-            if (isset($input[$attr])) $input[$attr] = $file->upload($input[$attr]);
+            if (isset($input[$attr]))
+            {
+                $input[$attr] = $file->upload($input[$attr]);
+            }
         }
 
         return $this;

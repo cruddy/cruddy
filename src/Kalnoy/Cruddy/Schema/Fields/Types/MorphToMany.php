@@ -5,24 +5,22 @@ namespace Kalnoy\Cruddy\Schema\Fields\Types;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /**
- * Handles belongs to many relation.
+ * Handles morph to many relation.
  */
-class MorphToMany extends HasMany {
+class MorphToMany extends BelongsToMany {
 
     /**
      * @inheritdoc
      *
-     * @var bool
+     * @param \Illuminate\Database\Query\Builder $query
+     * @param mixed                              $data
+     *
+     * @return void
      */
-    protected $multiple = true;
-
-    protected $filterType = self::FILTER_NONE;
-
-    protected function filterInnerQuery($q, $data)
+    protected function initNestedQuery(QueryBuilder $query, $data)
     {
-        parent::filterInnerQuery($q);
+        parent::initNestedQuery($query, $data);
 
-        // Wait until it is added to the Laravel
-        // $q->where($this->relation->getMorphType(), '=', $this->relation->getMorphClass());
+        $query->where($this->relation->getMorphType(), '=', $this->relation->getMorphClass());
     }
 }

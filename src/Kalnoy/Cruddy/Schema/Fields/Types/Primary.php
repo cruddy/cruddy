@@ -23,18 +23,6 @@ class Primary extends String {
     /**
      * @inheritdoc
      *
-     * @param mixed $value
-     *
-     * @return bool
-     */
-    public function skip($value)
-    {
-        return empty($value);
-    }
-
-    /**
-     * @inheritdoc
-     *
      * @param Illuminate\Database\Query\Builder $builder
      * @param mixed                             $data
      * 

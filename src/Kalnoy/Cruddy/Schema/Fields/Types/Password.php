@@ -34,16 +34,4 @@ class Password extends BaseTextField {
     {
         return '';
     }
-
-    /**
-     * @inheritdoc
-     *
-     * @param mixed $value
-     *
-     * @return mixed
-     */
-    public function skip($value)
-    {
-        return empty($value) or parent::skip($value);
-    }
 }

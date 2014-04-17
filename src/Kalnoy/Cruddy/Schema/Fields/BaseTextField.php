@@ -53,6 +53,18 @@ abstract class BaseTextField extends BaseField {
     /**
      * @inheritdoc
      *
+     * @param string $value
+     *
+     * @return bool
+     */
+    public function skip($value)
+    {
+        return trim($value) === '';
+    }
+
+    /**
+     * @inheritdoc
+     *
      * @param \Illuminate\Database\Query\Builder $builder
      * @param asc|desc                           $direction
      *

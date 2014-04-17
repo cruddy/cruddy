@@ -142,7 +142,7 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessorInte
      */
     public function process($data)
     {
-        if (empty($data)) return null;
+        if ( ! is_array($data)) return null;
 
         return $this->multiple ? array_pluck($data, 'id') : $data['id'];
     }

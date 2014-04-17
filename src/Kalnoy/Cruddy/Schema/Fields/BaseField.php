@@ -77,7 +77,7 @@ abstract class BaseField extends Attribute implements FieldInterface {
      */
     public function skip($value)
     {
-        return ! $this->isFillable();
+        return false;
     }
 
     /**

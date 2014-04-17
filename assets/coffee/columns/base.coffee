@@ -7,7 +7,7 @@ class Cruddy.Columns.Base extends Attribute
         super
 
     # Return value's text representation
-    format: (value) -> if @formatter? then @formatter.format value else value
+    format: (value) -> if @formatter? then @formatter.format value else _.escape value
 
     # Get column's header text
     getHeader: -> @attributes.header

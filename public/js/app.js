@@ -715,8 +715,8 @@
 
     DataGrid.prototype.renderHeadCellValue = function(col) {
       var help, title;
-      title = col.getHeader();
-      help = col.getHelp();
+      title = _.escape(col.getHeader());
+      help = _.escape(col.getHelp());
       if (col.canOrder()) {
         title = "<span class=\"sortable\" data-id=\"" + col.id + "\">" + title + "</span>";
       }
@@ -3282,7 +3282,7 @@
       if (this.formatter != null) {
         return this.formatter.format(value);
       } else {
-        return value;
+        return _.escape(value);
       }
     };
 
@@ -3405,7 +3405,7 @@
     }
 
     Plain.prototype.format = function(value) {
-      return value;
+      return _.escape(value);
     };
 
     return Plain;

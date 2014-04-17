@@ -453,8 +453,8 @@ class DataGrid extends Backbone.View
         """<th class="#{ col.getClass() }" id="col-#{ col.id }">#{ @renderHeadCellValue col }</th>"""
 
     renderHeadCellValue: (col) ->
-        title = col.getHeader()
-        help = col.getHelp()
+        title = _.escape col.getHeader()
+        help = _.escape col.getHelp()
         title = "<span class=\"sortable\" data-id=\"#{ col.id }\">#{ title }</span>" if col.canOrder()
         if help then "<span class=\"glyphicon glyphicon-question-sign\" title=\"#{ help }\"></span> #{ title }" else title
 
@@ -2179,7 +2179,7 @@ class Cruddy.Columns.Base extends Attribute
         super
 
     # Return value's text representation
-    format: (value) -> if @formatter? then @formatter.format value else value
+    format: (value) -> if @formatter? then @formatter.format value else _.escape value
 
     # Get column's header text
     getHeader: -> @attributes.header
@@ -2227,7 +2227,7 @@ class Cruddy.formatters.Image extends BaseFormatter
         <img src="#{ thumb value, @options.width, @options.height }" width="#{ @options.width or @defaultOptions.width }" height="#{ @options.height or @defaultOptions.height }" alt="#{ _.escape value }">
         """
 class Cruddy.formatters.Plain extends BaseFormatter
-    format: (value) -> value
+    format: (value) -> _.escape value
 Cruddy.Entity = {}
 
 class Cruddy.Entity.Entity extends Backbone.Model

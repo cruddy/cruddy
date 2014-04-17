@@ -87,8 +87,8 @@ class DataGrid extends Backbone.View
         """<th class="#{ col.getClass() }" id="col-#{ col.id }">#{ @renderHeadCellValue col }</th>"""
 
     renderHeadCellValue: (col) ->
-        title = col.getHeader()
-        help = col.getHelp()
+        title = _.escape col.getHeader()
+        help = _.escape col.getHelp()
         title = "<span class=\"sortable\" data-id=\"#{ col.id }\">#{ title }</span>" if col.canOrder()
         if help then "<span class=\"glyphicon glyphicon-question-sign\" title=\"#{ help }\"></span> #{ title }" else title
 

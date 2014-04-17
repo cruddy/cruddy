@@ -27,7 +27,7 @@
     <div class="main-content" id="content">@yield('content', $content)</div>
 
     <script>
-    Cruddy = {{ $cruddy->toJSON() }};
+    Cruddy = {{ $cruddyJSON }};
     </script>
 
     {{ $cruddy->scripts() }}

@@ -8,5 +8,6 @@ View::creator('cruddy::layout', function ($view)
     $view->brand_url = $cruddy->config('brand_url') ?: url('/');
     $view->logout_url = $cruddy->config('logout_url');
     $view->cruddy = $cruddy;
+    $view->cruddyJSON = $cruddy->toJSON();
     $view->content = '';
 });

@@ -2330,6 +2330,7 @@
       if (field.isRequired()) {
         className += " required";
       }
+      className += " form-group";
       this.className = this.className ? className + " " + this.className : className;
       BaseView.__super__.constructor.apply(this, arguments);
     }
@@ -2421,21 +2422,20 @@
     };
 
     InputView.prototype.hideError = function() {
-      this.inputHolder.removeClass("has-error");
+      this.$el.removeClass("has-error");
       return InputView.__super__.hideError.apply(this, arguments);
     };
 
     InputView.prototype.showError = function() {
-      this.inputHolder.addClass("has-error");
+      this.$el.addClass("has-error");
       return InputView.__super__.showError.apply(this, arguments);
     };
 
     InputView.prototype.render = function() {
       this.dispose();
       this.$el.html(this.template());
-      this.inputHolder = this.$(".input-holder");
-      this.inputHolder.append(this.input.render().el);
-      this.inputHolder.append(this.errorTemplate());
+      this.$el.append(this.input.render().el);
+      this.$el.append(this.errorTemplate());
       this.toggleVisibility();
       return InputView.__super__.render.apply(this, arguments);
     };
@@ -2448,7 +2448,7 @@
     };
 
     InputView.prototype.template = function() {
-      return "<div class=\"form-group input-holder\">\n    " + (this.label()) + "\n</div>";
+      return this.label();
     };
 
     InputView.prototype.focus = function() {

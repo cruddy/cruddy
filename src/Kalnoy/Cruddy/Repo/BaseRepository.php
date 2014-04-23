@@ -171,8 +171,14 @@ abstract class BaseRepository implements RepositoryInterface {
     public function update($id, array $input)
     {
         $model = $this->find($id);
+        $parents = $this->get_ancestors($model);
+        $updateArdent=FALSE;
 
-        return $this->save($model, $input);
+        if (in_array('LaravelBook\Ardent\Ardent',$parents)) {
+            $updateArdent=TRUE;
+        }
+
+        return $this->save($model, $input, $updateArdent);
     }
 
     /**
@@ -180,13 +186,14 @@ abstract class BaseRepository implements RepositoryInterface {
      *
      * @param \Illuminate\Database\Eloquent\Model $instance
      * @param array                               $input
+     * @param boolean                             $updateArdent
      *
      * @return \Illuminate\Database\Eloquent\Model
      * 
      * @throws \Exception
      * @throws \Kalnoy\Cruddy\ModelNotSavedException
      */
-    protected function save(Eloquent $instance, array $input)
+    protected function save(Eloquent $instance, array $input, $updateArdent = false)
     {
         $this->resetPostSaveCallbacks();
 
@@ -196,7 +203,12 @@ abstract class BaseRepository implements RepositoryInterface {
 
         try
         {
-            if (false === $this->fill($instance, $input)->save())
+            $saveMethod = 'save';
+            // check if ardent is used in the for updating the model
+            if ($updateArdent){
+                $saveMethod = 'updateUniques';
+            }
+            if (false === $this->fill($instance, $input)->$saveMethod())
             {
                 throw new ModelNotSavedException("Could not save instance of {get_class($instance)}.");
             }
@@ -465,6 +477,19 @@ abstract class BaseRepository implements RepositoryInterface {
     public function isFillable($key)
     {
         return $this->model->isFillable($key);
+    }
+
+    /**
+     * Check the parents of a class
+     *
+     * @param object                               $class
+     *
+     * @return array
+     *
+     */
+    public function get_ancestors ($class) {
+        for ($classes[] = $class; $class = get_parent_class ($class); $classes[] = $class);
+        return $classes;
     }
 
 }

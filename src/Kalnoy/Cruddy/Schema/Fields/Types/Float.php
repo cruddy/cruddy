@@ -9,6 +9,16 @@ use Kalnoy\Cruddy\Schema\Fields\BaseNumber;
  */
 class Float extends BaseNumber {
 
-    
+    /**
+     * @inheritdoc
+     *
+     * @param mixed $value
+     *
+     * @return int
+     */
+    protected function cast($value)
+    {
+        return (float)$value;
+    }
 
 }

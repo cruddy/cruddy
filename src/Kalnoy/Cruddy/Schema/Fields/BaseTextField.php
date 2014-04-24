@@ -47,19 +47,9 @@ abstract class BaseTextField extends BaseField {
      */
     public function process($value)
     {
-        return trim($value);
-    }
+        $value = trim($value);
 
-    /**
-     * @inheritdoc
-     *
-     * @param string $value
-     *
-     * @return bool
-     */
-    public function skip($value)
-    {
-        return trim($value) === '';
+        return $value === '' ? null : $value;
     }
 
     /**

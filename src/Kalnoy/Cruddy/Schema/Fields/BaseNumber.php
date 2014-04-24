@@ -2,6 +2,7 @@
 
 namespace Kalnoy\Cruddy\Schema\Fields;
 
+use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 
@@ -37,6 +38,43 @@ abstract class BaseNumber extends BaseField {
      * @var bool
      */
     protected $isDecimal = false;
+
+    /**
+     * @inheritdoc
+     *
+     * @param mixed $value
+     *
+     * @return mixed
+     */
+    public function process($value)
+    {
+        $value = trim($value);
+
+        return $value === '' ? null : $this->cast($value);
+    }
+
+    /**
+     * @inheritdoc
+     *
+     * @param \Illuminate\Database\Eloquent\Model $model
+     *
+     * @return int
+     */
+    public function extract(Eloquent $model)
+    {
+        $value = parent::extract($model);
+
+        return $value === null ? $value : $this->cast($value);
+    }
+
+    /**
+     * Cast value to a specific type.
+     *
+     * @param mixed $value
+     *
+     * @return mixed
+     */
+    abstract protected function cast($value);
 
     /**
      * @inheritdoc

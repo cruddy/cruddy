@@ -23,9 +23,9 @@ class Collection extends BaseCollection implements SearchProcessorInterface {
 
         foreach ($this->items as $key => $field)
         {
-            if (isset($input[$key]) && ! $field->skip($value = $input[$key]))
+            if (array_key_exists($key, $input))
             {
-                $result[$key] = $field->process($value);
+                $result[$key] = $field->process($input[$key]);
             }
         }
 

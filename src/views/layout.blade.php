@@ -13,12 +13,10 @@
             </div>
             
             <div class="navbar-collapse">
-                {{ $cruddy->menu() }}
+                {{ $menu->render($mainMenu) }}
             
-                @if ($logout_url)
-                    <p class="navbar-text navbar-right">
-                        <a href="{{ $logout_url }}" type="button" class="navbar-link">@lang('cruddy::app.logout')</a>
-                    </p>
+                @if ($serviceMenu)
+                    {{ $menu->render($serviceMenu, 'nav navbar-nav navbar-right') }}
                 @endif
             </div>
         </div>

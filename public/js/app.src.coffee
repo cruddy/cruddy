@@ -2820,14 +2820,6 @@ class Cruddy.Entity.Form extends Backbone.View
         this
 # Backend application file
 
-$(".navbar").on "click", ".entity", (e) =>
-    e.preventDefault();
-
-    baseUrl = Cruddy.root + "/" + Cruddy.uri + "/"
-    href = e.currentTarget.href.substr baseUrl.length
-
-    Cruddy.router.navigate href, trigger: true
-
 class App extends Backbone.Model
     initialize: ->
         @container = $ "body"
@@ -2900,14 +2892,33 @@ class Router extends Backbone.Router
         @addRoute "update", entities, "([^/]+)"
         @addRoute "create", entities, "create"
 
+        root = Cruddy.root + "/" + Cruddy.uri + "/"
+        history = Backbone.history
+        hashStripper = /#.*$/
+
+        $(document.body).on "click", "a", (e) ->
+            fragment = e.currentTarget.href.replace hashStripper, ""
+            oldFragment = history.fragment
+
+            if fragment.indexOf(root) is 0 and (fragment = fragment.slice root.length) and fragment isnt oldFragment
+                loaded = history.loadUrl fragment
+
+                # Backbone will set fragment even if no route matched so we need to
+                # restore old fragment
+                history.fragment = oldFragment
+
+                if loaded
+                    e.preventDefault()
+                    history.navigate fragment
+
+            e
+
         this
 
     addRoute: (name, entities, appendage = null) ->
         route = "^(#{ entities })"
         route += "/" + appendage if appendage
         route += "$"
-
-        console.log route
 
         @route new RegExp(route), name
 
@@ -2945,4 +2956,7 @@ class Router extends Backbone.Router
 
 Cruddy.router = new Router
 
-Backbone.history.start { root: Cruddy.uri + "/", pushState: true, hashChange: false }
+Backbone.history.start
+    root: Cruddy.uri
+    pushState: true
+    hashChange: false

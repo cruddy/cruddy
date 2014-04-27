@@ -3,6 +3,7 @@
 namespace Kalnoy\Cruddy;
 
 use Illuminate\Support\ServiceProvider;
+use Kalnoy\Cruddy\Service\MenuBuilder;
 use Kalnoy\Cruddy\Service\Permissions\PermissionsManager;
 use Kalnoy\Cruddy\Console\GenerateSchemaCommand;
 
@@ -35,9 +36,23 @@ class CruddyServiceProvider extends ServiceProvider {
 	 */
 	public function register()
     {
+        $this->registerMenu();
         $this->registerPermissions();
         $this->registerCruddy();
         $this->registerCommands();
+    }
+
+    /**
+     * Register menu builder.
+     *
+     * @return void
+     */
+    public function registerMenu()
+    {
+        $this->app->bindShared('cruddy.menu', function ($app)
+        {
+            return new MenuBuilder($app['cruddy'], $app['html'], $app['url']);
+        });
     }
 
     /**

@@ -117,18 +117,6 @@ class Environment implements JsonableInterface {
     }
 
     /**
-     * Render a menu.
-     *
-     * @return string
-     */
-    public function menu()
-    {
-        $menu = new Service\Menu($this);
-
-        return $menu->render($this->config('menu'));
-    }
-
-    /**
      * Get configuration option from cruddy configuration file.
      *
      * @param      $key

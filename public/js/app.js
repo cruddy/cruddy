@@ -4191,18 +4191,6 @@
 
   })(Backbone.View);
 
-  $(".navbar").on("click", ".entity", (function(_this) {
-    return function(e) {
-      var baseUrl, href;
-      e.preventDefault();
-      baseUrl = Cruddy.root + "/" + Cruddy.uri + "/";
-      href = e.currentTarget.href.substr(baseUrl.length);
-      return Cruddy.router.navigate(href, {
-        trigger: true
-      });
-    };
-  })(this));
-
   App = (function(_super) {
     __extends(App, _super);
 
@@ -4299,13 +4287,30 @@
     }
 
     Router.prototype.initialize = function() {
-      var entities;
+      var entities, hashStripper, history, root;
       entities = (_.map(Cruddy.entities, function(entity) {
         return entity.id;
       })).join("|");
       this.addRoute("index", entities);
       this.addRoute("update", entities, "([^/]+)");
       this.addRoute("create", entities, "create");
+      root = Cruddy.root + "/" + Cruddy.uri + "/";
+      history = Backbone.history;
+      hashStripper = /#.*$/;
+      $(document.body).on("click", "a", function(e) {
+        var fragment, loaded, oldFragment;
+        fragment = e.currentTarget.href.replace(hashStripper, "");
+        oldFragment = history.fragment;
+        if (fragment.indexOf(root) === 0 && (fragment = fragment.slice(root.length)) && fragment !== oldFragment) {
+          loaded = history.loadUrl(fragment);
+          history.fragment = oldFragment;
+          if (loaded) {
+            e.preventDefault();
+            history.navigate(fragment);
+          }
+        }
+        return e;
+      });
       return this;
     };
 
@@ -4319,7 +4324,6 @@
         route += "/" + appendage;
       }
       route += "$";
-      console.log(route);
       this.route(new RegExp(route), name);
       return this;
     };
@@ -4365,7 +4369,7 @@
   Cruddy.router = new Router;
 
   Backbone.history.start({
-    root: Cruddy.uri + "/",
+    root: Cruddy.uri,
     pushState: true,
     hashChange: false
   });

@@ -21,9 +21,6 @@
     // I.e. `auth.basic` or `auth`.
     'auth_filter' => null,
 
-    // The url that is used to log out a user
-    'logout_url' => null,
-
     // The main layout view.
     'layout' => 'cruddy::layout',
 
@@ -41,27 +38,17 @@
 
     ],
 
-    // The menu entries. There is three types of entry: entity, dropdown and custom
-    // link.
+    // Main menu items.
     // 
-    // To specify a link to the entity, just insert it's id.
-    // 
-    // To make a dropdown menu entry, provide a key-value pair where key will be
-    // the label and value is array of menu entries.
-    // 
-    // To make a custom link you need to provide an array with an url and label.
-    // 
-    // Example:
-    // 
-    // [
-    //      'auth' => ['users', 'groups'],
-    //      
-    //      ['url' => link_to_route('my.link'), 'label' => 'My link', 'permissions' => 'permissions_id'],
-    //      
-    //      'Another link' => 'http://mysite.com',
-    // ]
+    // How to define menu items: https://github.com/lazychaser/cruddy/wiki/Menu
     'menu' =>
     [
         
+    ],
+
+    // The menu that is displayed to the right of the main menu.
+    'service_menu' =>
+    [
+
     ],
 );

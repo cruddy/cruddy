@@ -183,7 +183,10 @@ class MenuBuilder {
             return $this->hrefFromUrl($options['url'], $secure);
         }
         
-        if (isset($options['route'])) $this->hrefFromRoute($options['route']);
+        if (isset($options['route']))
+        {
+            return $this->hrefFromRoute($options['route']);
+        }
      
         if (isset($options['entity']))
         {

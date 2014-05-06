@@ -23,9 +23,32 @@ class Collection extends BaseCollection implements SearchProcessorInterface {
 
         foreach ($this->items as $key => $field)
         {
-            if (array_key_exists($key, $input))
+            if ( ! $field->isComputed() && array_key_exists($key, $input))
             {
                 $result[$key] = $field->process($input[$key]);
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * Clean input from disabled fields.
+     *
+     * @param string $action
+     * @param array  $input
+     *
+     * @return array
+     */
+    public function cleanInput($action, array $input)
+    {
+        $result = [];
+
+        foreach ($input as $key => $value)
+        {
+            if ($this->items[$key]->sendToRepository($action))
+            {
+                $result[$key] = $value;
             }
         }
 

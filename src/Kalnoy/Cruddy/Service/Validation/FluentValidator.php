@@ -146,4 +146,46 @@ class FluentValidator extends Fluent implements ValidableInterface {
     {
         return $this->errors;
     }
+
+    /**
+     * An alias for `rules`.
+     *
+     * @param array $rules
+     *
+     * @return $this
+     */
+    public function always(array $rules)
+    {   
+        $this->attributes['rules'] = $rules;
+
+        return $this;
+    }
+
+    /**
+     * An alias for `create`.
+     *
+     * @param array $rules
+     *
+     * @return $this
+     */
+    public function fresh(array $rules)
+    {
+        $this->attributes['create'] = $rules;
+
+        return $this;
+    }
+
+    /**
+     * An alias for `update`.
+     *
+     * @param array $rules
+     *
+     * @return $this
+     */
+    public function existing(array $rules)
+    {
+        $this->attributes['update'] = $rules;
+
+        return $this;
+    }
 }

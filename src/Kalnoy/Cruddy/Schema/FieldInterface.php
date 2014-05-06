@@ -35,13 +35,21 @@ interface FieldInterface extends AttributeInterface {
     public function process($value);
 
     /**
-     * Get whether to exclude value from an input before save.
-     *
-     * @param mixed $value
+     * Get whether the field is computed and should not be nor validated or sent to
+     * the repository.
      *
      * @return bool
      */
-    public function skip($value);
+    public function isComputed();
+
+    /**
+     * Get whether the field is disabled for specified action.
+     *
+     * @param string $action
+     *
+     * @return bool
+     */
+    public function sendToRepository($action);
 
     /**
      * Apply constraints to the query builder.

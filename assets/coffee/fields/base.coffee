@@ -19,24 +19,31 @@ class Cruddy.Fields.BaseView extends Backbone.View
         super
 
     initialize: (options) ->
-        @listenTo @model, "sync",    @toggleVisibility
-        @listenTo @model, "request", @hideError
+        @listenTo @model, "sync",    @handleSync
+        @listenTo @model, "request", @handleRequest
         @listenTo @model, "invalid", @handleInvalid
 
         this
 
-    toggleVisibility: -> @$el.toggle @isVisible()
+    handleSync: -> @toggleVisibility()
 
-    hideError: ->
-        @error.hide()
-
-        this
+    handleRequest: -> @hideError()
 
     handleInvalid: (model, errors) ->
         if @field.id of errors
             error = errors[@field.id]
 
             @showError if _.isArray error then _.first error else error
+
+        this
+
+    toggleVisibility: ->
+        @$el.toggle @isVisible()
+
+        this
+
+    hideError: ->
+        @error.hide()
 
         this
 
@@ -63,7 +70,8 @@ class Cruddy.Fields.BaseView extends Backbone.View
     errorTemplate: -> """<span class="help-block error" id="#{ @cid }-error"></span>"""
 
     # Get whether the view is visible
-    isVisible: -> @field.isEditable() or not @model.isNew()
+    # The field is not visible when model is new and field is not editable or computed
+    isVisible: -> @field.isEditable(@model.action()) or not @model.isNew()
 
     dispose: -> this
 
@@ -74,8 +82,13 @@ class Cruddy.Fields.BaseView extends Backbone.View
 
 # This is basic field view that will render in bootstrap's vertical form style.
 class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
-    initialize: (options) ->
-        @input = options.input
+    handleRequest: (model) ->
+        @isEditable = @field.isEditable(model.action())
+
+        super
+
+    handleSync: (model) ->
+        @render() if @field.isEditable(model.action()) isnt @isEditable
 
         super
 
@@ -95,11 +108,15 @@ class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
 
         @$el.html @template()
 
+        @input = @field.createInput @model
+
         @$el.append @input.render().el
 
         @$el.append @errorTemplate()
 
         @toggleVisibility()
+
+        @isEditable = @field.isEditable(@model.action())
 
         super
 
@@ -121,20 +138,20 @@ class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
 
         this
 
-    remove: ->
-        @input.remove()
+    dispose: ->
+        @input?.remove()
 
-        super
+        this
 
 class Cruddy.Fields.Base extends Attribute
     viewConstructor: Cruddy.Fields.InputView
 
     # Create a view that will represent this field in field list
-    createView: (model) -> new @viewConstructor { model: model, field: this, input: @createInput(model) }
+    createView: (model) -> new @viewConstructor { model: model, field: this }
 
     # Create an input that is used by default view
     createInput: (model) ->
-        input = @createEditableInput model if @isEditable() and model.isSaveable()
+        input = @createEditableInput model if @isEditable(model.action()) and model.isSaveable()
 
         input or new Cruddy.Inputs.Static { model: model, key: @id, formatter: this }
 
@@ -153,8 +170,8 @@ class Cruddy.Fields.Base extends Attribute
     # Get field's label
     getLabel: -> @attributes.label
 
-    # Get whether the field is editable
-    isEditable: -> @attributes.fillable
+    # Get whether the field is editable for specified action
+    isEditable: (action) -> @attributes.fillable and @attributes.disabled isnt yes and @attributes.disabled isnt action
 
     # Get whether field is required
     isRequired: -> @attributes.required

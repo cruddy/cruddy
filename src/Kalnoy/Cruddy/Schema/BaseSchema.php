@@ -14,6 +14,10 @@ use Kalnoy\Cruddy\Service\Validation\FluentValidator;
  */
 abstract class BaseSchema implements SchemaInterface {
     
+    const WHEN_NEW = 'create';
+
+    const WHEN_EXISTS = 'update';
+
     /**
      * The model class name.
      *

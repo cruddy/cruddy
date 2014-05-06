@@ -339,7 +339,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
 
         if ( ! empty($errors)) throw new ValidationException($errors);
 
-        return [ $processed, $relatedData ];
+        return [ $this->fields->cleanInput($action, $processed), $relatedData ];
     }
 
     /**
@@ -361,7 +361,8 @@ class Entity implements JsonableInterface, ArrayableInterface {
             try
             {
                 $data[$id] = $item->processInput($input[$id]);
-            } 
+            }
+
             catch (ValidationException $e)
             {
                 $errors[$id] = $e->getErrors();

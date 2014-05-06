@@ -54,6 +54,18 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     /**
      * @inheritdoc
      *
+     * @param string $action
+     *
+     * @return bool
+     */
+    public function sendToRepository($action)
+    {
+        return false;
+    }
+
+    /**
+     * @inheritdoc
+     *
      * @param array $input
      *
      * @return array

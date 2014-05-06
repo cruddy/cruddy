@@ -2336,19 +2336,18 @@
     }
 
     BaseView.prototype.initialize = function(options) {
-      this.listenTo(this.model, "sync", this.toggleVisibility);
-      this.listenTo(this.model, "request", this.hideError);
+      this.listenTo(this.model, "sync", this.handleSync);
+      this.listenTo(this.model, "request", this.handleRequest);
       this.listenTo(this.model, "invalid", this.handleInvalid);
       return this;
     };
 
-    BaseView.prototype.toggleVisibility = function() {
-      return this.$el.toggle(this.isVisible());
+    BaseView.prototype.handleSync = function() {
+      return this.toggleVisibility();
     };
 
-    BaseView.prototype.hideError = function() {
-      this.error.hide();
-      return this;
+    BaseView.prototype.handleRequest = function() {
+      return this.hideError();
     };
 
     BaseView.prototype.handleInvalid = function(model, errors) {
@@ -2357,6 +2356,16 @@
         error = errors[this.field.id];
         this.showError(_.isArray(error) ? _.first(error) : error);
       }
+      return this;
+    };
+
+    BaseView.prototype.toggleVisibility = function() {
+      this.$el.toggle(this.isVisible());
+      return this;
+    };
+
+    BaseView.prototype.hideError = function() {
+      this.error.hide();
       return this;
     };
 
@@ -2393,7 +2402,7 @@
     };
 
     BaseView.prototype.isVisible = function() {
-      return this.field.isEditable() || !this.model.isNew();
+      return this.field.isEditable(this.model.action()) || !this.model.isNew();
     };
 
     BaseView.prototype.dispose = function() {
@@ -2416,9 +2425,16 @@
       return InputView.__super__.constructor.apply(this, arguments);
     }
 
-    InputView.prototype.initialize = function(options) {
-      this.input = options.input;
-      return InputView.__super__.initialize.apply(this, arguments);
+    InputView.prototype.handleRequest = function(model) {
+      this.isEditable = this.field.isEditable(model.action());
+      return InputView.__super__.handleRequest.apply(this, arguments);
+    };
+
+    InputView.prototype.handleSync = function(model) {
+      if (this.field.isEditable(model.action()) !== this.isEditable) {
+        this.render();
+      }
+      return InputView.__super__.handleSync.apply(this, arguments);
     };
 
     InputView.prototype.hideError = function() {
@@ -2434,9 +2450,11 @@
     InputView.prototype.render = function() {
       this.dispose();
       this.$el.html(this.template());
+      this.input = this.field.createInput(this.model);
       this.$el.append(this.input.render().el);
       this.$el.append(this.errorTemplate());
       this.toggleVisibility();
+      this.isEditable = this.field.isEditable(this.model.action());
       return InputView.__super__.render.apply(this, arguments);
     };
 
@@ -2456,9 +2474,12 @@
       return this;
     };
 
-    InputView.prototype.remove = function() {
-      this.input.remove();
-      return InputView.__super__.remove.apply(this, arguments);
+    InputView.prototype.dispose = function() {
+      var _ref1;
+      if ((_ref1 = this.input) != null) {
+        _ref1.remove();
+      }
+      return this;
     };
 
     return InputView;
@@ -2477,14 +2498,13 @@
     Base.prototype.createView = function(model) {
       return new this.viewConstructor({
         model: model,
-        field: this,
-        input: this.createInput(model)
+        field: this
       });
     };
 
     Base.prototype.createInput = function(model) {
       var input;
-      if (this.isEditable() && model.isSaveable()) {
+      if (this.isEditable(model.action()) && model.isSaveable()) {
         input = this.createEditableInput(model);
       }
       return input || new Cruddy.Inputs.Static({
@@ -2514,8 +2534,8 @@
       return this.attributes.label;
     };
 
-    Base.prototype.isEditable = function() {
-      return this.attributes.fillable;
+    Base.prototype.isEditable = function(action) {
+      return this.attributes.fillable && this.attributes.disabled !== true && this.attributes.disabled !== action;
     };
 
     Base.prototype.isRequired = function() {
@@ -3262,6 +3282,29 @@
 
   })(Cruddy.Fields.Base);
 
+  Cruddy.Fields.Computed = (function(_super) {
+    __extends(Computed, _super);
+
+    function Computed() {
+      return Computed.__super__.constructor.apply(this, arguments);
+    }
+
+    Computed.prototype.createInput = function(model) {
+      return new Cruddy.Inputs.Static({
+        model: model,
+        key: this.id,
+        formatter: this
+      });
+    };
+
+    Computed.prototype.isEditable = function() {
+      return false;
+    };
+
+    return Computed;
+
+  })(Cruddy.Fields.Base);
+
   Cruddy.Columns = new Factory;
 
   Cruddy.Columns.Base = (function(_super) {
@@ -3769,6 +3812,14 @@
       };
     };
 
+    Instance.prototype.action = function() {
+      if (this.isNew()) {
+        return "create";
+      } else {
+        return "update";
+      }
+    };
+
     return Instance;
 
   })(Backbone.Model);
@@ -3886,7 +3937,9 @@
     Page.prototype.buttonsTemplate = function() {
       var html;
       html = "<button type=\"button\" class=\"btn btn-default btn-refresh\" title=\"" + Cruddy.lang.refresh + "\">" + (b_icon("refresh")) + "</button>";
-      html += " <button type=\"button\" class=\"btn btn-primary btn-create\" title=\"" + Cruddy.lang.add + "\">" + (b_icon("plus")) + "</button>";
+      if (this.model.createPermitted()) {
+        html += " <button type=\"button\" class=\"btn btn-primary btn-create\" title=\"" + Cruddy.lang.add + "\">" + (b_icon("plus")) + "</button>";
+      }
       return html;
     };
 

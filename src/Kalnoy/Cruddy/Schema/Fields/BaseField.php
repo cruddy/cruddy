@@ -26,7 +26,7 @@ abstract class BaseField extends Attribute implements FieldInterface {
     /**
      * Whether the editing is disabled.
      * 
-     * @var bool
+     * @var bool|string
      */
     public $disabled = false;
 
@@ -66,18 +66,6 @@ abstract class BaseField extends Attribute implements FieldInterface {
     public function process($value)
     {
         return $value;
-    }
-
-    /**
-     * @inheritdoc
-     *
-     * @param mixed $value
-     *
-     * @return bool
-     */
-    public function skip($value)
-    {
-        return false;
     }
 
     /**
@@ -200,6 +188,7 @@ abstract class BaseField extends Attribute implements FieldInterface {
         [
             'required' => $this->required,
             'unique' => $this->unique,
+            'disabled' => $this->disabled,
             'fillable' => $this->isFillable(),
             'label' => $this->getLabel(),
             'filter_type' => $this->getFilterType(),
@@ -214,7 +203,29 @@ abstract class BaseField extends Attribute implements FieldInterface {
      */
     public function isFillable()
     {
-        return ! $this->disabled and $this->entity->getRepository()->isFillable($this->id);
+        return $this->entity->getRepository()->isFillable($this->id);
+    }
+
+    /**
+     * Get whether field is computed.
+     *
+     * @return bool
+     */
+    public function isComputed()
+    {
+        return false;
+    }
+
+    /**
+     * @inheritdoc
+     *
+     * @param string $action
+     *
+     * @return bool
+     */
+    public function sendToRepository($action)
+    {
+        return $this->disabled !== true and $this->disabled !== $action;
     }
 
 }

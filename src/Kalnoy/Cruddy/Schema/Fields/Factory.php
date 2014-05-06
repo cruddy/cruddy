@@ -136,7 +136,7 @@ class Factory extends BaseFactory {
      * @param \Kalnoy\Cruddy\Entity                $entity
      * @param \Kalnoy\Cruddy\Schema\BaseCollection $collection
      * @param string                               $id
-     * @param array|\Callable                       $items
+     * @param array|\Closure                       $items
      *
      * @return \Kalnoy\Cruddy\Fields\Types\Enum
      */
@@ -145,6 +145,32 @@ class Factory extends BaseFactory {
         $instance = new Types\Enum($entity, $id);
 
         $instance->items = $items;
+
+        $collection->add($instance);
+
+        return $instance;
+    }
+
+    /**
+     * Create computed field.
+     *
+     * @param \Kalnoy\Cruddy\Entity                $entity
+     * @param \Kalnoy\Cruddy\Schema\BaseCollection $collection
+     * @param string                               $id
+     * @param string|\Closure                     $accessor
+     *
+     * @return \Kalnoy\Cruddy\Fields\Types\Computed
+     */
+    public function computed($entity, $collection, $id, $accessor = null)
+    {
+        $instance = new Types\Computed($entity, $id);
+
+        if ($accessor === null)
+        {
+            $accessor = 'get'.\camel_case($id);
+        }
+
+        $instance->accessor = $accessor;
 
         $collection->add($instance);
 

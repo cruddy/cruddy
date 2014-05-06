@@ -148,7 +148,7 @@ abstract class BaseRelation extends BaseField {
      */
     public function isFillable()
     {
-        return ! $this->disabled;
+        return true;
     }
 
     /**

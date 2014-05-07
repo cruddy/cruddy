@@ -12,6 +12,15 @@ use Kalnoy\Cruddy\Repo\RepositoryInterface;
 interface SchemaInterface extends ArrayableInterface {
 
     /**
+     * Create an entity object.
+     *
+     * @param string $id
+     *
+     * @return \Kalnoy\Cruddy\Entity
+     */
+    public function entity($id);
+
+    /**
      * Initialize fields.
      *
      * @param $schema

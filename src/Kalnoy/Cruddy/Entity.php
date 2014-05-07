@@ -22,7 +22,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
      *
      * @var \Kalnoy\Cruddy\Environment
      */
-    protected $env;
+    protected static $env;
 
     /**
      * The schema.
@@ -76,13 +76,11 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Init entity.
      *
-     * @param \Kalnoy\Cruddy\Environment            $env
      * @param \Kalnoy\Cruddy\Schema\SchemaInterface $schema
      * @param string                                $id
      */
-    public function __construct(Environment $env, SchemaInterface $schema, $id)
+    public function __construct(SchemaInterface $schema, $id)
     {
-        $this->env = $env;
         $this->schema = $schema;
         $this->id = $id;
     }
@@ -208,9 +206,9 @@ class Entity implements JsonableInterface, ArrayableInterface {
     {
         $processor = new ChainedSearchProcessor([ $this->getFields(), $this->getColumns() ]);
 
-        if (isset($options['owner']))
+        if (isset($options['owner']) && static::$env !== null)
         {
-            $field = $this->env->field($options['owner']);
+            $field = static::$env->field($options['owner']);
 
             if ( ! $field instanceof SearchProcessorInterface)
             {
@@ -306,11 +304,78 @@ class Entity implements JsonableInterface, ArrayableInterface {
     {
         list($data, $relatedData) = $this->process($action, $input);
 
+        $eventResult = $this->fireEvent('saving', [ $action, $input ]);
+
+        if ( ! is_null($eventResult))
+        {
+            throw new ModelNotSavedException($eventResult);
+        }
+
         $model = $callback($data);
 
         $this->saveRelated($model, $relatedData);
 
+        $this->fireEvent('saved', [ $action, $model ], false);
+
         return $this->extract($model);
+    }
+
+    /**
+     * Register saving event.
+     *
+     * @param string $id
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public static function saving($id, $callback)
+    {
+        static::registerEvent($id, 'saving', $callback);
+    }
+
+    /**
+     * Register saved event.
+     *
+     * @param string $id
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public static function saved($id, $callback)
+    {
+        static::registerEvent($id, 'saved', $callback);
+    }
+
+    /**
+     * Register entity event handler.
+     *
+     * @param string $id
+     * @param string $event
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public static function registerEvent($id, $event, $callback)
+    {
+        static::$env->getDispatcher()->listen("entity.{$event}: {$id}", $callback);
+    }
+
+    /**
+     * Fire entity event.
+     *
+     * @param string $event
+     * @param array  $payload
+     * @param bool   $halt
+     *
+     * @return mixed
+     */
+    protected function fireEvent($event, array $payload, $halt = true)
+    {
+        if ( ! isset(static::$env)) return null;
+
+        $event = "entity.{$event}: {$this->id}";
+
+        return static::$env->getDispatcher()->fire($event, $payload, $halt);
     }
 
     /**
@@ -417,14 +482,14 @@ class Entity implements JsonableInterface, ArrayableInterface {
         {
             if ($pos === 0) $key = substr($key, 2);
 
-            return $this->env->translate($key, $default);
+            return static::$env->translate($key, $default);
         }
 
-        $line = $this->env->translate("{$this->id}.{$key}");
+        $line = static::$env->translate("{$this->id}.{$key}");
 
         if ($line !== null) return $line;
 
-        return $this->env->translate("entities.{$key}", $default);
+        return static::$env->translate("entities.{$key}", $default);
     }
 
     /**
@@ -458,7 +523,8 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     protected function createFields()
     {
-        $factory = $this->env->getFieldFactory();
+        $factory = static::$env->getFieldFactory();
+
         $collection = $this->fields = new Schema\Fields\Collection;
 
         $schema = new InstanceFactory($factory, $this, $collection);
@@ -487,20 +553,34 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function createColumns()
     {
-        $factory = $this->env->getColumnFactory();
+        $factory = static::$env->getColumnFactory();
         $collection = new Schema\Columns\Collection;
 
         $schema = new InstanceFactory($factory, $this, $collection);
 
         $this->schema->columns($schema);
 
-        $keyName = $this->repo->newModel()->getKeyName();
+        return $this->enshurePrimaryColumn($collection);
+    }
+
+    /**
+     * Enshure that primary column is exists.
+     *
+     * @param \Kalnoy\Cruddy\Schema\Columns\Collection $collection
+     *
+     * @return \Kalnoy\Cruddy\Schema\Columns\Collection
+     */
+    protected function enshurePrimaryColumn($collection)
+    {
+        $keyName = $this->getRepository()->newModel()->getKeyName();
 
         if ( ! $collection->has($keyName))
         {
             $field = $this->fields->get($keyName);
 
-            $collection->add(with(new Schema\Columns\Types\Proxy($this, $keyName, $field))->hide());
+            $column = new Schema\Columns\Types\Proxy($this, $keyName, $field);
+
+            $collection->add($column->hide());
         }
 
         return $collection;
@@ -536,9 +616,19 @@ class Entity implements JsonableInterface, ArrayableInterface {
      *
      * @return \Kalnoy\Cruddy\Environment
      */
-    public function getEnv()
+    public static function getEnvironment()
     {
-        return $this->env;  
+        return static::$env;
+    }
+
+    /**
+     * Set environment instance.
+     *
+     * @param \Kalnoy\Cruddy\Environment $env
+     */
+    public static function setEnvironment(Environment $env)
+    {
+        static::$env = $env;
     }
 
     /**
@@ -634,7 +724,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function getPermissions()
     {
-        $permissions = $this->env->getPermissions()->driver();
+        $permissions = static::$env->getPermissions()->driver();
         $actions = ['view', 'update', 'create', 'delete'];
         $data = [];
 

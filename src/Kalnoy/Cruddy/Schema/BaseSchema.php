@@ -8,6 +8,7 @@ use Kalnoy\Cruddy\Repo\Stub as StubRepository;
 use Kalnoy\Cruddy\Repo\BaseRepository;
 use Kalnoy\Cruddy\Form\BasicForm;
 use Kalnoy\Cruddy\Service\Validation\FluentValidator;
+use Kalnoy\Cruddy\Entity;
 
 /**
  * Base schema.
@@ -59,6 +60,18 @@ abstract class BaseSchema implements SchemaInterface {
      * @var string
      */
     protected $template = 'Basic';
+
+    /**
+     * @inheritdoc
+     *
+     * @param string $id
+     *
+     * @return \Kalnoy\Cruddy\Entity
+     */
+    public function entity($id)
+    {
+        return new Entity($this, $id);
+    }
 
     /**
      * @inheritdoc

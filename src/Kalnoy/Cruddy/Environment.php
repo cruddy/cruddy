@@ -3,6 +3,7 @@
 use Illuminate\Support\Contracts\JsonableInterface;
 use Illuminate\Http\Request;
 use Illuminate\Config\Repository as Config;
+use Illuminate\Events\Dispatcher;
 use Symfony\Component\Translation\TranslatorInterface;
 use Kalnoy\Cruddy\Schema\Fields\Factory as FieldFactory;
 use Kalnoy\Cruddy\Schema\Columns\Factory as ColumnFactory;
@@ -57,6 +58,13 @@ class Environment implements JsonableInterface {
     protected $permissions;
 
     /**
+     * Event dispatcher.
+     *
+     * @var \Illuminate\Events\Dispatcher
+     */
+    protected $dispatcher;
+
+    /**
      * The list of css files.
      *
      * @var array
@@ -87,7 +95,7 @@ class Environment implements JsonableInterface {
     public function __construct(
         Config $config, Request $request, TranslatorInterface $translator,
         SchemaRepository $schemas, FieldFactory $fields, ColumnFactory $columns,
-        PermissionsManager $permissions)
+        PermissionsManager $permissions, Dispatcher $dispatcher)
     {
         $this->config = $config;
         $this->request = $request;
@@ -96,6 +104,7 @@ class Environment implements JsonableInterface {
         $this->fields = $fields;
         $this->columns = $columns;
         $this->permissions = $permissions;
+        $this->dispatcher = $dispatcher;
     }
 
     /**
@@ -111,7 +120,7 @@ class Environment implements JsonableInterface {
 
         $schema = $this->schemas->resolve($id);
 
-        $entity = $this->resolved[$id] = new Entity($this, $schema, $id);
+        $this->resolved[$id] = $entity = $schema->entity($id);
 
         return $entity->init();
     }
@@ -377,5 +386,15 @@ class Environment implements JsonableInterface {
             'lang' => $this->getDefaultLang() + $this->lang,
 
         ], $options);
+    }
+
+    /**
+     * Get event dispatcher.
+     *
+     * @return \Illuminate\Events\Dispatcher
+     */
+    public function getDispatcher()
+    {
+        return $this->dispatcher;
     }
 }

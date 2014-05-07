@@ -50,7 +50,7 @@ abstract class BaseRelation extends BaseField {
      */
     public function extract(Eloquent $model)
     {
-        if ( ! $this->entity->getEnv()->getPermissions()->canView($this->reference))
+        if ( ! Entity::getEnvironment()->getPermissions()->canView($this->reference))
         {
             return null;
         }

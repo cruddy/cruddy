@@ -4,6 +4,7 @@ namespace Kalnoy\Cruddy\Schema\Fields;
 
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Kalnoy\Cruddy\Schema\BaseFactory;
+use Kalnoy\Cruddy\Entity;
 
 /**
  * Field Factory class.
@@ -59,30 +60,29 @@ class Factory extends BaseFactory {
     {
         if ($ref === null) $ref = \str_plural($id);
 
-        $ref = $entity->getEnv()->entity($ref);
+        $ref = Entity::getEnvironment()->entity($ref);
         $model = $entity->getRepository()->newModel();
-        $relationId = \camel_case($id);
 
-        if ( ! method_exists($model, $relationId))
+        if ( ! method_exists($model, $id))
         {
-            throw new \RuntimeException("The target model {get_class($model)} doesn't have relation {$relationId} defined.");
+            throw new \RuntimeException("The target model {get_class($model)} doesn't have relation {$id} defined.");
         }
 
-        $relation = $model->$relationId();
+        $relation = $model->$id();
 
         if ( ! $relation instanceof Relation)
         {
-            throw new \RuntimeException("The method {$relationId} of model {get_class($model)} did not return valid relation.");
+            throw new \RuntimeException("The method {$id} of model {get_class($model)} did not return valid relation.");
         }
 
-        $className = \class_basename($relation);
-        $className = 'Kalnoy\Cruddy\Schema\Fields\Types\\' . $className;
+        $relationClassName = \class_basename($relation);
+        $className = 'Kalnoy\Cruddy\Schema\Fields\Types\\' . $relationClassName;
 
         if ($inline) $className .= 'Inline';
 
         if ( ! class_exists($className))
         {
-            throw new \RuntimeException("Unknown relation type {$className}.");
+            throw new \RuntimeException("Cruddy does not know how to handle [{$relationClassName}] relation.");
         }
 
         $instance = new $className($entity, $id, $ref, $relation);

@@ -88,7 +88,11 @@ class CruddyServiceProvider extends ServiceProvider {
 
             $repository = new Schema\Repository($app, $config->get('cruddy::entities', []));
 
-            return $this->registerAssets(new Environment($config, $app['request'], $translator, $repository, $fields, $columns, $permissions));
+            $env = new Environment($config, $app['request'], $translator, $repository, $fields, $columns, $permissions, $app['events']);
+
+            Entity::setEnvironment($env);
+
+            return $this->registerAssets($env);
         });
     }
 

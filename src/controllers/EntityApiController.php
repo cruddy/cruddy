@@ -119,7 +119,7 @@ class EntityApiController extends ApiController {
      */
     public function update($entity, $id)
     {
-        return $this->resolveSafe($entity, 'create', function ($entity) use ($id)
+        return $this->resolveSafe($entity, 'update', function ($entity) use ($id)
         {
             $attributes = Input::all();
 
@@ -162,7 +162,7 @@ class EntityApiController extends ApiController {
 
             if ( ! $this->cruddy->isPermitted($method, $entity))
             {
-                $message = $this->cruddy->translate("cruddy::app.forbidden.{$method}", ['entity' => $id]);
+                $message = $this->cruddy->translate("cruddy::app.forbidden.{$method}", [':entity' => $id]);
 
                 throw new OperationNotPermittedException($message);
             }

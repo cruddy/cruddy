@@ -207,13 +207,13 @@ abstract class BaseField extends Attribute implements FieldInterface {
     }
 
     /**
-     * Get whether field is computed.
+     * @inheritdoc
      *
      * @return bool
      */
-    public function isComputed()
+    public function keep($value)
     {
-        return false;
+        return true;
     }
 
     /**

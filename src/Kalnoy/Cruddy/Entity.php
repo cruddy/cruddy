@@ -256,68 +256,43 @@ class Entity implements JsonableInterface, ArrayableInterface {
     }
 
     /**
-     * Create a new model.
-     *
-     * @param array $input
-     *
-     * @return array
-     *
-     * @throws \Kalnoy\Cruddy\Service\Validation\ValidationException
-     */
-    public function create(array $input)
-    {
-        return $this->save('create', $input, function ($data)
-        {
-            return $this->repo->create($data);
-        });
-    }
-
-    /**
-     * Update a model.
-     *
-     * @param mixed $id
-     * @param array  $input
-     *
-     * @return array
-     * 
-     * @throws \Kalnoy\Cruddy\Service\Validation\ValidationException
-     * @throws \Kalnoy\Cruddy\ModelNotFoundException
-     */
-    public function update($id, array $input)
-    {
-        return $this->save('update', $input, function ($data) use ($id)
-        {
-            return $this->repo->update($id, $data);
-        });
-    }
-
-    /**
      * Save an item and all of its related items.
      *
-     * @param string $action
-     * @param array   $input
-     * @param \Closure $callback
+     * @param array $data
      *
-     * @return array
+     * @return \Illuminate\Database\Eloquent\Model
+     *
+     * @throws \Kalnoy\Cruddy\ModelNotFoundException
+     * @throws \Kalnoy\Cruddy\ModelNotSavedException
      */
-    protected function save($action, array $input, \Closure $callback)
+    public function save(array $data)
     {
-        list($data, $relatedData) = $this->process($action, $input);
+        extract($data);
 
-        $eventResult = $this->fireEvent('saving', [ $action, $input ]);
+        $action = $this->actionFromData($data);
+
+        $eventResult = $this->fireEvent('saving', [ $action, $attributes ]);
 
         if ( ! is_null($eventResult))
         {
             throw new ModelNotSavedException($eventResult);
         }
 
-        $model = $callback($data);
+        $data = $this->fields->cleanInput($action, $attributes);
 
-        $this->saveRelated($model, $relatedData);
+        if (isset($extra)) $data += $extra;
+
+        switch ($action)
+        {
+            case 'create': $model = $this->repo->create($data); break;
+            case 'update': $model = $this->repo->update($id, $data); break;
+        }
+
+        $this->saveRelated($model, $related);
 
         $this->fireEvent('saved', [ $action, $model ], false);
 
-        return $this->extract($model);
+        return $model;
     }
 
     /**
@@ -357,6 +332,8 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public static function registerEvent($id, $event, $callback)
     {
+        if ( ! static::$env) return;
+
         static::$env->getDispatcher()->listen("entity.{$event}: {$id}", $callback);
     }
 
@@ -379,7 +356,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     }
 
     /**
-     * Perform validation and return processed data.
+     * Perform validation and return processed data that can be then saved.
      *
      * @param string $action
      * @param array  $input
@@ -388,23 +365,58 @@ class Entity implements JsonableInterface, ArrayableInterface {
      *
      * @throws \Kalnoy\Cruddy\Service\Validation\ValidationException
      */
-    public function process($action, array $input)
+    public function process(array $input)
     {
-        $processed = $this->fields->process($input);
-        $labels    = $this->fields->validationLabels();
-        $validator = $this->getValidator();
-        $errors = [];
+        extract($input);
 
-        if ( ! $validator->validFor($action, $processed, $labels))
-        {
-            $errors = $validator->errors();
-        }
+        $action = $this->actionFromData($input);
 
-        $relatedData = $this->processRelated($input, $errors);
+        // We will process an input by a collection of fields to remove any
+        // garbage
+        $attributes = $this->fields->process($attributes);
+
+        // Now we will validate those attributes
+        $errors = $this->validate($action, $attributes);
+
+        // And now time to process related items if any from raw input
+        $related = $this->processRelated($input['attributes'], $errors);
 
         if ( ! empty($errors)) throw new ValidationException($errors);
 
-        return [ $this->fields->cleanInput($action, $processed), $relatedData ];
+        return compact('id', 'attributes', 'related');
+    }
+
+    /**
+     * Validate input.
+     *
+     * @param string $action
+     * @param array  $attributes
+     *
+     * @return array
+     */
+    protected function validate($action, array $attributes)
+    {
+        $labels    = $this->fields->validationLabels();
+        $validator = $this->getValidator();
+
+        if ( ! $validator->validFor($action, $attributes, $labels))
+        {
+            return $validator->errors();
+        }
+
+        return [];
+    }
+
+    /**
+     * Get action from id.
+     *
+     * @param mixed $id
+     *
+     * @return string
+     */
+    public function actionFromData($data)
+    {
+        return empty($data['id']) ? 'create' : 'update';
     }
 
     /**
@@ -447,10 +459,22 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function saveRelated(Eloquent $model, array $data)
     {
-        foreach ($data as $id => $itemData)
+        foreach ($data as $id => $item)
         {
-            $this->related[$id]->save($model, $itemData);
+            $this->related[$id]->save($model, $item);
         }
+    }
+
+    /**
+     * Process and save item.
+     *
+     * @param array $input
+     *
+     * @return array
+     */
+    public function processAndSave($input)
+    {
+        return $this->extract($this->save($this->process($input)));
     }
 
     /**

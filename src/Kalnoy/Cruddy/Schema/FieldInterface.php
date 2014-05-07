@@ -35,12 +35,11 @@ interface FieldInterface extends AttributeInterface {
     public function process($value);
 
     /**
-     * Get whether the field is computed and should not be nor validated or sent to
-     * the repository.
+     * Get whether value can be left in the input.
      *
      * @return bool
      */
-    public function isComputed();
+    public function keep($value);
 
     /**
      * Get whether the field is disabled for specified action.

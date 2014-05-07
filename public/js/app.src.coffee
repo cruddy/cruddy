@@ -2110,7 +2110,9 @@ class Cruddy.Fields.RelatedCollection extends Backbone.Collection
             field: @field
 
     serialize: ->
-        if @field.isMultiple() 
+        if @field.isMultiple()
+            return "" if _.isEmpty @models
+
             data = {}
 
             data[item.cid] = item for item in @models

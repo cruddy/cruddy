@@ -16,7 +16,7 @@ interface InlineRelationInterface {
      *
      * @return array
      */
-    public function processInput(array $input);
+    public function processInput($input);
 
     /**
      * Save previously processed data.

@@ -2,7 +2,6 @@
 
 namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
 use Kalnoy\Cruddy\Schema\Fields\InlineRelation;
 
 /**
@@ -17,7 +16,7 @@ class HasOneInline extends InlineRelation {
      *
      * @return array
      */
-    public function getConnectingAttributes(Eloquent $model)
+    public function getExtra($model)
     {
         return [ $this->relation->getPlainForeignKey() => $model->getKey() ];
     }

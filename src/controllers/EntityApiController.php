@@ -45,13 +45,13 @@ class EntityApiController extends ApiController {
     /**
      * Get a list of models of specified entity.
      *
-     * @param string $type
+     * @param string $entity
      *
      * @return Response
      */
-    public function index($type)
+    public function index($entity)
     {
-        return $this->resolve($type, 'view', function ($entity) {
+        return $this->resolve($entity, 'view', function ($entity) {
 
             $options = $this->prepareSearchOptions(Input::all());
 
@@ -79,14 +79,14 @@ class EntityApiController extends ApiController {
     /**
      * View an item of specific entity type.
      *
-     * @param  string $type
+     * @param  string $entity
      * @param  int $id
      *
      * @return Response
      */
-    public function show($type, $id)
+    public function show($entity, $id)
     {
-        return $this->resolve($type, 'view', function ($entity) use ($id) 
+        return $this->resolve($entity, 'view', function ($entity) use ($id) 
         {
             return $this->success($entity->find($id));
         });
@@ -95,45 +95,49 @@ class EntityApiController extends ApiController {
     /**
      * Create an entity instance.
      *
-     * @param  string $type
+     * @param  string $entity
      *
      * @return Response
      */
-    public function create($type)
+    public function create($entity)
     {
-        return $this->resolveSafe($type, 'create', function ($entity)
+        return $this->resolveSafe($entity, 'create', function ($entity)
         {
-            return $this->success($entity->create(Input::all()));
+            $attributes = Input::all();
+            $id = null;
+
+            return $this->success($entity->processAndSave(compact('id', 'attributes')));
         });
     }
 
     /**
      * Update an entity instance.
      *
-     * @param  string $type
-     * @param  int    $id
+     * @param  string $entity
      *
      * @return Response
      */
-    public function update($type, $id)
+    public function update($entity, $id)
     {
-        return $this->resolveSafe($type, 'update', function ($entity) use ($id)
+        return $this->resolveSafe($entity, 'create', function ($entity) use ($id)
         {
-            return $this->success($entity->update($id, Input::all()));
+            $attributes = Input::all();
+
+            return $this->success($entity->processAndSave(compact('id', 'attributes')));
         });
     }
 
     /**
      * Destroy a model.
      *
-     * @param $type
+     * @param $entity
      * @param $id
      *
      * @return Response
      */
-    public function destroy($type, $id)
+    public function destroy($entity, $id)
     {
-        return $this->resolveSafe($type, 'delete', function ($entity) use ($id)
+        return $this->resolveSafe($entity, 'delete', function ($entity) use ($id)
         {
             return $entity->delete($id) > 0 ? $this->success() : $this->failure();
         });

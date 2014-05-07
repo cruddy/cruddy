@@ -3134,6 +3134,9 @@
     RelatedCollection.prototype.serialize = function() {
       var data, item, _i, _len, _ref1;
       if (this.field.isMultiple()) {
+        if (_.isEmpty(this.models)) {
+          return "";
+        }
         data = {};
         _ref1 = this.models;
         for (_i = 0, _len = _ref1.length; _i < _len; _i++) {

@@ -138,7 +138,7 @@ abstract class BaseRelation extends BaseField {
      */
     public function getRelationId()
     {
-        return \camel_case($this->id);
+        return $this->id;
     }
 
     /**

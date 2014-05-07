@@ -3,9 +3,11 @@
 namespace Kalnoy\Cruddy\Schema\Fields;
 
 use Illuminate\Database\Eloquent\Model as Eloquent;
+use Illuminate\Database\Eloquent\Relations\Relation;
 use Kalnoy\Cruddy\Schema\InlineRelationInterface;
 use Kalnoy\Cruddy\OperationNotPermittedException;
 use Kalnoy\Cruddy\Service\Validation\ValidationException;
+use Kalnoy\Cruddy\Entity;
 
 /**
  * Inline relation allows to edit related models inlinely.
@@ -36,19 +38,17 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     /**
      * @inheritdoc
      *
+     * Returns just the number of items so we could validate it.
+     *
      * @param mixed $data
      *
      * @return mixed
      */
     public function process($data)
     {
-        if ($this->multiple) return array_map(function ($item)
-        {
-            return $item['attributes'];
+        if ($this->multiple) return count($data);
 
-        }, $data);
-
-        return $data['attributes'];
+        return 1;
     }
 
     /**
@@ -70,11 +70,13 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
      *
      * @return array
      */
-    public function processInput(array $input)
+    public function processInput($input)
     {
+        if ( ! is_array($input)) return [];
+
         if ($this->multiple) return $this->processMany($input);
 
-        return $this->processInputItem($input);
+        return [ $this->reference->process($input) ];
     }
 
     /**
@@ -93,7 +95,7 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
         {
             try 
             {
-                $result[] = $this->processInputItem($item);
+                $result[] = $this->reference->process($item);
             } 
 
             catch (ValidationException $e) 
@@ -110,26 +112,6 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     }
 
     /**
-     * Process single item.
-     *
-     * @param array $item
-     *
-     * @return array
-     */
-    public function processInputItem(array $item)
-    {
-        if (empty($item)) return [];
-
-        extract($item);
-
-        $action = empty($id) ? 'create' : 'update';
-
-        list($attributes, $relatedData) = $this->reference->process($action, $attributes);
-
-        return compact('id', 'action', 'attributes', 'relatedData');
-    }
-
-    /**
      * @inhertidoc
      *
      * @param \Illuminate\Database\Eloquent\Model $model
@@ -139,11 +121,8 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
      */
     public function save(Eloquent $model, array $data)
     {
-        if ( ! $this->multiple && ! empty($data)) $data = [ $data ];
-
         $ref    = $this->reference;
         $permit = $ref->getPermissions();
-        $repo   = $ref->getRepository();
 
         // Get current items and check if some needs to be deleted
         $delete = $this->newRelationalQuery($model)->lists('id');
@@ -151,29 +130,30 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
 
         foreach ($data as $item)
         {
-            // See the layout @ processInputItem
-            extract($item);
+            $action = $ref->actionFromData($item);
 
             if ( ! $permit[$action]) continue;
 
-            $attributes += $this->getConnectingAttributes($model);
+            $item['extra'] = $this->getExtra($model);
 
-            switch ($action)
-            {
-                case 'create': $innerModel = $repo->create($attributes); break;
-                case 'update': $innerModel = $repo->update($id, $attributes); break;
-            }
+            $ref->save($item);
 
-            // Save related items for inner model.
-            $ref->saveRelated($innerModel, $relatedData);
-
-            if ( ! empty($id)) $ids[] = $id;
+            if ($action === 'update') $ids[] = $item['id'];
         }
 
         if ( ! empty($ids)) $delete = array_diff($delete, $ids);
 
-        if ( ! empty($delete) && $permit['delete']) $repo->delete($delete);
+        if ( ! empty($delete) && $permit['delete']) $ref->delete($delete);
     }
+
+    /**
+     * Get extra attributes.
+     *
+     * @param \Illuminate\Database\Eloquent\Model $model
+     *
+     * @return array
+     */
+    abstract public function getExtra($model);
 
     /**
      * @inheritdoc

@@ -34,4 +34,16 @@ class Password extends BaseTextField {
     {
         return '';
     }
+
+    /**
+     * @inheritdoc
+     *
+     * @param mixed $value
+     *
+     * @return void
+     */
+    public function keep($value)
+    {
+        return ! empty(trim($value));
+    }
 }

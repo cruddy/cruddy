@@ -17,13 +17,13 @@ class MorphOneInline extends HasOneInline {
      *
      * @return array
      */
-    public function getConnectingAttributes(Eloquent $model)
+    public function getExtra($model)
     {
         return
         [
             $this->relation->getPlainMorphType() => $this->relation->getMorphClass(),
 
-        ] + parent::getConnectingAttributes($model);
+        ] + parent::getExtra($model);
     }
 
 }

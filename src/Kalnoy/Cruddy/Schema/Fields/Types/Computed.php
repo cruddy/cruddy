@@ -65,9 +65,9 @@ class Computed extends BaseField {
      *
      * @return bool
      */
-    public function isComputed()
+    public function keep($value)
     {
-        return true;
+        return false;
     }
 
 }

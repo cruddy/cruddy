@@ -225,7 +225,7 @@ abstract class BaseField extends Attribute implements FieldInterface {
      */
     public function sendToRepository($action)
     {
-        return $this->disabled !== true and $this->disabled !== $action;
+        return $this->isFillable() and $this->disabled !== true and $this->disabled !== $action;
     }
 
 }

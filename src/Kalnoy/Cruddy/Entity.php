@@ -133,8 +133,9 @@ class Entity implements JsonableInterface, ArrayableInterface {
 
         $attributes = $this->fields->extract($model);
         $title = $this->schema->toString($model);
+        $extra = $this->schema->extra($model, false);
 
-        return compact('attributes', 'title');
+        return compact('attributes', 'title', 'extra');
     }
 
     /**
@@ -252,7 +253,11 @@ class Entity implements JsonableInterface, ArrayableInterface {
             return $this->simplifyAll($model);
         }
 
-        return ['id' => $model->getKey(), 'title' => $this->schema->toString($model)];
+        $id = $model->getKey();
+        $title = $this->schema->toString($model);
+        $extra = $this->schema->extra($model, true);
+
+        return compact('id', 'title', 'extra');
     }
 
     /**

@@ -7,6 +7,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
         
     initialize: (attributes, options) ->
         @original = _.clone attributes
+        @extra = options.extra ? {}
 
         @on "error", @processError, this
         @on "sync", @handleSync, this
@@ -16,8 +17,9 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
         this
 
-    handleSync: ->
+    handleSync: (model, resp) ->
         @original = _.clone @attributes
+        @extra = resp.data.extra
 
         this
 

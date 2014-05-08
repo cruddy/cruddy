@@ -33,8 +33,10 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
     # Create an instance for this entity
     createInstance: (attributes = {}, options = {}) ->
-        attributes = _.extend {}, @get("defaults"), attributes.attributes
+        options.extra = attributes.extra
         options.entity = this
+        
+        attributes = _.extend {}, @get("defaults"), attributes.attributes
 
         new Cruddy.Entity.Instance attributes, options
 

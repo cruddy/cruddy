@@ -141,6 +141,30 @@ abstract class BaseSchema implements SchemaInterface {
     /**
      * @inheritdoc
      *
+     * @param \Illuminate\Database\Eloquent\Model $model
+     * @param bool $simplified
+     *
+     * @return array
+     */
+    public function extra($model, $simplified)
+    {
+        if ($simplified) return [];
+
+        return [ 'external' => $this->externalUrl($model) ];
+    }
+
+    /**
+     * Get the url to the model on main site.   
+     *
+     * @param \Illuminate\Database\Eloquent\Model $model
+     *
+     * @return string
+     */
+    protected function externalUrl($model) {}
+
+    /**
+     * @inheritdoc
+     *
      * Default implementation will try to get {@see $titleAttribute} attribute and if one
      * is not set will return model's key.
      *
@@ -148,9 +172,11 @@ abstract class BaseSchema implements SchemaInterface {
      *
      * @return string
      */
-    public function toString(Eloquent $model)
+    public function toString($model)
     {
-        return $this->titleAttribute ? $model->getAttribute($this->titleAttribute) : $model->getKey();
+        return $this->titleAttribute
+            ? $model->getAttribute($this->titleAttribute)
+            : $model->getKey();
     }
 
     /**

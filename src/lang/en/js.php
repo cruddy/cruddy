@@ -13,6 +13,7 @@
     'any_value' => 'Any value',
     'never' => 'Never',
     'refresh' => 'Refresh',
+    'view_external' => 'View item on main site',
 
     'no_results' => 'No results',
     'more' => 'More',

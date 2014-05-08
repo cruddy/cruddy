@@ -3532,8 +3532,9 @@
       if (options == null) {
         options = {};
       }
-      attributes = _.extend({}, this.get("defaults"), attributes.attributes);
+      options.extra = attributes.extra;
       options.entity = this;
+      attributes = _.extend({}, this.get("defaults"), attributes.attributes);
       return new Cruddy.Entity.Instance(attributes, options);
     };
 
@@ -3664,8 +3665,9 @@
     }
 
     Instance.prototype.initialize = function(attributes, options) {
-      var event, _i, _len, _ref1;
+      var event, _i, _len, _ref1, _ref2;
       this.original = _.clone(attributes);
+      this.extra = (_ref1 = options.extra) != null ? _ref1 : {};
       this.on("error", this.processError, this);
       this.on("sync", this.handleSync, this);
       this.on("destroy", (function(_this) {
@@ -3675,16 +3677,17 @@
           }
         };
       })(this));
-      _ref1 = ["sync", "request"];
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        event = _ref1[_i];
+      _ref2 = ["sync", "request"];
+      for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
+        event = _ref2[_i];
         this.on(event, this.triggerRelated(event), this);
       }
       return this;
     };
 
-    Instance.prototype.handleSync = function() {
+    Instance.prototype.handleSync = function(model, resp) {
       this.original = _.clone(this.attributes);
+      this.extra = resp.data.extra;
       return this;
     };
 
@@ -4196,7 +4199,7 @@
     };
 
     Form.prototype.update = function() {
-      var permit;
+      var permit, _ref1;
       permit = this.model.entity.getPermissions();
       this.$el.toggleClass("loading", this.request != null);
       this.submit.text(this.model.isNew() ? Cruddy.lang.create : Cruddy.lang.save);
@@ -4206,11 +4209,21 @@
       this.destroy.html(this.model.entity.isSoftDeleting() && this.model.get("deleted_at") ? "Восстановить" : "<span class='glyphicon glyphicon-trash' title='" + Cruddy.lang["delete"] + "'></span>");
       this.destroy.toggle(!this.model.isNew() && permit["delete"]);
       this.copy.toggle(!this.model.isNew() && permit.create);
+      if ((_ref1 = this.external) != null) {
+        _ref1.remove();
+      }
+      if (this.model.extra.external) {
+        this.destroy.before(this.external = $(this.externalTemplate(this.model.extra.external)));
+      }
       return this;
     };
 
     Form.prototype.template = function() {
       return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n        <button type=\"button\" class=\"btn btn-link btn-destroy navbar-btn pull-right\" type=\"button\"></button>\n        \n        <button type=\"button\" tabindex=\"-1\" class=\"btn btn-link btn-copy navbar-btn pull-right\" title=\"" + Cruddy.lang.copy + "\">\n            <span class=\"glyphicon glyphicon-book\"></span>\n        </button>\n        \n        <ul class=\"nav navbar-nav\"></ul>\n    </div>\n</div>\n\n<footer>\n    <button type=\"button\" class=\"btn btn-default btn-close\" type=\"button\">" + Cruddy.lang.close + "</button>\n    <button type=\"button\" class=\"btn btn-primary btn-save\" type=\"button\" disabled></button>\n\n    <div class=\"progress\"><div class=\"progress-bar form-save-progress\"></div></div>\n</footer>";
+    };
+
+    Form.prototype.externalTemplate = function(href) {
+      return "<a href=\"" + href + "\" class=\"btn btn-link navbar-btn pull-right\" title=\"" + Cruddy.lang.view_external + "\" target=\"_blank\">\n    " + (b_icon("eye-open")) + "\n</a>";
     };
 
     Form.prototype.navTemplate = function(label, target, active) {

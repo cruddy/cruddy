@@ -2281,8 +2281,10 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
     # Create an instance for this entity
     createInstance: (attributes = {}, options = {}) ->
-        attributes = _.extend {}, @get("defaults"), attributes.attributes
+        options.extra = attributes.extra
         options.entity = this
+        
+        attributes = _.extend {}, @get("defaults"), attributes.attributes
 
         new Cruddy.Entity.Instance attributes, options
 
@@ -2369,6 +2371,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
         
     initialize: (attributes, options) ->
         @original = _.clone attributes
+        @extra = options.extra ? {}
 
         @on "error", @processError, this
         @on "sync", @handleSync, this
@@ -2378,8 +2381,9 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
         this
 
-    handleSync: ->
+    handleSync: (model, resp) ->
         @original = _.clone @attributes
+        @extra = resp.data.extra
 
         this
 
@@ -2794,6 +2798,10 @@ class Cruddy.Entity.Form extends Backbone.View
         
         @copy.toggle not @model.isNew() and permit.create
 
+        @external?.remove()
+
+        @destroy.before @external = $ @externalTemplate @model.extra.external if @model.extra.external
+
         this
 
     template: ->
@@ -2816,6 +2824,12 @@ class Cruddy.Entity.Form extends Backbone.View
 
             <div class="progress"><div class="progress-bar form-save-progress"></div></div>
         </footer>
+        """
+
+    externalTemplate: (href) ->"""
+        <a href="#{ href }" class="btn btn-link navbar-btn pull-right" title="#{ Cruddy.lang.view_external }" target="_blank">
+            #{ b_icon "eye-open" }
+        </a>
         """
 
     navTemplate: (label, target, active) ->

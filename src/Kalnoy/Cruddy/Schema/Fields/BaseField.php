@@ -12,7 +12,7 @@ abstract class BaseField extends Attribute implements FieldInterface {
     /**
      * Get whether the field is required.
      *
-     * @var bool
+     * @var bool|string
      */
     public $required = false;
 

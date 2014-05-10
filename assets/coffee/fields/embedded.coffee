@@ -13,6 +13,11 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
 
         super
 
+    handleSync: ->
+        super
+
+        @render()
+
     handleInvalid: (model, errors) ->
         super if @field.id of errors and errors[@field.id].length
 
@@ -30,7 +35,7 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
         @views[model.cid] = view = new Cruddy.Fields.EmbeddedItemView
             model: model
             collection: @collection
-            disabled: @field.isEditable()
+            disabled: not @isEditable
 
         @body.append view.render().el
 
@@ -60,8 +65,6 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
 
         @add model for model in @collection.models
 
-        @update()
-
         super
 
     update: ->
@@ -72,7 +75,7 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
     template: ->
         ref = @field.getReference()
 
-        buttons = if ref.createPermitted() then b_btn("", "plus", ["default", "create"]) else ""
+        buttons = if @isEditable and ref.createPermitted() then b_btn("", "plus", ["default", "create"]) else ""
 
         """
         <div class='header field-label'>
@@ -126,13 +129,13 @@ class Cruddy.Fields.EmbeddedItemView extends Backbone.View
 
         @fieldList = new FieldList
             model: @model
-            disabled: @disabled or not @model.isSaveable()
+            forceDisable: @disabled
 
         @$el.prepend @fieldList.render().el
 
         this
 
-    template: -> if @model.entity.deletePermitted() or @model.isNew() then b_btn(Cruddy.lang.delete, "trash", ["default", "sm", "delete"]) else ""
+    template: -> if not @disabled and (@model.entity.deletePermitted() or @model.isNew()) then b_btn(Cruddy.lang.delete, "trash", ["default", "sm", "delete"]) else ""
 
     dispose: ->
         @fieldList?.remove()
@@ -194,12 +197,13 @@ class Cruddy.Fields.RelatedCollection extends Backbone.Collection
             @first()
 
 class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
+
     viewConstructor: Cruddy.Fields.EmbeddedView
 
     createInstance: (model, items) ->
         return items if items instanceof Backbone.Collection
 
-        items = (if items or @isRequired() then [ items ] else []) if not @attributes.multiple
+        items = (if items or @isRequired(model) then [ items ] else []) if not @attributes.multiple
 
         ref = @getReference()
         items = (ref.createInstance item for item in items)

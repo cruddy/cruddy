@@ -770,6 +770,12 @@
 
     FieldList.prototype.className = "field-list";
 
+    FieldList.prototype.initialize = function(options) {
+      var _ref1;
+      this.forceDisable = (_ref1 = options.forceDisable) != null ? _ref1 : false;
+      return this;
+    };
+
     FieldList.prototype.focus = function() {
       var _ref1;
       if ((_ref1 = this.primary) != null) {
@@ -799,7 +805,7 @@
         for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
           field = _ref1[_i];
           if (field.isVisible()) {
-            _results.push(field.createView(this.model).render());
+            _results.push(field.createView(this.model, this.forceDisable).render());
           }
         }
         return _results;
@@ -807,7 +813,7 @@
       _ref1 = this.fields;
       for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
         view = _ref1[_i];
-        if (!(view.field.isEditable(this.model))) {
+        if (!view.isEditable) {
           continue;
         }
         this.primary = view;
@@ -2321,17 +2327,16 @@
     __extends(BaseView, _super);
 
     function BaseView(options) {
-      var base, className, classes, field;
+      var base, className, classes, field, inputId, _ref1;
       this.field = field = options.field;
-      this.inputId = options.model.entity.id + "_" + field.id;
+      inputId = options.model.entity.id + "__" + field.id;
+      this.inputId = inputId + "__" + options.model.cid;
       base = " field-";
-      classes = [field.getType(), field.id, this.inputId];
+      classes = [field.getType(), field.id, inputId];
       className = "field" + base + classes.join(base);
-      if (field.isRequired()) {
-        className += " required";
-      }
       className += " form-group";
       this.className = this.className ? className + " " + this.className : className;
+      this.forceDisable = (_ref1 = options.forceDisable) != null ? _ref1 : false;
       BaseView.__super__.constructor.apply(this, arguments);
     }
 
@@ -2339,11 +2344,11 @@
       this.listenTo(this.model, "sync", this.handleSync);
       this.listenTo(this.model, "request", this.handleRequest);
       this.listenTo(this.model, "invalid", this.handleInvalid);
-      return this;
+      return this.updateContainer();
     };
 
     BaseView.prototype.handleSync = function() {
-      return this.toggleVisibility();
+      return this.updateContainer();
     };
 
     BaseView.prototype.handleRequest = function() {
@@ -2359,8 +2364,10 @@
       return this;
     };
 
-    BaseView.prototype.toggleVisibility = function() {
+    BaseView.prototype.updateContainer = function() {
+      this.isEditable = !this.forceDisable && this.field.isEditable(this.model);
       this.$el.toggle(this.isVisible());
+      this.$el.toggleClass("required", this.field.isRequired(this.model));
       return this;
     };
 
@@ -2402,7 +2409,7 @@
     };
 
     BaseView.prototype.isVisible = function() {
-      return this.field.isEditable(this.model.action()) || !this.model.isNew();
+      return this.isEditable || !this.model.isNew();
     };
 
     BaseView.prototype.dispose = function() {
@@ -2425,16 +2432,13 @@
       return InputView.__super__.constructor.apply(this, arguments);
     }
 
-    InputView.prototype.handleRequest = function(model) {
-      this.isEditable = this.field.isEditable(model.action());
-      return InputView.__super__.handleRequest.apply(this, arguments);
-    };
-
-    InputView.prototype.handleSync = function(model) {
-      if (this.field.isEditable(model.action()) !== this.isEditable) {
-        this.render();
+    InputView.prototype.updateContainer = function() {
+      var isEditable;
+      isEditable = this.isEditable;
+      InputView.__super__.updateContainer.apply(this, arguments);
+      if (isEditable !== this.isEditable) {
+        return this.render();
       }
-      return InputView.__super__.handleSync.apply(this, arguments);
     };
 
     InputView.prototype.hideError = function() {
@@ -2450,11 +2454,9 @@
     InputView.prototype.render = function() {
       this.dispose();
       this.$el.html(this.template());
-      this.input = this.field.createInput(this.model);
+      this.input = this.field.createInput(this.model, this.inputId, this.forceDisable);
       this.$el.append(this.input.render().el);
       this.$el.append(this.errorTemplate());
-      this.toggleVisibility();
-      this.isEditable = this.field.isEditable(this.model.action());
       return InputView.__super__.render.apply(this, arguments);
     };
 
@@ -2495,17 +2497,24 @@
 
     Base.prototype.viewConstructor = Cruddy.Fields.InputView;
 
-    Base.prototype.createView = function(model) {
+    Base.prototype.createView = function(model, forceDisable) {
+      if (forceDisable == null) {
+        forceDisable = false;
+      }
       return new this.viewConstructor({
         model: model,
-        field: this
+        field: this,
+        forceDisable: forceDisable
       });
     };
 
-    Base.prototype.createInput = function(model) {
+    Base.prototype.createInput = function(model, inputId, forceDisable) {
       var input;
-      if (this.isEditable(model.action()) && model.isSaveable()) {
-        input = this.createEditableInput(model);
+      if (forceDisable == null) {
+        forceDisable = false;
+      }
+      if (!forceDisable && this.isEditable(model)) {
+        input = this.createEditableInput(model, inputId);
       }
       return input || new Cruddy.Inputs.Static({
         model: model,
@@ -2514,7 +2523,7 @@
       });
     };
 
-    Base.prototype.createEditableInput = function(model) {
+    Base.prototype.createEditableInput = function(model, inputId) {
       return null;
     };
 
@@ -2534,12 +2543,12 @@
       return this.attributes.label;
     };
 
-    Base.prototype.isEditable = function(action) {
-      return this.attributes.fillable && this.attributes.disabled !== true && this.attributes.disabled !== action;
+    Base.prototype.isEditable = function(model) {
+      return model.isSaveable() && this.attributes.fillable && this.attributes.disabled !== true && this.attributes.disabled !== model.action();
     };
 
-    Base.prototype.isRequired = function() {
-      return this.attributes.required;
+    Base.prototype.isRequired = function(model) {
+      return this.attributes.required === true || this.attributes.required === model.action();
     };
 
     Base.prototype.isUnique = function() {
@@ -2557,10 +2566,11 @@
       return Input.__super__.constructor.apply(this, arguments);
     }
 
-    Input.prototype.createEditableInput = function(model) {
+    Input.prototype.createEditableInput = function(model, inputId) {
       var attributes, type;
       attributes = {
-        placeholder: this.attributes.placeholder
+        placeholder: this.attributes.placeholder,
+        id: inputId
       };
       type = this.attributes.input_type;
       if (type === "textarea") {
@@ -2806,12 +2816,15 @@
       return Enum.__super__.constructor.apply(this, arguments);
     }
 
-    Enum.prototype.createEditableInput = function(model) {
+    Enum.prototype.createEditableInput = function(model, inputId) {
       return new Cruddy.Inputs.Select({
         model: model,
         key: this.id,
         prompt: this.attributes.prompt,
-        items: this.attributes.items
+        items: this.attributes.items,
+        attributes: {
+          id: inputId
+        }
       });
     };
 
@@ -2900,6 +2913,11 @@
       return EmbeddedView.__super__.initialize.apply(this, arguments);
     };
 
+    EmbeddedView.prototype.handleSync = function() {
+      EmbeddedView.__super__.handleSync.apply(this, arguments);
+      return this.render();
+    };
+
     EmbeddedView.prototype.handleInvalid = function(model, errors) {
       if (this.field.id in errors && errors[this.field.id].length) {
         EmbeddedView.__super__.handleInvalid.apply(this, arguments);
@@ -2921,7 +2939,7 @@
       this.views[model.cid] = view = new Cruddy.Fields.EmbeddedItemView({
         model: model,
         collection: this.collection,
-        disabled: this.field.isEditable()
+        disabled: !this.isEditable
       });
       this.body.append(view.render().el);
       if (options != null ? options.focus : void 0) {
@@ -2957,7 +2975,6 @@
         model = _ref1[_i];
         this.add(model);
       }
-      this.update();
       return EmbeddedView.__super__.render.apply(this, arguments);
     };
 
@@ -2969,7 +2986,7 @@
     EmbeddedView.prototype.template = function() {
       var buttons, ref;
       ref = this.field.getReference();
-      buttons = ref.createPermitted() ? b_btn("", "plus", ["default", "create"]) : "";
+      buttons = this.isEditable && ref.createPermitted() ? b_btn("", "plus", ["default", "create"]) : "";
       return "<div class='header field-label'>\n    " + (this.helpTemplate()) + (_.escape(this.field.getLabel())) + " " + buttons + "\n</div>\n<div class=\"error-container has-error\">" + (this.errorTemplate()) + "</div>\n<div class='body' id='" + this.cid + "-body'></div>";
     };
 
@@ -3034,14 +3051,14 @@
       this.$el.html(this.template());
       this.fieldList = new FieldList({
         model: this.model,
-        disabled: this.disabled || !this.model.isSaveable()
+        forceDisable: this.disabled
       });
       this.$el.prepend(this.fieldList.render().el);
       return this;
     };
 
     EmbeddedItemView.prototype.template = function() {
-      if (this.model.entity.deletePermitted() || this.model.isNew()) {
+      if (!this.disabled && (this.model.entity.deletePermitted() || this.model.isNew())) {
         return b_btn(Cruddy.lang["delete"], "trash", ["default", "sm", "delete"]);
       } else {
         return "";
@@ -3168,7 +3185,7 @@
         return items;
       }
       if (!this.attributes.multiple) {
-        items = (items || this.isRequired() ? [items] : []);
+        items = (items || this.isRequired(model) ? [items] : []);
       }
       ref = this.getReference();
       items = (function() {
@@ -3264,12 +3281,13 @@
       return Number.__super__.constructor.apply(this, arguments);
     }
 
-    Number.prototype.createEditableInput = function(model) {
+    Number.prototype.createEditableInput = function(model, inputId) {
       return new Cruddy.Inputs.Text({
         model: model,
         key: this.id,
         attributes: {
-          type: "text"
+          type: "text",
+          id: inputId
         }
       });
     };

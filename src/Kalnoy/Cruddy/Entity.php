@@ -372,7 +372,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
         $errors = $this->validate($action, $attributes);
 
         // And now time to process related items if any from raw input
-        $related = $this->processRelated($input['attributes'], $errors);
+        $related = $this->processRelated($action, $input['attributes'], $errors);
 
         if ( ! empty($errors)) throw new ValidationException($errors);
 
@@ -415,12 +415,13 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Validate related entities.
      *
+     * @param string $action
      * @param array $input
      * @param array $errors
      *
      * @return array
      */
-    protected function processRelated(array $input, array &$errors)
+    protected function processRelated($action, array $input, array &$errors)
     {
         $data = [];
 
@@ -430,7 +431,10 @@ class Entity implements JsonableInterface, ArrayableInterface {
 
             try
             {
-                $data[$id] = $item->processInput($input[$id]);
+                if ($item->isSaveable($action))
+                {
+                    $data[$id] = $item->processInput($input[$id]);
+                }
             }
 
             catch (ValidationException $e)

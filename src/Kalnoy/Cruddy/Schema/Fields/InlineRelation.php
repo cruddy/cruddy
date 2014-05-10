@@ -66,6 +66,18 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     /**
      * @inheritdoc
      *
+     * @param string $action
+     *
+     * @return bool
+     */
+    public function isSaveable($action)
+    {
+        return parent::sendToRepository($action);
+    }
+
+    /**
+     * @inheritdoc
+     *
      * @param array $input
      *
      * @return array

@@ -61,7 +61,6 @@ module.exports = function(grunt) {
                     '<%= app %>/fields/enum.coffee',
                     '<%= app %>/fields/markdown.coffee',
                     '<%= app %>/fields/code.coffee',
-                    // '<%= app %>/fields/hasOne.coffee',
                     '<%= app %>/fields/embedded.coffee',
                     '<%= app %>/fields/number.coffee',
                     '<%= app %>/fields/computed.coffee',

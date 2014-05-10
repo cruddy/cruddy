@@ -482,6 +482,11 @@ class DataGrid extends Backbone.View
 class FieldList extends Backbone.View
     className: "field-list"
 
+    initialize: (options) ->
+        @forceDisable = options.forceDisable ? false
+
+        this
+
     # Focus first editable field
     focus: ->
         @primary?.focus()
@@ -497,9 +502,9 @@ class FieldList extends Backbone.View
         this
 
     createFields: ->
-        @fields = (field.createView(@model).render() for field in @model.entity.fields.models when field.isVisible())
+        @fields = (field.createView(@model, @forceDisable).render() for field in @model.entity.fields.models when field.isVisible())
 
-        for view in @fields when view.field.isEditable @model
+        for view in @fields when view.isEditable
             @primary = view
             break
 
@@ -1613,16 +1618,18 @@ class Cruddy.Fields.BaseView extends Backbone.View
     constructor: (options) ->
         @field = field = options.field
 
-        @inputId = options.model.entity.id + "_" + field.id
+        inputId = options.model.entity.id + "__" + field.id
+        @inputId = inputId + "__" + options.model.cid
 
         base = " field-"
-        classes = [ field.getType(), field.id, @inputId ]
+        classes = [ field.getType(), field.id, inputId ]
         className = "field" + base + classes.join base
 
-        className += " required" if field.isRequired()
         className += " form-group"
 
         @className = if @className then className + " " + @className else className
+
+        @forceDisable = options.forceDisable ? false
 
         super
 
@@ -1631,9 +1638,9 @@ class Cruddy.Fields.BaseView extends Backbone.View
         @listenTo @model, "request", @handleRequest
         @listenTo @model, "invalid", @handleInvalid
 
-        this
+        @updateContainer()
 
-    handleSync: -> @toggleVisibility()
+    handleSync: -> @updateContainer()
 
     handleRequest: -> @hideError()
 
@@ -1645,8 +1652,11 @@ class Cruddy.Fields.BaseView extends Backbone.View
 
         this
 
-    toggleVisibility: ->
+    updateContainer: ->
+        @isEditable = not @forceDisable and @field.isEditable(@model)
+
         @$el.toggle @isVisible()
+        @$el.toggleClass "required", @field.isRequired @model
 
         this
 
@@ -1679,7 +1689,7 @@ class Cruddy.Fields.BaseView extends Backbone.View
 
     # Get whether the view is visible
     # The field is not visible when model is new and field is not editable or computed
-    isVisible: -> @field.isEditable(@model.action()) or not @model.isNew()
+    isVisible: -> @isEditable or not @model.isNew()
 
     dispose: -> this
 
@@ -1690,15 +1700,14 @@ class Cruddy.Fields.BaseView extends Backbone.View
 
 # This is basic field view that will render in bootstrap's vertical form style.
 class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
-    handleRequest: (model) ->
-        @isEditable = @field.isEditable(model.action())
 
+    updateContainer: ->
+        isEditable = @isEditable
+        
         super
 
-    handleSync: (model) ->
-        @render() if @field.isEditable(model.action()) isnt @isEditable
+        @render() if isEditable isnt @isEditable
 
-        super
 
     hideError: ->
         @$el.removeClass "has-error"
@@ -1716,15 +1725,11 @@ class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
 
         @$el.html @template()
 
-        @input = @field.createInput @model
+        @input = @field.createInput @model, @inputId, @forceDisable
 
         @$el.append @input.render().el
 
         @$el.append @errorTemplate()
-
-        @toggleVisibility()
-
-        @isEditable = @field.isEditable(@model.action())
 
         super
 
@@ -1755,16 +1760,16 @@ class Cruddy.Fields.Base extends Attribute
     viewConstructor: Cruddy.Fields.InputView
 
     # Create a view that will represent this field in field list
-    createView: (model) -> new @viewConstructor { model: model, field: this }
+    createView: (model, forceDisable = no) -> new @viewConstructor { model: model, field: this, forceDisable: forceDisable }
 
     # Create an input that is used by default view
-    createInput: (model) ->
-        input = @createEditableInput model if @isEditable(model.action()) and model.isSaveable()
+    createInput: (model, inputId, forceDisable = no) ->
+        input = @createEditableInput model, inputId if not forceDisable and @isEditable(model)
 
         input or new Cruddy.Inputs.Static { model: model, key: @id, formatter: this }
 
     # Create an input that is used when field is editable
-    createEditableInput: (model) -> null
+    createEditableInput: (model, inputId) -> null
 
     # Create filter input that
     createFilterInput: (model) -> null
@@ -1778,18 +1783,21 @@ class Cruddy.Fields.Base extends Attribute
     # Get field's label
     getLabel: -> @attributes.label
 
-    # Get whether the field is editable for specified action
-    isEditable: (action) -> @attributes.fillable and @attributes.disabled isnt yes and @attributes.disabled isnt action
+    # Get whether the field is editable for specified model
+    isEditable: (model) -> model.isSaveable() and @attributes.fillable and @attributes.disabled isnt yes and @attributes.disabled isnt model.action()
 
     # Get whether field is required
-    isRequired: -> @attributes.required
+    isRequired: (model) -> @attributes.required is yes or @attributes.required == model.action()
 
     # Get whether the field is unique
     isUnique: -> @attributes.unique
 class Cruddy.Fields.Input extends Cruddy.Fields.Base
 
-    createEditableInput: (model) ->
-        attributes = placeholder: @attributes.placeholder
+    createEditableInput: (model, inputId) ->
+        attributes =
+            placeholder: @attributes.placeholder
+            id: inputId
+            
         type = @attributes.input_type
 
         if type is "textarea"
@@ -1894,11 +1902,12 @@ class Cruddy.Fields.Slug extends Cruddy.Fields.Base
             placeholder: @attributes.placeholder
 class Cruddy.Fields.Enum extends Cruddy.Fields.Base
 
-    createEditableInput: (model) -> new Cruddy.Inputs.Select
+    createEditableInput: (model, inputId) -> new Cruddy.Inputs.Select
         model: model
         key: @id
         prompt: @attributes.prompt
         items: @attributes.items
+        attributes: id: inputId
 
     createFilterInput: (model) -> new Cruddy.Inputs.Select
         model: model
@@ -1941,6 +1950,11 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
 
         super
 
+    handleSync: ->
+        super
+
+        @render()
+
     handleInvalid: (model, errors) ->
         super if @field.id of errors and errors[@field.id].length
 
@@ -1958,7 +1972,7 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
         @views[model.cid] = view = new Cruddy.Fields.EmbeddedItemView
             model: model
             collection: @collection
-            disabled: @field.isEditable()
+            disabled: not @isEditable
 
         @body.append view.render().el
 
@@ -1988,8 +2002,6 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
 
         @add model for model in @collection.models
 
-        @update()
-
         super
 
     update: ->
@@ -2000,7 +2012,7 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
     template: ->
         ref = @field.getReference()
 
-        buttons = if ref.createPermitted() then b_btn("", "plus", ["default", "create"]) else ""
+        buttons = if @isEditable and ref.createPermitted() then b_btn("", "plus", ["default", "create"]) else ""
 
         """
         <div class='header field-label'>
@@ -2054,13 +2066,13 @@ class Cruddy.Fields.EmbeddedItemView extends Backbone.View
 
         @fieldList = new FieldList
             model: @model
-            disabled: @disabled or not @model.isSaveable()
+            forceDisable: @disabled
 
         @$el.prepend @fieldList.render().el
 
         this
 
-    template: -> if @model.entity.deletePermitted() or @model.isNew() then b_btn(Cruddy.lang.delete, "trash", ["default", "sm", "delete"]) else ""
+    template: -> if not @disabled and (@model.entity.deletePermitted() or @model.isNew()) then b_btn(Cruddy.lang.delete, "trash", ["default", "sm", "delete"]) else ""
 
     dispose: ->
         @fieldList?.remove()
@@ -2122,12 +2134,13 @@ class Cruddy.Fields.RelatedCollection extends Backbone.Collection
             @first()
 
 class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
+
     viewConstructor: Cruddy.Fields.EmbeddedView
 
     createInstance: (model, items) ->
         return items if items instanceof Backbone.Collection
 
-        items = (if items or @isRequired() then [ items ] else []) if not @attributes.multiple
+        items = (if items or @isRequired(model) then [ items ] else []) if not @attributes.multiple
 
         ref = @getReference()
         items = (ref.createInstance item for item in items)
@@ -2175,11 +2188,12 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
     isMultiple: -> @attributes.multiple
 
 class Cruddy.Fields.Number extends Cruddy.Fields.Base
-    createEditableInput: (model) -> new Cruddy.Inputs.Text
+    createEditableInput: (model, inputId) -> new Cruddy.Inputs.Text
         model: model
         key: @id
         attributes:
             type: "text"
+            id: inputId
 
     createFilterInput: (model) -> new Cruddy.Inputs.NumberFilter
         model: model

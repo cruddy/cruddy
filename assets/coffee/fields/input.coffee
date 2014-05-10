@@ -1,7 +1,10 @@
 class Cruddy.Fields.Input extends Cruddy.Fields.Base
 
-    createEditableInput: (model) ->
-        attributes = placeholder: @attributes.placeholder
+    createEditableInput: (model, inputId) ->
+        attributes =
+            placeholder: @attributes.placeholder
+            id: inputId
+            
         type = @attributes.input_type
 
         if type is "textarea"

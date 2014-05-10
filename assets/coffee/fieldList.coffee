@@ -2,6 +2,11 @@
 class FieldList extends Backbone.View
     className: "field-list"
 
+    initialize: (options) ->
+        @forceDisable = options.forceDisable ? false
+
+        this
+
     # Focus first editable field
     focus: ->
         @primary?.focus()
@@ -17,9 +22,9 @@ class FieldList extends Backbone.View
         this
 
     createFields: ->
-        @fields = (field.createView(@model).render() for field in @model.entity.fields.models when field.isVisible())
+        @fields = (field.createView(@model, @forceDisable).render() for field in @model.entity.fields.models when field.isVisible())
 
-        for view in @fields when view.field.isEditable @model
+        for view in @fields when view.isEditable
             @primary = view
             break
 

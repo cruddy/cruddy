@@ -1,10 +1,11 @@
 class Cruddy.Fields.Enum extends Cruddy.Fields.Base
 
-    createEditableInput: (model) -> new Cruddy.Inputs.Select
+    createEditableInput: (model, inputId) -> new Cruddy.Inputs.Select
         model: model
         key: @id
         prompt: @attributes.prompt
         items: @attributes.items
+        attributes: id: inputId
 
     createFilterInput: (model) -> new Cruddy.Inputs.Select
         model: model

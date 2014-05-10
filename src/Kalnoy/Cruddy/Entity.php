@@ -43,28 +43,28 @@ class Entity implements JsonableInterface, ArrayableInterface {
      *
      * @var \Kalnoy\Cruddy\Schema\Fields\Collection
      */
-    protected $fields;
+    private $fields;
 
     /**
      * The column list.
      *
      * @var \Kalnoy\Cruddy\Schema\Columns\Collection
      */
-    protected $columns;
+    private $columns;
 
     /**
      * The repository.
      *
      * @var \Kalnoy\Cruddy\Repo\RepositoryInterface
      */
-    protected $repo;
+    private $repo;
 
     /**
      * The validator.
      *
      * @var \Kalnoy\Cruddy\Service\Validation\ValidableInterface
      */
-    protected $validator;
+    private $validator;
 
     /**
      * The list of related entities.
@@ -86,20 +86,6 @@ class Entity implements JsonableInterface, ArrayableInterface {
     }
 
     /**
-     * Init entity.
-     *
-     * @return $this
-     */
-    public function init()
-    {
-        $this->repo = $this->schema->repository();
-
-        $this->createFields();
-
-        return $this;
-    }
-
-    /**
      * Find an item with given id.
      *
      * @param mixed $id
@@ -110,7 +96,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function find($id)
     {
-        $model = $this->repo->find($id);
+        $model = $this->getRepository()->find($id);
 
         return $this->extract($model);
     }
@@ -131,7 +117,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
             return $this->extractAll($model);
         }
 
-        $attributes = $this->fields->extract($model);
+        $attributes = $this->getFields()->extract($model);
         $title = $this->schema->toString($model);
         $extra = $this->schema->extra($model, false);
 
@@ -182,7 +168,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function search(array $options)
     {
-        $results = $this->repo->search($options, $this->getSearchProcessor($options));
+        $results = $this->getRepository()->search($options, $this->getSearchProcessor($options));
 
         if (array_get($options, 'simple'))
         {
@@ -272,6 +258,8 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function save(array $data)
     {
+        $repo = $this->getRepository();
+
         extract($data);
 
         $action = $this->actionFromData($data);
@@ -283,14 +271,14 @@ class Entity implements JsonableInterface, ArrayableInterface {
             throw new ModelNotSavedException($eventResult);
         }
 
-        $data = $this->fields->cleanInput($action, $attributes);
+        $data = $this->getFields()->cleanInput($action, $attributes);
 
         if (isset($extra)) $data += $extra;
 
         switch ($action)
         {
-            case 'create': $model = $this->repo->create($data); break;
-            case 'update': $model = $this->repo->update($id, $data); break;
+            case 'create': $model = $repo->create($data); break;
+            case 'update': $model = $repo->update($id, $data); break;
         }
 
         $this->saveRelated($model, $related);
@@ -378,7 +366,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
 
         // We will process an input by a collection of fields to remove any
         // garbage
-        $attributes = $this->fields->process($attributes);
+        $attributes = $this->getFields()->process($attributes);
 
         // Now we will validate those attributes
         $errors = $this->validate($action, $attributes);
@@ -399,9 +387,9 @@ class Entity implements JsonableInterface, ArrayableInterface {
      *
      * @return array
      */
-    protected function validate($action, array $attributes)
+    public function validate($action, array $attributes)
     {
-        $labels    = $this->fields->validationLabels();
+        $labels    = $this->getFields()->validationLabels();
         $validator = $this->getValidator();
 
         if ( ! $validator->validFor($action, $attributes, $labels))
@@ -462,7 +450,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
      *
      * @return void
      */
-    public function saveRelated(Eloquent $model, array $data)
+    protected function saveRelated(Eloquent $model, array $data)
     {
         foreach ($data as $id => $item)
         {
@@ -491,7 +479,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function delete($ids)
     {
-        return $this->repo->delete($ids);
+        return $this->getRepository()->delete($ids);
     }
 
     /**
@@ -542,6 +530,8 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function getFields()
     {
+        if ($this->fields === null) return $this->fields = $this->createFields();
+
         return $this->fields;
     }
 
@@ -554,13 +544,13 @@ class Entity implements JsonableInterface, ArrayableInterface {
     {
         $factory = static::$env->getFieldFactory();
 
-        $collection = $this->fields = new Schema\Fields\Collection;
+        $collection = new Schema\Fields\Collection;
 
         $schema = new InstanceFactory($factory, $this, $collection);
 
         $this->schema->fields($schema);
 
-        return $this;
+        return $collection;
     }
 
     /**
@@ -583,6 +573,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     public function createColumns()
     {
         $factory = static::$env->getColumnFactory();
+
         $collection = new Schema\Columns\Collection;
 
         $schema = new InstanceFactory($factory, $this, $collection);
@@ -605,7 +596,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
 
         if ( ! $collection->has($keyName))
         {
-            $field = $this->fields->get($keyName);
+            $field = $this->getFields()->get($keyName);
 
             $column = new Schema\Columns\Types\Proxy($this, $keyName, $field);
 
@@ -622,6 +613,11 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function getRepository()
     {
+        if ($this->repo === null)
+        {
+            return $this->repo = $this->schema->repository();
+        }
+
         return $this->repo;
     }
 
@@ -772,20 +768,20 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function toArray()
     {
-        $this->getColumns();
+        $fields = $this->getFields();
 
-        $model = $this->repo->newModel();
+        $model = $this->getRepository()->newModel();
 
         return
         [
             'id' => $this->id,
             'soft_deleting' => $model->isSoftDeleting(),
-            'defaults' => $this->fields->extract($model),
+            'defaults' => $fields->extract($model),
             'title' => $this->getTitle(),
             'permissions' => $this->getPermissions(),
 
-            'fields' => array_values($this->fields->toArray()),
-            'columns' => array_values($this->columns->toArray()),
+            'fields' => array_values($fields->toArray()),
+            'columns' => array_values($this->getColumns()->toArray()),
             'related' => array_keys($this->related),
 
 

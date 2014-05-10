@@ -122,7 +122,7 @@ class Environment implements JsonableInterface {
 
         $this->resolved[$id] = $entity = $schema->entity($id);
 
-        return $entity->init();
+        return $entity;
     }
 
     /**
@@ -198,6 +198,21 @@ class Environment implements JsonableInterface {
     public function registerColumn($macro, $callback)
     {
         $this->columns->register($macro, $callback);
+
+        return $this;
+    }
+
+    /**
+     * Extend permissions manager.
+     *
+     * @param string $driver
+     * @param \Closure $callback
+     *
+     * @return $this
+     */
+    public function extendPermissions($driver, $callback)
+    {
+        $this->permissions->extend($driver, $callback);
 
         return $this;
     }
@@ -370,6 +385,8 @@ class Environment implements JsonableInterface {
     }
 
     /**
+     * @inheritdoc
+     * 
      * @param int $options
      *
      * @return string

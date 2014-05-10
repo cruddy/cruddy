@@ -74,6 +74,24 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessorInte
     {
         if ($otherField === null) $otherField = $field;
 
+        $this->constraint = compact('field', 'otherField');
+
+        return $this;
+    }
+
+    /**
+     * Check whether specified field constraints are valid.
+     *
+     * @return void
+     *
+     * @throws \RuntimeException
+     */
+    protected function validateConstraint()
+    {
+        if ($this->constraint === null) return;
+
+        extract($this->constraint);
+
         $fieldInstance = $this->findField($this->entity, $field);
         $otherFieldInstance = $this->findField($this->reference, $otherField);
 
@@ -86,10 +104,6 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessorInte
         {
             throw new RuntimeException("Cannot set up constraint with a field that is not able to apply filter.");
         }
-
-        $this->constraint = compact('field', 'otherField');
-
-        return $this;
     }
 
     /**
@@ -170,6 +184,8 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessorInte
      */
     public function toArray()
     {
+        $this->validateConstraint();
+        
         return
         [
             'multiple' => $this->multiple,

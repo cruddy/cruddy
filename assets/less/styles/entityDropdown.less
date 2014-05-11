@@ -22,18 +22,36 @@
 
 
     > .items {
-        .ed-item {
-            .form-control, .btn {
+        > .ed-item {
+            > .form-control, > .input-group-btn > .btn {
                 .border-bottom-radius(0);
             }
 
-            .form-control:focus {
+            > .form-control:focus {
                 position: relative;
-                z-index: 2;
+                z-index: 3;
+
+                + .input-group-btn {
+                    @color: @input-border-focus;
+                    @color-rgba: rgba(red(@color), green(@color), blue(@color), .6);
+
+                    position: relative;
+                    z-index: 3;
+                    .box-shadow(~"inset 0 1px 1px rgba(0,0,0,.075), 0 0 8px @{color-rgba}");
+
+                    > .btn {
+                        border-color: @color;
+                    }
+                }
+            }
+
+            .input-group-btn {
+                .form-control-focus();
+
             }
 
             + .ed-item {
-                .form-control, .btn {
+                > .form-control, > .input-group-btn > .btn {
                     .border-top-radius(0);
                     margin-top: -1px;
                 }

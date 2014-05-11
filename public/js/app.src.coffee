@@ -731,6 +731,11 @@ class Cruddy.Inputs.Boolean extends Cruddy.Inputs.Base
             <button type="button" class="btn btn-default" data-value="0">#{ Cruddy.lang.no }</button>
         </div>
         """
+
+    focus: ->
+        @values?[0].focus()
+
+        this
 class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     className: "entity-dropdown"
 
@@ -978,6 +983,11 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
                 """
 
         html += "</div></div>"
+
+    focus: ->
+        @$component("dropdown").trigger("click")[0].focus()
+
+        this
 
     dispose: ->
         @selector?.remove()
@@ -1237,7 +1247,7 @@ class Cruddy.Inputs.FileList extends Cruddy.Inputs.Base
     renderInput: (label) ->
         """
         <div class="btn btn-sm btn-default file-list-input-wrap">
-            <input type="file" accept="#{ @accepts } "#{ "multiple" if @multiple }>
+            <input type="file" id="#{ @componentId "input" } accept="#{ @accepts } "#{ "multiple" if @multiple }>
             #{ label }
         </div>
         """
@@ -1252,6 +1262,12 @@ class Cruddy.Inputs.FileList extends Cruddy.Inputs.Base
             #{ label }
         </li>
         """
+
+    focus: ->
+        @$component("input")[0].focus()
+
+        this
+
 
 class Cruddy.Inputs.ImageList extends Cruddy.Inputs.FileList
     className: "image-list"

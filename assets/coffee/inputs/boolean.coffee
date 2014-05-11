@@ -40,3 +40,8 @@ class Cruddy.Inputs.Boolean extends Cruddy.Inputs.Base
             <button type="button" class="btn btn-default" data-value="0">#{ Cruddy.lang.no }</button>
         </div>
         """
+
+    focus: ->
+        @values?[0].focus()
+
+        this

@@ -246,6 +246,11 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         html += "</div></div>"
 
+    focus: ->
+        @$component("dropdown").trigger("click")[0].focus()
+
+        this
+
     dispose: ->
         @selector?.remove()
         @innerForm?.remove()

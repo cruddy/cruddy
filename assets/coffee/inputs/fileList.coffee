@@ -55,7 +55,7 @@ class Cruddy.Inputs.FileList extends Cruddy.Inputs.Base
     renderInput: (label) ->
         """
         <div class="btn btn-sm btn-default file-list-input-wrap">
-            <input type="file" accept="#{ @accepts } "#{ "multiple" if @multiple }>
+            <input type="file" id="#{ @componentId "input" } accept="#{ @accepts } "#{ "multiple" if @multiple }>
             #{ label }
         </div>
         """
@@ -70,3 +70,9 @@ class Cruddy.Inputs.FileList extends Cruddy.Inputs.Base
             #{ label }
         </li>
         """
+
+    focus: ->
+        @$component("input")[0].focus()
+
+        this
+

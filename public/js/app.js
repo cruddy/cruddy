@@ -1175,6 +1175,14 @@
       return "<div class=\"btn-group\">\n    <button type=\"button\" class=\"btn btn-default\" data-value=\"1\">" + Cruddy.lang.yes + "</button>\n    <button type=\"button\" class=\"btn btn-default\" data-value=\"0\">" + Cruddy.lang.no + "</button>\n</div>";
     };
 
+    Boolean.prototype.focus = function() {
+      var _ref1;
+      if ((_ref1 = this.values) != null) {
+        _ref1[0].focus();
+      }
+      return this;
+    };
+
     return Boolean;
 
   })(Cruddy.Inputs.Base);
@@ -1468,6 +1476,11 @@
         html += "<button type=\"button\" class=\"btn btn-default btn-dropdown dropdown-toggle\" data-toggle=\"dropdown\" id=\"" + this.cid + "-dropdown\" data-target=\"#" + this.cid + "\" tab-index=\"1\">\n    <span class=\"glyphicon glyphicon-search\"></span>\n</button>";
       }
       return html += "</div></div>";
+    };
+
+    EntityDropdown.prototype.focus = function() {
+      this.$component("dropdown").trigger("click")[0].focus();
+      return this;
     };
 
     EntityDropdown.prototype.dispose = function() {
@@ -1825,7 +1838,7 @@
     };
 
     FileList.prototype.renderInput = function(label) {
-      return "<div class=\"btn btn-sm btn-default file-list-input-wrap\">\n    <input type=\"file\" accept=\"" + this.accepts + " \"" + (this.multiple ? "multiple" : void 0) + ">\n    " + label + "\n</div>";
+      return "<div class=\"btn btn-sm btn-default file-list-input-wrap\">\n    <input type=\"file\" id=\"" + (this.componentId("input")) + " accept=\"" + this.accepts + " \"" + (this.multiple ? "multiple" : void 0) + ">\n    " + label + "\n</div>";
     };
 
     FileList.prototype.renderItem = function(item, i) {
@@ -1835,6 +1848,11 @@
       }
       label = this.formatter.format(item);
       return "<li class=\"list-group-item\">\n    <a href=\"#\" class=\"action-delete pull-right\" data-index=\"" + i + "\"><span class=\"glyphicon glyphicon-remove\"></span></a>\n\n    " + label + "\n</li>";
+    };
+
+    FileList.prototype.focus = function() {
+      this.$component("input")[0].focus();
+      return this;
     };
 
     return FileList;

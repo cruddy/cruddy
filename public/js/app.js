@@ -1838,7 +1838,7 @@
     };
 
     FileList.prototype.renderInput = function(label) {
-      return "<div class=\"btn btn-sm btn-default file-list-input-wrap\">\n    <input type=\"file\" id=\"" + (this.componentId("input")) + " accept=\"" + this.accepts + " \"" + (this.multiple ? "multiple" : void 0) + ">\n    " + label + "\n</div>";
+      return "<div class=\"btn btn-sm btn-default file-list-input-wrap\">\n    <input type=\"file\" id=\"" + (this.componentId("input")) + "\" accept=\"" + this.accepts + "\"" + (this.multiple ? " multiple" : "") + ">\n    " + label + "\n</div>";
     };
 
     FileList.prototype.renderItem = function(item, i) {
@@ -2104,9 +2104,23 @@
 
     Select.prototype.applyChanges = function(data, external) {
       if (external) {
-        this.$("[value='" + data + "']").prop("selected", true);
+        this.$(":nth-child(" + (this.optionIndex(data)) + ")").prop("selected", true);
       }
       return this;
+    };
+
+    Select.prototype.optionIndex = function(value) {
+      var data, index, label, _ref1;
+      index = this.prompt ? 2 : 1;
+      _ref1 = this.items;
+      for (data in _ref1) {
+        label = _ref1[data];
+        if (value === data) {
+          break;
+        }
+        index++;
+      }
+      return index;
     };
 
     Select.prototype.render = function() {
@@ -3533,7 +3547,7 @@
       data = {
         order_by: this.get("order_by")
       };
-      data.order_dir = data.order_dir != null ? this.columns.get(data.order_by).get("order_dir") : "asc";
+      data.order_dir = this.columns.get(data.order_by).get("order_dir");
       return new DataSource(data, {
         entity: this,
         columns: columns,

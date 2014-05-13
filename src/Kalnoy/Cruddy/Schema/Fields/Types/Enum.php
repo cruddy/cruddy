@@ -66,6 +66,23 @@ class Enum extends BaseField {
     }
 
     /**
+     * Translate items if possible.
+     *
+     * @param array $items
+     *
+     * @return array
+     */
+    protected function translateItems($items)
+    {
+        foreach ($items as $key => $value)
+        {
+            $items[$key] = \Kalnoy\Cruddy\try_trans($value);
+        }
+
+        return $items;
+    }
+
+    /**
      * @inheritdoc
      *
      * @return array
@@ -75,7 +92,7 @@ class Enum extends BaseField {
         return
         [
             'prompt' => \Kalnoy\Cruddy\try_trans($this->prompt),
-            'items' => \value($this->items),
+            'items' => $this->translateItems(\value($this->items)),
 
         ] + parent::toArray();
     }

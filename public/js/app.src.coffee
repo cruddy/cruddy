@@ -1247,7 +1247,7 @@ class Cruddy.Inputs.FileList extends Cruddy.Inputs.Base
     renderInput: (label) ->
         """
         <div class="btn btn-sm btn-default file-list-input-wrap">
-            <input type="file" id="#{ @componentId "input" } accept="#{ @accepts } "#{ "multiple" if @multiple }>
+            <input type="file" id="#{ @componentId "input" }" accept="#{ @accepts }"#{ if @multiple then " multiple" else "" }>
             #{ label }
         </div>
         """
@@ -1444,9 +1444,19 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
         super
 
     applyChanges: (data, external) ->
-        @$("[value='#{ data }']").prop "selected", yes if external
+        @$(":nth-child(#{ @optionIndex data })").prop "selected", yes if external
 
         this
+
+    optionIndex: (value) ->
+        index = if @prompt then 2 else 1
+
+        for data, label of @items
+            break if value == data
+
+            index++
+
+        index
 
     render: ->
         @$el.html @template()
@@ -2299,7 +2309,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
     # by specified filters
     createDataSource: (columns = null) ->
         data = { order_by: @get("order_by") }
-        data.order_dir = if data.order_dir? then @columns.get(data.order_by).get "order_dir" else "asc"
+        data.order_dir = @columns.get(data.order_by).get "order_dir"
 
         new DataSource data, { entity: this, columns: columns, filter: new Backbone.Model }
 

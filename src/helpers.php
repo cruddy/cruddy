@@ -30,24 +30,6 @@ if (!function_exists('Kalnoy\Cruddy\try_trans'))
     }
 }
 
-if (!function_exists('Kalnoy\Cruddy\extract_list'))
-{
-    /**
-     * Explode a list of items separated by comma.
-     *
-     * @param string $value
-     * @param array  $default
-     *
-     * @return array
-     */
-    function extract_list($value, $default = ['*'])
-    {
-        if (empty($value)) return $default;
-
-        return explode(',', $value);
-    }
-}
-
 if (!function_exists('Kalnoy\Cruddy\ucfirst'))
 {
     /**

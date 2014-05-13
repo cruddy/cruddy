@@ -8,9 +8,19 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
         super
 
     applyChanges: (data, external) ->
-        @$("[value='#{ data }']").prop "selected", yes if external
+        @$(":nth-child(#{ @optionIndex data })").prop "selected", yes if external
 
         this
+
+    optionIndex: (value) ->
+        index = if @prompt then 2 else 1
+
+        for data, label of @items
+            break if value == data
+
+            index++
+
+        index
 
     render: ->
         @$el.html @template()

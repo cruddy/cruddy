@@ -21,7 +21,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
     # by specified filters
     createDataSource: (columns = null) ->
         data = { order_by: @get("order_by") }
-        data.order_dir = if data.order_dir? then @columns.get(data.order_by).get "order_dir" else "asc"
+        data.order_dir = @columns.get(data.order_by).get "order_dir"
 
         new DataSource data, { entity: this, columns: columns, filter: new Backbone.Model }
 

@@ -3547,7 +3547,7 @@
       data = {
         order_by: this.get("order_by")
       };
-      data.order_dir = this.columns.get(data.order_by).get("order_dir");
+      data.order_dir = data.order_by != null ? this.columns.get(data.order_by).get("order_dir") : "asc";
       return new DataSource(data, {
         entity: this,
         columns: columns,

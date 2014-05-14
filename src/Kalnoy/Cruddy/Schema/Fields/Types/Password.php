@@ -5,30 +5,28 @@ namespace Kalnoy\Cruddy\Schema\Fields\Types;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Kalnoy\Cruddy\Schema\Fields\BaseTextField;
 
+/**
+ * Password field type.
+ * 
+ * Password field will not expose a value and will always be empty. The empty
+ * password will be removed from the input.
+ * 
+ * @version 1.0.0
+ */
 class Password extends BaseTextField {
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $type = 'password';
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $inputType = 'password';
 
     /**
-     * @inheritdoc
-     *
-     * Password returns empty string.
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function extract(Eloquent $model)
     {
@@ -36,14 +34,12 @@ class Password extends BaseTextField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param mixed $value
-     *
-     * @return void
+     * {@inheritdoc}
      */
     public function keep($value)
     {
-        return ! empty(trim($value));
+        $value = trim($value);
+
+        return ! empty($value);
     }
 }

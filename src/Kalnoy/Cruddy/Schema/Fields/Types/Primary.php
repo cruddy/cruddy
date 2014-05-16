@@ -26,7 +26,7 @@ class Primary extends String {
      * 
      * We will check for actual match rather than partial.
      */
-    public function filter(QueryBuilder $builder, $data)
+    public function filter(Builder $builder, $data)
     {
         $builder->orWhere($this->id, '=', $data);
 

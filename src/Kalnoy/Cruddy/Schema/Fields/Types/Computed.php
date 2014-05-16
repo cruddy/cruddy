@@ -7,13 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Computed field.
+ * 
+ * @since 1.0.0
  */
 class Computed extends BaseField {
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $class = 'Computed';
 
@@ -25,11 +25,7 @@ class Computed extends BaseField {
     public $accessor;
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     *
-     * @return mixed
+     * {@inheritdoc}
      */
     public function extract(Model $model)
     {
@@ -39,11 +35,7 @@ class Computed extends BaseField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param string $action
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function isDisabled($action)
     {
@@ -51,9 +43,7 @@ class Computed extends BaseField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function isFillable()
     {
@@ -61,9 +51,7 @@ class Computed extends BaseField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function keep($value)
     {

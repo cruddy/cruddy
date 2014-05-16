@@ -1,18 +1,21 @@
-<?php namespace Kalnoy\Cruddy\Schema\Fields\Types;
+<?php
 
+namespace Kalnoy\Cruddy\Schema\Fields\Types;
+
+/**
+ * Date field.
+ * 
+ * @since 1.0.0
+ */
 class Date extends DateTime {
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $type = 'date';
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     public $format = 'DD.MM.YYYY';
 }

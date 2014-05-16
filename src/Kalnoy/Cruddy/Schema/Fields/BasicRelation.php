@@ -10,20 +10,18 @@ use Kalnoy\Cruddy\Schema\FieldInterface;
 
 /**
  * The base class for relation that will be selectable in drop down list.
+ * 
+ * @since 1.0.0
  */
 abstract class BasicRelation extends BaseRelation implements SearchProcessorInterface {
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $class = 'Relation';
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $type = 'relation';
 
@@ -127,11 +125,7 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessorInte
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     *
-     * @return mixed
+     * {@inheritdoc}
      */
     public function extract(Eloquent $model)
     {
@@ -148,11 +142,7 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessorInte
     }
 
     /**
-     * @inheritdoc
-     * 
-     * @param mixed $data
-     *
-     * @return mixed
+     * {@inheritdoc}
      */
     public function process($data)
     {
@@ -162,12 +152,7 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessorInte
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param array                                 $options
-     *
-     * @return void
+     * {@inheritdoc}
      */
     public function search(Builder $query, array $options)
     {
@@ -178,9 +163,7 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessorInte
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function toArray()
     {

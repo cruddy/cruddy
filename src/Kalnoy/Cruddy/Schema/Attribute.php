@@ -6,6 +6,11 @@ use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Kalnoy\Cruddy\Entity;
 
+/**
+ * Base attribute class.
+ * 
+ * @since 1.0.0
+ */
 abstract class Attribute implements AttributeInterface {
     
     /**
@@ -31,6 +36,9 @@ abstract class Attribute implements AttributeInterface {
 
     /**
      * The attribute type.
+     * 
+     * It's used to distinguish fields by type so it is possible to differentiate
+     * styling.
      *
      * @var string
      */
@@ -77,11 +85,7 @@ abstract class Attribute implements AttributeInterface {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $builder
-     *
-     * @return $this
+     * {@inheritdoc}
      */
     public function modifyQuery(EloquentBuilder $builder)
     {
@@ -89,12 +93,7 @@ abstract class Attribute implements AttributeInterface {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Query\Builder $builder
-     * @param asc|desc                           $direction
-     *
-     * @return $this
+     * {@inheritdoc}
      */
     public function order(QueryBuilder $builder, $direction)
     {
@@ -104,7 +103,7 @@ abstract class Attribute implements AttributeInterface {
     }
 
     /**
-     * Get attribute id.
+     * Get an attribute id.
      *
      * @return string
      */
@@ -114,7 +113,7 @@ abstract class Attribute implements AttributeInterface {
     }
 
     /**
-     * Get owning entity.
+     * Get an owning entity.
      *
      * @return \Kalnoy\Cruddy\Entity
      */
@@ -124,7 +123,7 @@ abstract class Attribute implements AttributeInterface {
     }
 
     /**
-     * Get type.
+     * Get an attribute type.
      *
      * @return string
      */
@@ -134,7 +133,7 @@ abstract class Attribute implements AttributeInterface {
     }
 
     /**
-     * Get help for an attribute.
+     * Get a help string for the attribute.
      *
      * @return string
      */
@@ -144,7 +143,7 @@ abstract class Attribute implements AttributeInterface {
     }
 
     /**
-     * Translate given key.
+     * Translate an attribute id under specified group.
      *
      * @param string $group
      * @param string $default
@@ -161,9 +160,17 @@ abstract class Attribute implements AttributeInterface {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return bool
+     * Generate a label from the id.
+     * 
+     * @return string
+     */
+    protected function generateLabel()
+    {
+        return \Kalnoy\Cruddy\ucfirst(\Kalnoy\Cruddy\prettify_string($this->id));
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function canOrder()
     {
@@ -171,9 +178,7 @@ abstract class Attribute implements AttributeInterface {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function toArray()
     {

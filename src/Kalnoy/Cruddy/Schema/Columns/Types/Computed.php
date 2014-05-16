@@ -7,6 +7,11 @@ use Illuminate\Database\Query\Builder;
 use Kalnoy\Cruddy\Schema\Columns\BaseColumn;
 use Kalnoy\Cruddy\Entity;
 
+/**
+ * Computed column that extracts data using a closure.
+ * 
+ * @since 1.0.0
+ */
 class Computed extends BaseColumn {
 
     /**
@@ -47,7 +52,7 @@ class Computed extends BaseColumn {
     }
 
     /**
-     * Set column clause to support order and search.
+     * Set column clause to support order.
      *
      * @param string|\Illuminate\Database\Expression $value
      *
@@ -61,11 +66,7 @@ class Computed extends BaseColumn {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     *
-     * @return mixed
+     * {@inheritdoc}
      */
     public function extract(Eloquent $model)
     {
@@ -75,12 +76,7 @@ class Computed extends BaseColumn {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Query\Builder $builder
-     * @param string                             $direction
-     *
-     * @return $this
+     * {@inheritdoc}
      */
     public function order(Builder $builder, $direction)
     {
@@ -93,9 +89,7 @@ class Computed extends BaseColumn {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function canOrder()
     {

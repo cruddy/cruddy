@@ -15,6 +15,11 @@ use Kalnoy\Cruddy\Service\Validation\ValidationException;
 use Kalnoy\Cruddy\Repo\SearchProcessorInterface;
 use Kalnoy\Cruddy\Repo\ChainedSearchProcessor;
 
+/**
+ * The entity class that is responsible for operations on model.
+ * 
+ * @since 1.0.0
+ */
 class Entity implements JsonableInterface, ArrayableInterface {
 
     /**
@@ -72,6 +77,13 @@ class Entity implements JsonableInterface, ArrayableInterface {
      * @var \Kalnoy\Cruddy\Schema\InlineRelationInterface[]
      */
     protected $related = [];
+
+    /**
+     * The list of all actions.
+     * 
+     * @var array
+     */
+    protected static $actions = [ 'view', 'update', 'create', 'delete' ];
 
     /**
      * Init entity.
@@ -209,7 +221,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     }
 
     /**
-     * Convert all items to simple representation.
+     * Convert all items to simple representation which is used by an entity dropdown.
      *
      * @param array $items
      *
@@ -226,7 +238,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     }
 
     /**
-     * Convert item to a simple representation.
+     * Convert item to a simple representation which is used by an entity dropdown.
      *
      * @param array|\Illuminate\Database\Eloquent\Model $model
      *
@@ -244,6 +256,31 @@ class Entity implements JsonableInterface, ArrayableInterface {
         $extra = $this->schema->extra($model, true);
 
         return compact('id', 'title', 'extra');
+    }
+
+    /**
+     * Create new model and return extracted attributes.
+     * 
+     * @param array $attributes
+     * 
+     * @return array
+     */
+    public function create(array $attributes)
+    {
+        return $this->processAndSave(compact('attributes'));
+    }
+
+    /**
+     * Update a model and return its extracted attributes.
+     * 
+     * @param mixed $id
+     * @param array $attributes
+     * 
+     * @return array
+     */
+    public function update($id, array $attributes)
+    {
+        return $this->processAndSave(compact('id', 'attributes'));
     }
 
     /**
@@ -266,6 +303,8 @@ class Entity implements JsonableInterface, ArrayableInterface {
 
         $eventResult = $this->fireEvent('saving', [ $action, $attributes ]);
 
+        // If saving event returned non-null result, we'll throw a ModelNotSavedException
+        // with that result.
         if ( ! is_null($eventResult))
         {
             throw new ModelNotSavedException($eventResult);
@@ -401,9 +440,9 @@ class Entity implements JsonableInterface, ArrayableInterface {
     }
 
     /**
-     * Get action from id.
+     * Get an action from the data.
      *
-     * @param mixed $id
+     * @param mixed $data
      *
      * @return string
      */
@@ -413,11 +452,14 @@ class Entity implements JsonableInterface, ArrayableInterface {
     }
 
     /**
-     * Validate related entities.
+     * Process and validate related items.
+     * 
+     * If corresponding input key doesn't exists, nothing will happen with the
+     * related items (i.e. they will not be removed).
      *
      * @param string $action
-     * @param array $input
-     * @param array $errors
+     * @param array  $input
+     * @param array  $errors
      *
      * @return array
      */
@@ -463,7 +505,10 @@ class Entity implements JsonableInterface, ArrayableInterface {
     }
 
     /**
-     * Process and save item.
+     * Process, save and return extracted attributes of the model.
+     * 
+     * If $input contains `id` attribute it is condisdered that model is exists
+     * and Cruddy will try to update it; it will create a new model otherwise.
      *
      * @param array $input
      *
@@ -491,7 +536,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
      *
      * If key isn't namespaced, looks for a key under entity's id namespace, 
      * then under `entities` namespace. Othwerwise, just translates line as is.
-     *
+     * 
      * @param string $key
      * @param string $default
      *
@@ -542,7 +587,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Create field collection.
      *
-     * @return $this
+     * @return \Kalnoy\Cruddy\Schema\Fields\Collection
      */
     protected function createFields()
     {
@@ -641,7 +686,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     }
 
     /**
-     * Get cruddy environment object.
+     * Get cruddy environment instance.
      *
      * @return \Kalnoy\Cruddy\Environment
      */
@@ -731,7 +776,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Make title for specified plurality.
      *
-     * @param singular|plural $plurality
+     * @param string $plurality
      *
      * @return string
      */
@@ -747,17 +792,16 @@ class Entity implements JsonableInterface, ArrayableInterface {
     }
 
     /**
-     * Get permissions as array.
+     * Get permissions for every action.
      *
      * @return array
      */
     public function getPermissions()
     {
         $permissions = static::$env->getPermissions()->driver();
-        $actions = ['view', 'update', 'create', 'delete'];
-        $data = [];
 
-        foreach ($actions as $action)
+        $data = [];
+        foreach (static::$actions as $action)
         {
             $data[$action] = $permissions->isPermitted($action, $this);
         }
@@ -766,9 +810,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function toArray()
     {
@@ -793,11 +835,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param int $options
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function toJson($options = 0)
     {

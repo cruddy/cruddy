@@ -11,6 +11,11 @@ use Kalnoy\Cruddy\ModelNotSavedException;
 use Kalnoy\Cruddy\Service\FileUploader;
 use Exception;
 
+/**
+ * Base repository class.
+ * 
+ * @since 1.0.0
+ */
 abstract class BaseRepository implements RepositoryInterface {
 
     /**
@@ -33,6 +38,8 @@ abstract class BaseRepository implements RepositoryInterface {
     protected $files = [];
 
     /**
+     * The handlers that are called after the model is saved.
+     * 
      * @var \Callable[]
      */
     protected $postSave = [];
@@ -48,6 +55,7 @@ abstract class BaseRepository implements RepositoryInterface {
      * Init repo.
      *
      * @param \Illuminate\Filesystem\Filesystem $file
+     * @param \Illuminate\Pagination\Factory    $paginator
      */
     public function __construct(Filesystem $file = null, PaginationFactory $paginator = null)
     {
@@ -59,8 +67,8 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * Fill the model attributes.
      *
-     * @param \Illuminate\Database\Eloquent\Model   $model
-     * @param array                                 $input
+     * @param \Illuminate\Database\Eloquent\Model $model
+     * @param array                               $input
      *
      * @return \Illuminate\Database\Eloquent\Model
      */
@@ -72,8 +80,9 @@ abstract class BaseRepository implements RepositoryInterface {
     }
 
     /**
-     * Clean input from unwanted keys. Default implementation just removes
-     * relations from the input.
+     * Clean input from unwanted keys.
+     * 
+     * Default implementation just removes relations from the input.
      *
      * @param array $input
      *
@@ -105,13 +114,7 @@ abstract class BaseRepository implements RepositoryInterface {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param int $id
-     *
-     * @return \Illuminate\Database\Eloquent\Model
-     *
-     * @throws \Kalnoy\Cruddy\ModelNotFoundException
+     * {@inheritdoc}
      */
     public function find($id)
     {
@@ -123,11 +126,7 @@ abstract class BaseRepository implements RepositoryInterface {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param array $options
-     *
-     * @return \Illuminate\Pagination\Paginator
+     * {@inheritdoc}
      */
     public function search(array $options, SearchProcessorInterface $processor = null)
     {
@@ -139,7 +138,7 @@ abstract class BaseRepository implements RepositoryInterface {
         $total = $query->getPaginationCount();
 
         $page = array_get($options, 'page', 1);
-        $perPage = array_get($options, 'per_page', $this->model->getPerPage());
+        $perPage = array_get($options, 'per_page', $this->getPerPage());
 
         $query->forPage($page, $perPage);
 
@@ -147,11 +146,17 @@ abstract class BaseRepository implements RepositoryInterface {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param array $input
-     *
-     * @return \Illuminate\Database\Eloquent\Model
+     * Get per page items count.
+     * 
+     * @return int
+     */
+    public function getPerPage()
+    {
+        return $this->model->getPerPage();
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function create(array $input)
     {
@@ -159,14 +164,7 @@ abstract class BaseRepository implements RepositoryInterface {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param int    $id
-     * @param array  $input
-     *
-     * @return \Illuminate\Database\Eloquent\Model
-     *
-     * @throws \Kalnoy\Cruddy\ModelNotFoundException
+     * {@inheritdoc}
      */
     public function update($id, array $input)
     {
@@ -183,7 +181,6 @@ abstract class BaseRepository implements RepositoryInterface {
      *
      * @return \Illuminate\Database\Eloquent\Model
      * 
-     * @throws \Exception
      * @throws \Kalnoy\Cruddy\ModelNotSavedException
      */
     protected function save(Eloquent $instance, array $input)
@@ -192,13 +189,17 @@ abstract class BaseRepository implements RepositoryInterface {
 
         $this->syncRelations($instance, $input);
 
+        // We will temporarly unguard eloquent models to be sure that every
+        // attribute is set.
         Eloquent::unguard();
 
         try
         {
             if (false === $this->fill($instance, $input)->save())
             {
-                throw new ModelNotSavedException("Could not save instance of {get_class($instance)}.");
+                $className = get_class($instance);
+
+                throw new ModelNotSavedException("Could not save an instance of [{$className}].");
             }
         }
 
@@ -222,12 +223,12 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * Sync relationships.
      *
-     * @param Eloquent $instance
-     * @param array    $input
+     * @param \Illuminate\Database\Eloquent\Model $instance
+     * @param array                               $input
      *
      * @return $this
      */
-    protected function syncRelations(Eloquent $instance, array &$input)
+    protected function syncRelations(Eloquent $instance, array $input)
     {
         foreach ($input as $key => $value)
         {
@@ -243,8 +244,8 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * Get relationship query.
      *
-     * @param Eloquent $instance
-     * @param string   $key
+     * @param \Illuminate\Database\Eloquent\Model $instance
+     * @param string                              $key
      *
      * @return null|\Illuminate\Database\Eloquent\Relations\Relation
      */
@@ -262,8 +263,8 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * Get whether an attribute on model is a relation.
      *
-     * @param Eloquent $instance
-     * @param string   $key
+     * @param \Illuminate\Database\Eloquent\Model $instance
+     * @param string                              $key
      *
      * @return bool
      */
@@ -275,10 +276,10 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * Sync one given relationship.
      *
-     * @param Eloquent $instance
-     * @param Relation $relation
-     * @param string   $key
-     * @param array    $data
+     * @param \Illuminate\Database\Eloquent\Model              $instance
+     * @param \Illuminate\Database\Eloquent\Relations\Relation $relation
+     * @param string                                           $key
+     * @param array                                            $data
      */
     protected function syncRelation(Eloquent $instance, Relation $relation, $key, $data)
     {
@@ -293,9 +294,9 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * Sync BelongsToMany relationship.
      *
-     * @param Eloquent $instance
-     * @param string   $key
-     * @param array    $data
+     * @param \Illuminate\Database\Eloquent\Model $instance
+     * @param string                              $key
+     * @param array                               $data
      *
      * @return $this
      */
@@ -315,9 +316,9 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * Sync MorphToMany relationship.
      *
-     * @param   Eloquent  $instance
-     * @param   string    $key
-     * @param   array     $data
+     * @param \Illuminate\Database\Eloquent\Model $instance
+     * @param string                              $key
+     * @param array                               $data
      *
      * @return  $this
      */
@@ -329,9 +330,9 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * Sync BelongsTo relationship.
      *
-     * @param Eloquent $instance
-     * @param string   $key
-     * @param int      $data
+     * @param \Illuminate\Database\Eloquent\Model $instance
+     * @param string                              $key
+     * @param int                                 $data
      *
      * @return $this
      */
@@ -363,9 +364,9 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * Fire post save callbacks.
      *
-     * @param Eloquent $instance
+     * @param \Illuminate\Database\Eloquent\Model $instance
      *
-     * @return Eloquent
+     * @return \Illuminate\Database\Eloquent\Model
      */
     protected function firePostSaveCallbacks(Eloquent $instance)
     {
@@ -433,11 +434,7 @@ abstract class BaseRepository implements RepositoryInterface {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param  int|array $ids
-     *
-     * @return int
+     * {@inheritdoc}
      */
     public function delete($ids)
     {
@@ -456,11 +453,7 @@ abstract class BaseRepository implements RepositoryInterface {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param string $key
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function isFillable($key)
     {

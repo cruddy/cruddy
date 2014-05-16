@@ -5,6 +5,11 @@ namespace Kalnoy\Cruddy\Service\Validation;
 use Exception;
 use RuntimeException;
 
+/**
+ * Validation exception that provides validation errors.
+ * 
+ * @since 1.0.0
+ */
 class ValidationException extends RuntimeException {
 
     /**

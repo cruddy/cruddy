@@ -6,20 +6,18 @@ use Kalnoy\Cruddy\Schema\Fields\BaseField;
 
 /**
  * Code editor based on {@link http://http://ace.c9.io/ ACE}.
+ * 
+ * @since 1.0.0
  */
 class Code extends BaseField {
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $class = 'Code';
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $type = 'code';
 
@@ -89,9 +87,7 @@ class Code extends BaseField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return  array
+     * {@inheritdoc}
      */
     public function toArray()
     {

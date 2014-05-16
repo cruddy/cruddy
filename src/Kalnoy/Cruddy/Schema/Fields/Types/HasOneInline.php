@@ -6,15 +6,13 @@ use Kalnoy\Cruddy\Schema\Fields\InlineRelation;
 
 /**
  * This field will allow to inlinely edit related model.
+ * 
+ * @since 1.0.0
  */
 class HasOneInline extends InlineRelation {
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function getExtra($model)
     {

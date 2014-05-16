@@ -3,14 +3,20 @@
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Kalnoy\Cruddy\Schema\Fields\BaseField;
 
+/**
+ * File input field.
+ * 
+ * @since 1.0.0
+ */
 class File extends BaseField {
 
+    /**
+     * {@inheritdoc}
+     */
     protected $class = 'File';
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $type = 'file';
 
@@ -29,11 +35,9 @@ class File extends BaseField {
     public $accepts;
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     *
-     * @return array|string
+     * @return string[]|string
      */
     public function extract(Eloquent $model)
     {
@@ -45,11 +49,9 @@ class File extends BaseField {
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      *
-     * @param array|string $value
-     *
-     * @return array|string
+     * @return string[]|string
      */
     public function process($value)
     {
@@ -87,9 +89,7 @@ class File extends BaseField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function toArray()
     {

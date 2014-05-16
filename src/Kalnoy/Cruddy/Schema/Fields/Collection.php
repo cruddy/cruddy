@@ -8,6 +8,11 @@ use Kalnoy\Cruddy\Schema\BaseCollection;
 use Kalnoy\Cruddy\Schema\FieldInterface;
 use Kalnoy\Cruddy\Repo\SearchProcessorInterface;
 
+/**
+ * Fields collection.
+ * 
+ * @since 1.0.0
+ */
 class Collection extends BaseCollection implements SearchProcessorInterface {
 
     /**
@@ -72,8 +77,8 @@ class Collection extends BaseCollection implements SearchProcessorInterface {
     /**
      * Filter by keywords.
      *
-     * @param QueryBuilder $builder
-     * @param string       $keywords
+     * @param \Illuminate\Database\Query\Builder $builder
+     * @param string                            $keywords
      *
      * @return void
      */
@@ -94,8 +99,8 @@ class Collection extends BaseCollection implements SearchProcessorInterface {
     /**
      * Apply complex filters.
      *
-     * @param QueryBuilder $builder
-     * @param array        $data
+     * @param \Illuminate\Database\Query\Builder $builder
+     * @param array                              $data
      *
      * @return void
      */
@@ -116,12 +121,7 @@ class Collection extends BaseCollection implements SearchProcessorInterface {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $builder
-     * @param array                                 $options
-     *
-     * @return void
+     * {@inheritdoc}
      */
     public function search(EloquentBuilder $builder, array $options)
     {

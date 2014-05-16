@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\Redirect;
 use Intervention\Image\Exception\ImageNotFoundException;
 use Kalnoy\Cruddy\Service\ThumbnailFactory;
 
+/**
+ * This controller handles base web-requests.
+ * 
+ * @since 1.0.0
+ */
 class CruddyController extends Controller {
 
     /**

@@ -6,16 +6,13 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /**
  * Handles morph to many relation.
+ * 
+ * @since 1.0.0
  */
 class MorphToMany extends BelongsToMany {
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Query\Builder $query
-     * @param mixed                              $data
-     *
-     * @return void
+     * {@inheritdoc}
      */
     protected function initNestedQuery(QueryBuilder $query, $data)
     {

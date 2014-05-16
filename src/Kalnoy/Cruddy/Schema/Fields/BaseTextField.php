@@ -6,28 +6,26 @@ use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /**
- * Base text field.
+ * Base text field class.
+ * 
+ * This kind of fields don't have complex filters.
+ * 
+ * @since 1.0.0
  */
 abstract class BaseTextField extends BaseField {
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $class = 'Input';
 
     /**
-     * @inheritdoc
-     *
-     * @var bool
+     * {@inheritdoc}
      */
     protected $canOrder = true;
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $filterType = self::FILTER_STRING;
 
@@ -39,11 +37,7 @@ abstract class BaseTextField extends BaseField {
     protected $inputType = 'text';
 
     /**
-     * Process value.
-     *
-     * @param  string $value
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function process($value)
     {
@@ -53,12 +47,7 @@ abstract class BaseTextField extends BaseField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Query\Builder $builder
-     * @param asc|desc                           $direction
-     *
-     * @return $this
+     * {@inheritdoc}
      */
     public function order(QueryBuilder $builder, $direction)
     {
@@ -68,12 +57,9 @@ abstract class BaseTextField extends BaseField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Query\Builder $builder
-     * @param mixed                              $data
-     *
-     * @return $this
+     * {@inheritdoc}
+     * 
+     * Simple keywords search.
      */
     public function filter(QueryBuilder $builder, $data)
     {
@@ -83,9 +69,7 @@ abstract class BaseTextField extends BaseField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function toArray()
     {

@@ -3,8 +3,12 @@
 namespace Kalnoy\Cruddy\Repo;
 
 /**
- * RepositoryInterface is responsible for fetching, searching and performing 
+ * Repository interface.
+ * 
+ * The repository is responsible for fetching, searching and performing 
  * CRUD operations.
+ * 
+ * @since 1.0.0
  */
 interface RepositoryInterface {
 
@@ -18,9 +22,9 @@ interface RepositoryInterface {
    /**
     * Get an item by given id.
     *
-    * @param   mixed  $id
+    * @param mixed  $id
     *
-    * @return  \Illuminate\Database\Eloquent\Model
+    * @return \Illuminate\Database\Eloquent\Model
     *
     * @throws \Kalnoy\Cruddy\ModelNotFoundException
     */
@@ -53,8 +57,8 @@ interface RepositoryInterface {
     /**
      * Update existing eloquent model with input.
      *
-     * @param int    $id
-     * @param array  $input
+     * @param int   $id
+     * @param array $input
      *
      * @return \Illuminate\Database\Eloquent\Model
      * 
@@ -65,7 +69,7 @@ interface RepositoryInterface {
     /**
      * Delete a model or a set of model.
      *
-     * @param int|array $ids
+     * @param int|int[] $ids
      *
      * @return int the number of deleted items.
      */

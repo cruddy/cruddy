@@ -4,19 +4,22 @@ namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
 use Kalnoy\Cruddy\Schema\Fields\BaseTextField;
 
+/**
+ * Slug field type.
+ * 
+ * The slug uses other field's value to generate own value.
+ * 
+ * @since 1.0.0
+ */
 class Slug extends BaseTextField {
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $class = 'Slug';
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $type = 'slug';
 
@@ -72,9 +75,7 @@ class Slug extends BaseTextField {
     }
 
     /**
-     * @inheritdoc
-     * 
-     * @return array
+     * {@inheritdoc}
      */
     public function toArray()
     {

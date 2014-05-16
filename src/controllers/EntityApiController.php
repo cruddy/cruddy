@@ -10,8 +10,16 @@ use Illuminate\Support\Facades\Config;
 use Kalnoy\Cruddy\Entity;
 use Kalnoy\Cruddy\Service\Validation\ValidationException;
 
+/**
+ * This controller handles requests to the api.
+ * 
+ * @since 1.0.0
+ */
 class EntityApiController extends ApiController {
 
+    /**
+     * Validation error code.
+     */
     const E_VALIDATION = 'VALIDATION';
 
     /**
@@ -103,10 +111,7 @@ class EntityApiController extends ApiController {
     {
         return $this->resolveSafe($entity, 'create', function ($entity)
         {
-            $attributes = Input::all();
-            $id = null;
-
-            return $this->success($entity->processAndSave(compact('id', 'attributes')));
+            return $this->success($entity->create(Input::all()));
         });
     }
 
@@ -121,9 +126,7 @@ class EntityApiController extends ApiController {
     {
         return $this->resolveSafe($entity, 'update', function ($entity) use ($id)
         {
-            $attributes = Input::all();
-
-            return $this->success($entity->processAndSave(compact('id', 'attributes')));
+            return $this->success($entity->update($id, Input::all()));
         });
     }
 

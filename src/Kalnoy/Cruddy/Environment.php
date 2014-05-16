@@ -1,4 +1,6 @@
-<?php namespace Kalnoy\Cruddy;
+<?php
+
+namespace Kalnoy\Cruddy;
 
 use Illuminate\Support\Contracts\JsonableInterface;
 use Illuminate\Http\Request;
@@ -10,6 +12,11 @@ use Kalnoy\Cruddy\Schema\Columns\Factory as ColumnFactory;
 use Kalnoy\Cruddy\Service\Permissions\PermissionsManager;
 use Kalnoy\Cruddy\Schema\Repository as SchemaRepository;
 
+/**
+ * Cruddy environment.
+ * 
+ * @since 1.0.0
+ */
 class Environment implements JsonableInterface {
 
     /**
@@ -128,8 +135,8 @@ class Environment implements JsonableInterface {
     /**
      * Get configuration option from cruddy configuration file.
      *
-     * @param      $key
-     * @param null $default
+     * @param string $key
+     * @param mixed  $default
      *
      * @return mixed
      */
@@ -139,7 +146,7 @@ class Environment implements JsonableInterface {
     }
 
     /**
-     * Translate key.
+     * Translate a key.
      *
      * @param string $key
      * @param string $default
@@ -156,7 +163,7 @@ class Environment implements JsonableInterface {
     /**
      * Register new field type.
      *
-     * @param string $macro
+     * @param string          $macro
      * @param string|Callable $callback
      *
      * @return $this
@@ -170,10 +177,15 @@ class Environment implements JsonableInterface {
 
     /**
      * Find a field with given id.
+     * 
+     * The full field id consists of two parts: the entity id and the field id.
+     * I.e. `users.password`.
      *
      * @param string $id
      *
      * @return \Kalnoy\Cruddy\Schema\Fields\BaseField
+     * 
+     * @throws \RuntimeException if field is not found.
      */
     public function field($id)
     {
@@ -182,7 +194,10 @@ class Environment implements JsonableInterface {
         $entity = $this->entity($entity);
         $field = $entity->getFields()->get($field);
 
-        if ( ! $field) throw new RuntimeException("The field with an id of [{$id}] is not found.");
+        if ( ! $field)
+        {
+            throw new RuntimeException("The field with an id of [{$id}] is not found.");
+        }
 
         return $field;
     }
@@ -190,7 +205,7 @@ class Environment implements JsonableInterface {
     /**
      * Register new column type.
      *
-     * @param string $macro
+     * @param string          $macro
      * @param string|Callable $callback
      *
      * @return $this
@@ -298,7 +313,7 @@ class Environment implements JsonableInterface {
     /**
      * Get whether the action for an entity is permitted.
      *
-     * @param string $action
+     * @param string                $action
      * @param \Kalnoy\Cruddy\Entity $entity
      *
      * @return bool
@@ -353,7 +368,7 @@ class Environment implements JsonableInterface {
      *
      * @return array
      */
-    protected function getAllEntities()
+    protected function entitiesToArray()
     {
         $classes = $this->schemas->getClasses();
         $data = [];
@@ -385,11 +400,7 @@ class Environment implements JsonableInterface {
     }
 
     /**
-     * @inheritdoc
-     * 
-     * @param int $options
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function toJSON($options = 0)
     {
@@ -399,7 +410,7 @@ class Environment implements JsonableInterface {
             'uri' => $this->config('uri'),
             'root' => $this->request->root(),
             'ace_theme' => $this->config('ace_theme', 'chrome'),
-            'entities' => $this->getAllEntities(),
+            'entities' => $this->entitiesToArray(),
             'lang' => $this->getDefaultLang() + $this->lang,
 
         ], $options);

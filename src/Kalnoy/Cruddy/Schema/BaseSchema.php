@@ -12,11 +12,19 @@ use Kalnoy\Cruddy\Entity;
 
 /**
  * Base schema.
+ * 
+ * @since 1.0.0
  */
 abstract class BaseSchema implements SchemaInterface {
     
+    /**
+     * The state of model when it is new.
+     */
     const WHEN_NEW = 'create';
 
+    /**
+     * The state of model when it is exists.
+     */
     const WHEN_EXISTS = 'update';
 
     /**
@@ -55,6 +63,15 @@ abstract class BaseSchema implements SchemaInterface {
     protected $defaultOrder;
 
     /**
+     * The number of items per page.
+     * 
+     * Set this value to override default model's value.
+     * 
+     * @var int
+     */
+    protected $perPage;
+
+    /**
      * The template JavaScript class name under `Cruddy.Entity.Templates` namespace.
      *
      * @var string
@@ -62,11 +79,7 @@ abstract class BaseSchema implements SchemaInterface {
     protected $template = 'Basic';
 
     /**
-     * @inheritdoc
-     *
-     * @param string $id
-     *
-     * @return \Kalnoy\Cruddy\Entity
+     * {@inheritdoc}
      */
     public function entity($id)
     {
@@ -74,22 +87,18 @@ abstract class BaseSchema implements SchemaInterface {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param mixed $schema
-     *
-     * @return void
+     * {@inheritdoc}
      */
     public function columns($schema) {}
 
     /**
-     * @inheritdoc
-     *
-     * @return \Kalnoy\Cruddy\Repo\RepositoryInterface
+     * {@inheritdoc}
      */
     public function repository()
     {
         $repo = new StubRepository($this->model, $this->defaults());
+
+        $repo->perPage = $this->perPage;
 
         $this->files($repo);
 
@@ -116,9 +125,7 @@ abstract class BaseSchema implements SchemaInterface {
     public function files($repo) {}
 
     /**
-     * Create validator.
-     *
-     * @return \Kalnoy\Cruddy\Service\Validation\ValidableInterface
+     * {@inheritdoc}
      */
     public function validator()
     {
@@ -139,12 +146,7 @@ abstract class BaseSchema implements SchemaInterface {
     protected function rules($validate) {}
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     * @param bool $simplified
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function extra($model, $simplified)
     {
@@ -163,14 +165,10 @@ abstract class BaseSchema implements SchemaInterface {
     protected function externalUrl($model) {}
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      *
      * Default implementation will try to get {@see $titleAttribute} attribute and if one
      * is not set will return model's key.
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     *
-     * @return string
      */
     public function toString($model)
     {
@@ -180,9 +178,7 @@ abstract class BaseSchema implements SchemaInterface {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function toArray()
     {

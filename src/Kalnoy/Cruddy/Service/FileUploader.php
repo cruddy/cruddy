@@ -10,7 +10,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
  * I.e. if the root is `/var/www/public` and the path is `files` then file with name `myfile.zip` would be
  * uploaded at `/var/www/public/files/myfile.zip` and the result would be `/files/myfile.zip`.
  *
- * @package Kalnoy\Cruddy
+ * @since 1.0.0
  */
 class FileUploader {
 
@@ -66,7 +66,7 @@ class FileUploader {
      * $value can be either a string or UploadedFile.
      * The string is considered as old filename and returned as is.
      *
-     * @param array|string|UploadedFile $value
+     * @param array|string|\Symfony\Component\HttpFoundation\File\UploadedFile $value
      *
      * @return array|string
      */
@@ -80,7 +80,7 @@ class FileUploader {
     /**
      * Upload multiple files.
      *
-     * @param $files
+     * @param Symfony\Component\HttpFoundation\File\UploadedFile[] $files
      *
      * @return array
      */
@@ -106,7 +106,7 @@ class FileUploader {
     /**
      * Move UploadedFile to a required directory and return path.
      *
-     * @param UploadedFile $file
+     * @param Symfony\Component\HttpFoundation\File\UploadedFile $file
      *
      * @return string|null
      */
@@ -150,7 +150,7 @@ class FileUploader {
     /**
      * Get a name for a file.
      *
-     * @param UploadedFile $file
+     * @param \Symfony\Component\HttpFoundation\File\UploadedFile $file
      *
      * @return string
      */

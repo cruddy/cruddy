@@ -57,7 +57,7 @@ class Repository {
 
         if ( ! $this->resolvable($id))
         {
-            throw new EntityNotFoundException("The entity {$id} is not registered.");
+            throw new EntityNotFoundException("The entity [{$id}] is not registered.");
         }
 
         return $this->resolved[$id] = $this->container->make($this->classes[$id]);
@@ -72,7 +72,7 @@ class Repository {
      */
     public function resolvable($id)
     {
-        if (!isset($this->classes[$id])) return false;
+        if ( ! isset($this->classes[$id])) return false;
 
         $class = $this->classes[$id];
 

@@ -6,42 +6,35 @@ use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Kalnoy\Cruddy\Schema\Fields\BaseField;
 
+/**
+ * Boolean field.
+ * 
+ * @since 1.0.0
+ */
 class Boolean extends BaseField {
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $class = 'Boolean';
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $type = 'bool';
 
     /**
-     * @inheritdoc
-     *
-     * @var bool
+     * {@inheritdoc}
      */
     protected $canOrder = true;
 
     /**
-     * @inhertidoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $filterType = self::FILTER_COMPLEX;
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function extract(Eloquent $model)
     {
@@ -49,11 +42,9 @@ class Boolean extends BaseField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param mixed $value
-     *
-     * @return int
+     * {@inheritdoc}
+     * 
+     * @return bool
      */
     public function process($value)
     {
@@ -61,24 +52,15 @@ class Boolean extends BaseField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param mixed $value
-     *
-     * @return bool
+     * {@inheritdoc}
      */
-    public function skip($value)
+    public function keep($value)
     {
-        return $value === '';
+        return trim($value) !== '';
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Query\Builder $builder
-     * @param string                             $direction
-     *
-     * @return $this
+     * {@inheritdoc}
      */
     public function order(Builder $builder, $direction)
     {
@@ -88,16 +70,11 @@ class Boolean extends BaseField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Query\Builder $builder
-     * @param mixed                              $data
-     *
-     * @return $this
+     * {@inheritdoc}
      */
     public function filter(Builder $builder, $data)
     {
-        if ( ! $this->skip($data))
+        if ($this->keep($data))
         {
             $builder->where($this->id, '=', $this->process($data));
         }

@@ -8,18 +8,22 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Contracts\ArrayableInterface;
 
 /**
- * AttributeInterface
+ * Base attribute interface.
+ * 
+ * Attributes extract data, can order data lists.
+ * 
+ * @since 1.0.0
  */
 interface AttributeInterface extends ArrayableInterface {
 
     /**
-     * Extract model's value.
+     * Get model's corresponding value.
      *
      * @param \Illuminate\Database\Eloquent\Model $model
      *
      * @return mixed
      */
-    public function extract(Eloquent $item);
+    public function extract(Eloquent $model);
 
     /**
      * Modify eloquent query before requesting any data.

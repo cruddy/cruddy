@@ -11,6 +11,8 @@ use Kalnoy\Cruddy\Entity;
 
 /**
  * Proxy relies on a field to do stuff. It just passes calls to the field.
+ * 
+ * @since 1.0.0
  */
 class Proxy extends BaseColumn {
 
@@ -22,16 +24,12 @@ class Proxy extends BaseColumn {
     protected $field;
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $class = 'Proxy';
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $type = 'proxy';
 
@@ -50,11 +48,7 @@ class Proxy extends BaseColumn {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     *
-     * @return mixed
+     * {@inheritdoc}
      */
     public function extract(Eloquent $model)
     {
@@ -62,11 +56,7 @@ class Proxy extends BaseColumn {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $builder
-     *
-     * @return $this
+     * {@inheritdoc}
      */
     public function modifyQuery(EloquentBuilder $builder)
     {
@@ -76,12 +66,7 @@ class Proxy extends BaseColumn {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Query\Builder $builder
-     * @param mixed                              $data
-     *
-     * @return $this
+     * {@inheritdoc}
      */
     public function order(QueryBuilder $builder, $data)
     {
@@ -91,9 +76,7 @@ class Proxy extends BaseColumn {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function canOrder()
     {
@@ -101,9 +84,7 @@ class Proxy extends BaseColumn {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getHeader()
     {
@@ -111,9 +92,7 @@ class Proxy extends BaseColumn {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function toArray()
     {

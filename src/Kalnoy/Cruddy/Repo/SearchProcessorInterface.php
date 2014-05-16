@@ -5,12 +5,12 @@ namespace Kalnoy\Cruddy\Repo;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
- * SearchProcessorInterface
+ * Search processor interface for applying conditions the the query.
  */
 interface SearchProcessorInterface {
 
     /**
-     * Apply the search to the builder.
+     * Apply search conditions to the builder.
      *
      * @param \Illuminate\Database\Eloquent\Builder $builder
      * @param array                                 $options

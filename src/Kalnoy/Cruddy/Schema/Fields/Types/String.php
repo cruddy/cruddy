@@ -4,6 +4,11 @@ namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
 use Kalnoy\Cruddy\Schema\Fields\BaseTextField;
 
+/**
+ * Basic string field type.
+ * 
+ * @since 1.0.0
+ */
 class String extends BaseTextField {
 
     /**
@@ -58,9 +63,7 @@ class String extends BaseTextField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function toArray()
     {

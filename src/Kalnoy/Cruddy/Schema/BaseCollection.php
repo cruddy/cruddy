@@ -4,6 +4,11 @@ namespace Kalnoy\Cruddy\Schema;
 
 use Illuminate\Support\Collection;
 
+/**
+ * Base collection for any kind of attributes.
+ * 
+ * @since 1.0.0
+ */
 class BaseCollection extends Collection {
 
     /**

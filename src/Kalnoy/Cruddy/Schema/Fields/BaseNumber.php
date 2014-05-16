@@ -7,28 +7,27 @@ use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /**
- * Base number class.
+ * Base number field class.
+ * 
+ * Number fields use special filter, they also cast value to appropriate format
+ * when both extracting and processing value.
+ * 
+ * @since 1.0.0
  */
 abstract class BaseNumber extends BaseField {
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $class = 'Number';
 
     /**
-     * @inheritdoc
-     *
-     * @var bool
+     * {@inheritdoc}
      */
     protected $canOrder = true;
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $filterType = self::FILTER_COMPLEX;
 
@@ -40,11 +39,9 @@ abstract class BaseNumber extends BaseField {
     protected $isDecimal = false;
 
     /**
-     * @inheritdoc
-     *
-     * @param mixed $value
-     *
-     * @return mixed
+     * {@inheritdoc}
+     * 
+     * If value is empty, null is returned.
      */
     public function process($value)
     {
@@ -54,11 +51,7 @@ abstract class BaseNumber extends BaseField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     *
-     * @return int
+     * {@inheritdoc}
      */
     public function extract(Eloquent $model)
     {
@@ -77,12 +70,7 @@ abstract class BaseNumber extends BaseField {
     abstract protected function cast($value);
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Query\Builder $builder
-     * @param asc|desc                           $direction
-     *
-     * @return $this
+     * {@inheritdoc}
      */
     public function order(QueryBuilder $builder, $direction)
     {
@@ -92,12 +80,7 @@ abstract class BaseNumber extends BaseField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Query\Builder $builder
-     * @param mixed                              $data
-     *
-     * @return $this
+     * {@inheritdoc}
      */
     public function filter(QueryBuilder $builder, $data)
     {
@@ -109,9 +92,7 @@ abstract class BaseNumber extends BaseField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function toArray()
     {

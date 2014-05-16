@@ -7,18 +7,41 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Routing\Controller;
 
+/**
+ * Base api controller.
+ * 
+ * @since 1.0.0
+ */
 class ApiController extends Controller {
 
+    /**
+     * Everything is ok.
+     */
     const S_OK = 'ok';
 
+    /**
+     * Everything is not ok.
+     */
     const S_FAIL = 'fail';
 
+    /**
+     * Not found error code.
+     */
     const E_NOT_FOUND = 'NOT_FOUND';
 
+    /**
+     * Missing method code.
+     */
     const E_MISSING_METHOD = 'MISSING_METHOD';
 
+    /**
+     * Forbidden error code.
+     */
     const E_FORBIDDEN = 'FORBIDDEN';
 
+    /**
+     * Exception thrown error code.
+     */
     const E_EXCEPTION = 'EXCEPTION';
 
     /**

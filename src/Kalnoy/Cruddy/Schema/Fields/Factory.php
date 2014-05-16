@@ -8,6 +8,8 @@ use Kalnoy\Cruddy\Entity;
 
 /**
  * Field Factory class.
+ * 
+ * @since 1.0.0
  */
 class Factory extends BaseFactory {
 

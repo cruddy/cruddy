@@ -1,18 +1,21 @@
-<?php namespace Kalnoy\Cruddy\Schema\Fields\Types;
+<?php
 
+namespace Kalnoy\Cruddy\Schema\Fields\Types;
+
+/**
+ * Time editing field.
+ * 
+ * @since 1.0.0
+ */
 class Time extends DateTime {
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $type = 'time';
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     public $format = 'HH:mm';
 }

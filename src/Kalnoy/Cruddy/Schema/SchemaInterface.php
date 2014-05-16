@@ -7,7 +7,12 @@ use Illuminate\Database\Eloquent\Model as Eloquent;
 use Kalnoy\Cruddy\Repo\RepositoryInterface;
 
 /**
- * SchemaInterface
+ * The schema interface.
+ * 
+ * Schema is used by the entity to initialize components. It also provides additional
+ * configuration for the UI.
+ * 
+ * @since 1.0.0
  */
 interface SchemaInterface extends ArrayableInterface {
 
@@ -23,7 +28,7 @@ interface SchemaInterface extends ArrayableInterface {
     /**
      * Initialize fields.
      *
-     * @param $schema
+     * @param \Kalnoy\Cruddy\Schema\InstanceFactory $schema
      *
      * @return void
      */
@@ -32,21 +37,21 @@ interface SchemaInterface extends ArrayableInterface {
     /**
      * Initialize columns.
      *
-     * @param $schema
+     * @param \Kalnoy\Cruddy\Schema\InstanceFactory $schema
      *
      * @return void
      */
     public function columns($schema);
 
     /**
-     * Initialize repository.
+     * Create repository.
      *
      * @return \Kalnoy\Cruddy\Repo\RepositoryInterface
      */
     public function repository();
 
     /**
-     * Get validator.
+     * Create validator.
      *
      * @return \Kalnoy\Cruddy\Support\Validation\ValidableInterface
      */
@@ -56,7 +61,7 @@ interface SchemaInterface extends ArrayableInterface {
      * Get additional model attributes that will be available for the UI.
      *
      * @param \Illuminate\Database\Eloquent\Model $model
-     * @param bool $simplified
+     * @param bool                                $simplified
      *
      * @return array
      */

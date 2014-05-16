@@ -2,45 +2,41 @@
 
 use Illuminate\Database\Query\Builder;
 
+/**
+ * Primary field type.
+ * 
+ * @since 1.0.0
+ */
 class Primary extends String {
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $type = 'primary';
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      *
      * Primary field is hidden by default.
-     *
-     * @var bool
      */
     public $hide = true;
 
     /**
-     * @inheritdoc
-     *
-     * @param Illuminate\Database\Query\Builder $builder
-     * @param mixed                             $data
+     * {@inheritdoc}
      * 
-     * @return $this
+     * We will check for actual match rather than partial.
      */
-    public function applyConstraints(Builder $builder, $data)
+    public function filter(QueryBuilder $builder, $data)
     {
-        $builder->orWhere($this->id, '=', $data, $boolean);
+        $builder->orWhere($this->id, '=', $data);
 
         return $this;
     }
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      *
      * Unique is forced here.
-     *
-     * @return array
      */
     public function toArray()
     {

@@ -5,6 +5,13 @@ namespace Kalnoy\Cruddy\Service\Permissions;
 use Cartalyst\Sentry\Sentry;
 use Kalnoy\Cruddy\Entity;
 
+/**
+ * Permissions for handling sentry users.
+ * 
+ * The user is checked to have `entityId.action` permission, i.e. `users.update`.
+ * 
+ * @since 1.0.0
+ */
 class SentryPermissions implements PermissionsInterface {
 
     /**
@@ -25,12 +32,7 @@ class SentryPermissions implements PermissionsInterface {
     }
 
     /**
-     * @inhertidoc
-     *
-     * @param string $action
-     * @param \Kalnoy\Cruddy\Entity $entity
-     *
-     * @return bool
+     * {@inhertidoc}
      */
     public function isPermitted($action, Entity $entity)
     {

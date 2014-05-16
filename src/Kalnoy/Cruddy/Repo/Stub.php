@@ -2,6 +2,13 @@
 
 namespace Kalnoy\Cruddy\Repo;
 
+/**
+ * Basic repository class.
+ * 
+ * You can provide model's default attributes and override per page value.
+ * 
+ * @since 1.0.0
+ */
 class Stub extends BaseRepository {
 
     /**
@@ -19,6 +26,13 @@ class Stub extends BaseRepository {
     protected $defaults;
 
     /**
+     * Override the per page value.
+     * 
+     * @var int
+     */
+    public $perPage;
+
+    /**
      * Init repo.
      *
      * @param string                            $className
@@ -34,9 +48,15 @@ class Stub extends BaseRepository {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return \Illuminate\Database\Eloquent\Model
+     * {@inheritdoc}
+     */
+    public function getPerPage()
+    {
+        return $this->perPage ?: parent::getPerPage();
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function newModel()
     {

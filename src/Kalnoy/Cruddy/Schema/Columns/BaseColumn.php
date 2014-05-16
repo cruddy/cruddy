@@ -5,10 +5,15 @@ namespace Kalnoy\Cruddy\Schema\Columns;
 use Kalnoy\Cruddy\Schema\Attribute;
 use Kalnoy\Cruddy\Schema\ColumnInterface;
 
+/**
+ * Base column class.
+ *
+ * @since 1.0.0 
+ */
 abstract class BaseColumn extends Attribute implements ColumnInterface {
     
     /**
-     * The column width.
+     * The column width in pixels or percents.
      *
      * @var int
      */
@@ -36,7 +41,7 @@ abstract class BaseColumn extends Attribute implements ColumnInterface {
     public $formatterOptions;
 
     /**
-     * Set the width.
+     * Set the column width in pixels or percents.
      *
      * @param int $value
      *
@@ -66,7 +71,7 @@ abstract class BaseColumn extends Attribute implements ColumnInterface {
     }
 
     /**
-     * Set default order direction.
+     * Set the default order direction.
      *
      * @param asc|desc $value
      *
@@ -86,7 +91,7 @@ abstract class BaseColumn extends Attribute implements ColumnInterface {
      */
     public function getHeader()
     {
-        return $this->translate('columns') ?: \Kalnoy\Cruddy\ucfirst(\Kalnoy\Cruddy\prettify_string($this->id));
+        return $this->translate('columns') ?: $this->generateLabel();
     }
 
     /**

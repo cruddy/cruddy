@@ -2,6 +2,11 @@
 
 namespace Kalnoy\Cruddy\Schema;
 
+/**
+ * Base factory for all kinds of attributes.
+ * 
+ * @since 1.0.0
+ */
 class BaseFactory {
 
     protected $macros = [];
@@ -38,7 +43,7 @@ class BaseFactory {
             return $this->evaluate([ $this, $macro ], $entity, $collection, $params);
         }
 
-        if (!isset($this->macros[$macro]))
+        if ( ! isset($this->macros[$macro]))
         {
             throw new \RuntimeException("Attribute of type {$macro} is not registered.");
         }

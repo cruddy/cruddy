@@ -2,24 +2,25 @@
 
 use Kalnoy\Cruddy\Schema\Fields\BaseTextField;
 
+/**
+ * Base text field that is represented with textarea.
+ * 
+ * @since 1.0.0
+ */
 class Text extends BaseTextField {
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $type = 'text';
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $inputType = 'textarea';
 
     /**
-     * The number of rows for a textarea.
+     * The number of rows for the textarea.
      *
      * @var int
      */
@@ -40,9 +41,7 @@ class Text extends BaseTextField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function toArray()
     {

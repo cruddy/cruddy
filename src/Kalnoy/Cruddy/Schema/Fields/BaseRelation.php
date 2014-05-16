@@ -9,6 +9,11 @@ use Kalnoy\Cruddy\Entity;
 
 /**
  * Base relation field class.
+ * 
+ * This field type is provided with references entity and corresponding relation
+ * object.
+ * 
+ * @since 1.0.0
  */
 abstract class BaseRelation extends BaseField {
 
@@ -42,11 +47,7 @@ abstract class BaseRelation extends BaseField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     *
-     * @return mixed
+     * {@inheritdoc}
      */
     public function extract(Eloquent $model)
     {
@@ -73,11 +74,7 @@ abstract class BaseRelation extends BaseField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $builder
-     *
-     * @return $this
+     * {@inheritdoc}
      */
     public function modifyQuery(EloquentBuilder $builder)
     {
@@ -112,7 +109,7 @@ abstract class BaseRelation extends BaseField {
     }
 
     /**
-     * Get references entity instance.
+     * Get referenced entity instance.
      *
      * @return \Kalnoy\Cruddy\Entity
      */
@@ -142,9 +139,10 @@ abstract class BaseRelation extends BaseField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return bool
+     * {@inheritdoc}
+     * 
+     * Relational fields are always fillable since they are not actual attribute
+     * on the model.
      */
     public function isFillable()
     {
@@ -152,9 +150,7 @@ abstract class BaseRelation extends BaseField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function toArray()
     {

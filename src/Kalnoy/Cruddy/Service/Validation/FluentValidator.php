@@ -5,6 +5,15 @@ namespace Kalnoy\Cruddy\Service\Validation;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Fluent;
 
+/**
+ * Fluent validator for validating input.
+ * 
+ * This is basic implementation that uses laravel validator with few usefull features.
+ * 
+ * @see https://github.com/lazychaser/cruddy/wiki/Validation for expanded documentation.
+ * 
+ * @since 1.0.0
+ */
 class FluentValidator extends Fluent implements ValidableInterface {
 
     /**
@@ -30,12 +39,7 @@ class FluentValidator extends Fluent implements ValidableInterface {
     }
 
     /**
-     * Perform validation with given set of rules.
-     *
-     * @param string $action
-     * @param array  $input
-     *
-     * @throws ValidationException
+     * {@inheritdoc}
      */
     public function validFor($action, array $input, array $labels)
     {
@@ -61,9 +65,9 @@ class FluentValidator extends Fluent implements ValidableInterface {
     /**
      * Resolve rules given rule set name.
      *
-     * @param $action
+     * @param string $action
      *
-     * @return mixed
+     * @return array
      */
     public function resolveRules($action)
     {
@@ -138,9 +142,7 @@ class FluentValidator extends Fluent implements ValidableInterface {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function errors()
     {

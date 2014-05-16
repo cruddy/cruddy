@@ -6,7 +6,9 @@ use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /**
- * FieldInterface
+ * Base interface for all fields.
+ * 
+ * @since 1.0.0
  */
 interface FieldInterface extends AttributeInterface {
 
@@ -26,7 +28,8 @@ interface FieldInterface extends AttributeInterface {
     const FILTER_COMPLEX = 'complex';
 
     /**
-     * Process an input value and convert it to a valid format.
+     * Process a value and convert it to a format consumable by a validator
+     * and a repository.
      *
      * @param mixed $value
      *
@@ -35,14 +38,14 @@ interface FieldInterface extends AttributeInterface {
     public function process($value);
 
     /**
-     * Get whether value can be left in the input.
+     * Get whether value can stay in the input.
      *
      * @return bool
      */
     public function keep($value);
 
     /**
-     * Get whether the field is disabled for specified action.
+     * Get whether the field is allowed to be sent to the repository.
      *
      * @param string $action
      *

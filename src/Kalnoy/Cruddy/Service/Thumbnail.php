@@ -4,6 +4,11 @@ namespace Kalnoy\Cruddy\Service;
 
 use Illuminate\Http\Response;
 
+/**
+ * The thumbnail class.
+ * 
+ * @since 1.0.0 
+ */
 class Thumbnail {
 
     /**

@@ -6,6 +6,8 @@ use Kalnoy\Cruddy\Entity;
 
 /**
  * Instance factory connects attribute collection, entity and actual factory.
+ * 
+ * @since 1.0.0
  */
 class InstanceFactory {
 

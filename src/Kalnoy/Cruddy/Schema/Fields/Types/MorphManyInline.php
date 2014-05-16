@@ -4,13 +4,13 @@ namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
 /**
  * Morph many inline editing.
+ * 
+ * @since 1.0.0
  */
 class MorphManyInline extends MorphOneInline {
 
     /**
-     * @inheritdoc
-     *
-     * @var bool
+     * {@inheritdoc}
      */
     protected $multiple = true;
 

@@ -7,6 +7,11 @@ use Illuminate\Routing\UrlGenerator;
 use Kalnoy\Cruddy\Environment;
 use Kalnoy\Cruddy\Service\Permissions\PermissionsInterface;
 
+/**
+ * The menu builder class for rendering menus.
+ * 
+ * @since 1.0.0
+ */
 class MenuBuilder {
 
     /**
@@ -155,11 +160,7 @@ class MenuBuilder {
 
         if (isset($options['permissions']))
         {
-            $permissions = $options['permissions'];
-
-            if ($permissions instanceof \Closure) return $permissions();
-
-            return $this->permissions->hasAccess($permissions);
+            return value($options['permissions']);
         }
 
         return true;

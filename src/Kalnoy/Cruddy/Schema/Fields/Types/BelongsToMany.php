@@ -7,30 +7,23 @@ use Kalnoy\Cruddy\Schema\Fields\BasicRelation;
 
 /**
  * Handles belongs to many relation.
+ * 
+ * @since 1.0.0
  */
 class BelongsToMany extends BasicRelation {
 
     /**
-     * @inheritdoc
-     *
-     * @var bool
+     * {@inheritdoc}
      */
     protected $multiple = true;
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $filterType = self::FILTER_COMPLEX;
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Query\Builder $builder
-     * @param array                              $data
-     *
-     * @return $this
+     * {@inheritdoc}
      */
     public function filter(QueryBuilder $builder, $data)
     {

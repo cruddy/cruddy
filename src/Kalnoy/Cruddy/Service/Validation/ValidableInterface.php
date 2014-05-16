@@ -2,6 +2,13 @@
 
 namespace Kalnoy\Cruddy\Service\Validation;
 
+/**
+ * Validable interface.
+ * 
+ * The objects of that interface are used to validate input for specified action.
+ * 
+ * @since 1.0.0
+ */
 interface ValidableInterface {
 
     /**

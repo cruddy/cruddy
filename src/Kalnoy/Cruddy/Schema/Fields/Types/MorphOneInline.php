@@ -7,15 +7,13 @@ use Kalnoy\Cruddy\Schema\Fields\InlineRelation;
 
 /**
  * This field will allow to inlinely edit models connectend by morph one relation.
+ * 
+ * @since 1.0.0
  */
 class MorphOneInline extends HasOneInline {
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function getExtra($model)
     {

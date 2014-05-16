@@ -4,6 +4,11 @@ namespace Kalnoy\Cruddy\Repo;
 
 use Illuminate\Database\Eloquent\Builder;
 
+/**
+ * Chained search processor for using multiple search processor.
+ * 
+ * @since 1.0.0
+ */
 class ChainedSearchProcessor implements SearchProcessorInterface {
 
     /**
@@ -13,6 +18,11 @@ class ChainedSearchProcessor implements SearchProcessorInterface {
      */
     protected $processors;
 
+    /**
+     * Init object.
+     * 
+     * @param array $processors
+     */
     public function __construct(array $processors = [])
     {
         $this->processors = $processors;
@@ -29,12 +39,7 @@ class ChainedSearchProcessor implements SearchProcessorInterface {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param array                                 $options
-     *
-     * @return void
+     * {@inheritdoc}
      */
     public function search(Builder $query, array $options)
     {

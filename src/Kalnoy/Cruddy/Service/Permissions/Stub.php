@@ -5,17 +5,16 @@ namespace Kalnoy\Cruddy\Service\Permissions;
 use Kalnoy\Cruddy\Entity;
 
 /**
- * This type of permissions will just allow all operations. 
+ * Stub permissions.
+ * 
+ * This type of permissions will just allow all operations.
+ * 
+ * @since 1.0.0
  */
 class Stub implements PermissionsInterface {
 
     /**
-     * @inheritdoc
-     *
-     * @param string $action
-     * @param \Kalnoy\Cruddy\Entity $entity
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function isPermitted($action, Entity $entity)
     {

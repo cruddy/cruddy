@@ -5,7 +5,11 @@ namespace Kalnoy\Cruddy\Schema;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 
 /**
- * InlineRelationInterface
+ * Inline relation interface.
+ * 
+ * These objects are used by entity to process and save embedded entities.
+ * 
+ * @since 1.0.0
  */
 interface InlineRelationInterface {
 
@@ -30,6 +34,7 @@ interface InlineRelationInterface {
     /**
      * Save previously processed data.
      *
+     * @param \Illuminate\Database\Eloquent\Model $model
      * @param array $data
      *
      * @return void

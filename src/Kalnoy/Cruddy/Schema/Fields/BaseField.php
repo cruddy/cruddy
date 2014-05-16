@@ -7,10 +7,17 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 use Kalnoy\Cruddy\Schema\Attribute;
 use Kalnoy\Cruddy\Schema\FieldInterface;
 
+/**
+ * A base class for all fields.
+ * 
+ * @since 1.0.0
+ */
 abstract class BaseField extends Attribute implements FieldInterface {
     
     /**
      * Get whether the field is required.
+     * 
+     * Field can be required based on the state of the model. {@see $disabled}.
      *
      * @var bool|string
      */
@@ -25,6 +32,12 @@ abstract class BaseField extends Attribute implements FieldInterface {
 
     /**
      * Whether the editing is disabled.
+     * 
+     * The field can be disabled for specified state of the model; if set to
+     * {@see \Kalnoy\Cruddy\Schema\BaseSchema::WHEN_EXISTS} the field will be
+     * disabled when model is exists; if set to
+     * {@see \Kalnoy\Cruddy\Schema\BaseSchema::WHEN_NEW} the field will not be
+     * shown at all when model is new.
      * 
      * @var bool|string
      */
@@ -45,11 +58,7 @@ abstract class BaseField extends Attribute implements FieldInterface {
     protected $filterType = self::FILTER_NONE;
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     *
-     * @return mixed
+     * {@inheritdoc}
      */
     public function extract(Eloquent $model)
     {
@@ -57,11 +66,7 @@ abstract class BaseField extends Attribute implements FieldInterface {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param mixed $value
-     *
-     * @return mixed
+     * {@inheritdoc}
      */
     public function process($value)
     {
@@ -146,21 +151,11 @@ abstract class BaseField extends Attribute implements FieldInterface {
      */
     protected function generateLabel()
     {
-        if (null === $label = $this->translate('fields'))
-        {
-            $label = \Kalnoy\Cruddy\ucfirst(\Kalnoy\Cruddy\prettify_string($this->id));
-        }
-
-        return $label;
+        return $this->translate('fields') ?: parent::generateLabel();
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Query\Builder $builder
-     * @param mixed                              $data
-     *
-     * @return $this
+     * {@inheritdoc}
      */
     public function filter(QueryBuilder $builder, $data)
     {
@@ -168,9 +163,7 @@ abstract class BaseField extends Attribute implements FieldInterface {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return string
+     * {@inheritdoc}
      */
     public function getFilterType()
     {
@@ -178,9 +171,7 @@ abstract class BaseField extends Attribute implements FieldInterface {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function toArray()
     {
@@ -207,9 +198,7 @@ abstract class BaseField extends Attribute implements FieldInterface {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function keep($value)
     {
@@ -217,15 +206,23 @@ abstract class BaseField extends Attribute implements FieldInterface {
     }
 
     /**
-     * @inheritdoc
-     *
+     * Get whether the field is disabled for specified action.
+     * 
      * @param string $action
-     *
+     * 
      * @return bool
+     */
+    public function isDisabled($action)
+    {
+        return $this->disabled === true or $this->disabled === $action;
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function sendToRepository($action)
     {
-        return $this->isFillable() and $this->disabled !== true and $this->disabled !== $action;
+        return ! $this->isDisabled($action) and $this->isFillable();
     }
 
 }

@@ -11,7 +11,7 @@ use Kalnoy\Cruddy\Schema\Fields\BaseTextField;
  * Password field will not expose a value and will always be empty. The empty
  * password will be removed from the input.
  * 
- * @version 1.0.0
+ * @since 1.0.0
  */
 class Password extends BaseTextField {
 

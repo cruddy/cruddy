@@ -1,36 +1,35 @@
-<?php namespace Kalnoy\Cruddy\Schema\Fields\Types;
+<?php
+
+namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
 use Kalnoy\Cruddy\Schema\Fields\BaseTextField;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Carbon\Carbon;
 
+/**
+ * Date and time field.
+ * 
+ * @since 1.0.0
+ */
 class DateTime extends BaseTextField {
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $class = 'DateTime';
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $type = 'datetime';
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */ 
     protected $filterType = self::FILTER_NONE;
 
     /**
-     * The input type.
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $inputType = 'text';
 
@@ -42,9 +41,7 @@ class DateTime extends BaseTextField {
     public $format = "DD.MM.YYYY HH:mm";
 
     /**
-     * @inheritdoc
-     *
-     * @param mixed $value
+     * {@inheritdoc}
      *
      * @return \Carbon\Carbon
      */
@@ -54,9 +51,7 @@ class DateTime extends BaseTextField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
+     * {@inheritdoc}
      *
      * @return int
      */
@@ -88,9 +83,7 @@ class DateTime extends BaseTextField {
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function toArray()
     {

@@ -5,6 +5,11 @@ namespace Kalnoy\Cruddy\Service;
 use Carbon\Carbon;
 use Intervention\Image\ImageCache;
 
+/**
+ * Thumbnail factory for creating smaller images.
+ * 
+ * @since 1.0.0
+ */
 class ThumbnailFactory {
 
     /**

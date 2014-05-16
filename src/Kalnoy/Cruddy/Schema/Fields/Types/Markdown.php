@@ -4,20 +4,18 @@ namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
 /**
  * Markdown editor.
+ * 
+ * @since 1.0.0
  */
 class Markdown extends Code {
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $class = 'Markdown';
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $type = 'markdown';
 

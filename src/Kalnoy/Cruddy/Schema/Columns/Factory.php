@@ -6,6 +6,8 @@ use Kalnoy\Cruddy\Schema\BaseFactory;
 
 /**
  * The column factory.
+ * 
+ * @since 1.0.0
  */
 class Factory extends BaseFactory {
 

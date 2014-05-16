@@ -11,20 +11,18 @@ use Kalnoy\Cruddy\Entity;
 
 /**
  * Inline relation allows to edit related models inlinely.
+ * 
+ * @since 1.0.0
  */
 abstract class InlineRelation extends BaseRelation implements InlineRelationInterface {
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $class = 'Embedded';
 
     /**
-     * @inheritdoc
-     *
-     * @var string
+     * {@inheritdoc}
      */
     protected $type = 'inline-relation';
 
@@ -36,13 +34,9 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     protected $multiple = false;
 
     /**
-     * @inheritdoc
+     * {@inheritdoc}
      *
      * Returns just the number of items so we could validate it.
-     *
-     * @param mixed $data
-     *
-     * @return mixed
      */
     public function process($data)
     {
@@ -52,11 +46,9 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param string $action
-     *
-     * @return bool
+     * {@inheritdoc}
+     * 
+     * Inline relations are not sent to the repository.
      */
     public function sendToRepository($action)
     {
@@ -64,11 +56,7 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param string $action
-     *
-     * @return bool
+     * {@inheritdoc}
      */
     public function isSaveable($action)
     {
@@ -76,11 +64,7 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param array $input
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function processInput($input)
     {
@@ -124,12 +108,7 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     }
 
     /**
-     * @inhertidoc
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     * @param array                               $data
-     *
-     * @return \Illuminate\Database\Eloquent\Model
+     * {@inheritdoc}
      */
     public function save(Eloquent $model, array $data)
     {
@@ -168,11 +147,7 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     abstract public function getExtra($model);
 
     /**
-     * @inheritdoc
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function extract(Eloquent $model)
     {
@@ -184,12 +159,7 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     }
 
     /**
-     * @inheritdoc
-     *
-     * @param array  $items
-     * @param string $key
-     *
-     * @return void
+     * {@inheritdoc}
      */
     protected function appendPreloadableRelations(array &$items, $key = null)
     {
@@ -236,9 +206,7 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return string
+     * {@inheritdoc}
      */
     protected function generateLabel()
     {
@@ -248,9 +216,7 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     }
 
     /**
-     * @inheritdoc
-     *
-     * @return array
+     * {@inheritdoc}
      */
     public function toArray()
     {

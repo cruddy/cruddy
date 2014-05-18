@@ -1,13 +1,13 @@
 <?php return
 [
     'logout' => 'Déconnexion',
-    'loading' => 'Please, wait until the app is loaded.',
+    'loading' => 'Merci d\'attendre la fin du chargement.',
 
     'forbidden' =>
     [
-        'view'   => 'You are not allowed to view the :entity entity.',
-        'create' => 'You are not allowed to create new items of the :entity entity.',
-        'update' => 'You are not allowed to update items of the :entity entity.',
-        'delete' => 'You are not allowed to delete items of the :entity entity.',
+        'view'   => 'Vous n\'êtes pas autorisé à voir l\'entité :entity.',
+        'create' => 'Vous n\'êtes pas autorisé à créer des éléments pour l\'entité :entity.',
+        'update' => 'Vous n\'êtes pas autorisé à modifier les éléments de l\'entité :entity.',
+        'delete' => 'Vous n\'êtes pas autorisé à supprimer les éléments de l\'entité :entity.',
     ],
 ];

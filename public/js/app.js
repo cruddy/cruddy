@@ -3486,6 +3486,9 @@
       if (_.isArray(value)) {
         value = value[0];
       }
+      if (_.isObject(value)) {
+        value = value.title;
+      }
       return "<img src=\"" + (thumb(value, this.options.width, this.options.height)) + "\" width=\"" + (this.options.width || this.defaultOptions.width) + "\" height=\"" + (this.options.height || this.defaultOptions.height) + "\" alt=\"" + (_.escape(value)) + "\">";
     };
 

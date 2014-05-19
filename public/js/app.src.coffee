@@ -2280,6 +2280,7 @@ class Cruddy.formatters.Image extends BaseFormatter
     format: (value) ->
         return "" if _.isEmpty value
         value = value[0] if _.isArray value
+        value = value.title if _.isObject value
 
         """
         <img src="#{ thumb value, @options.width, @options.height }" width="#{ @options.width or @defaultOptions.width }" height="#{ @options.height or @defaultOptions.height }" alt="#{ _.escape value }">

@@ -153,7 +153,7 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     {
         $items = $model->{$this->id};
 
-        $this->loadRelations($items);
+        $items and $this->loadRelations($items);
 
         return $this->reference->extract($items);
     }

@@ -85,6 +85,18 @@ abstract class BaseColumn extends Attribute implements ColumnInterface {
     }
 
     /**
+     * Set descending order direction.
+     * 
+     * @return $this
+     */
+    public function reversed()
+    {
+        $this->orderDir = 'desc';
+        
+        return $this;
+    }
+
+    /**
      * Get column header.
      *
      * @return string

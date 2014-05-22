@@ -8,4 +8,4 @@ class Cruddy.Fields.Code extends Cruddy.Fields.Base
             mode: @attributes.mode
             theme: @attributes.theme
 
-    format: (value) -> if value then "<pre class=\"limit-height\">#{ value }</pre>" else "n/a"
+    format: (value) -> if value then "<pre class=\"limit-height\">#{ value }</pre>" else NOT_AVAILABLE

@@ -17,4 +17,4 @@ class Cruddy.Fields.Enum extends Cruddy.Fields.Base
     format: (value) ->
         items = @attributes.items
 
-        if value of items then items[value] else "n/a"
+        if value of items then items[value] else NOT_AVAILABLE

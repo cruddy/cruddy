@@ -4,6 +4,7 @@ Cruddy.baseUrl = Cruddy.root + "/" + Cruddy.uri
 
 API_URL = "/backend/api/v1"
 TRANSITIONEND = "transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd"
+NOT_AVAILABLE = "&mdash;"
 moment.lang Cruddy.locale ? "en"
 
 Backbone.emulateHTTP = true
@@ -1807,7 +1808,7 @@ class Cruddy.Fields.Base extends Attribute
     getFilterLabel: -> @attributes.label
 
     # Format value as static text
-    format: (value) -> value or "n/a"
+    format: (value) -> value or NOT_AVAILABLE
 
     # Get field's label
     getLabel: -> @attributes.label
@@ -1875,7 +1876,7 @@ class Cruddy.Fields.BaseRelation extends Cruddy.Fields.Base
     getFilterLabel: -> @getReference().getSingularTitle()
 
     format: (value) ->
-        return "n/a" if _.isEmpty value
+        return NOT_AVAILABLE if _.isEmpty value
         
         if @attributes.multiple then _.pluck(value, "title").join ", " else value.title
 class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
@@ -1948,7 +1949,7 @@ class Cruddy.Fields.Enum extends Cruddy.Fields.Base
     format: (value) ->
         items = @attributes.items
 
-        if value of items then items[value] else "n/a"
+        if value of items then items[value] else NOT_AVAILABLE
 class Cruddy.Fields.Markdown extends Cruddy.Fields.Base
 
     createEditableInput: (model) -> new Cruddy.Inputs.Markdown
@@ -1957,7 +1958,7 @@ class Cruddy.Fields.Markdown extends Cruddy.Fields.Base
         height: @attributes.height
         theme: @attributes.theme
 
-    format: (value) -> if value then "<div class=\"well limit-height\">#{ marked value }</div>" else "n/a"
+    format: (value) -> if value then "<div class=\"well limit-height\">#{ marked value }</div>" else NOT_AVAILABLE
 class Cruddy.Fields.Code extends Cruddy.Fields.Base
     
     createEditableInput: (model) ->
@@ -1968,7 +1969,7 @@ class Cruddy.Fields.Code extends Cruddy.Fields.Base
             mode: @attributes.mode
             theme: @attributes.theme
 
-    format: (value) -> if value then "<pre class=\"limit-height\">#{ value }</pre>" else "n/a"
+    format: (value) -> if value then "<pre class=\"limit-height\">#{ value }</pre>" else NOT_AVAILABLE
 class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
     className: "has-many-view"
 

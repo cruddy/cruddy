@@ -4,6 +4,7 @@ Cruddy.baseUrl = Cruddy.root + "/" + Cruddy.uri
 
 API_URL = "/backend/api/v1"
 TRANSITIONEND = "transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd"
+NOT_AVAILABLE = "&mdash;"
 moment.lang Cruddy.locale ? "en"
 
 Backbone.emulateHTTP = true

@@ -1,5 +1,5 @@
 (function() {
-  var API_URL, AdvFormData, Alert, App, Attribute, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, Pagination, Router, SearchDataSource, TRANSITIONEND, after_break, b_btn, b_icon, entity_url, humanize, thumb, _ref,
+  var API_URL, AdvFormData, Alert, App, Attribute, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, NOT_AVAILABLE, Pagination, Router, SearchDataSource, TRANSITIONEND, after_break, b_btn, b_icon, entity_url, humanize, thumb, _ref,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -10,6 +10,8 @@
   API_URL = "/backend/api/v1";
 
   TRANSITIONEND = "transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd";
+
+  NOT_AVAILABLE = "&mdash;";
 
   moment.lang((_ref = Cruddy.locale) != null ? _ref : "en");
 
@@ -2578,7 +2580,7 @@
     };
 
     Base.prototype.format = function(value) {
-      return value || "n/a";
+      return value || NOT_AVAILABLE;
     };
 
     Base.prototype.getLabel = function() {
@@ -2722,7 +2724,7 @@
 
     BaseRelation.prototype.format = function(value) {
       if (_.isEmpty(value)) {
-        return "n/a";
+        return NOT_AVAILABLE;
       }
       if (this.attributes.multiple) {
         return _.pluck(value, "title").join(", ");
@@ -2886,7 +2888,7 @@
       if (value in items) {
         return items[value];
       } else {
-        return "n/a";
+        return NOT_AVAILABLE;
       }
     };
 
@@ -2914,7 +2916,7 @@
       if (value) {
         return "<div class=\"well limit-height\">" + (marked(value)) + "</div>";
       } else {
-        return "n/a";
+        return NOT_AVAILABLE;
       }
     };
 
@@ -2943,7 +2945,7 @@
       if (value) {
         return "<pre class=\"limit-height\">" + value + "</pre>";
       } else {
-        return "n/a";
+        return NOT_AVAILABLE;
       }
     };
 

@@ -165,7 +165,7 @@ class Cruddy.Fields.Base extends Attribute
     getFilterLabel: -> @attributes.label
 
     # Format value as static text
-    format: (value) -> value or "n/a"
+    format: (value) -> value or NOT_AVAILABLE
 
     # Get field's label
     getLabel: -> @attributes.label

@@ -17,5 +17,5 @@ class Time extends DateTime {
     /**
      * {@inheritdoc}
      */
-    public $format = 'hh:ii';
+    public $format = 'HH:mm';
 }

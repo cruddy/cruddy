@@ -1,12 +1,13 @@
 class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
 
-    createEditableInput: (model) -> new Cruddy.Inputs.EntityDropdown
+    createInput: (model, inputId, forceDisable = no) -> new Cruddy.Inputs.EntityDropdown
         model: model
         key: @id
         multiple: @attributes.multiple
         reference: @getReference()
         owner: @entity.id + "." + @id
         constraint: @attributes.constraint
+        enabled: not forceDisable and @isEditable(model)
 
     createFilterInput: (model) -> new Cruddy.Inputs.EntityDropdown
         model: model
@@ -17,6 +18,6 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         owner: @entity.id + "." + @id
         constraint: @attributes.constraint
 
-    isEditable: -> super and @getReference().viewPermitted()
+    isEditable: -> @getReference().viewPermitted() and super
 
-    canFilter: -> super and @getReference().viewPermitted()
+    canFilter: -> @getReference().viewPermitted() and super

@@ -20,7 +20,6 @@
         }
     }
 
-
     > .items {
         > .ed-item {
             > .form-control, > .input-group-btn > .btn {
@@ -58,6 +57,16 @@
             }
         }
 
+    }
+
+    &.disabled > .items > .ed-item:last-child {
+        > .form-control {
+            border-bottom-left-radius: @border-radius-base;
+        }
+
+        > .input-group-btn > .btn:last-child {
+            border-bottom-right-radius: @border-radius-base;
+        }
     }
 
     >.has-items + .dropdown-toggle {

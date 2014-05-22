@@ -63,14 +63,8 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
                 if is_copy
                     related = @related[id] = relationAttrs
-
-                else if id of @related
-                    related = @related[id]
-                    relation.applyValues related, relationAttrs if relationAttrs
-
                 else
                     related = @related[id] = relation.createInstance this, relationAttrs
-                    related.parent = this
 
                 # Attribute will now hold instance
                 attrs[id] = related

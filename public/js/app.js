@@ -1200,6 +1200,7 @@
     EntityDropdown.prototype.events = {
       "click .btn-remove": "removeItem",
       "click .btn-edit": "editItem",
+      "click .form-control": "maybeEditItem",
       "keydown [type=search]": "searchKeydown",
       "show.bs.dropdown": "renderDropdown",
       "shown.bs.dropdown": function() {
@@ -1221,7 +1222,7 @@
     EntityDropdown.prototype.reference = null;
 
     EntityDropdown.prototype.initialize = function(options) {
-      var _ref1, _ref2;
+      var _ref1, _ref2, _ref3;
       if (options.multiple != null) {
         this.multiple = options.multiple;
       }
@@ -1232,9 +1233,14 @@
         this.owner = options.owner;
       }
       this.allowEdit = ((_ref1 = options.allowEdit) != null ? _ref1 : true) && this.reference.updatePermitted();
-      this.active = false;
       this.placeholder = (_ref2 = options.placeholder) != null ? _ref2 : Cruddy.lang.not_selected;
+      this.enabled = (_ref3 = options.enabled) != null ? _ref3 : true;
+      this.editing = false;
       this.disableDropdown = false;
+      this.opened = false;
+      if (!this.enabled) {
+        this.$el.addClass("disabled");
+      }
       if (options.constraint) {
         this.constraint = options.constraint;
         this.listenTo(this.model, "change:" + this.constraint.field, function() {
@@ -1260,8 +1266,18 @@
       return this.setValue(value);
     };
 
+    EntityDropdown.prototype.maybeEditItem = function(e) {
+      if (this.multiple || !this.enabled) {
+        return this.editItem(e);
+      }
+    };
+
     EntityDropdown.prototype.editItem = function(e) {
-      var item, target, xhr;
+      var item, target;
+      console.log(this.editing);
+      if (this.editing || !this.allowEdit) {
+        return;
+      }
       item = this.model.get(this.key);
       if (this.multiple) {
         item = item[this.getKey(e)];
@@ -1269,8 +1285,12 @@
       if (!item) {
         return;
       }
-      target = $(e.currentTarget).prop("disabled", true);
-      xhr = this.reference.load(item.id).done((function(_this) {
+      target = $(e.currentTarget);
+      if (target.is(".form-control")) {
+        target = target.next().children(".btn-edit");
+      }
+      target.prop("disabled", true);
+      this.editing = this.reference.load(item.id).done((function(_this) {
         return function(instance) {
           _this.innerForm = new Cruddy.Entity.Form({
             model: instance,
@@ -1293,9 +1313,12 @@
           });
         };
       })(this));
-      xhr.always(function() {
-        return target.prop("disabled", false);
-      });
+      this.editing.always((function(_this) {
+        return function() {
+          _this.editing = false;
+          return target.prop("disabled", false);
+        };
+      })(this));
       return this;
     };
 
@@ -1325,7 +1348,7 @@
     };
 
     EntityDropdown.prototype.checkToDisable = function() {
-      if (this.constraint) {
+      if (this.constraint && this.enabled) {
         if (_.isEmpty(this.model.get(this.constraint.field))) {
           this.disable();
         } else {
@@ -1361,7 +1384,7 @@
 
     EntityDropdown.prototype.renderDropdown = function(e) {
       var dataSource;
-      if (this.disableDropdown) {
+      if (this.disableDropdown || !this.enabled) {
         e.preventDefault();
         return;
       }
@@ -1429,7 +1452,9 @@
       this.$el.append(this.items = $("<div>", {
         "class": "items"
       }));
-      this.$el.append("<button type=\"button\" class=\"btn btn-default btn-block dropdown-toggle ed-dropdown-toggle\" data-toggle=\"dropdown\" id=\"" + this.cid + "-dropdown\" data-target=\"#" + this.cid + "\">\n    " + Cruddy.lang.choose + "\n    <span class=\"caret\"></span>\n</button>");
+      if (this.enabled) {
+        this.$el.append("<button type=\"button\" class=\"btn btn-default btn-block dropdown-toggle ed-dropdown-toggle\" data-toggle=\"dropdown\" id=\"" + this.cid + "-dropdown\" data-target=\"#" + this.cid + "\">\n    " + Cruddy.lang.choose + "\n    <span class=\"caret\"></span>\n</button>");
+      }
       return this.renderItems();
     };
 
@@ -1464,19 +1489,30 @@
     };
 
     EntityDropdown.prototype.itemTemplate = function(value, key) {
-      var html;
+      var buttons, html;
       if (key == null) {
         key = null;
       }
-      html = "<div class=\"input-group input-group ed-item " + (!this.multiple ? "ed-dropdown-toggle" : "") + "\" data-key=\"" + key + "\">\n    <input type=\"text\" class=\"form-control\" " + (!this.multiple ? "data-toggle='dropdown' data-target='#" + this.cid + "' placeholder='" + this.placeholder + "'" : "tab-index='-1'") + " value=\"" + (_.escape(value)) + "\" readonly>\n    <div class=\"input-group-btn\">";
+      html = "<div class=\"input-group input-group ed-item " + (!this.multiple ? "ed-dropdown-toggle" : "") + "\" data-key=\"" + key + "\">\n    <input type=\"text\" class=\"form-control\" " + (!this.multiple ? "data-toggle='dropdown' data-target='#" + this.cid + "' placeholder='" + this.placeholder + "'" : "tab-index='-1'") + " value=\"" + (_.escape(value)) + "\" readonly>";
+      if (!_.isEmpty(buttons = this.buttonsTemplate())) {
+        html += "<div class=\"input-group-btn\">\n    " + buttons + "\n</div>";
+      }
+      return html += "</div></div>";
+    };
+
+    EntityDropdown.prototype.buttonsTemplate = function() {
+      var html;
+      html = "";
       if (this.allowEdit) {
         html += "<button type=\"button\" class=\"btn btn-default btn-edit\" tabindex=\"-1\">\n    <span class=\"glyphicon glyphicon-pencil\"></span>\n</button>";
       }
-      html += "<button type=\"button\" class=\"btn btn-default btn-remove\" tabindex=\"-1\">\n    <span class=\"glyphicon glyphicon-remove\"></span>\n</button>";
-      if (!this.multiple) {
+      if (this.enabled) {
+        html += "<button type=\"button\" class=\"btn btn-default btn-remove\" tabindex=\"-1\">\n    <span class=\"glyphicon glyphicon-remove\"></span>\n</button>";
+      }
+      if (this.enabled && !this.multiple) {
         html += "<button type=\"button\" class=\"btn btn-default btn-dropdown dropdown-toggle\" data-toggle=\"dropdown\" id=\"" + this.cid + "-dropdown\" data-target=\"#" + this.cid + "\" tab-index=\"1\">\n    <span class=\"glyphicon glyphicon-search\"></span>\n</button>";
       }
-      return html += "</div></div>";
+      return html;
     };
 
     EntityDropdown.prototype.focus = function() {
@@ -2785,14 +2821,18 @@
       return Relation.__super__.constructor.apply(this, arguments);
     }
 
-    Relation.prototype.createEditableInput = function(model) {
+    Relation.prototype.createInput = function(model, inputId, forceDisable) {
+      if (forceDisable == null) {
+        forceDisable = false;
+      }
       return new Cruddy.Inputs.EntityDropdown({
         model: model,
         key: this.id,
         multiple: this.attributes.multiple,
         reference: this.getReference(),
         owner: this.entity.id + "." + this.id,
-        constraint: this.attributes.constraint
+        constraint: this.attributes.constraint,
+        enabled: !forceDisable && this.isEditable(model)
       });
     };
 
@@ -2809,11 +2849,11 @@
     };
 
     Relation.prototype.isEditable = function() {
-      return Relation.__super__.isEditable.apply(this, arguments) && this.getReference().viewPermitted();
+      return this.getReference().viewPermitted() && Relation.__super__.isEditable.apply(this, arguments);
     };
 
     Relation.prototype.canFilter = function() {
-      return Relation.__super__.canFilter.apply(this, arguments) && this.getReference().viewPermitted();
+      return this.getReference().viewPermitted() && Relation.__super__.canFilter.apply(this, arguments);
     };
 
     return Relation;
@@ -2984,7 +3024,7 @@
 
     Code.prototype.format = function(value) {
       if (value) {
-        return "<pre class=\"limit-height\">" + value + "</pre>";
+        return "<div class=\"limit-height\">" + value + "</div>";
       } else {
         return NOT_AVAILABLE;
       }
@@ -3875,14 +3915,8 @@
           relationAttrs = attrs[id];
           if (is_copy) {
             related = this.related[id] = relationAttrs;
-          } else if (id in this.related) {
-            related = this.related[id];
-            if (relationAttrs) {
-              relation.applyValues(related, relationAttrs);
-            }
           } else {
             related = this.related[id] = relation.createInstance(this, relationAttrs);
-            related.parent = this;
           }
           attrs[id] = related;
         }

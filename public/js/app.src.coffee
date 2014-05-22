@@ -741,6 +741,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     events:
         "click .btn-remove": "removeItem"
         "click .btn-edit": "editItem"
+        "click .form-control": "maybeEditItem"
         "keydown [type=search]": "searchKeydown"
         "show.bs.dropdown": "renderDropdown"
 
@@ -754,6 +755,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
             this
 
+
     mutiple: false
     reference: null
 
@@ -761,10 +763,25 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
         @multiple = options.multiple if options.multiple?
         @reference = options.reference if options.reference?
         @owner = options.owner if options.owner?
+
+        # Whether to show edit button (pencil)
         @allowEdit = options.allowEdit ? yes and @reference.updatePermitted()
-        @active = false
+
         @placeholder = options.placeholder ? Cruddy.lang.not_selected
+
+        # Whether the drop down is enabled
+        @enabled = options.enabled ? true
+
+        # Whether the item is currently editing
+        @editing = false
+
+        # Whether to not allow to open a dropdown
         @disableDropdown = false
+
+        # Whether the dropdown is opened
+        @opened = false
+
+        @$el.addClass "disabled" if not @enabled
 
         if options.constraint
             @constraint = options.constraint
@@ -784,15 +801,26 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         @setValue value
 
+    maybeEditItem: (e) -> @editItem e if @multiple or not @enabled
+
     editItem: (e) ->
+        console.log @editing
+
+        return if @editing or not @allowEdit
+
         item = @model.get @key
         item = item[@getKey e] if @multiple
 
         return if not item
 
-        target = $(e.currentTarget).prop "disabled", yes
+        target = $(e.currentTarget)
 
-        xhr = @reference.load(item.id).done (instance) =>
+        # We'll look for the button if it is form control that was clicked
+        target = target.next().children(".btn-edit") if target.is ".form-control"
+
+        target.prop "disabled", yes
+
+        @editing = @reference.load(item.id).done (instance) =>
             @innerForm = new Cruddy.Entity.Form
                 model: instance
                 inner: yes
@@ -810,7 +838,9 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
             @listenTo @innerForm, "remove", => @innerForm = null
 
-        xhr.always -> target.prop "disabled", no
+        @editing.always =>
+            @editing = no
+            target.prop "disabled", no
 
         this
 
@@ -830,10 +860,9 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
         this
 
     checkToDisable: ->
-        (if _.isEmpty @model.get @constraint.field then @disable() else @enable()) if @constraint
+        (if _.isEmpty @model.get @constraint.field then @disable() else @enable()) if @constraint and @enabled
 
         this
-
 
     disable: ->
         return this if @disableDropdown
@@ -856,7 +885,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
         this
 
     renderDropdown: (e) ->
-        if @disableDropdown
+        if @disableDropdown or not @enabled
             e.preventDefault()
 
             return
@@ -926,7 +955,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
                 #{ Cruddy.lang.choose }
                 <span class="caret"></span>
             </button>
-            """
+            """ if @enabled
 
         @renderItems()
 
@@ -957,10 +986,20 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
     itemTemplate: (value, key = null) ->
         html = """
-        <div class="input-group input-group ed-item #{ if not @multiple then "ed-dropdown-toggle" else "" }" data-key="#{ key }">
-            <input type="text" class="form-control" #{ if not @multiple then "data-toggle='dropdown' data-target='##{ @cid }' placeholder='#{ @placeholder }'" else "tab-index='-1'"} value="#{ _.escape value }" readonly>
+            <div class="input-group input-group ed-item #{ if not @multiple then "ed-dropdown-toggle" else "" }" data-key="#{ key }">
+                <input type="text" class="form-control" #{ if not @multiple then "data-toggle='dropdown' data-target='##{ @cid }' placeholder='#{ @placeholder }'" else "tab-index='-1'"} value="#{ _.escape value }" readonly>
+            """
+
+        html += """
             <div class="input-group-btn">
-        """
+                #{ buttons }
+            </div>
+            """ if not _.isEmpty buttons = @buttonsTemplate()
+
+        html += "</div></div>"
+
+    buttonsTemplate: ->
+        html = ""
 
         html += """
             <button type="button" class="btn btn-default btn-edit" tabindex="-1">
@@ -972,16 +1011,15 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
             <button type="button" class="btn btn-default btn-remove" tabindex="-1">
                 <span class="glyphicon glyphicon-remove"></span>
             </button>
-            """
+            """ if @enabled
 
-        if not @multiple
-            html += """
-                <button type="button" class="btn btn-default btn-dropdown dropdown-toggle" data-toggle="dropdown" id="#{ @cid }-dropdown" data-target="##{ @cid }" tab-index="1">
-                    <span class="glyphicon glyphicon-search"></span>
-                </button>
-                """
+        html += """
+            <button type="button" class="btn btn-default btn-dropdown dropdown-toggle" data-toggle="dropdown" id="#{ @cid }-dropdown" data-target="##{ @cid }" tab-index="1">
+                <span class="glyphicon glyphicon-search"></span>
+            </button>
+            """ if @enabled and not @multiple
 
-        html += "</div></div>"
+        html
 
     focus: ->
         @$component("dropdown").trigger("click")[0].focus()
@@ -1904,13 +1942,14 @@ class Cruddy.Fields.BaseRelation extends Cruddy.Fields.Base
         if @attributes.multiple then _.pluck(value, "title").join ", " else value.title
 class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
 
-    createEditableInput: (model) -> new Cruddy.Inputs.EntityDropdown
+    createInput: (model, inputId, forceDisable = no) -> new Cruddy.Inputs.EntityDropdown
         model: model
         key: @id
         multiple: @attributes.multiple
         reference: @getReference()
         owner: @entity.id + "." + @id
         constraint: @attributes.constraint
+        enabled: not forceDisable and @isEditable(model)
 
     createFilterInput: (model) -> new Cruddy.Inputs.EntityDropdown
         model: model
@@ -1921,9 +1960,9 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         owner: @entity.id + "." + @id
         constraint: @attributes.constraint
 
-    isEditable: -> super and @getReference().viewPermitted()
+    isEditable: -> @getReference().viewPermitted() and super
 
-    canFilter: -> super and @getReference().viewPermitted()
+    canFilter: -> @getReference().viewPermitted() and super
 class Cruddy.Fields.File extends Cruddy.Fields.Base
 
     createEditableInput: (model) -> new Cruddy.Inputs.FileList
@@ -1992,7 +2031,7 @@ class Cruddy.Fields.Code extends Cruddy.Fields.Base
             mode: @attributes.mode
             theme: @attributes.theme
 
-    format: (value) -> if value then "<pre class=\"limit-height\">#{ value }</pre>" else NOT_AVAILABLE
+    format: (value) -> if value then "<div class=\"limit-height\">#{ value }</div>" else NOT_AVAILABLE
 class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
     className: "has-many-view"
 
@@ -2500,14 +2539,8 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
                 if is_copy
                     related = @related[id] = relationAttrs
-
-                else if id of @related
-                    related = @related[id]
-                    relation.applyValues related, relationAttrs if relationAttrs
-
                 else
                     related = @related[id] = relation.createInstance this, relationAttrs
-                    related.parent = this
 
                 # Attribute will now hold instance
                 attrs[id] = related

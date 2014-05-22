@@ -21,10 +21,7 @@ class Cruddy.Inputs.BaseText extends Cruddy.Inputs.Base
 
         this
 
-    change: ->
-        @model.set @key, @el.value
-
-        this
+    change: -> @setValue @el.value
 
     applyChanges: (data, external) ->
         @$el.val data if external

@@ -93,7 +93,7 @@ class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
         
         super
 
-        @render() if isEditable isnt @isEditable
+        @render() if isEditable? and isEditable isnt @isEditable
 
 
     hideError: ->

@@ -1022,8 +1022,7 @@
     };
 
     BaseText.prototype.change = function() {
-      this.model.set(this.key, this.el.value);
-      return this;
+      return this.setValue(this.el.value);
     };
 
     BaseText.prototype.applyChanges = function(data, external) {
@@ -2365,6 +2364,37 @@
 
   })(Cruddy.Inputs.Base);
 
+  Cruddy.Inputs.DateTime = (function(_super) {
+    __extends(DateTime, _super);
+
+    function DateTime() {
+      return DateTime.__super__.constructor.apply(this, arguments);
+    }
+
+    DateTime.prototype.tagName = "input";
+
+    DateTime.prototype.initialize = function(options) {
+      this.format = options.format;
+      return DateTime.__super__.initialize.apply(this, arguments);
+    };
+
+    DateTime.prototype.applyChanges = function(value, external) {
+      if (external) {
+        this.$el.val(moment.unix(value).format(this.format));
+      }
+      return this;
+    };
+
+    DateTime.prototype.change = function() {
+      var value;
+      this.setValue(value = moment(this.$el.val(), this.format).unix());
+      return this.applyChanges(value, true);
+    };
+
+    return DateTime;
+
+  })(Cruddy.Inputs.BaseText);
+
   Cruddy.Fields = new Factory;
 
   Cruddy.Fields.BaseView = (function(_super) {
@@ -2480,7 +2510,7 @@
       var isEditable;
       isEditable = this.isEditable;
       InputView.__super__.updateContainer.apply(this, arguments);
-      if (isEditable !== this.isEditable) {
+      if ((isEditable != null) && isEditable !== this.isEditable) {
         return this.render();
       }
     };
@@ -2654,6 +2684,17 @@
       return DateTime.__super__.constructor.apply(this, arguments);
     }
 
+    DateTime.prototype.createEditableInput = function(model, inputId) {
+      return new Cruddy.Inputs.DateTime({
+        model: model,
+        key: this.id,
+        format: this.attributes.format,
+        attributes: {
+          id: this.inputId
+        }
+      });
+    };
+
     DateTime.prototype.format = function(value) {
       if (value === null) {
         return Cruddy.lang.never;
@@ -2664,7 +2705,7 @@
 
     return DateTime;
 
-  })(Cruddy.Fields.Input);
+  })(Cruddy.Fields.Base);
 
   Cruddy.Fields.Boolean = (function(_super) {
     __extends(Boolean, _super);

@@ -17,7 +17,8 @@ class Cruddy.Inputs.Base extends Cruddy.View
     # external is true when value is changed not by input itself.
     applyChanges: (data, external) -> this
 
-    render: -> @applyChanges @getValue(), yes
+    render: ->
+        @applyChanges @getValue(), yes
 
     # Focus an element.
     focus: -> this

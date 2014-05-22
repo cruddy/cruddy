@@ -579,7 +579,8 @@ class Cruddy.Inputs.Base extends Cruddy.View
     # external is true when value is changed not by input itself.
     applyChanges: (data, external) -> this
 
-    render: -> @applyChanges @getValue(), yes
+    render: ->
+        @applyChanges @getValue(), yes
 
     # Focus an element.
     focus: -> this
@@ -636,10 +637,7 @@ class Cruddy.Inputs.BaseText extends Cruddy.Inputs.Base
 
         this
 
-    change: ->
-        @model.set @key, @el.value
-
-        this
+    change: -> @setValue @el.value
 
     applyChanges: (data, external) ->
         @$el.val data if external
@@ -1641,6 +1639,24 @@ class Cruddy.Inputs.NumberFilter extends Cruddy.Inputs.Base
     """
 
     makeValue: (op, val) -> { op: op, val: val }
+class Cruddy.Inputs.DateTime extends Cruddy.Inputs.BaseText
+    tagName: "input"
+
+    initialize: (options) ->
+        @format = options.format
+
+        super
+
+    applyChanges: (value, external) ->
+        @$el.val moment.unix(value).format @format if external
+
+        this
+
+    change: ->
+        @setValue value = moment(@$el.val(), @format).unix()
+
+        # We will always set input value it may not be parsed properly
+        @applyChanges value, yes
 Cruddy.Fields = new Factory
 
 class Cruddy.Fields.BaseView extends Backbone.View
@@ -1736,7 +1752,7 @@ class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
         
         super
 
-        @render() if isEditable isnt @isEditable
+        @render() if isEditable? and isEditable isnt @isEditable
 
 
     hideError: ->
@@ -1848,7 +1864,14 @@ class Cruddy.Fields.Input extends Cruddy.Fields.Base
 
     format: (value) -> if @attributes.input_type is "textarea" then "<pre class=\"limit-height\">#{ super }</pre>" else super
 
-class Cruddy.Fields.DateTime extends Cruddy.Fields.Input
+class Cruddy.Fields.DateTime extends Cruddy.Fields.Base
+
+    createEditableInput: (model, inputId) -> new Cruddy.Inputs.DateTime
+        model: model
+        key: @id
+        format: @attributes.format
+        attributes:
+            id: @inputId
     
     format: (value) -> if value is null then Cruddy.lang.never else moment.unix(value).calendar()
 class Cruddy.Fields.Boolean extends Cruddy.Fields.Base

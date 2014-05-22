@@ -38,6 +38,18 @@ class Enum extends BaseField {
     /**
      * {@inheritdoc}
      */
+    public function process($value)
+    {
+        $items = value($this->items);
+
+        if ( ! isset($items[$value])) return null;
+
+        return $value;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function filter(Builder $query, $data)
     {
         $query->where($this->id, $data);
@@ -84,7 +96,7 @@ class Enum extends BaseField {
         return
         [
             'prompt' => \Kalnoy\Cruddy\try_trans($this->prompt),
-            'items' => $this->translateItems(\value($this->items)),
+            'items' => $this->translateItems(value($this->items)),
 
         ] + parent::toArray();
     }

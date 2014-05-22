@@ -23,4 +23,4 @@ class Cruddy.Fields.Input extends Cruddy.Fields.Base
                 mask: @attributes.mask
                 attributes: attributes
 
-    format: (value) -> if @attributes.input_type is "textarea" then "<pre>#{ super }</pre>" else super
+    format: (value) -> if @attributes.input_type is "textarea" then "<pre class=\"limit-height\">#{ super }</pre>" else super

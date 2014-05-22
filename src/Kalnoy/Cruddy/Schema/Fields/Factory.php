@@ -35,16 +35,27 @@ class Factory extends BaseFactory {
 
     /**
      * Generate timestamp columns.
+     * 
+     * They are disabled by default.
      *
      * @param \Kalnoy\Cruddy\Entity                $entity
      * @param \Kalnoy\Cruddy\Schema\BaseCollection $collection
+     * @param bool                                 $hide
+     * @param bool                                 $disable
      *
      * @return void
      */
-    public function timestamps($entity, $collection)
+    public function timestamps($entity, $collection, $hide = false, $disable = true)
     {
-        $this->resolve('datetime', $entity, $collection, ['created_at'])->unique();
-        $this->resolve('datetime', $entity, $collection, ['updated_at'])->unique();
+        $this->resolve('datetime', $entity, $collection, ['created_at'])
+            ->unique()
+            ->hide($hide)
+            ->disable($disable);
+
+        $this->resolve('datetime', $entity, $collection, ['updated_at'])
+            ->unique()
+            ->hide($hide)
+            ->disable($disable);
     }
 
     /**

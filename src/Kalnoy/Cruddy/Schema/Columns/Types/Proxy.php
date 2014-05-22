@@ -52,7 +52,7 @@ class Proxy extends BaseColumn {
      */
     public function extract(Eloquent $model)
     {
-        return $this->field->extract($model);
+        return $this->field->extractForColumn($model);
     }
 
     /**

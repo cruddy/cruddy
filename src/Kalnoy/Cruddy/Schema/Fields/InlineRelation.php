@@ -58,14 +58,6 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     /**
      * {@inheritdoc}
      */
-    public function isSaveable($action)
-    {
-        return parent::sendToRepository($action);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function processInput($input)
     {
         if ( ! is_array($input)) return [];
@@ -151,11 +143,19 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
      */
     public function extract(Eloquent $model)
     {
-        $items = $model->{$this->id};
+        $items = parent::extract($model);
 
         $items and $this->loadRelations($items);
 
         return $this->reference->extract($items);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function extractForColumn(Eloquent $model)
+    {
+        return $this->reference->simplify(parent::extract($model));
     }
 
     /**

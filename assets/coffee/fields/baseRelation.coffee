@@ -9,3 +9,8 @@ class Cruddy.Fields.BaseRelation extends Cruddy.Fields.Base
         @reference
 
     getFilterLabel: -> @getReference().getSingularTitle()
+
+    format: (value) ->
+        return "n/a" if _.isEmpty value
+        
+        if @attributes.multiple then _.pluck(value, "title").join ", " else value.title

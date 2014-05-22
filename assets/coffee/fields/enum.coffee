@@ -5,6 +5,7 @@ class Cruddy.Fields.Enum extends Cruddy.Fields.Base
         key: @id
         prompt: @attributes.prompt
         items: @attributes.items
+        required: @attributes.required
         attributes: id: inputId
 
     createFilterInput: (model) -> new Cruddy.Inputs.Select

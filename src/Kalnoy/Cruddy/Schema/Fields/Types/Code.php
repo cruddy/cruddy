@@ -45,6 +45,16 @@ class Code extends BaseField {
     public $mode;
 
     /**
+     * {@inheritdoc}
+     */
+    public function process($value)
+    {
+        $value = trim($value);
+
+        return $value === '' ? null : $value;
+    }
+
+    /**
      * Set the editor mode.
      *
      * @param string $value

@@ -51,7 +51,7 @@ class Collection extends BaseCollection implements SearchProcessorInterface {
 
         foreach ($input as $key => $value)
         {
-            if ($this->items[$key]->sendToRepository($action))
+            if ( ! $this->items[$key]->isDisabled($action))
             {
                 $result[$key] = $value;
             }

@@ -246,6 +246,8 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function simplify($model)
     {
+        if ( ! $model) return null;
+
         if (is_array($model) or $model instanceof Collection)
         {
             return $this->simplifyAll($model);
@@ -473,7 +475,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
 
             try
             {
-                if ($item->isSaveable($action))
+                if ( ! $item->isDisabled($action))
                 {
                     $data[$id] = $item->processInput($input[$id]);
                 }

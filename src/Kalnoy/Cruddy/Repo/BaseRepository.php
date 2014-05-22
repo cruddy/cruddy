@@ -452,12 +452,4 @@ abstract class BaseRepository implements RepositoryInterface {
         return $count;
     }
 
-    /**
-     * {@inheritdoc}
-     */
-    public function isFillable($key)
-    {
-        return $this->model->isFillable($key);
-    }
-
 }

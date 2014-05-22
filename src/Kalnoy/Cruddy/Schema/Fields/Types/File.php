@@ -55,7 +55,7 @@ class File extends BaseField {
      */
     public function process($value)
     {
-        if (empty($value)) return $this->multiple ? [] : "";
+        if (empty($value)) return null;
 
         return $this->multiple ? (array)$value : $value;
     }

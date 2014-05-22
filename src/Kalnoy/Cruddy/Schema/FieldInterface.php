@@ -28,6 +28,15 @@ interface FieldInterface extends AttributeInterface {
     const FILTER_COMPLEX = 'complex';
 
     /**
+     * Extract data from a model for column.
+     * 
+     * @param \Illuminate\Database\Eloquent\Model $model
+     * 
+     * @return mixed
+     */
+    public function extractForColumn(Eloquent $model);
+
+    /**
      * Process a value and convert it to a format consumable by a validator
      * and a repository.
      *

@@ -68,6 +68,14 @@ abstract class BaseField extends Attribute implements FieldInterface {
     /**
      * {@inheritdoc}
      */
+    public function extractForColumn(Eloquent $model)
+    {
+        return $this->extract($model);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function process($value)
     {
         return $value;
@@ -180,21 +188,10 @@ abstract class BaseField extends Attribute implements FieldInterface {
             'required' => $this->required,
             'unique' => $this->unique,
             'disabled' => $this->disabled,
-            'fillable' => $this->isFillable(),
             'label' => $this->getLabel(),
             'filter_type' => $this->getFilterType(),
 
         ] + parent::toArray();
-    }
-
-    /**
-     * Get whether the field is fillable.
-     *
-     * @return bool
-     */
-    public function isFillable()
-    {
-        return $this->entity->getRepository()->isFillable($this->id);
     }
 
     /**
@@ -222,7 +219,7 @@ abstract class BaseField extends Attribute implements FieldInterface {
      */
     public function sendToRepository($action)
     {
-        return ! $this->isDisabled($action) and $this->isFillable();
+        return ! $this->isDisabled($action);
     }
 
 }

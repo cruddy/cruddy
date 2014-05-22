@@ -4,6 +4,7 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
     initialize: (options) ->
         @items = options.items ? {}
         @prompt = options.prompt ? null
+        @required = options.required ? no
 
         super
 
@@ -13,7 +14,7 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
         this
 
     optionIndex: (value) ->
-        index = if @prompt then 2 else 1
+        index = if @hasPrompt() then 2 else 1
 
         for data, label of @items
             break if value == data
@@ -29,9 +30,11 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
 
     template: ->
         html = ""
-        html += @optionTemplate "", @prompt ? ""
+        html += @optionTemplate "", @prompt ? Cruddy.lang.not_selected, @required if @hasPrompt()
         html += @optionTemplate key, value for key, value of @items
         html
 
-    optionTemplate: (value, title) ->
-        """<option value="#{ _.escape value }">#{ _.escape title }</option>"""
+    optionTemplate: (value, title, disabled = no) ->
+        """<option value="#{ _.escape value }"#{ if disabled then " disabled" else ""}>#{ _.escape title }</option>"""
+
+    hasPrompt: -> not @required or @prompt?

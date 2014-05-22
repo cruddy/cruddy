@@ -2096,9 +2096,10 @@
     Select.prototype.tagName = "select";
 
     Select.prototype.initialize = function(options) {
-      var _ref1, _ref2;
+      var _ref1, _ref2, _ref3;
       this.items = (_ref1 = options.items) != null ? _ref1 : {};
       this.prompt = (_ref2 = options.prompt) != null ? _ref2 : null;
+      this.required = (_ref3 = options.required) != null ? _ref3 : false;
       return Select.__super__.initialize.apply(this, arguments);
     };
 
@@ -2111,7 +2112,7 @@
 
     Select.prototype.optionIndex = function(value) {
       var data, index, label, _ref1;
-      index = this.prompt ? 2 : 1;
+      index = this.hasPrompt() ? 2 : 1;
       _ref1 = this.items;
       for (data in _ref1) {
         label = _ref1[data];
@@ -2131,7 +2132,9 @@
     Select.prototype.template = function() {
       var html, key, value, _ref1, _ref2;
       html = "";
-      html += this.optionTemplate("", (_ref1 = this.prompt) != null ? _ref1 : "");
+      if (this.hasPrompt()) {
+        html += this.optionTemplate("", (_ref1 = this.prompt) != null ? _ref1 : Cruddy.lang.not_selected, this.required);
+      }
       _ref2 = this.items;
       for (key in _ref2) {
         value = _ref2[key];
@@ -2140,8 +2143,15 @@
       return html;
     };
 
-    Select.prototype.optionTemplate = function(value, title) {
-      return "<option value=\"" + (_.escape(value)) + "\">" + (_.escape(title)) + "</option>";
+    Select.prototype.optionTemplate = function(value, title, disabled) {
+      if (disabled == null) {
+        disabled = false;
+      }
+      return "<option value=\"" + (_.escape(value)) + "\"" + (disabled ? " disabled" : "") + ">" + (_.escape(title)) + "</option>";
+    };
+
+    Select.prototype.hasPrompt = function() {
+      return !this.required || (this.prompt != null);
     };
 
     return Select;
@@ -2576,7 +2586,7 @@
     };
 
     Base.prototype.isEditable = function(model) {
-      return model.isSaveable() && this.attributes.fillable && this.attributes.disabled !== true && this.attributes.disabled !== model.action();
+      return model.isSaveable() && this.attributes.disabled !== true && this.attributes.disabled !== model.action();
     };
 
     Base.prototype.isRequired = function(model) {
@@ -2625,7 +2635,7 @@
 
     Input.prototype.format = function(value) {
       if (this.attributes.input_type === "textarea") {
-        return "<pre>" + Input.__super__.format.apply(this, arguments) + "</pre>";
+        return "<pre class=\"limit-height\">" + Input.__super__.format.apply(this, arguments) + "</pre>";
       } else {
         return Input.__super__.format.apply(this, arguments);
       }
@@ -2710,6 +2720,17 @@
       return this.getReference().getSingularTitle();
     };
 
+    BaseRelation.prototype.format = function(value) {
+      if (_.isEmpty(value)) {
+        return "n/a";
+      }
+      if (this.attributes.multiple) {
+        return _.pluck(value, "title").join(", ");
+      } else {
+        return value.title;
+      }
+    };
+
     return BaseRelation;
 
   })(Cruddy.Fields.Base);
@@ -2742,17 +2763,6 @@
         owner: this.entity.id + "." + this.id,
         constraint: this.attributes.constraint
       });
-    };
-
-    Relation.prototype.format = function(value) {
-      if (_.isEmpty(value)) {
-        return Cruddy.lang.not_selected;
-      }
-      if (this.attributes.multiple) {
-        return _.pluck(value, "title").join(", ");
-      } else {
-        return value.title;
-      }
     };
 
     Relation.prototype.isEditable = function() {
@@ -2854,6 +2864,7 @@
         key: this.id,
         prompt: this.attributes.prompt,
         items: this.attributes.items,
+        required: this.attributes.required,
         attributes: {
           id: inputId
         }
@@ -2899,6 +2910,14 @@
       });
     };
 
+    Markdown.prototype.format = function(value) {
+      if (value) {
+        return "<div class=\"well limit-height\">" + (marked(value)) + "</div>";
+      } else {
+        return "n/a";
+      }
+    };
+
     return Markdown;
 
   })(Cruddy.Fields.Base);
@@ -2918,6 +2937,14 @@
         mode: this.attributes.mode,
         theme: this.attributes.theme
       });
+    };
+
+    Code.prototype.format = function(value) {
+      if (value) {
+        return "<pre class=\"limit-height\">" + value + "</pre>";
+      } else {
+        return "n/a";
+      }
     };
 
     return Code;

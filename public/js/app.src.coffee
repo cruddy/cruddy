@@ -1440,6 +1440,7 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
     initialize: (options) ->
         @items = options.items ? {}
         @prompt = options.prompt ? null
+        @required = options.required ? no
 
         super
 
@@ -1449,7 +1450,7 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
         this
 
     optionIndex: (value) ->
-        index = if @prompt then 2 else 1
+        index = if @hasPrompt() then 2 else 1
 
         for data, label of @items
             break if value == data
@@ -1465,12 +1466,14 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
 
     template: ->
         html = ""
-        html += @optionTemplate "", @prompt ? ""
+        html += @optionTemplate "", @prompt ? Cruddy.lang.not_selected, @required if @hasPrompt()
         html += @optionTemplate key, value for key, value of @items
         html
 
-    optionTemplate: (value, title) ->
-        """<option value="#{ _.escape value }">#{ _.escape title }</option>"""
+    optionTemplate: (value, title, disabled = no) ->
+        """<option value="#{ _.escape value }"#{ if disabled then " disabled" else ""}>#{ _.escape title }</option>"""
+
+    hasPrompt: -> not @required or @prompt?
 class Cruddy.Inputs.Code extends Cruddy.Inputs.Base
     initialize: (options) ->
         @$el.height (options.height ? 100) + "px"
@@ -1810,7 +1813,7 @@ class Cruddy.Fields.Base extends Attribute
     getLabel: -> @attributes.label
 
     # Get whether the field is editable for specified model
-    isEditable: (model) -> model.isSaveable() and @attributes.fillable and @attributes.disabled isnt yes and @attributes.disabled isnt model.action()
+    isEditable: (model) -> model.isSaveable() and @attributes.disabled isnt yes and @attributes.disabled isnt model.action()
 
     # Get whether field is required
     isRequired: (model) -> @attributes.required is yes or @attributes.required == model.action()
@@ -1842,7 +1845,7 @@ class Cruddy.Fields.Input extends Cruddy.Fields.Base
                 mask: @attributes.mask
                 attributes: attributes
 
-    format: (value) -> if @attributes.input_type is "textarea" then "<pre>#{ super }</pre>" else super
+    format: (value) -> if @attributes.input_type is "textarea" then "<pre class=\"limit-height\">#{ super }</pre>" else super
 
 class Cruddy.Fields.DateTime extends Cruddy.Fields.Input
     
@@ -1870,6 +1873,11 @@ class Cruddy.Fields.BaseRelation extends Cruddy.Fields.Base
         @reference
 
     getFilterLabel: -> @getReference().getSingularTitle()
+
+    format: (value) ->
+        return "n/a" if _.isEmpty value
+        
+        if @attributes.multiple then _.pluck(value, "title").join ", " else value.title
 class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
 
     createEditableInput: (model) -> new Cruddy.Inputs.EntityDropdown
@@ -1888,11 +1896,6 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         placeholder: Cruddy.lang.any_value
         owner: @entity.id + "." + @id
         constraint: @attributes.constraint
-
-    format: (value) ->
-        return Cruddy.lang.not_selected if _.isEmpty value
-        
-        if @attributes.multiple then _.pluck(value, "title").join ", " else value.title
 
     isEditable: -> super and @getReference().viewPermitted()
 
@@ -1933,6 +1936,7 @@ class Cruddy.Fields.Enum extends Cruddy.Fields.Base
         key: @id
         prompt: @attributes.prompt
         items: @attributes.items
+        required: @attributes.required
         attributes: id: inputId
 
     createFilterInput: (model) -> new Cruddy.Inputs.Select
@@ -1952,6 +1956,8 @@ class Cruddy.Fields.Markdown extends Cruddy.Fields.Base
         key: @id
         height: @attributes.height
         theme: @attributes.theme
+
+    format: (value) -> if value then "<div class=\"well limit-height\">#{ marked value }</div>" else "n/a"
 class Cruddy.Fields.Code extends Cruddy.Fields.Base
     
     createEditableInput: (model) ->
@@ -1961,6 +1967,8 @@ class Cruddy.Fields.Code extends Cruddy.Fields.Base
             height: @attributes.height
             mode: @attributes.mode
             theme: @attributes.theme
+
+    format: (value) -> if value then "<pre class=\"limit-height\">#{ value }</pre>" else "n/a"
 class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
     className: "has-many-view"
 

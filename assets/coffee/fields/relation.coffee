@@ -17,11 +17,6 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         owner: @entity.id + "." + @id
         constraint: @attributes.constraint
 
-    format: (value) ->
-        return Cruddy.lang.not_selected if _.isEmpty value
-        
-        if @attributes.multiple then _.pluck(value, "title").join ", " else value.title
-
     isEditable: -> super and @getReference().viewPermitted()
 
     canFilter: -> super and @getReference().viewPermitted()

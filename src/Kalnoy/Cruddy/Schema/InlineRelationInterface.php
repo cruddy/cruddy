@@ -11,16 +11,7 @@ use Illuminate\Database\Eloquent\Model as Eloquent;
  * 
  * @since 1.0.0
  */
-interface InlineRelationInterface {
-
-    /**
-     * Get whether the inline relation can be processed and saved.
-     *
-     * @param string $action
-     *
-     * @return bool
-     */
-    public function isSaveable($action);
+interface InlineRelationInterface extends FieldInterface {
 
     /**
      * Process input and return data to save.
@@ -40,12 +31,5 @@ interface InlineRelationInterface {
      * @return void
      */
     public function save(Eloquent $model, array $data);
-
-    /**
-     * Get the id of the relation.
-     *
-     * @return string
-     */
-    public function getId();
 
 }

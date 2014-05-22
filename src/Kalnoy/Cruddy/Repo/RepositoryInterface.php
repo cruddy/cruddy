@@ -75,13 +75,4 @@ interface RepositoryInterface {
      */
     public function delete($ids);
 
-    /**
-     * Get whether the field is fillable.
-     *
-     * @param string $key
-     *
-     * @return bool
-     */
-    public function isFillable($key);
-
 }

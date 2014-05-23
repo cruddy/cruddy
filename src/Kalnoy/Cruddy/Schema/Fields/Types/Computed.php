@@ -31,7 +31,7 @@ class Computed extends BaseField {
     {
         if (is_string($this->accessor)) return $model->{$this->accessor}();
 
-        return $this->accessor($model);
+        return {$this->accessor}($model);
     }
 
     /**

@@ -235,22 +235,21 @@ class MenuBuilder {
      */
     protected function getLabel(array $options)
     {
+        $label = '';
+
         if (isset($options['label']))
         {
             $label = \Kalnoy\Cruddy\try_trans($options['label']);
+            $label = $this->html->entities($label);
         }
-        else
+        else if (isset($options['entity']))
         {
-            if ( ! isset($options['entity'])) return '';
-
             $label = $this->env->entity($options['entity'])->getPluralTitle();
         }
 
-        $label = $this->html->entities($label);
-
         if (isset($options['icon']))
         {
-            $label = $this->icon($options['icon']).' '.$label;
+            $label = $this->icon($options['icon']).($label ? ' '.$label : '');
         }
 
         return $label;

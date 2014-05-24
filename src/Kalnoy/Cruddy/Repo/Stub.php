@@ -39,12 +39,12 @@ class Stub extends BaseRepository {
      * @param array                             $defaults
      * @param \Illuminate\Filesystem\Filesystem $file
      */ 
-    public function __construct($className, array $defaults = [], $file = null)
+    public function __construct($className, array $defaults = [])
     {
         $this->className = $className;
         $this->defaults = $defaults;
 
-        parent::__construct($file);
+        parent::__construct();
     }
 
     /**

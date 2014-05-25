@@ -4,6 +4,7 @@ namespace Kalnoy\Cruddy;
 
 use Illuminate\Support\ServiceProvider;
 use Kalnoy\Cruddy\Service\MenuBuilder;
+use Kalnoy\Cruddy\Repo\BaseRepository;
 use Kalnoy\Cruddy\Service\Permissions\PermissionsManager;
 use Kalnoy\Cruddy\Console\GenerateSchemaCommand;
 
@@ -91,6 +92,9 @@ class CruddyServiceProvider extends ServiceProvider {
             $env = new Environment($config, $app['request'], $translator, $repository, $fields, $columns, $permissions, $app['events']);
 
             Entity::setEnvironment($env);
+
+            BaseRepository::setFiles($files);
+            BaseRepository::setPaginationFactory($app['paginator']);
 
             return $this->registerAssets($env);
         });

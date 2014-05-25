@@ -1,4 +1,6 @@
-<?php  namespace Kalnoy\Cruddy\Service;
+<?php
+
+namespace Kalnoy\Cruddy\Service;
 
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Support\Str;
@@ -63,7 +65,7 @@ class FileUploader {
     /**
      * Upload a file.
      *
-     * $value can be either a string or UploadedFile.
+     * `$value` can be either a string or UploadedFile.
      * The string is considered as old filename and returned as is.
      *
      * @param array|string|\Symfony\Component\HttpFoundation\File\UploadedFile $value

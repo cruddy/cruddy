@@ -10,6 +10,7 @@ use Kalnoy\Cruddy\ModelNotFoundException;
 use Kalnoy\Cruddy\ModelNotSavedException;
 use Kalnoy\Cruddy\Service\FileUploader;
 use Exception;
+use RuntimeException;
 
 /**
  * Base repository class.
@@ -23,14 +24,14 @@ abstract class BaseRepository implements RepositoryInterface {
      *
      * @var \Illuminate\Filesystem\Filesystem
      */
-    protected $file;
+    protected static $file;
 
     /**
      * Paginator factory.
      *
      * @var \Illuminate\Pagination\Factory
      */
-    protected $paginator;
+    protected static $paginator;
 
     /**
      * @var \Kalnoy\Cruddy\Service\FileUploader[]
@@ -53,14 +54,9 @@ abstract class BaseRepository implements RepositoryInterface {
 
     /**
      * Init repo.
-     *
-     * @param \Illuminate\Filesystem\Filesystem $file
-     * @param \Illuminate\Pagination\Factory    $paginator
      */
-    public function __construct(Filesystem $file = null, PaginationFactory $paginator = null)
+    public function __construct()
     {
-        $this->file = $file ?: \app('files');
-        $this->paginator = $paginator ?: \app('paginator');
         $this->model = $this->newModel();
     }
 
@@ -74,31 +70,42 @@ abstract class BaseRepository implements RepositoryInterface {
      */
     protected function fill(Eloquent $model, array $input)
     {
-        $this->uploadFiles($input);
-
-        return $model->fill($this->cleanInput($input));
-    }
-
-    /**
-     * Clean input from unwanted keys.
-     * 
-     * Default implementation just removes relations from the input.
-     *
-     * @param array $input
-     *
-     * @return array
-     */
-    protected function cleanInput(array $input)
-    {
         foreach ($input as $key => $value)
         {
-            if ($this->isRelation($key))
+            if ($this->isFillable($key))
             {
-                unset($input[$key]);
+                $model->setAttribute($key, $this->transform($key, $value));
             }
         }
 
-        return $input;
+        return $model;
+    }
+
+    /**
+     * Transform given attribute before setting it on model.
+     *
+     * @param string $key
+     * @param mixed  $value
+     *
+     * @return mixed
+     */
+    protected function transform($key, $value)
+    {
+        if ($this->isFile($key)) return $this->upload($key, $value);
+
+        return $value;
+    }
+
+    /**
+     * Get whether the attribute is fillable.
+     *
+     * @param string $key
+     *
+     * @return bool
+     */
+    protected function isFillable($key)
+    {
+        return ! $this->isRelation($key);
     }
 
     /**
@@ -130,6 +137,11 @@ abstract class BaseRepository implements RepositoryInterface {
      */
     public function search(array $options, SearchProcessorInterface $processor = null)
     {
+        if ( ! self::$paginator)
+        {
+            throw new RuntimeException("Cannot search items because paginator is not set.");
+        }
+
         $builder = $this->newQuery();
         $query = $builder->getQuery();
 
@@ -142,7 +154,7 @@ abstract class BaseRepository implements RepositoryInterface {
 
         $query->forPage($page, $perPage);
 
-        return $this->paginator->make($builder->get()->all(), $total, $perPage);
+        return self::$paginator->make($builder->get()->all(), $total, $perPage);
     }
 
     /**
@@ -189,10 +201,6 @@ abstract class BaseRepository implements RepositoryInterface {
 
         $this->syncRelations($instance, $input);
 
-        // We will temporarly unguard eloquent models to be sure that every
-        // attribute is set.
-        Eloquent::unguard();
-
         try
         {
             if (false === $this->fill($instance, $input)->save())
@@ -205,16 +213,13 @@ abstract class BaseRepository implements RepositoryInterface {
 
         catch (Exception $e)
         {
-            Eloquent::reguard();
-
             $this->cancelUploads();
 
             throw $e;
         }
         
-        Eloquent::reguard();
-
-        // Now when the instance is saved, we can run post-save events
+        // Now when the instance is saved, we can run post-save events that are
+        // defined by relations
         $this->firePostSaveCallbacks($instance);
 
         return $instance;
@@ -395,27 +400,32 @@ abstract class BaseRepository implements RepositoryInterface {
      */
     public function uploads($attribute)
     {
-        return $this->files[$attribute] = new FileUploader($this->file);
+        return $this->files[$attribute] = new FileUploader(self::$file);
     }
 
     /**
-     * Upload files if any.
+     * Upload a file.
      *
-     * @param array $input
+     * @param string $key
+     * @param mixed $value
      *
-     * @return $this
+     * @return mixed
      */
-    protected function uploadFiles(array &$input)
+    protected function upload($key, $value)
     {
-        foreach ($this->files as $attr => $file)
-        {
-            if (isset($input[$attr]))
-            {
-                $input[$attr] = $file->upload($input[$attr]);
-            }
-        }
+        return $this->files[$key]->upload($value);
+    }
 
-        return $this;
+    /**
+     * Get whether specified key is a file that needs to be uploaded.
+     * 
+     * @param string $key
+     * 
+     * @return bool
+     */
+    protected function isFile($key)
+    {
+        return isset($this->files[$key]);
     }
 
     /**
@@ -450,6 +460,26 @@ abstract class BaseRepository implements RepositoryInterface {
         }
 
         return $count;
+    }
+
+    /**
+     * Set pagination factory.
+     * 
+     * @param \Illuminate\Pagination\Factory $factory
+     */
+    public static function setPaginationFactory($factory)
+    {
+        self::$paginator = $factory;
+    }
+
+    /**
+     * Set filesystem object.
+     * 
+     * @param \Illuminate\Filesystem\Filesystem $files
+     */
+    public static function setFiles($files)
+    {
+        self::$file = $files;
     }
 
 }

@@ -1,10 +1,8 @@
 <?php
 
-View::creator('cruddy::layout', function ($view)
+View::composer('cruddy::layout', function ($view)
 {
     $cruddy = app('cruddy');
-
-    $view->content = '';
     
     $view->cruddy = $cruddy;
     $view->cruddyJSON = $cruddy->toJSON();

@@ -1499,7 +1499,7 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
     render: ->
         @$el.html @template()
 
-        @setValue @$el.val() if @required
+        @setValue @$el.val() if @required and not @getValue()
 
         super
 

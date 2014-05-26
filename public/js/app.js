@@ -2163,7 +2163,7 @@
 
     Select.prototype.render = function() {
       this.$el.html(this.template());
-      if (this.required) {
+      if (this.required && !this.getValue()) {
         this.setValue(this.$el.val());
       }
       return Select.__super__.render.apply(this, arguments);

@@ -26,6 +26,8 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
     render: ->
         @$el.html @template()
 
+        @setValue @$el.val() if @required
+
         super
 
     template: ->

@@ -2163,6 +2163,9 @@
 
     Select.prototype.render = function() {
       this.$el.html(this.template());
+      if (this.required) {
+        this.setValue(this.$el.val());
+      }
       return Select.__super__.render.apply(this, arguments);
     };
 
@@ -3832,6 +3835,7 @@
       this.original = _.clone(attributes);
       this.extra = (_ref1 = options.extra) != null ? _ref1 : {};
       this.on("error", this.processError, this);
+      this.on("invalid", this.processInvalid, this);
       this.on("sync", this.handleSync, this);
       this.on("destroy", (function(_this) {
         return function() {
@@ -3869,21 +3873,24 @@
       };
     };
 
-    Instance.prototype.processError = function(model, xhr) {
-      var errors, id, _ref1, _ref2, _results;
-      if (((_ref1 = xhr.responseJSON) != null ? _ref1.error : void 0) === "VALIDATION") {
-        errors = xhr.responseJSON.data;
-        this.trigger("invalid", this, errors);
-        _ref2 = this.related;
-        _results = [];
-        for (id in _ref2) {
-          model = _ref2[id];
-          if (id in errors) {
-            _results.push(this.entity.getRelation(id).processErrors(model, errors[id]));
-          }
+    Instance.prototype.processInvalid = function(model, errors) {
+      var id, _ref1;
+      _ref1 = this.related;
+      for (id in _ref1) {
+        model = _ref1[id];
+        if (id in errors) {
+          this.entity.getRelation(id).processErrors(model, errors[id]);
         }
-        return _results;
       }
+      return this;
+    };
+
+    Instance.prototype.processError = function(model, xhr) {
+      var _ref1;
+      if (((_ref1 = xhr.responseJSON) != null ? _ref1.error : void 0) === "VALIDATION") {
+        this.trigger("invalid", this, xhr.responseJSON.data);
+      }
+      return this;
     };
 
     Instance.prototype.validate = function() {

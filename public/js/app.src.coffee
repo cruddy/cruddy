@@ -1499,6 +1499,8 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
     render: ->
         @$el.html @template()
 
+        @setValue @$el.val() if @required
+
         super
 
     template: ->
@@ -2486,6 +2488,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
         @extra = options.extra ? {}
 
         @on "error", @processError, this
+        @on "invalid", @processInvalid, this
         @on "sync", @handleSync, this
         @on "destroy", => @set "deleted_at", moment().unix() if @entity.get "soft_deleting"
 
@@ -2510,14 +2513,16 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
             this
 
+    processInvalid: (model, errors) ->
+        # Trigger errors for related models
+        @entity.getRelation(id).processErrors model, errors[id] for id, model of @related when id of errors
+
+        this
+
     processError: (model, xhr) ->
-        if xhr.responseJSON?.error is "VALIDATION"
-            errors = xhr.responseJSON.data
+        @trigger "invalid", this, xhr.responseJSON.data if xhr.responseJSON?.error is "VALIDATION"
 
-            @trigger "invalid", this, errors
-
-            # Trigger errors for related models
-            @entity.getRelation(id).processErrors model, errors[id] for id, model of @related when id of errors
+        this
 
     validate: ->
         @set "errors", {}

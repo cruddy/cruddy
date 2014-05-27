@@ -2418,15 +2418,15 @@
     };
 
     DateTime.prototype.applyChanges = function(value, external) {
-      if (external) {
-        this.$el.val(moment.unix(value).format(this.format));
-      }
+      this.$el.val(value === null ? "" : external ? moment.unix(value).format(this.format) : void 0);
       return this;
     };
 
     DateTime.prototype.change = function() {
       var value;
-      this.setValue(value = moment(this.$el.val(), this.format).unix());
+      value = this.$el.val();
+      value = _.isEmpty(value) ? null : moment(value, this.format).unix();
+      this.setValue(value);
       return this.applyChanges(value, true);
     };
 

@@ -134,7 +134,7 @@ class FluentValidator extends Fluent implements ValidableInterface {
      */
     public function processRule($rule, array $input)
     {
-        return preg_replace_callback('/{([a-z0-9_\.]+)}/i', function ($matches) use ($input)
+        return preg_replace_callback('/\{([a-z-_][a-z0-9_\.]*)\}/i', function ($matches) use ($input)
         {
             return \array_get($input, $matches[1], '');
 

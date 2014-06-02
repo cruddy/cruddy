@@ -631,11 +631,11 @@ class Entity implements JsonableInterface, ArrayableInterface {
 
         $this->schema->columns($schema);
 
-        return $this->enshurePrimaryColumn($collection);
+        return $this->ensurePrimaryColumn($collection);
     }
 
     /**
-     * Enshure that primary column is exists.
+     * Ensure that primary column is exists.
      *
      * @param \Kalnoy\Cruddy\Schema\Columns\Collection $collection
      *

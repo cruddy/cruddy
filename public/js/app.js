@@ -3482,7 +3482,7 @@
 
     Base.prototype.initialize = function(attributes) {
       if (attributes.formatter != null) {
-        this.formatter = Cruddy.formatters.create(attributes.formatter, attributes.formatterOptions);
+        this.formatter = Cruddy.formatters.create(attributes.formatter, attributes.formatter_options);
       }
       return Base.__super__.initialize.apply(this, arguments);
     };

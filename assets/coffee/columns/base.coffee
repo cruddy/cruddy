@@ -2,7 +2,7 @@ Cruddy.Columns = new Factory
 
 class Cruddy.Columns.Base extends Attribute
     initialize: (attributes) ->
-        @formatter = Cruddy.formatters.create attributes.formatter, attributes.formatterOptions if attributes.formatter?
+        @formatter = Cruddy.formatters.create attributes.formatter, attributes.formatter_options if attributes.formatter?
 
         super
 

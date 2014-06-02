@@ -641,7 +641,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
      *
      * @return \Kalnoy\Cruddy\Schema\Columns\Collection
      */
-    protected function enshurePrimaryColumn($collection)
+    protected function ensurePrimaryColumn($collection)
     {
         $keyName = $this->getRepository()->newModel()->getKeyName();
 

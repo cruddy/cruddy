@@ -47,12 +47,12 @@ class Factory extends BaseFactory {
      */
     public function timestamps($entity, $collection, $hide = false, $disable = null)
     {
-        $this->resolve('datetime', $entity, $collection, ['created_at'])
+        $this->resolve('datetime', $entity, $collection, [ 'created_at' ])
             ->unique()
             ->hide($hide)
-            ->disable($disable === true);
+            ->disable($disable ? true : 'create');
 
-        $this->resolve('datetime', $entity, $collection, ['updated_at'])
+        $this->resolve('datetime', $entity, $collection, [ 'updated_at' ])
             ->unique()
             ->hide($hide)
             ->disable($disable !== false);

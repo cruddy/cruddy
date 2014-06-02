@@ -47,6 +47,14 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
 
     /**
      * {@inheritdoc}
+     */
+    public function keep($value)
+    {
+        return ! empty($value);
+    }
+
+    /**
+     * {@inheritdoc}
      * 
      * Inline relations are not sent to the repository.
      */

@@ -60,6 +60,13 @@ class Stub extends BaseRepository {
      */
     public function newModel()
     {
-        return new $this->className($this->defaults);
+        $instance = new $this->className;
+
+        // We will set raw attributes to prevent exceptions when model is
+        // totally guarded.
+        $instance->setRawAttributes($this->defaults, true);
+
+        return $instance;
     }
+
 }

@@ -4,6 +4,7 @@ namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Kalnoy\Cruddy\Schema\Fields\BaseTextField;
+use Hash;
 
 /**
  * Password field type.
@@ -32,7 +33,15 @@ class Password extends BaseTextField {
     {
         return '';
     }
-
+    
+    /**
+     * {@inheritdoc}
+     */
+    public function process($value)
+    {
+        return Hash::make($value);
+    }
+    
     /**
      * {@inheritdoc}
      */

@@ -3052,14 +3052,20 @@
 
     EmbeddedView.prototype.initialize = function(options) {
       this.views = {};
+      this.updateCollection();
+      return EmbeddedView.__super__.initialize.apply(this, arguments);
+    };
+
+    EmbeddedView.prototype.updateCollection = function() {
       this.collection = this.model.get(this.field.id);
       this.listenTo(this.collection, "add", this.add);
       this.listenTo(this.collection, "remove", this.removeItem);
-      return EmbeddedView.__super__.initialize.apply(this, arguments);
+      return this;
     };
 
     EmbeddedView.prototype.handleSync = function() {
       EmbeddedView.__super__.handleSync.apply(this, arguments);
+      this.updateCollection();
       return this.render();
     };
 
@@ -3602,7 +3608,7 @@
       if (_.isObject(value)) {
         value = value.title;
       }
-      return "<img src=\"" + (thumb(value, this.options.width, this.options.height)) + "\" width=\"" + (this.options.width || this.defaultOptions.width) + "\" height=\"" + (this.options.height || this.defaultOptions.height) + "\" alt=\"" + (_.escape(value)) + "\">";
+      return "<img src=\"" + (thumb(value, this.options.width, this.options.height)) + "\" " + (this.options.width ? " width=" + this.options.width : "") + " " + (this.options.height ? " height=" + this.options.height : "") + " alt=\"" + (_.escape(value)) + "\">";
     };
 
     return Image;

@@ -2045,15 +2045,23 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
 
     initialize: (options) ->
         @views = {}
+
+        @updateCollection()
+
+        super
+
+    updateCollection: ->
         @collection = @model.get @field.id
 
         @listenTo @collection, "add", @add
         @listenTo @collection, "remove", @removeItem
 
-        super
+        this
 
     handleSync: ->
         super
+
+        @updateCollection()
 
         @render()
 
@@ -2359,7 +2367,7 @@ class Cruddy.formatters.Image extends BaseFormatter
         value = value.title if _.isObject value
 
         """
-        <img src="#{ thumb value, @options.width, @options.height }" width="#{ @options.width or @defaultOptions.width }" height="#{ @options.height or @defaultOptions.height }" alt="#{ _.escape value }">
+        <img src="#{ thumb value, @options.width, @options.height }" #{ if @options.width then " width=#{ @options.width }" else "" } #{ if @options.height then " height=#{ @options.height }" else "" } alt="#{ _.escape value }">
         """
 class Cruddy.formatters.Plain extends BaseFormatter
     format: (value) -> _.escape value
@@ -2585,7 +2593,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
         no
 
     # Get whether is allowed to save instance
-    isSaveable: -> (@isNew() and @entity.createPermitted()) or (!@isNew() and @entity.updatePermitted())
+    isSaveable: -> (@isNew() and @entity.createPermitted()) or (not @isNew() and @entity.updatePermitted())
 
     serialize: -> { attributes: @attributes, id: @id }
 

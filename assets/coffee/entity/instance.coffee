@@ -104,7 +104,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
         no
 
     # Get whether is allowed to save instance
-    isSaveable: -> (@isNew() and @entity.createPermitted()) or (!@isNew() and @entity.updatePermitted())
+    isSaveable: -> (@isNew() and @entity.createPermitted()) or (not @isNew() and @entity.updatePermitted())
 
     serialize: -> { attributes: @attributes, id: @id }
 

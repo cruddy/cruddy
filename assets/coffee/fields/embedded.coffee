@@ -6,15 +6,23 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
 
     initialize: (options) ->
         @views = {}
+
+        @updateCollection()
+
+        super
+
+    updateCollection: ->
         @collection = @model.get @field.id
 
         @listenTo @collection, "add", @add
         @listenTo @collection, "remove", @removeItem
 
-        super
+        this
 
     handleSync: ->
         super
+
+        @updateCollection()
 
         @render()
 

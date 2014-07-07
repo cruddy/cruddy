@@ -6,23 +6,15 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
 
     initialize: (options) ->
         @views = {}
-
-        @updateCollection()
-
-        super
-
-    updateCollection: ->
         @collection = @model.get @field.id
 
         @listenTo @collection, "add", @add
         @listenTo @collection, "remove", @removeItem
 
-        this
+        super
 
     handleSync: ->
         super
-
-        @updateCollection()
 
         @render()
 
@@ -202,7 +194,7 @@ class Cruddy.Fields.RelatedCollection extends Backbone.Collection
 
             data
         else
-            @first()
+            @first() or ""
 
 class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
 

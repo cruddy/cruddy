@@ -3052,20 +3052,14 @@
 
     EmbeddedView.prototype.initialize = function(options) {
       this.views = {};
-      this.updateCollection();
-      return EmbeddedView.__super__.initialize.apply(this, arguments);
-    };
-
-    EmbeddedView.prototype.updateCollection = function() {
       this.collection = this.model.get(this.field.id);
       this.listenTo(this.collection, "add", this.add);
       this.listenTo(this.collection, "remove", this.removeItem);
-      return this;
+      return EmbeddedView.__super__.initialize.apply(this, arguments);
     };
 
     EmbeddedView.prototype.handleSync = function() {
       EmbeddedView.__super__.handleSync.apply(this, arguments);
-      this.updateCollection();
       return this.render();
     };
 
@@ -3313,7 +3307,7 @@
         }
         return data;
       } else {
-        return this.first();
+        return this.first() || "";
       }
     };
 

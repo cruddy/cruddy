@@ -154,7 +154,7 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessorInte
     /**
      * {@inheritdoc}
      */
-    public function search(Builder $query, array $options)
+    public function constraintBuilder(Builder $query, array $options)
     {
         if (isset($this->filter))
         {

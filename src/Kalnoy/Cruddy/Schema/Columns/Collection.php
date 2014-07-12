@@ -56,7 +56,7 @@ class Collection extends BaseCollection implements SearchProcessorInterface {
     /**
      * {@inheritdoc}
      */
-    public function search(EloquentBuilder $builder, array $options)
+    public function constraintBuilder(EloquentBuilder $builder, array $options)
     {
         $this->modifyQuery($builder);
 

@@ -823,7 +823,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
         return
         [
             'id' => $this->id,
-            'soft_deleting' => $model->isSoftDeleting(),
+            'soft_deleting' => false,
             'defaults' => $fields->extract($model),
             'title' => $this->getTitle(),
             'permissions' => $this->getPermissions(),

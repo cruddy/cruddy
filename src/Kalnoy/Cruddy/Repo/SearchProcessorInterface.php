@@ -17,5 +17,5 @@ interface SearchProcessorInterface {
      *
      * @return void
      */
-    public function search(Builder $builder, array $options);
+    public function constraintBuilder(Builder $builder, array $options);
 }

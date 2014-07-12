@@ -41,11 +41,11 @@ class ChainedSearchProcessor implements SearchProcessorInterface {
     /**
      * {@inheritdoc}
      */
-    public function search(Builder $query, array $options)
+    public function constraintBuilder(Builder $query, array $options)
     {
         foreach ($this->processors as $processor)
         {
-            $processor->search($query, $options);
+            $processor->constraintBuilder($query, $options);
         }
     }
 }

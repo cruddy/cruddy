@@ -145,7 +145,7 @@ abstract class BaseRepository implements RepositoryInterface {
         $builder = $this->newQuery();
         $query = $builder->getQuery();
 
-        if ($processor) $processor->search($builder, $options);
+        if ($processor) $processor->constraintBuilder($builder, $options);
 
         $total = $query->getPaginationCount();
 

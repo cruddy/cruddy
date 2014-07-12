@@ -744,15 +744,22 @@
     };
 
     DataGrid.prototype.renderRow = function(columns, item) {
-      var active, col, html, instance, _i, _len;
-      instance = this.entity.get("instance");
-      active = (instance != null) && item.id === instance.id ? "active" : "";
-      html = "<tr class=\"item " + active + "\" id=\"item-" + item.id + "\" data-id=\"" + item.id + "\">";
+      var col, html, _i, _len;
+      html = "<tr class=\"item " + (this.states(item)) + "\" id=\"item-" + item.id + "\" data-id=\"" + item.id + "\">";
       for (_i = 0, _len = columns.length; _i < _len; _i++) {
         col = columns[_i];
         html += this.renderCell(col, item);
       }
       return html += "</tr>";
+    };
+
+    DataGrid.prototype.states = function(item) {
+      var instance, states;
+      states = item._states ? item._states : "";
+      if (((instance = this.entity.get("instance")) != null) && item.id === instance.id) {
+        states += " active";
+      }
+      return states;
     };
 
     DataGrid.prototype.renderCell = function(col, item) {

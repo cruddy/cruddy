@@ -103,12 +103,16 @@ class DataGrid extends Backbone.View
         html += "</tbody>"
 
     renderRow: (columns, item) ->
-        instance = @entity.get "instance"
-        active = if instance? and item.id == instance.id then "active" else ""
-
-        html = "<tr class=\"item #{ active }\" id=\"item-#{ item.id }\" data-id=\"#{ item.id }\">"
+        html = "<tr class=\"item #{ @states item }\" id=\"item-#{ item.id }\" data-id=\"#{ item.id }\">"
         html += @renderCell col, item for col in columns
         html += "</tr>"
+
+    states: (item) -> 
+        states = if item._states then item._states else ""
+
+        states += " active" if (instance = @entity.get "instance")? and item.id == instance.id
+
+        return states
 
     renderCell: (col, item) ->
         """<td class="#{ col.getClass() }">#{ col.format item[col.id] }</td>"""

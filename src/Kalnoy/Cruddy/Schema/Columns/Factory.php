@@ -11,6 +11,11 @@ use Kalnoy\Cruddy\Schema\BaseFactory;
  */
 class Factory extends BaseFactory {
 
+    protected $macros =
+    [
+        'states' => 'Kalnoy\Cruddy\Schema\Columns\Types\States',
+    ];
+
     /**
      * Create computed column.
      *

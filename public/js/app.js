@@ -1205,9 +1205,9 @@
     EntityDropdown.prototype.className = "entity-dropdown";
 
     EntityDropdown.prototype.events = {
-      "click .btn-remove": "removeItem",
-      "click .btn-edit": "editItem",
-      "click .form-control": "maybeEditItem",
+      "click .ed-item>.input-group-btn>.btn-remove": "removeItem",
+      "click .ed-item>.input-group-btn>.btn-edit": "editItem",
+      "click .ed-item>.form-control": "executeFirstAction",
       "keydown [type=search]": "searchKeydown",
       "show.bs.dropdown": "renderDropdown",
       "shown.bs.dropdown": function() {
@@ -1218,15 +1218,16 @@
         })(this));
         return this;
       },
+      "hide.bs.dropdown": function(e) {
+        if (this.executingFirstAction) {
+          e.preventDefault();
+        }
+      },
       "hidden.bs.dropdown": function() {
         this.opened = false;
         return this;
       }
     };
-
-    EntityDropdown.prototype.mutiple = false;
-
-    EntityDropdown.prototype.reference = null;
 
     EntityDropdown.prototype.initialize = function(options) {
       var _ref1, _ref2, _ref3;
@@ -1245,9 +1246,6 @@
       this.editing = false;
       this.disableDropdown = false;
       this.opened = false;
-      if (!this.enabled) {
-        this.$el.addClass("disabled");
-      }
       if (options.constraint) {
         this.constraint = options.constraint;
         this.listenTo(this.model, "change:" + this.constraint.field, function() {
@@ -1273,15 +1271,13 @@
       return this.setValue(value);
     };
 
-    EntityDropdown.prototype.maybeEditItem = function(e) {
-      if (this.multiple || !this.enabled) {
-        return this.editItem(e);
-      }
+    EntityDropdown.prototype.executeFirstAction = function(e) {
+      $(".btn:not(:disabled):last", $(e.currentTarget).next()).trigger("click");
+      return false;
     };
 
     EntityDropdown.prototype.editItem = function(e) {
-      var item, target;
-      console.log(this.editing);
+      var btn, item;
       if (this.editing || !this.allowEdit) {
         return;
       }
@@ -1292,11 +1288,11 @@
       if (!item) {
         return;
       }
-      target = $(e.currentTarget);
-      if (target.is(".form-control")) {
-        target = target.next().children(".btn-edit");
+      btn = $(e.currentTarget);
+      if (btn.is(".form-control")) {
+        btn = btn.next().children(".btn-edit");
       }
-      target.prop("disabled", true);
+      btn.prop("disabled", true);
       this.editing = this.reference.load(item.id).done((function(_this) {
         return function(instance) {
           _this.innerForm = new Cruddy.Entity.Form({
@@ -1309,7 +1305,7 @@
           });
           _this.listenTo(instance, "sync", function(model, resp) {
             if (resp.data) {
-              target.parent().siblings("input").val(resp.data.title);
+              btn.parent().siblings("input").val(resp.data.title);
               return _this.innerForm.remove();
             } else {
               return _this.removeItem(e);
@@ -1323,7 +1319,7 @@
       this.editing.always((function(_this) {
         return function() {
           _this.editing = false;
-          return target.prop("disabled", false);
+          return btn.prop("disabled", false);
         };
       })(this));
       return this;
@@ -1355,12 +1351,10 @@
     };
 
     EntityDropdown.prototype.checkToDisable = function() {
-      if (this.constraint && this.enabled) {
-        if (_.isEmpty(this.model.get(this.constraint.field))) {
-          this.disable();
-        } else {
-          this.enable();
-        }
+      if (!this.enabled || this.constraint && _.isEmpty(this.model.get(this.constraint.field))) {
+        this.disable();
+      } else {
+        this.enable();
       }
       return this;
     };
@@ -1383,15 +1377,13 @@
 
     EntityDropdown.prototype.toggleDisableControls = function() {
       this.dropdownBtn.prop("disabled", this.disableDropdown);
-      if (!this.multiple) {
-        this.itemTitle.prop("disabled", this.disableDropdown);
-      }
+      this.$el.toggleClass("disabled", this.disableDropdown);
       return this;
     };
 
     EntityDropdown.prototype.renderDropdown = function(e) {
       var dataSource;
-      if (this.disableDropdown || !this.enabled) {
+      if (this.disableDropdown) {
         e.preventDefault();
         return;
       }
@@ -1500,23 +1492,23 @@
       if (key == null) {
         key = null;
       }
-      html = "<div class=\"input-group input-group ed-item " + (!this.multiple ? "ed-dropdown-toggle" : "") + "\" data-key=\"" + key + "\">\n    <input type=\"text\" class=\"form-control\" " + (!this.multiple ? "data-toggle='dropdown' data-target='#" + this.cid + "' placeholder='" + this.placeholder + "'" : "tab-index='-1'") + " value=\"" + (_.escape(value)) + "\" readonly>";
+      html = "<div class=\"input-group ed-item " + (!this.multiple ? "ed-dropdown-toggle" : "") + "\" data-key=\"" + key + "\">\n    <input type=\"text\" class=\"form-control\" " + (this.multiple ? "tab-index='-1'" : "placeholder='" + this.placeholder + "'") + " value=\"" + (_.escape(value)) + "\" readonly>";
       if (!_.isEmpty(buttons = this.buttonsTemplate())) {
         html += "<div class=\"input-group-btn\">\n    " + buttons + "\n</div>";
       }
-      return html += "</div></div>";
+      return html += "</div>";
     };
 
     EntityDropdown.prototype.buttonsTemplate = function() {
       var html;
       html = "";
-      if (this.allowEdit) {
-        html += "<button type=\"button\" class=\"btn btn-default btn-edit\" tabindex=\"-1\">\n    <span class=\"glyphicon glyphicon-pencil\"></span>\n</button>";
-      }
       if (this.enabled) {
         html += "<button type=\"button\" class=\"btn btn-default btn-remove\" tabindex=\"-1\">\n    <span class=\"glyphicon glyphicon-remove\"></span>\n</button>";
       }
-      if (this.enabled && !this.multiple) {
+      if (this.allowEdit) {
+        html += "<button type=\"button\" class=\"btn btn-default btn-edit\" tabindex=\"-1\">\n    <span class=\"glyphicon glyphicon-pencil\"></span>\n</button>";
+      }
+      if (!this.multiple) {
         html += "<button type=\"button\" class=\"btn btn-default btn-dropdown dropdown-toggle\" data-toggle=\"dropdown\" id=\"" + this.cid + "-dropdown\" data-target=\"#" + this.cid + "\" tab-index=\"1\">\n    <span class=\"glyphicon glyphicon-search\"></span>\n</button>";
       }
       return html;
@@ -2421,6 +2413,9 @@
 
     DateTime.prototype.initialize = function(options) {
       this.format = options.format;
+      if (options.mask != null) {
+        this.$el.mask(options.mask);
+      }
       return DateTime.__super__.initialize.apply(this, arguments);
     };
 
@@ -2723,6 +2718,71 @@
 
   })(Cruddy.Fields.Base);
 
+  Cruddy.Fields.BaseDateTime = (function(_super) {
+    __extends(BaseDateTime, _super);
+
+    function BaseDateTime() {
+      return BaseDateTime.__super__.constructor.apply(this, arguments);
+    }
+
+    BaseDateTime.prototype.inputFormat = null;
+
+    BaseDateTime.prototype.mask = null;
+
+    BaseDateTime.prototype.createEditableInput = function(model, inputId) {
+      return new Cruddy.Inputs.DateTime({
+        model: model,
+        key: this.id,
+        format: this.inputFormat,
+        mask: this.mask,
+        attributes: {
+          id: this.inputId
+        }
+      });
+    };
+
+    BaseDateTime.prototype.format = function(value) {
+      if (value === null) {
+        return NOT_AVAILABLE;
+      } else {
+        return moment.unix(value).format(this.inputFormat);
+      }
+    };
+
+    return BaseDateTime;
+
+  })(Cruddy.Fields.Base);
+
+  Cruddy.Fields.Date = (function(_super) {
+    __extends(Date, _super);
+
+    function Date() {
+      return Date.__super__.constructor.apply(this, arguments);
+    }
+
+    Date.prototype.inputFormat = "YYYY-MM-DD";
+
+    Date.prototype.mask = "9999-99-99";
+
+    return Date;
+
+  })(Cruddy.Fields.BaseDateTime);
+
+  Cruddy.Fields.Time = (function(_super) {
+    __extends(Time, _super);
+
+    function Time() {
+      return Time.__super__.constructor.apply(this, arguments);
+    }
+
+    Time.prototype.inputFormat = "HH:mm:ss";
+
+    Time.prototype.mask = "99:99:99";
+
+    return Time;
+
+  })(Cruddy.Fields.BaseDateTime);
+
   Cruddy.Fields.DateTime = (function(_super) {
     __extends(DateTime, _super);
 
@@ -2730,28 +2790,13 @@
       return DateTime.__super__.constructor.apply(this, arguments);
     }
 
-    DateTime.prototype.createEditableInput = function(model, inputId) {
-      return new Cruddy.Inputs.DateTime({
-        model: model,
-        key: this.id,
-        format: this.attributes.format,
-        attributes: {
-          id: this.inputId
-        }
-      });
-    };
+    DateTime.prototype.inputFormat = "YYYY-MM-DD HH:mm:ss";
 
-    DateTime.prototype.format = function(value) {
-      if (value === null) {
-        return Cruddy.lang.never;
-      } else {
-        return moment.unix(value).calendar();
-      }
-    };
+    DateTime.prototype.mask = "9999-99-99 99:99:99";
 
     return DateTime;
 
-  })(Cruddy.Fields.Base);
+  })(Cruddy.Fields.BaseDateTime);
 
   Cruddy.Fields.Boolean = (function(_super) {
     __extends(Boolean, _super);

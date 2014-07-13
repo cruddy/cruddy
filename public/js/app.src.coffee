@@ -743,9 +743,9 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     className: "entity-dropdown"
 
     events:
-        "click .btn-remove": "removeItem"
-        "click .btn-edit": "editItem"
-        "click .form-control": "maybeEditItem"
+        "click .ed-item>.input-group-btn>.btn-remove": "removeItem"
+        "click .ed-item>.input-group-btn>.btn-edit": "editItem"
+        "click .ed-item>.form-control": "executeFirstAction"
         "keydown [type=search]": "searchKeydown"
         "show.bs.dropdown": "renderDropdown"
 
@@ -754,14 +754,15 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
             this
 
+        "hide.bs.dropdown": (e) ->
+            e.preventDefault() if @executingFirstAction
+
+            return
+
         "hidden.bs.dropdown": ->
             @opened = no
 
             this
-
-
-    mutiple: false
-    reference: null
 
     initialize: (options) ->
         @multiple = options.multiple if options.multiple?
@@ -785,8 +786,6 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
         # Whether the dropdown is opened
         @opened = false
 
-        @$el.addClass "disabled" if not @enabled
-
         if options.constraint
             @constraint = options.constraint
             @listenTo @model, "change:" + @constraint.field, -> @checkToDisable().applyConstraint yes
@@ -805,11 +804,12 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         @setValue value
 
-    maybeEditItem: (e) -> @editItem e if @multiple or not @enabled
+    executeFirstAction: (e) ->
+        $(".btn:not(:disabled):last", $(e.currentTarget).next()).trigger "click"
+
+        return false
 
     editItem: (e) ->
-        console.log @editing
-
         return if @editing or not @allowEdit
 
         item = @model.get @key
@@ -817,12 +817,12 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         return if not item
 
-        target = $(e.currentTarget)
+        btn = $(e.currentTarget)
 
         # We'll look for the button if it is form control that was clicked
-        target = target.next().children(".btn-edit") if target.is ".form-control"
+        btn = btn.next().children(".btn-edit") if btn.is ".form-control"
 
-        target.prop "disabled", yes
+        btn.prop "disabled", yes
 
         @editing = @reference.load(item.id).done (instance) =>
             @innerForm = new Cruddy.Entity.Form
@@ -835,7 +835,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
             @listenTo instance, "sync", (model, resp) =>
                 # Check whether the model was destroyed
                 if resp.data
-                    target.parent().siblings("input").val resp.data.title
+                    btn.parent().siblings("input").val resp.data.title
                     @innerForm.remove()
                 else
                     @removeItem e
@@ -844,7 +844,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         @editing.always =>
             @editing = no
-            target.prop "disabled", no
+            btn.prop "disabled", no
 
         this
 
@@ -864,7 +864,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
         this
 
     checkToDisable: ->
-        (if _.isEmpty @model.get @constraint.field then @disable() else @enable()) if @constraint and @enabled
+        if not @enabled or @constraint and _.isEmpty(@model.get @constraint.field) then @disable() else @enable()
 
         this
 
@@ -884,12 +884,12 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
     toggleDisableControls: ->
         @dropdownBtn.prop "disabled", @disableDropdown
-        @itemTitle.prop "disabled", @disableDropdown if not @multiple
+        @$el.toggleClass "disabled", @disableDropdown
 
         this
 
     renderDropdown: (e) ->
-        if @disableDropdown or not @enabled
+        if @disableDropdown
             e.preventDefault()
 
             return
@@ -982,7 +982,9 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
     updateItem: ->
         value = @getValue()
+
         @itemTitle.val if value then value.title else ""
+
         @itemDelete.toggle !!value
         @itemEdit.toggle !!value
 
@@ -990,8 +992,8 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
     itemTemplate: (value, key = null) ->
         html = """
-            <div class="input-group input-group ed-item #{ if not @multiple then "ed-dropdown-toggle" else "" }" data-key="#{ key }">
-                <input type="text" class="form-control" #{ if not @multiple then "data-toggle='dropdown' data-target='##{ @cid }' placeholder='#{ @placeholder }'" else "tab-index='-1'"} value="#{ _.escape value }" readonly>
+            <div class="input-group ed-item #{ if not @multiple then "ed-dropdown-toggle" else "" }" data-key="#{ key }">
+                <input type="text" class="form-control" #{ if @multiple then "tab-index='-1'" else "placeholder='#{ @placeholder }'" } value="#{ _.escape value }" readonly>
             """
 
         html += """
@@ -1000,16 +1002,10 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
             </div>
             """ if not _.isEmpty buttons = @buttonsTemplate()
 
-        html += "</div></div>"
+        html += "</div>"
 
     buttonsTemplate: ->
         html = ""
-
-        html += """
-            <button type="button" class="btn btn-default btn-edit" tabindex="-1">
-                <span class="glyphicon glyphicon-pencil"></span>
-            </button>
-            """ if @allowEdit
 
         html += """
             <button type="button" class="btn btn-default btn-remove" tabindex="-1">
@@ -1018,10 +1014,16 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
             """ if @enabled
 
         html += """
+            <button type="button" class="btn btn-default btn-edit" tabindex="-1">
+                <span class="glyphicon glyphicon-pencil"></span>
+            </button>
+            """ if @allowEdit
+
+        html += """
             <button type="button" class="btn btn-default btn-dropdown dropdown-toggle" data-toggle="dropdown" id="#{ @cid }-dropdown" data-target="##{ @cid }" tab-index="1">
                 <span class="glyphicon glyphicon-search"></span>
             </button>
-            """ if @enabled and not @multiple
+            """ if not @multiple
 
         html
 
@@ -1689,6 +1691,8 @@ class Cruddy.Inputs.DateTime extends Cruddy.Inputs.BaseText
     initialize: (options) ->
         @format = options.format
 
+        @$el.mask options.mask if options.mask?
+
         super
 
     applyChanges: (value, external) ->
@@ -1910,17 +1914,34 @@ class Cruddy.Fields.Input extends Cruddy.Fields.Base
                 attributes: attributes
 
     format: (value) -> if @attributes.input_type is "textarea" then "<pre class=\"limit-height\">#{ super }</pre>" else super
+class Cruddy.Fields.BaseDateTime extends Cruddy.Fields.Base
 
-class Cruddy.Fields.DateTime extends Cruddy.Fields.Base
+    inputFormat: null
+    mask: null
 
     createEditableInput: (model, inputId) -> new Cruddy.Inputs.DateTime
         model: model
         key: @id
-        format: @attributes.format
+        format: @inputFormat
+        mask: @mask
         attributes:
             id: @inputId
     
-    format: (value) -> if value is null then Cruddy.lang.never else moment.unix(value).calendar()
+    format: (value) -> if value is null then NOT_AVAILABLE else moment.unix(value).format(@inputFormat)
+
+class Cruddy.Fields.Date extends Cruddy.Fields.BaseDateTime
+    inputFormat: "YYYY-MM-DD"
+    mask: "9999-99-99"
+
+class Cruddy.Fields.Time extends Cruddy.Fields.BaseDateTime
+    inputFormat: "HH:mm:ss"
+    mask: "99:99:99"
+
+class Cruddy.Fields.DateTime extends Cruddy.Fields.BaseDateTime
+    inputFormat: "YYYY-MM-DD HH:mm:ss"
+    mask: "9999-99-99 99:99:99"
+    
+    # format: (value) -> if value is null then NOT_AVAILABLE else moment.unix(value).calendar()
 class Cruddy.Fields.Boolean extends Cruddy.Fields.Base
     
     createEditableInput: (model) -> new Cruddy.Inputs.Boolean

@@ -4,6 +4,8 @@ class Cruddy.Inputs.DateTime extends Cruddy.Inputs.BaseText
     initialize: (options) ->
         @format = options.format
 
+        @$el.mask options.mask if options.mask?
+
         super
 
     applyChanges: (value, external) ->

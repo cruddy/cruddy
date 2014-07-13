@@ -34,13 +34,6 @@ class DateTime extends BaseTextField {
     protected $inputType = 'text';
 
     /**
-     * The format.
-     *
-     * @var string
-     */
-    public $format = "DD.MM.YYYY HH:mm";
-
-    /**
      * {@inheritdoc}
      *
      * @return \Carbon\Carbon
@@ -61,32 +54,9 @@ class DateTime extends BaseTextField {
 
         if ($value === null) return null;
 
-        if (!$value instanceof Carbon) $value = new Carbon($value);
+        if ( ! $value instanceof Carbon) $value = new Carbon($value);
 
         return $value->getTimestamp();
     }
-
-    /**
-     * The date format.
-     *
-     * {@link http://momentjs.com/docs/#/displaying/format/ Format Options}.
-     *
-     * @param string $value
-     *
-     * @return $this
-     */
-    public function format($value)
-    {
-        $this->format = $value;
-
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function toArray()
-    {
-        return ['format' => $this->format] + parent::toArray();
-    }
+    
 }

@@ -17,5 +17,5 @@ class Date extends DateTime {
     /**
      * {@inheritdoc}
      */
-    public $format = 'DD.MM.YYYY';
+    protected $class = 'Date';
 }

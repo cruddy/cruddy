@@ -20,11 +20,11 @@
   Backbone.emulateJSON = true;
 
   $(document).ajaxSend(function(e, xhr, options) {
-    if (options.displayLoading) {
+    if (Cruddy.app && options.displayLoading) {
       return Cruddy.app.startLoading();
     }
   }).ajaxComplete(function(e, xhr, options) {
-    if (options.displayLoading) {
+    if (Cruddy.app && options.displayLoading) {
       return Cruddy.app.doneLoading();
     }
   });
@@ -4484,19 +4484,44 @@
     }
 
     App.prototype.initialize = function() {
-      var entity, _i, _len, _ref1;
       this.container = $("body");
       this.mainContent = $("#content");
       this.loadingRequests = 0;
       this.entities = {};
-      this.entitiesDfd = {};
-      _ref1 = Cruddy.entities;
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        entity = _ref1[_i];
-        this.entities[entity.id] = new Cruddy.Entity.Entity(entity);
-      }
       this.on("change:entity", this.displayEntity, this);
+      this.dfd = $.Deferred();
+      this.loadSchema();
       return this;
+    };
+
+    App.prototype.ready = function(callback) {
+      return this.dfd.done(callback);
+    };
+
+    App.prototype.loadSchema = function() {
+      var req;
+      req = $.ajax({
+        url: entity_url("_schema"),
+        displayLoading: true
+      });
+      req.done((function(_this) {
+        return function(resp) {
+          var entity, _i, _len, _ref1;
+          _ref1 = resp.data;
+          for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+            entity = _ref1[_i];
+            _this.entities[entity.id] = new Cruddy.Entity.Entity(entity);
+          }
+          _this.dfd.resolve(_this);
+        };
+      })(this));
+      req.fail((function(_this) {
+        return function() {
+          _this.dfd.reject();
+          _this.displayError(Cruddy.lang.schema_failed);
+        };
+      })(this));
+      return req;
     };
 
     App.prototype.displayEntity = function(model, entity) {
@@ -4562,8 +4587,6 @@
 
   })(Backbone.Model);
 
-  Cruddy.app = new App;
-
   Router = (function(_super) {
     __extends(Router, _super);
 
@@ -4573,9 +4596,7 @@
 
     Router.prototype.initialize = function() {
       var entities, hashStripper, history, root;
-      entities = (_.map(Cruddy.entities, function(entity) {
-        return entity.id;
-      })).join("|");
+      entities = Cruddy.entities;
       this.addRoute("index", entities);
       this.addRoute("update", entities, "([^/]+)");
       this.addRoute("create", entities, "create");
@@ -4594,9 +4615,15 @@
             history.navigate(fragment);
           }
         }
-        return e;
       });
       return this;
+    };
+
+    Router.prototype.createApp = function() {
+      if (!Cruddy.app) {
+        Cruddy.app = new App;
+      }
+      return Cruddy.app;
     };
 
     Router.prototype.addRoute = function(name, entities, appendage) {
@@ -4613,17 +4640,20 @@
       return this;
     };
 
-    Router.prototype.resolveEntity = function(id) {
-      var entity;
-      entity = Cruddy.app.entity(id);
-      if (entity.viewPermitted()) {
-        entity.set("instance", null);
-        Cruddy.app.set("entity", entity);
-        return entity;
-      } else {
-        Cruddy.app.displayError(Cruddy.lang.entity_forbidden);
-        return null;
-      }
+    Router.prototype.resolveEntity = function(id, callback) {
+      return this.createApp().ready(function(app) {
+        var entity;
+        entity = app.entity(id);
+        if (entity.viewPermitted()) {
+          entity.set("instance", null);
+          Cruddy.app.set("entity", entity);
+          if (callback) {
+            callback.call(this, entity);
+          }
+        } else {
+          Cruddy.app.displayError(Cruddy.lang.entity_forbidden);
+        }
+      });
     };
 
     Router.prototype.index = function(entity) {
@@ -4631,32 +4661,28 @@
     };
 
     Router.prototype.create = function(entity) {
-      console.log('create');
-      entity = this.resolveEntity(entity);
-      if (entity) {
-        entity.actionCreate();
-      }
-      return entity;
+      return this.resolveEntity(entity, function(entity) {
+        return entity.actionCreate();
+      });
     };
 
     Router.prototype.update = function(entity, id) {
-      entity = this.resolveEntity(entity);
-      if (entity) {
-        entity.actionUpdate(id);
-      }
-      return entity;
+      return this.resolveEntity(entity, function(entity) {
+        return entity.actionUpdate(id);
+      });
     };
 
     return Router;
 
   })(Backbone.Router);
 
-  Cruddy.router = new Router;
-
-  Backbone.history.start({
-    root: Cruddy.uri,
-    pushState: true,
-    hashChange: false
+  $(function() {
+    Cruddy.router = new Router;
+    return Backbone.history.start({
+      root: Cruddy.uri,
+      pushState: true,
+      hashChange: false
+    });
   });
 
 }).call(this);

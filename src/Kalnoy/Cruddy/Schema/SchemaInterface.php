@@ -19,11 +19,9 @@ interface SchemaInterface extends ArrayableInterface {
     /**
      * Create an entity object.
      *
-     * @param string $id
-     *
      * @return \Kalnoy\Cruddy\Entity
      */
-    public function entity($id);
+    public function entity();
 
     /**
      * Initialize fields.

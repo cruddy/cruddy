@@ -1,19 +1,42 @@
 # Backend application file
 
 class App extends Backbone.Model
+
     initialize: ->
         @container = $ "body"
         @mainContent = $ "#content"
         @loadingRequests = 0
         @entities = {}
-        @entitiesDfd = {}
-
-        # Create entities
-        @entities[entity.id] = new Cruddy.Entity.Entity entity for entity in Cruddy.entities
 
         @on "change:entity", @displayEntity, this
 
+        @dfd = $.Deferred()
+        @loadSchema()
+
         this
+
+    ready: (callback) -> @dfd.done callback
+
+    loadSchema: ->
+        req = $.ajax
+            url: entity_url "_schema"
+            displayLoading: yes
+
+        req.done (resp) =>
+            @entities[entity.id] = new Cruddy.Entity.Entity entity for entity in resp.data
+
+            @dfd.resolve this
+
+            return
+
+        req.fail =>
+            @dfd.reject()
+
+            @displayError Cruddy.lang.schema_failed
+
+            return
+
+        return req
 
     displayEntity: (model, entity) ->
         @dispose()
@@ -61,12 +84,10 @@ class App extends Backbone.Model
 
         this
 
-Cruddy.app = new App
-
 class Router extends Backbone.Router
 
     initialize: ->
-        entities = (_.map Cruddy.entities, (entity) -> entity.id).join "|"
+        entities = Cruddy.entities
 
         @addRoute "index", entities
         @addRoute "update", entities, "([^/]+)"
@@ -91,9 +112,14 @@ class Router extends Backbone.Router
                     e.preventDefault()
                     history.navigate fragment
 
-            e
+            return
 
         this
+
+    createApp: ->
+        Cruddy.app = new App if not Cruddy.app
+
+        return Cruddy.app
 
     addRoute: (name, entities, appendage = null) ->
         route = "^(#{ entities })"
@@ -104,39 +130,29 @@ class Router extends Backbone.Router
 
         this
 
-    resolveEntity: (id) ->
-        entity = Cruddy.app.entity(id)
+    resolveEntity: (id, callback) -> @createApp().ready (app) ->
+        entity = app.entity(id)
 
         if entity.viewPermitted()
             entity.set "instance", null
             Cruddy.app.set "entity", entity
 
-            entity
+            callback.call this, entity if callback
         else
             Cruddy.app.displayError Cruddy.lang.entity_forbidden
 
-            null
+        return
 
     index: (entity) -> @resolveEntity entity
 
-    create: (entity) ->
-        console.log 'create'
+    create: (entity) -> @resolveEntity entity, (entity) -> entity.actionCreate()
 
-        entity = @resolveEntity entity
-        entity.actionCreate() if entity
+    update: (entity, id) -> @resolveEntity entity, (entity) -> entity.actionUpdate id
 
-        entity
-
-    update: (entity, id) ->
-        entity = @resolveEntity entity
-
-        entity.actionUpdate id if entity
-
-        entity
-
-Cruddy.router = new Router
-
-Backbone.history.start
-    root: Cruddy.uri
-    pushState: true
-    hashChange: false
+$ ->
+    Cruddy.router = new Router
+    
+    Backbone.history.start
+        root: Cruddy.uri
+        pushState: true
+        hashChange: false

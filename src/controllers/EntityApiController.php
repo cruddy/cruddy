@@ -51,6 +51,14 @@ class EntityApiController extends ApiController {
     }
 
     /**
+     * Get the schema.
+     */
+    public function schema()
+    {
+        return $this->success($this->cruddy->schema());
+    }
+
+    /**
      * Get a list of models of specified entity.
      *
      * @param string $entity

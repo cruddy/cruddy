@@ -81,9 +81,9 @@ abstract class BaseSchema implements SchemaInterface {
     /**
      * {@inheritdoc}
      */
-    public function entity($id)
+    public function entity()
     {
-        return new Entity($this, $id);
+        return new Entity($this);
     }
 
     /**

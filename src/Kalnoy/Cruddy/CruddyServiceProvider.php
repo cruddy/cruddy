@@ -37,10 +37,26 @@ class CruddyServiceProvider extends ServiceProvider {
 	 */
 	public function register()
     {
+        $this->registerAssets();
+        $this->registerLang();
         $this->registerMenu();
         $this->registerPermissions();
+        $this->registerFields();
+        $this->registerColumns();
+        $this->registerRepository();
         $this->registerCruddy();
         $this->registerCommands();
+    }
+
+    /**
+     * Register cruddy lang object.
+     */
+    protected function registerLang()
+    {
+        $this->app->bindShared('cruddy.lang', function ($app)
+        {
+            return new Lang($app['translator']);
+        });
     }
 
     /**
@@ -52,7 +68,7 @@ class CruddyServiceProvider extends ServiceProvider {
     {
         $this->app->bindShared('cruddy.menu', function ($app)
         {
-            return new MenuBuilder($app['cruddy'], $app['html'], $app['url']);
+            return new MenuBuilder($app['cruddy'], $app['cruddy.lang'], $app['html'], $app['url']);
         });
     }
 
@@ -63,9 +79,39 @@ class CruddyServiceProvider extends ServiceProvider {
      */
     public function registerPermissions()
     {
-        $this->app['cruddy.permissions'] = $this->app->share(function ($app)
+        $this->app->bindShared('cruddy.permissions', function ($app)
         {
             return new PermissionsManager($app);
+        });
+    }
+
+    /**
+     * Register fields factory.
+     */
+    protected function registerFields()
+    {
+        $this->app->bindShared('cruddy.fields', function ($app)
+        {
+            return new Schema\Fields\Factory;
+        });
+    }
+
+    /**
+     * Register columns factory.
+     */
+    protected function registerColumns()
+    {
+        $this->app->bindShared('cruddy.columns', function ($app)
+        {
+            return new Schema\Columns\Factory;
+        });
+    }
+
+    public function registerRepository()
+    {
+        $this->app->bindShared('cruddy.repository', function ($app)
+        {
+            return new Repository($app, $app['config']->get('cruddy::entities', []));
         });
     }
 
@@ -76,27 +122,24 @@ class CruddyServiceProvider extends ServiceProvider {
      */
     protected function registerCruddy()
     {
-        $this->app['cruddy'] = $this->app->share(function ($app)
+        $this->app->bindShared('cruddy', function ($app)
         {
             $config = $app['config'];
-            $validator = $app['validator'];
-            $translator = $app['translator'];
-            $files = $app['files'];
+
+            $fields = $app['cruddy.fields'];
+            $columns = $app['cruddy.columns'];
             $permissions = $app['cruddy.permissions'];
+            $lang = $app['cruddy.lang'];
+            $repository = $app['cruddy.repository'];
 
-            $fields = new Schema\Fields\Factory;
-            $columns = new Schema\Columns\Factory;
-
-            $repository = new Schema\Repository($app, $config->get('cruddy::entities', []));
-
-            $env = new Environment($config, $app['request'], $translator, $repository, $fields, $columns, $permissions, $app['events']);
+            $env = new Environment($config, $repository, $fields, $columns, $permissions, $lang, $app['events']);
 
             Entity::setEnvironment($env);
 
-            BaseRepository::setFiles($files);
+            BaseRepository::setFiles($app['files']);
             BaseRepository::setPaginationFactory($app['paginator']);
 
-            return $this->registerAssets($env);
+            return $env;
         });
     }
 
@@ -107,11 +150,20 @@ class CruddyServiceProvider extends ServiceProvider {
      *
      * @return \Kalnoy\Cruddy\Environment
      */
-    protected function registerAssets(Environment $env)
+    protected function registerAssets()
     {
-        $baseDir = $this->app['config']->get('cruddy::assets', 'packages/kalnoy/cruddy');
+        $this->app->bindShared('cruddy.assets', function ($app)
+        {
+            $baseDir = $app['config']->get('cruddy::assets', 'packages/kalnoy/cruddy');
 
-        return $env->css($this->getCssFiles($baseDir))->js($this->getJsFiles($baseDir));
+            $assets = new Assets;
+            
+            $assets->css($this->getCssFiles($baseDir));
+            $assets->js($this->getJsFiles($baseDir));
+
+            return $assets;
+        });
+
     }
 
     /**
@@ -161,7 +213,7 @@ class CruddyServiceProvider extends ServiceProvider {
 
         return $this->assets($baseDir.'/js', 
         [
-            'ace/ace.js', 
+            'ace/ace.js',
             "vendor{$suffix}.js", 
             "app{$suffix}.js",
         ]);

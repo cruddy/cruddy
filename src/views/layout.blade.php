@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>{{ $brand }}</title>
-    {{ $cruddy->styles() }}
+    {{ $assets->styles() }}
 </head>
 <body>
     <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -26,8 +26,9 @@
 
     <script>
     Cruddy = {{ $cruddyJSON }};
+    Cruddy.root = '{{ Request::root() }}';
     </script>
 
-    {{ $cruddy->scripts() }}
+    {{ $assets->scripts() }}
 </body>
 </html>

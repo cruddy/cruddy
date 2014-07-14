@@ -6,6 +6,7 @@ use Illuminate\Html\HtmlBuilder;
 use Illuminate\Routing\UrlGenerator;
 use Kalnoy\Cruddy\Environment;
 use Kalnoy\Cruddy\Service\Permissions\PermissionsInterface;
+use Kalnoy\Cruddy\Lang;
 
 /**
  * The menu builder class for rendering menus.
@@ -39,6 +40,11 @@ class MenuBuilder {
     protected $permissions;
 
     /**
+     * @var \Kalnoy\Cruddy\Lang
+     */
+    protected $lang;
+
+    /**
      * The list of reserved attributes of the item.
      *
      * @var array
@@ -50,10 +56,11 @@ class MenuBuilder {
      *
      * @param \Kalnoy\Cruddy\Environment $env
      */
-    public function __construct(Environment $env, HtmlBuilder $html, UrlGenerator $url)
+    public function __construct(Environment $env, Lang $lang, HtmlBuilder $html, UrlGenerator $url)
     {
         $this->env = $env;
         $this->permissions = $env->getPermissions();
+        $this->lang = $lang;
         $this->html = $html;
         $this->url = $url;
     }
@@ -118,7 +125,7 @@ class MenuBuilder {
 
         if (empty($inner)) return '';
 
-        $label = $this->html->entities(\Kalnoy\Cruddy\try_trans($label));
+        $label = $this->html->entities($this->lang->tryTranslate($label));
 
         return $this->wrap('<a href="#" class="dropdown-toggle" data-toggle="dropdown">'.$label.' <span class="caret"></span></a>'.$inner);
     }
@@ -239,7 +246,7 @@ class MenuBuilder {
 
         if (isset($options['label']))
         {
-            $label = \Kalnoy\Cruddy\try_trans($options['label']);
+            $label = $this->lang->tryTranslate($options['label']);
             $label = $this->html->entities($label);
         }
         else if (isset($options['entity']))

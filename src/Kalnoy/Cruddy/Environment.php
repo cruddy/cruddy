@@ -6,11 +6,9 @@ use Illuminate\Support\Contracts\JsonableInterface;
 use Illuminate\Http\Request;
 use Illuminate\Config\Repository as Config;
 use Illuminate\Events\Dispatcher;
-use Symfony\Component\Translation\TranslatorInterface;
 use Kalnoy\Cruddy\Schema\Fields\Factory as FieldFactory;
 use Kalnoy\Cruddy\Schema\Columns\Factory as ColumnFactory;
 use Kalnoy\Cruddy\Service\Permissions\PermissionsManager;
-use Kalnoy\Cruddy\Schema\Repository as SchemaRepository;
 
 /**
  * Cruddy environment.
@@ -25,25 +23,11 @@ class Environment implements JsonableInterface {
     protected $config;
 
     /**
-     * The request.
+     * The entities repository.
      *
-     * @var \Illuminate\Http\Request
+     * @var \Kalnoy\Cruddy\Repository
      */
-    protected $request;
-
-    /**
-     * The translator.
-     *
-     * @var \Symfony\Component\Translation\TranslatorInterface;
-     */
-    protected $translator;
-
-    /**
-     * The schemas repository.
-     *
-     * @var \Kalnoy\Cruddy\Schema\Repository
-     */
-    protected $schemas;
+    protected $entities;
 
     /**
      * The field factory.
@@ -65,52 +49,27 @@ class Environment implements JsonableInterface {
     protected $permissions;
 
     /**
+     * @var \Kalnoy\Cruddy\Lang
+     */
+    protected $lang;
+
+    /**
      * Event dispatcher.
      *
      * @var \Illuminate\Events\Dispatcher
      */
     protected $dispatcher;
 
-    /**
-     * The list of css files.
-     *
-     * @var array
-     */
-    protected $css = [];
-
-    /**
-     * The list of js files.
-     *
-     * @var array
-     */
-    protected $js = [];
-
-    /**
-     * Some UI text lines for JavaScript.
-     *
-     * @var array
-     */
-    protected $lang = [];
-
-    /**
-     * The list of resolved entities.
-     *
-     * @var \Kalnoy\Cruddy\Entity[]
-     */
-    protected $resolved = [];
-
     public function __construct(
-        Config $config, Request $request, TranslatorInterface $translator,
-        SchemaRepository $schemas, FieldFactory $fields, ColumnFactory $columns,
-        PermissionsManager $permissions, Dispatcher $dispatcher)
+        Config $config, Repository $entities, FieldFactory $fields, ColumnFactory $columns,
+        PermissionsManager $permissions, Lang $lang, Dispatcher $dispatcher)
     {
         $this->config = $config;
-        $this->request = $request;
-        $this->translator = $translator;
-        $this->schemas = $schemas;
+        $this->entities = $entities;
         $this->fields = $fields;
         $this->columns = $columns;
         $this->permissions = $permissions;
+        $this->lang = $lang;
         $this->dispatcher = $dispatcher;
     }
 
@@ -123,13 +82,7 @@ class Environment implements JsonableInterface {
      */
     public function entity($id)
     {
-        if (isset($this->resolved[$id])) return $this->resolved[$id];
-
-        $schema = $this->schemas->resolve($id);
-
-        $this->resolved[$id] = $entity = $schema->entity($id);
-
-        return $entity;
+        return $this->entities->resolve($id);
     }
 
     /**
@@ -149,30 +102,13 @@ class Environment implements JsonableInterface {
      * Translate a key.
      *
      * @param string $key
-     * @param string $default
+     * @param mixed $default
      *
      * @return string
      */
     public function translate($key, $default = null)
     {
-        $line = $this->translator->trans($key);
-
-        return $line === $key ? $default : $line;
-    }
-
-    /**
-     * Register new field type.
-     *
-     * @param string          $macro
-     * @param string|Callable $callback
-     *
-     * @return $this
-     */
-    public function registerField($macro, $callback)
-    {
-        $this->fields->register($macro, $callback);
-
-        return $this;
+        return $this->lang->translate($key, $default);
     }
 
     /**
@@ -189,125 +125,17 @@ class Environment implements JsonableInterface {
      */
     public function field($id)
     {
-        list($entity, $field) = explode('.', $id, 2);
+        list($entityId, $fieldId) = explode('.', $id, 2);
 
-        $entity = $this->entity($entity);
-        $field = $entity->getFields()->get($field);
+        $entity = $this->entities->resolve($entityId);
+        $field = $entity->getFields()->get($fieldId);
 
         if ( ! $field)
         {
-            throw new RuntimeException("The field with an id of [{$id}] is not found.");
+            throw new RuntimeException("The field [{$fieldId}] of [{$entityId}] entity is not found.");
         }
 
         return $field;
-    }
-
-    /**
-     * Register new column type.
-     *
-     * @param string          $macro
-     * @param string|Callable $callback
-     *
-     * @return $this
-     */
-    public function registerColumn($macro, $callback)
-    {
-        $this->columns->register($macro, $callback);
-
-        return $this;
-    }
-
-    /**
-     * Extend permissions manager.
-     *
-     * @param string $driver
-     * @param \Closure $callback
-     *
-     * @return $this
-     */
-    public function extendPermissions($driver, $callback)
-    {
-        $this->permissions->extend($driver, $callback);
-
-        return $this;
-    }
-
-    /**
-     * Add extra css files.
-     *
-     * @param string|array $uri
-     *
-     * @return $this
-     */
-    public function css($uri)
-    {
-        $uri = is_array($uri) ? $uri : func_get_args();
-
-        $this->css = array_merge($this->css, $uri);
-
-        return $this;
-    }
-
-    /**
-     * Add extra js files.
-     *
-     * @param string|array $uri
-     *
-     * @return $this
-     */
-    public function js($uri)
-    {
-        $uri = is_array($uri) ? $uri : func_get_args();
-
-        $this->js = array_merge($this->js, $uri);
-
-        return $this;
-    }
-
-    /**
-     * Add some lines for JavaScript ui.
-     *
-     * @param array $items
-     *
-     * @return $this
-     */
-    public function lang(array $items)
-    {
-        $this->lang += array_map(function ($string)
-        {
-            return \Kalnoy\Cruddy\try_trans($string);
-
-        }, $items);
-
-        return $this;
-    }
-
-    /**
-     * Render scripts.
-     *
-     * @return string
-     */
-    public function scripts()
-    {
-        return implode("\r\n", array_map(function ($uri)
-        {
-            return "<script src='{$uri}'></script>";
-
-        }, $this->js));
-    }
-
-    /**
-     * Render styles.
-     *
-     * @return string
-     */
-    public function styles()
-    {
-        return implode("\r\n", array_map(function ($uri)
-        {
-            return "<link rel='stylesheet' href='{$uri}'>";
-
-        }, $this->css));
     }
 
     /**
@@ -354,13 +182,13 @@ class Environment implements JsonableInterface {
     }
 
     /**
-     * Get schema's repository.
+     * Get entity repository.
      *
-     * @return \Kalnoy\Cruddy\Schema\Repository
+     * @return \Kalnoy\Cruddy\Repository
      */
-    public function getSchemaRepository()
+    public function getEntities()
     {
-        return $this->schemas;
+        return $this->entities;
     }
 
     /**
@@ -368,35 +196,13 @@ class Environment implements JsonableInterface {
      *
      * @return array
      */
-    protected function entitiesToArray()
+    public function schema()
     {
-        $classes = $this->schemas->getClasses();
-        $data = [];
-
-        foreach ($classes as $key => $value)
+        return array_map(function ($entity)
         {
-            $data[] = $this->entity($key)->toArray();
-        }
+            return $entity->toArray();
 
-        return $data;
-    }
-
-    /**
-     * Get built-in UI strings.
-     *
-     * @return array
-     */
-    protected function getDefaultLang()
-    {
-        $keys = array_keys(include __DIR__.'/../../lang/en/js.php');
-
-        $strings = array_map(function ($key)
-        {
-            return $this->translator->trans("cruddy::js.{$key}");
-
-        }, $keys);
-
-        return array_combine($keys, $strings);
+        }, $this->entities->resolveAll());
     }
 
     /**
@@ -408,10 +214,9 @@ class Environment implements JsonableInterface {
         [
             'locale' => $this->config->get('app.locale'),
             'uri' => $this->config('uri'),
-            'root' => $this->request->root(),
             'ace_theme' => $this->config('ace_theme', 'chrome'),
-            'entities' => $this->entitiesToArray(),
-            'lang' => $this->getDefaultLang() + $this->lang,
+            'entities' => $this->entities->available(),
+            'lang' => $this->lang->ui(),
 
         ], $options);
     }

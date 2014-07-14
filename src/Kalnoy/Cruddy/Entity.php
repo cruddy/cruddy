@@ -89,12 +89,10 @@ class Entity implements JsonableInterface, ArrayableInterface {
      * Init entity.
      *
      * @param \Kalnoy\Cruddy\Schema\SchemaInterface $schema
-     * @param string                                $id
      */
-    public function __construct(SchemaInterface $schema, $id)
+    public function __construct(SchemaInterface $schema)
     {
         $this->schema = $schema;
-        $this->id = $id;
     }
 
     /**
@@ -546,6 +544,8 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function translate($key, $default = null)
     {
+        if ( ! static::$env) return $default;
+
         if (false !== $pos = strpos($key, '::'))
         {
             if ($pos === 0) $key = substr($key, 2);
@@ -728,6 +728,16 @@ class Entity implements JsonableInterface, ArrayableInterface {
     }
 
     /**
+     * Set an id.
+     *
+     * @param string $id
+     */
+    public function setId($id)
+    {
+        $this->id = $id;
+    }
+
+    /**
      * Get list of related entities.
      *
      * @return array
@@ -810,6 +820,8 @@ class Entity implements JsonableInterface, ArrayableInterface {
 
         return $data;
     }
+
+
 
     /**
      * {@inheritdoc}

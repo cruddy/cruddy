@@ -11,6 +11,7 @@ View::composer('cruddy::layout', function ($view)
     $view->brand_url = $cruddy->config('brand_url') ?: url('/');    
 
     $view->menu = app('cruddy.menu');
+    $view->assets = app('cruddy.assets');
     $view->mainMenu = $cruddy->config('menu');
     $view->serviceMenu = $cruddy->config('service_menu');
 });

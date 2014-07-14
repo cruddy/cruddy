@@ -4,6 +4,12 @@ Route::group(['prefix' => Config::get('cruddy::uri')], function ()
 {
     Route::group(['prefix' => 'api'], function ()
     {
+        Route::get('_schema',
+        [
+            'as' => 'cruddy.api.schema',
+            'uses' => 'Kalnoy\Cruddy\EntityApiController@schema',
+        ]);
+
         Route::get('{entity}',
         [
             'as' => 'cruddy.api.entity.index',
@@ -38,7 +44,7 @@ Route::group(['prefix' => Config::get('cruddy::uri')], function ()
     Route::get('/', 'Kalnoy\Cruddy\CruddyController@index');
     Route::get('thumb', 'Kalnoy\Cruddy\CruddyController@thumb');
 
-    $entityPattern = implode("|", array_keys(app('cruddy')->getSchemaRepository()->getClasses()));
+    $entityPattern = app('cruddy.repository')->available();
     $entityPattern = "({$entityPattern})";
 
     Route::get('{entity}',

@@ -7,13 +7,16 @@ class App extends Backbone.Model
         @mainContent = $ "#content"
         @loadingRequests = 0
         @entities = {}
+        @dfd = $.Deferred()
 
         @on "change:entity", @displayEntity, this
 
-        @dfd = $.Deferred()
+        this
+
+    init: ->
         @loadSchema()
 
-        this
+        return this
 
     ready: (callback) -> @dfd.done callback
 
@@ -117,7 +120,9 @@ class Router extends Backbone.Router
         this
 
     createApp: ->
-        Cruddy.app = new App if not Cruddy.app
+        if not Cruddy.app
+            Cruddy.app = new App
+            Cruddy.app.init()
 
         return Cruddy.app
 

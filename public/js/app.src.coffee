@@ -14,8 +14,16 @@ Backbone.emulateJSON = true
 #    location.href = "/login" if xhr.status is 403 and not options.dontRedirect
 
 $(document)
-    .ajaxSend((e, xhr, options) -> Cruddy.app.startLoading() if Cruddy.app and options.displayLoading)
-    .ajaxComplete((e, xhr, options) -> Cruddy.app.doneLoading() if Cruddy.app and options.displayLoading)
+    .ajaxSend (e, xhr, options) ->
+        options.displayLoading = no if not Cruddy.app
+        Cruddy.app.startLoading() if options.displayLoading
+
+        return
+
+    .ajaxComplete (e, xhr, options) ->
+        Cruddy.app.doneLoading() if options.displayLoading
+
+        return
 
 $.extend $.fancybox.defaults,
     openEffect: "elastic"
@@ -2070,16 +2078,25 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
 
     initialize: (options) ->
         @views = {}
-        @collection = @model.get @field.id
 
-        @listenTo @collection, "add", @add
-        @listenTo @collection, "remove", @removeItem
+        @updateCollection()
 
         super
+
+    updateCollection: ->
+        @stopListening @collection if @collection
+
+        @collection = collection = @model.get @field.id
+
+        @listenTo collection, "add", @add
+        @listenTo collection, "remove", @removeItem
+
+        return this
 
     handleSync: ->
         super
 
+        @updateCollection()
         @render()
 
     handleInvalid: (model, errors) ->
@@ -3006,13 +3023,16 @@ class App extends Backbone.Model
         @mainContent = $ "#content"
         @loadingRequests = 0
         @entities = {}
+        @dfd = $.Deferred()
 
         @on "change:entity", @displayEntity, this
 
-        @dfd = $.Deferred()
+        this
+
+    init: ->
         @loadSchema()
 
-        this
+        return this
 
     ready: (callback) -> @dfd.done callback
 
@@ -3116,7 +3136,9 @@ class Router extends Backbone.Router
         this
 
     createApp: ->
-        Cruddy.app = new App if not Cruddy.app
+        if not Cruddy.app
+            Cruddy.app = new App
+            Cruddy.app.init()
 
         return Cruddy.app
 

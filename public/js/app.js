@@ -20,12 +20,15 @@
   Backbone.emulateJSON = true;
 
   $(document).ajaxSend(function(e, xhr, options) {
-    if (Cruddy.app && options.displayLoading) {
-      return Cruddy.app.startLoading();
+    if (!Cruddy.app) {
+      options.displayLoading = false;
+    }
+    if (options.displayLoading) {
+      Cruddy.app.startLoading();
     }
   }).ajaxComplete(function(e, xhr, options) {
-    if (Cruddy.app && options.displayLoading) {
-      return Cruddy.app.doneLoading();
+    if (options.displayLoading) {
+      Cruddy.app.doneLoading();
     }
   });
 
@@ -3104,14 +3107,24 @@
 
     EmbeddedView.prototype.initialize = function(options) {
       this.views = {};
-      this.collection = this.model.get(this.field.id);
-      this.listenTo(this.collection, "add", this.add);
-      this.listenTo(this.collection, "remove", this.removeItem);
+      this.updateCollection();
       return EmbeddedView.__super__.initialize.apply(this, arguments);
+    };
+
+    EmbeddedView.prototype.updateCollection = function() {
+      var collection;
+      if (this.collection) {
+        this.stopListening(this.collection);
+      }
+      this.collection = collection = this.model.get(this.field.id);
+      this.listenTo(collection, "add", this.add);
+      this.listenTo(collection, "remove", this.removeItem);
+      return this;
     };
 
     EmbeddedView.prototype.handleSync = function() {
       EmbeddedView.__super__.handleSync.apply(this, arguments);
+      this.updateCollection();
       return this.render();
     };
 
@@ -4488,8 +4501,12 @@
       this.mainContent = $("#content");
       this.loadingRequests = 0;
       this.entities = {};
-      this.on("change:entity", this.displayEntity, this);
       this.dfd = $.Deferred();
+      this.on("change:entity", this.displayEntity, this);
+      return this;
+    };
+
+    App.prototype.init = function() {
       this.loadSchema();
       return this;
     };
@@ -4622,6 +4639,7 @@
     Router.prototype.createApp = function() {
       if (!Cruddy.app) {
         Cruddy.app = new App;
+        Cruddy.app.init();
       }
       return Cruddy.app;
     };

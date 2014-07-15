@@ -14,8 +14,16 @@ Backbone.emulateJSON = true
 #    location.href = "/login" if xhr.status is 403 and not options.dontRedirect
 
 $(document)
-    .ajaxSend((e, xhr, options) -> Cruddy.app.startLoading() if Cruddy.app and options.displayLoading)
-    .ajaxComplete((e, xhr, options) -> Cruddy.app.doneLoading() if Cruddy.app and options.displayLoading)
+    .ajaxSend (e, xhr, options) ->
+        options.displayLoading = no if not Cruddy.app
+        Cruddy.app.startLoading() if options.displayLoading
+
+        return
+
+    .ajaxComplete (e, xhr, options) ->
+        Cruddy.app.doneLoading() if options.displayLoading
+
+        return
 
 $.extend $.fancybox.defaults,
     openEffect: "elastic"

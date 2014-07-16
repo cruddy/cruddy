@@ -17,6 +17,13 @@ class CruddyServiceProvider extends ServiceProvider {
 	 */
 	protected $defer = false;
 
+    /**
+     * Assets build number.
+     *
+     * @var int
+     */
+    protected $build = 1;
+
 	/**
 	 * Bootstrap the application events.
 	 *
@@ -180,7 +187,7 @@ class CruddyServiceProvider extends ServiceProvider {
 
         return array_map(function ($item) use ($url, $baseDir)
         {
-            return $url->asset("{$baseDir}/{$item}");
+            return $url->asset("{$baseDir}/{$item}").'?v='.$this->build;
 
         }, $items);
     }

@@ -18,8 +18,6 @@ class Cruddy.Inputs.ImageList extends Cruddy.Inputs.FileList
         reader.readAsDataURL reader.item for reader in @readers
         @readers = []
 
-        @$(".fancybox").fancybox();
-
         this
 
     wrapItems: (html) -> """<ul class="image-group">#{ html }</ul>"""
@@ -42,7 +40,7 @@ class Cruddy.Inputs.ImageList extends Cruddy.Inputs.FileList
             image = thumb item, @width, @height
 
         """
-        <a href="#{ if item instanceof File then item.data or "#" else Cruddy.root + '/' + item }" class="fancybox">
+        <a href="#{ if item instanceof File then item.data or "#" else Cruddy.root + '/' + item }" data-trigger="fancybox">
             <img src="#{ image }" id="#{ id }">
         </a>
         """

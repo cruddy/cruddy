@@ -25,6 +25,12 @@ $(document)
 
         return
 
+$(document.body)
+    .on "click", "[data-trigger=fancybox]", (e) ->
+        e.preventDefault() if $.fancybox.open(e.currentTarget) isnt false
+
+        return
+
 $.extend $.fancybox.defaults,
     openEffect: "elastic"
 humanize = (id) => id.replace(/_-/, " ")
@@ -1340,8 +1346,6 @@ class Cruddy.Inputs.ImageList extends Cruddy.Inputs.FileList
         reader.readAsDataURL reader.item for reader in @readers
         @readers = []
 
-        @$(".fancybox").fancybox();
-
         this
 
     wrapItems: (html) -> """<ul class="image-group">#{ html }</ul>"""
@@ -1364,7 +1368,7 @@ class Cruddy.Inputs.ImageList extends Cruddy.Inputs.FileList
             image = thumb item, @width, @height
 
         """
-        <a href="#{ if item instanceof File then item.data or "#" else Cruddy.root + '/' + item }" class="fancybox">
+        <a href="#{ if item instanceof File then item.data or "#" else Cruddy.root + '/' + item }" data-trigger="fancybox">
             <img src="#{ image }" id="#{ id }">
         </a>
         """
@@ -1871,7 +1875,13 @@ class Cruddy.Fields.Base extends Attribute
     createInput: (model, inputId, forceDisable = no) ->
         input = @createEditableInput model, inputId if not forceDisable and @isEditable(model)
 
-        input or new Cruddy.Inputs.Static { model: model, key: @id, formatter: this }
+        input or @createStaticInput(model)
+
+    # Create an input that will display a static value without possibility to edit
+    createStaticInput: (model) -> new Cruddy.Inputs.Static
+        model: model
+        key: @id
+        formatter: this
 
     # Create an input that is used when field is editable
     createEditableInput: (model, inputId) -> null
@@ -2019,6 +2029,40 @@ class Cruddy.Fields.Image extends Cruddy.Fields.File
         height: @attributes.height
         multiple: @attributes.multiple
         accepts: @attributes.accepts
+
+    createStaticInput: (model) -> new Cruddy.Inputs.Static
+        model: model
+        key: @id
+        formatter: new Cruddy.Fields.Image.Formatter
+            width: @attributes.width
+            height: @attributes.height
+
+class Cruddy.Fields.Image.Formatter
+
+    constructor: (options) ->
+        @options = options
+
+        return
+
+    imageUrl: (image) -> Cruddy.root + "/" + image
+
+    imageThumb: (image) -> thumb image, @options.width, @options.height
+
+    format: (value) ->
+        html = """<ul class="image-group">"""
+
+        value = [ value ] if not _.isArray value
+
+        for image in value
+            html += """
+                <li class="image-group-item">
+                    <a href="#{ @imageUrl image }" data-trigger="fancybox">
+                        <img src="#{ @imageThumb image }">
+                    </a>
+                </li>
+            """
+
+        return html + "</ul>"
 class Cruddy.Fields.Slug extends Cruddy.Fields.Base
 
     createEditableInput: (model) -> new Cruddy.Inputs.Slug

@@ -153,7 +153,13 @@ class Cruddy.Fields.Base extends Attribute
     createInput: (model, inputId, forceDisable = no) ->
         input = @createEditableInput model, inputId if not forceDisable and @isEditable(model)
 
-        input or new Cruddy.Inputs.Static { model: model, key: @id, formatter: this }
+        input or @createStaticInput(model)
+
+    # Create an input that will display a static value without possibility to edit
+    createStaticInput: (model) -> new Cruddy.Inputs.Static
+        model: model
+        key: @id
+        formatter: this
 
     # Create an input that is used when field is editable
     createEditableInput: (model, inputId) -> null

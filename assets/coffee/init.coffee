@@ -25,5 +25,11 @@ $(document)
 
         return
 
+$(document.body)
+    .on "click", "[data-trigger=fancybox]", (e) ->
+        e.preventDefault() if $.fancybox.open(e.currentTarget) isnt false
+
+        return
+
 $.extend $.fancybox.defaults,
     openEffect: "elastic"

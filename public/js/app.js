@@ -32,6 +32,12 @@
     }
   });
 
+  $(document.body).on("click", "[data-trigger=fancybox]", function(e) {
+    if ($.fancybox.open(e.currentTarget) !== false) {
+      e.preventDefault();
+    }
+  });
+
   $.extend($.fancybox.defaults, {
     openEffect: "elastic"
   });
@@ -1924,7 +1930,6 @@
         reader.readAsDataURL(reader.item);
       }
       this.readers = [];
-      this.$(".fancybox").fancybox();
       return this;
     };
 
@@ -1953,7 +1958,7 @@
       } else {
         image = thumb(item, this.width, this.height);
       }
-      return "<a href=\"" + (item instanceof File ? item.data || "#" : Cruddy.root + '/' + item) + "\" class=\"fancybox\">\n    <img src=\"" + image + "\" id=\"" + id + "\">\n</a>";
+      return "<a href=\"" + (item instanceof File ? item.data || "#" : Cruddy.root + '/' + item) + "\" data-trigger=\"fancybox\">\n    <img src=\"" + image + "\" id=\"" + id + "\">\n</a>";
     };
 
     ImageList.prototype.createPreviewLoader = function(item, id) {
@@ -2634,7 +2639,11 @@
       if (!forceDisable && this.isEditable(model)) {
         input = this.createEditableInput(model, inputId);
       }
-      return input || new Cruddy.Inputs.Static({
+      return input || this.createStaticInput(model);
+    };
+
+    Base.prototype.createStaticInput = function(model) {
+      return new Cruddy.Inputs.Static({
         model: model,
         key: this.id,
         formatter: this
@@ -2964,9 +2973,51 @@
       });
     };
 
+    Image.prototype.createStaticInput = function(model) {
+      return new Cruddy.Inputs.Static({
+        model: model,
+        key: this.id,
+        formatter: new Cruddy.Fields.Image.Formatter({
+          width: this.attributes.width,
+          height: this.attributes.height
+        })
+      });
+    };
+
     return Image;
 
   })(Cruddy.Fields.File);
+
+  Cruddy.Fields.Image.Formatter = (function() {
+    function Formatter(options) {
+      this.options = options;
+      return;
+    }
+
+    Formatter.prototype.imageUrl = function(image) {
+      return Cruddy.root + "/" + image;
+    };
+
+    Formatter.prototype.imageThumb = function(image) {
+      return thumb(image, this.options.width, this.options.height);
+    };
+
+    Formatter.prototype.format = function(value) {
+      var html, image, _i, _len;
+      html = "<ul class=\"image-group\">";
+      if (!_.isArray(value)) {
+        value = [value];
+      }
+      for (_i = 0, _len = value.length; _i < _len; _i++) {
+        image = value[_i];
+        html += "<li class=\"image-group-item\">\n    <a href=\"" + (this.imageUrl(image)) + "\" data-trigger=\"fancybox\">\n        <img src=\"" + (this.imageThumb(image)) + "\">\n    </a>\n</li>";
+      }
+      return html + "</ul>";
+    };
+
+    return Formatter;
+
+  })();
 
   Cruddy.Fields.Slug = (function(_super) {
     __extends(Slug, _super);

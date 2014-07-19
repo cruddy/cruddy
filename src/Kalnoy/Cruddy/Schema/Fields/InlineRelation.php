@@ -34,6 +34,29 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     protected $multiple = false;
 
     /**
+     * Extra attributes that will be set on model.
+     *
+     * @var array|Closure
+     */
+    public $extra = [];
+
+    /**
+     * Set an extra attributes that will be set on model.
+     * 
+     * Note that this attributes will not overwrite request data.
+     *
+     * @param array $value
+     *
+     * @return $this
+     */
+    public function extra($value)
+    {
+        $this->extra = $value;
+
+        return $this;
+    }
+
+    /**
      * {@inheritdoc}
      *
      * Returns just the number of items so we could validate it.
@@ -125,7 +148,7 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
 
             if ( ! $permit[$action]) continue;
 
-            $item['extra'] = $this->getExtra($model);
+            $item['extra'] = $this->mergeExtra($action, $this->getExtra($model));
 
             $ref->save($item);
 
@@ -135,6 +158,30 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
         if ( ! empty($ids)) $delete = array_diff($delete, $ids);
 
         if ( ! empty($delete) && $permit['delete']) $ref->delete($delete);
+    }
+
+    /**
+     * Merge data with some extra attributes that user may have provided.
+     * 
+     * @param string $action
+     * @param array $data
+     * 
+     * @return array
+     */
+    protected function mergeExtra($action, array $data)
+    {
+        $extra = $this->extra;
+
+        if ($extra instanceof \Closure)
+        {
+            $extra = $extra($action);
+        }
+        else
+        {
+            $extra = $action === 'create' ? $extra : [];
+        }
+
+        return $data + (array)$extra;
     }
 
     /**

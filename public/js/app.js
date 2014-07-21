@@ -2526,7 +2526,7 @@
 
     Fieldset.prototype.template = function() {
       var html;
-      html = this.title ? "<legend>" + escape(this.title) + "</legend>" : "";
+      html = this.title ? "<legend>" + _.escape(this.title) + "</legend>" : "";
       return html + "<div id='" + this.componentId("body") + "'></div>";
     };
 

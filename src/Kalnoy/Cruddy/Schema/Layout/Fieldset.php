@@ -33,7 +33,7 @@ class Fieldset extends BaseFieldset {
      */
     public function compile()
     {
-        return [ 'title' => $this->title ] + parent::compile();
+        return [ 'title' => \Kalnoy\Cruddy\try_trans($this->title) ] + parent::compile();
     }
 
 }

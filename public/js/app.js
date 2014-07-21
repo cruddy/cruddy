@@ -779,90 +779,6 @@
 
   })(Backbone.View);
 
-  FieldList = (function(_super) {
-    __extends(FieldList, _super);
-
-    function FieldList() {
-      return FieldList.__super__.constructor.apply(this, arguments);
-    }
-
-    FieldList.prototype.className = "field-list";
-
-    FieldList.prototype.initialize = function(options) {
-      var _ref1;
-      this.forceDisable = (_ref1 = options.forceDisable) != null ? _ref1 : false;
-      return this;
-    };
-
-    FieldList.prototype.focus = function() {
-      var _ref1;
-      if ((_ref1 = this.primary) != null) {
-        _ref1.focus();
-      }
-      return this;
-    };
-
-    FieldList.prototype.render = function() {
-      var field, _i, _len, _ref1;
-      this.dispose();
-      this.$el.empty();
-      _ref1 = this.createFields();
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        field = _ref1[_i];
-        this.$el.append(field.el);
-      }
-      return this;
-    };
-
-    FieldList.prototype.createFields = function() {
-      var field, view, _i, _len, _ref1;
-      this.fields = (function() {
-        var _i, _len, _ref1, _results;
-        _ref1 = this.model.entity.fields.models;
-        _results = [];
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          field = _ref1[_i];
-          if (field.isVisible()) {
-            _results.push(field.createView(this.model, this.forceDisable).render());
-          }
-        }
-        return _results;
-      }).call(this);
-      _ref1 = this.fields;
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        view = _ref1[_i];
-        if (!view.isEditable) {
-          continue;
-        }
-        this.primary = view;
-        break;
-      }
-      return this.fields;
-    };
-
-    FieldList.prototype.dispose = function() {
-      var field, _i, _len, _ref1;
-      if (this.fields != null) {
-        _ref1 = this.fields;
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          field = _ref1[_i];
-          field.remove();
-        }
-      }
-      this.fields = null;
-      this.primary = null;
-      return this;
-    };
-
-    FieldList.prototype.remove = function() {
-      this.dispose();
-      return FieldList.__super__.remove.apply(this, arguments);
-    };
-
-    return FieldList;
-
-  })(Backbone.View);
-
   FilterList = (function(_super) {
     __extends(FilterList, _super);
 
@@ -2444,6 +2360,369 @@
 
   })(Cruddy.Inputs.BaseText);
 
+  Cruddy.Layout = {};
+
+  Cruddy.Layout.Element = (function(_super) {
+    __extends(Element, _super);
+
+    function Element(options, parent) {
+      var _ref1;
+      this.parent = parent;
+      this.disable = (_ref1 = options.disable) != null ? _ref1 : false;
+      Element.__super__.constructor.apply(this, arguments);
+    }
+
+    Element.prototype.isDisabled = function() {
+      if (this.disable) {
+        return true;
+      }
+      if (this.parent) {
+        return this.parent.isDisabled();
+      }
+      return false;
+    };
+
+    Element.prototype.initialize = function() {
+      if (!this.model && this.parent) {
+        this.model = this.parent.model;
+      }
+      if (this.model) {
+        this.entity = this.model.entity;
+      }
+      return Element.__super__.initialize.apply(this, arguments);
+    };
+
+    Element.prototype.handleValidationError = function(error) {
+      if (this.parent) {
+        this.parent.handleValidationError(error);
+      }
+      return this;
+    };
+
+    return Element;
+
+  })(Cruddy.View);
+
+  Cruddy.Layout.Container = (function(_super) {
+    __extends(Container, _super);
+
+    function Container() {
+      return Container.__super__.constructor.apply(this, arguments);
+    }
+
+    Container.prototype.defaultMethod = null;
+
+    Container.prototype.initialize = function(options) {
+      Container.__super__.initialize.apply(this, arguments);
+      this.$container = this.$el;
+      this.items = [];
+      if (options.items) {
+        this.createItems(options.items);
+      }
+      return this;
+    };
+
+    Container.prototype.create = function(options) {
+      var method;
+      method = options.method || this.defaultMethod;
+      if (!method || !_.isFunction(this[method])) {
+        console.error("Couldn't resolve method ", method);
+        return;
+      }
+      return this[method].call(this, options);
+    };
+
+    Container.prototype.createItems = function(items) {
+      var item, _i, _len;
+      for (_i = 0, _len = items.length; _i < _len; _i++) {
+        item = items[_i];
+        this.create(item);
+      }
+      return this;
+    };
+
+    Container.prototype.append = function(element) {
+      this.items.push(element);
+      return element;
+    };
+
+    Container.prototype.renderElement = function(element) {
+      this.$container.append(element.render().$el);
+      return this;
+    };
+
+    Container.prototype.render = function() {
+      var element, _i, _len, _ref1;
+      if (this.items) {
+        _ref1 = this.items;
+        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+          element = _ref1[_i];
+          this.renderElement(element);
+        }
+      }
+      return Container.__super__.render.apply(this, arguments);
+    };
+
+    Container.prototype.remove = function() {
+      var item, _i, _len, _ref1;
+      _ref1 = this.items;
+      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+        item = _ref1[_i];
+        item.remove();
+      }
+      return Container.__super__.remove.apply(this, arguments);
+    };
+
+    Container.prototype.focus = function() {
+      var el;
+      if (el = _.first(this.items)) {
+        el.focus();
+      }
+      return this;
+    };
+
+    return Container;
+
+  })(Cruddy.Layout.Element);
+
+  Cruddy.Layout.BaseFieldContainer = (function(_super) {
+    __extends(BaseFieldContainer, _super);
+
+    function BaseFieldContainer(options) {
+      var _ref1;
+      this.title = (_ref1 = options.title) != null ? _ref1 : null;
+      BaseFieldContainer.__super__.constructor.apply(this, arguments);
+    }
+
+    BaseFieldContainer.prototype.field = function(options) {
+      var field;
+      if ((field = this.entity.field(options.field)) && field.isVisible()) {
+        return this.append(field.createView(this.model, this.isDisabled(), this));
+      }
+    };
+
+    BaseFieldContainer.prototype.row = function(options) {
+      return this.append(new Cruddy.Layout.Row(options, this));
+    };
+
+    return BaseFieldContainer;
+
+  })(Cruddy.Layout.Container);
+
+  Cruddy.Layout.Fieldset = (function(_super) {
+    __extends(Fieldset, _super);
+
+    function Fieldset() {
+      return Fieldset.__super__.constructor.apply(this, arguments);
+    }
+
+    Fieldset.prototype.tagName = "fieldset";
+
+    Fieldset.prototype.render = function() {
+      this.$el.html(this.template());
+      this.$container = this.$component("body");
+      return Fieldset.__super__.render.apply(this, arguments);
+    };
+
+    Fieldset.prototype.template = function() {
+      var html;
+      html = this.title ? "<legend>" + escape(this.title) + "</legend>" : "";
+      return html + "<div id='" + this.componentId("body") + "'></div>";
+    };
+
+    return Fieldset;
+
+  })(Cruddy.Layout.BaseFieldContainer);
+
+  Cruddy.Layout.TabPane = (function(_super) {
+    __extends(TabPane, _super);
+
+    function TabPane() {
+      return TabPane.__super__.constructor.apply(this, arguments);
+    }
+
+    TabPane.prototype.className = "tab-pane";
+
+    TabPane.prototype.initialize = function(options) {
+      TabPane.__super__.initialize.apply(this, arguments);
+      if (!options.title) {
+        this.title = this.entity.get("title").singular;
+      }
+      this.$el.attr("id", this.cid);
+      this.header = new Cruddy.Layout.TabPane.Header({
+        model: this
+      });
+      this.listenTo(this.model, "request", function() {
+        return this.header.resetErrors();
+      });
+      return this;
+    };
+
+    TabPane.prototype.fieldset = function(options) {
+      return this.append(new Cruddy.Layout.Fieldset(options, this));
+    };
+
+    TabPane.prototype.activate = function() {
+      this.header.activate();
+      after_break((function(_this) {
+        return function() {
+          return _this.focus();
+        };
+      })(this));
+      return this;
+    };
+
+    TabPane.prototype.handleValidationError = function() {
+      this.header.incrementErrors();
+      return TabPane.__super__.handleValidationError.apply(this, arguments);
+    };
+
+    return TabPane;
+
+  })(Cruddy.Layout.BaseFieldContainer);
+
+  Cruddy.Layout.TabPane.Header = (function(_super) {
+    __extends(Header, _super);
+
+    function Header() {
+      return Header.__super__.constructor.apply(this, arguments);
+    }
+
+    Header.prototype.tagName = "li";
+
+    Header.prototype.events = {
+      "shown.bs.tab": function() {
+        this.model.focus();
+      }
+    };
+
+    Header.prototype.initialize = function() {
+      this.errors = 0;
+      return Header.__super__.initialize.apply(this, arguments);
+    };
+
+    Header.prototype.incrementErrors = function() {
+      this.$badge.text(++this.errors);
+      return this;
+    };
+
+    Header.prototype.resetErrors = function() {
+      this.errors = 0;
+      this.$badge.text("");
+      return this;
+    };
+
+    Header.prototype.render = function() {
+      this.$el.html(this.template());
+      this.$badge = this.$component("badge");
+      return Header.__super__.render.apply(this, arguments);
+    };
+
+    Header.prototype.template = function() {
+      return "<a href=\"#" + this.model.cid + "\" role=\"tab\" data-toggle=\"tab\">\n    " + this.model.title + "\n    <span class=\"badge\" id=\"" + (this.componentId("badge")) + "\"></span>\n</a>";
+    };
+
+    Header.prototype.activate = function() {
+      this.$("a").tab("show");
+      return this;
+    };
+
+    return Header;
+
+  })(Cruddy.View);
+
+  Cruddy.Layout.Row = (function(_super) {
+    __extends(Row, _super);
+
+    function Row() {
+      return Row.__super__.constructor.apply(this, arguments);
+    }
+
+    Row.prototype.className = "row";
+
+    Row.prototype.col = function(options) {
+      return this.append(new Cruddy.Layout.Col(options, this));
+    };
+
+    return Row;
+
+  })(Cruddy.Layout.Container);
+
+  Cruddy.Layout.Col = (function(_super) {
+    __extends(Col, _super);
+
+    function Col() {
+      return Col.__super__.constructor.apply(this, arguments);
+    }
+
+    Col.prototype.initialize = function(options) {
+      this.$el.addClass("col-xs-" + options.span);
+      return Col.__super__.initialize.apply(this, arguments);
+    };
+
+    return Col;
+
+  })(Cruddy.Layout.BaseFieldContainer);
+
+  FieldList = (function(_super) {
+    __extends(FieldList, _super);
+
+    function FieldList() {
+      return FieldList.__super__.constructor.apply(this, arguments);
+    }
+
+    FieldList.prototype.className = "field-list";
+
+    FieldList.prototype.initialize = function() {
+      var field, _i, _len, _ref1;
+      FieldList.__super__.initialize.apply(this, arguments);
+      _ref1 = this.entity.fields.models;
+      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+        field = _ref1[_i];
+        this.field({
+          field: field.id
+        });
+      }
+      return this;
+    };
+
+    return FieldList;
+
+  })(Cruddy.Layout.BaseFieldContainer);
+
+  Cruddy.Layout.Layout = (function(_super) {
+    __extends(Layout, _super);
+
+    function Layout() {
+      return Layout.__super__.constructor.apply(this, arguments);
+    }
+
+    Layout.prototype.initialize = function() {
+      Layout.__super__.initialize.apply(this, arguments);
+      return this.setupLayout();
+    };
+
+    Layout.prototype.setupLayout = function() {
+      if (this.entity.attributes.layout) {
+        this.createItems(this.entity.attributes.layout);
+      } else {
+        this.setupDefaultLayout();
+      }
+      return this;
+    };
+
+    Layout.prototype.setupDefaultLayout = function() {
+      return this;
+    };
+
+    Layout.prototype.tab = function(options) {
+      return this.append(new Cruddy.Layout.TabPane(options, this));
+    };
+
+    return Layout;
+
+  })(Cruddy.Layout.Container);
+
   Cruddy.Fields = new Factory;
 
   Cruddy.Fields.BaseView = (function(_super) {
@@ -2501,6 +2780,7 @@
 
     BaseView.prototype.showError = function(message) {
       this.error.text(message).show();
+      this.handleValidationError(message);
       return this;
     };
 
@@ -2513,7 +2793,7 @@
         container: "body",
         placement: "left"
       });
-      this.error = this.$("#" + this.cid + "-error");
+      this.error = this.$component("error");
       return this;
     };
 
@@ -2528,7 +2808,7 @@
     };
 
     BaseView.prototype.errorTemplate = function() {
-      return "<span class=\"help-block error\" id=\"" + this.cid + "-error\"></span>";
+      return "<span class=\"help-block error\" style=\"display:none;\" id=\"" + (this.componentId("error")) + "\"></span>";
     };
 
     BaseView.prototype.isVisible = function() {
@@ -2546,7 +2826,7 @@
 
     return BaseView;
 
-  })(Backbone.View);
+  })(Cruddy.Layout.Element);
 
   Cruddy.Fields.InputView = (function(_super) {
     __extends(InputView, _super);
@@ -2620,7 +2900,7 @@
 
     Base.prototype.viewConstructor = Cruddy.Fields.InputView;
 
-    Base.prototype.createView = function(model, forceDisable) {
+    Base.prototype.createView = function(model, forceDisable, parent) {
       if (forceDisable == null) {
         forceDisable = false;
       }
@@ -2628,7 +2908,7 @@
         model: model,
         field: this,
         forceDisable: forceDisable
-      });
+      }, parent);
     };
 
     Base.prototype.createInput = function(model, inputId, forceDisable) {
@@ -3196,12 +3476,13 @@
     };
 
     EmbeddedView.prototype.add = function(model, collection, options) {
-      var view;
-      this.views[model.cid] = view = new Cruddy.Fields.EmbeddedItemView({
+      var itemOptions, view;
+      itemOptions = {
         model: model,
         collection: this.collection,
-        disabled: !this.isEditable
-      });
+        disable: !this.isEditable
+      };
+      this.views[model.cid] = view = new Cruddy.Fields.EmbeddedItemView(itemOptions, this);
       this.body.append(view.render().el);
       if (options != null ? options.focus : void 0) {
         after_break(function() {
@@ -3229,7 +3510,7 @@
       var model, _i, _len, _ref1;
       this.dispose();
       this.$el.html(this.template());
-      this.body = this.$("#" + this.cid + "-body");
+      this.body = this.$component("body");
       this.createButton = this.$(".btn-create");
       _ref1 = this.collection.models;
       for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
@@ -3248,7 +3529,7 @@
       var buttons, ref;
       ref = this.field.getReference();
       buttons = this.isEditable && ref.createPermitted() ? b_btn("", "plus", ["default", "create"]) : "";
-      return "<div class='header field-label'>\n    " + (this.helpTemplate()) + (_.escape(this.field.getLabel())) + " " + buttons + "\n</div>\n<div class=\"error-container has-error\">" + (this.errorTemplate()) + "</div>\n<div class='body' id='" + this.cid + "-body'></div>";
+      return "<div class='header field-label'>\n    " + (this.helpTemplate()) + (_.escape(this.field.getLabel())) + " " + buttons + "\n</div>\n<div class=\"error-container has-error\">" + (this.errorTemplate()) + "</div>\n<div class=\"body\" id=\"" + (this.componentId("body")) + "\"></div>";
     };
 
     EmbeddedView.prototype.dispose = function() {
@@ -3283,22 +3564,16 @@
   Cruddy.Fields.EmbeddedItemView = (function(_super) {
     __extends(EmbeddedItemView, _super);
 
-    function EmbeddedItemView() {
-      return EmbeddedItemView.__super__.constructor.apply(this, arguments);
-    }
-
     EmbeddedItemView.prototype.className = "has-many-item-view";
 
     EmbeddedItemView.prototype.events = {
       "click .btn-delete": "deleteItem"
     };
 
-    EmbeddedItemView.prototype.initialize = function(options) {
-      var _ref1;
+    function EmbeddedItemView(options) {
       this.collection = options.collection;
-      this.disabled = (_ref1 = options.disabled) != null ? _ref1 : true;
-      return EmbeddedItemView.__super__.initialize.apply(this, arguments);
-    };
+      EmbeddedItemView.__super__.constructor.apply(this, arguments);
+    }
 
     EmbeddedItemView.prototype.deleteItem = function(e) {
       e.preventDefault();
@@ -3307,50 +3582,29 @@
       return this;
     };
 
-    EmbeddedItemView.prototype.render = function() {
-      this.dispose();
-      this.$el.html(this.template());
-      this.fieldList = new FieldList({
-        model: this.model,
-        forceDisable: this.disabled
-      });
-      this.$el.prepend(this.fieldList.render().el);
+    EmbeddedItemView.prototype.setupDefaultLayout = function() {
+      this.append(new FieldList({}, this));
       return this;
+    };
+
+    EmbeddedItemView.prototype.render = function() {
+      this.$el.html(this.template());
+      this.$container = this.$component("body");
+      return EmbeddedItemView.__super__.render.apply(this, arguments);
     };
 
     EmbeddedItemView.prototype.template = function() {
+      var html;
+      html = "<div id=\"" + (this.componentId("body")) + "\"></div>";
       if (!this.disabled && (this.model.entity.deletePermitted() || this.model.isNew())) {
-        return b_btn(Cruddy.lang["delete"], "trash", ["default", "sm", "delete"]);
-      } else {
-        return "";
+        html += b_btn(Cruddy.lang["delete"], "trash", ["default", "sm", "delete"]);
       }
-    };
-
-    EmbeddedItemView.prototype.dispose = function() {
-      var _ref1;
-      if ((_ref1 = this.fieldList) != null) {
-        _ref1.remove();
-      }
-      this.fieldList = null;
-      return this;
-    };
-
-    EmbeddedItemView.prototype.remove = function() {
-      this.dispose();
-      return EmbeddedItemView.__super__.remove.apply(this, arguments);
-    };
-
-    EmbeddedItemView.prototype.focus = function() {
-      var _ref1;
-      if ((_ref1 = this.fieldList) != null) {
-        _ref1.focus();
-      }
-      return this;
+      return html;
     };
 
     return EmbeddedItemView;
 
-  })(Backbone.View);
+  })(Cruddy.Layout.Layout);
 
   Cruddy.Fields.RelatedCollection = (function(_super) {
     __extends(RelatedCollection, _super);
@@ -3822,13 +4076,18 @@
 
     Entity.prototype.getRelation = function(id) {
       var field;
-      field = this.fields.get(id);
-      if (!field) {
-        console.error("The field " + id + " is not found.");
-        return;
-      }
+      field = this.field(id);
       if (!field instanceof Cruddy.Fields.BaseRelation) {
         console.error("The field " + id + " is not a relation.");
+        return;
+      }
+      return field;
+    };
+
+    Entity.prototype.field = function(id) {
+      var field;
+      if (!(field = this.fields.get(id))) {
+        console.error("The field " + id + " is not found.");
         return;
       }
       return field;
@@ -4280,6 +4539,7 @@
 
     Form.prototype.initialize = function(options) {
       var key, model, _ref1, _ref2;
+      Form.__super__.initialize.apply(this, arguments);
       this.inner = (_ref1 = options.inner) != null ? _ref1 : false;
       this.listenTo(this.model, "destroy", this.handleDestroy);
       this.listenTo(this.model, "invalid", this.displayInvalid);
@@ -4290,6 +4550,21 @@
         this.listenTo(model, "change", this.handleChange);
       }
       this.hotkeys = $(document).on("keydown." + this.cid, "body", $.proxy(this, "hotkeys"));
+      return this;
+    };
+
+    Form.prototype.setupDefaultLayout = function() {
+      var field, tab, _i, _len, _ref1;
+      tab = this.tab({
+        title: this.model.entity.get("title").singular
+      });
+      _ref1 = this.entity.fields.models;
+      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+        field = _ref1[_i];
+        tab.field({
+          field: field.id
+        });
+      }
       return this;
     };
 
@@ -4359,7 +4634,8 @@
 
     Form.prototype.show = function() {
       this.$el.toggleClass("opened", true);
-      this.tabs[0].focus();
+      this.items[0].activate();
+      this.focus();
       return this;
     };
 
@@ -4451,31 +4727,21 @@
     };
 
     Form.prototype.render = function() {
-      this.dispose();
       this.$el.html(this.template());
-      this.nav = this.$(".navbar-nav");
+      this.$container = this.$component("body");
+      this.nav = this.$component("nav");
       this.footer = this.$("footer");
       this.submit = this.$(".btn-save");
       this.destroy = this.$(".btn-destroy");
       this.copy = this.$(".btn-copy");
       this.progressBar = this.$(".form-save-progress");
-      this.tabs = [];
-      this.renderTab(this.model, true);
-      return this.update();
+      this.update();
+      return Form.__super__.render.apply(this, arguments);
     };
 
-    Form.prototype.renderTab = function(model, active) {
-      var fieldList, id;
-      this.tabs.push(fieldList = new FieldList({
-        model: model
-      }));
-      id = "tab-" + model.entity.id;
-      fieldList.render().$el.insertBefore(this.footer).wrap($("<div></div>", {
-        id: id,
-        "class": "wrap" + (active ? " active" : "")
-      }));
-      this.nav.append(this.navTemplate(model.entity.get("title").singular, id, active));
-      return this;
+    Form.prototype.renderElement = function(el) {
+      this.nav.append(el.header.render().$el);
+      return Form.__super__.renderElement.apply(this, arguments);
     };
 
     Form.prototype.update = function() {
@@ -4499,46 +4765,28 @@
     };
 
     Form.prototype.template = function() {
-      return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n        <button type=\"button\" class=\"btn btn-link btn-destroy navbar-btn pull-right\" type=\"button\"></button>\n        \n        <button type=\"button\" tabindex=\"-1\" class=\"btn btn-link btn-copy navbar-btn pull-right\" title=\"" + Cruddy.lang.copy + "\">\n            <span class=\"glyphicon glyphicon-book\"></span>\n        </button>\n        \n        <ul class=\"nav navbar-nav\"></ul>\n    </div>\n</div>\n\n<footer>\n    <button type=\"button\" class=\"btn btn-default btn-close\" type=\"button\">" + Cruddy.lang.close + "</button>\n    <button type=\"button\" class=\"btn btn-primary btn-save\" type=\"button\" disabled></button>\n\n    <div class=\"progress\"><div class=\"progress-bar form-save-progress\"></div></div>\n</footer>";
+      return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n        <button type=\"button\" class=\"btn btn-link btn-destroy navbar-btn pull-right\" type=\"button\"></button>\n        \n        <button type=\"button\" tabindex=\"-1\" class=\"btn btn-link btn-copy navbar-btn pull-right\" title=\"" + Cruddy.lang.copy + "\">\n            <span class=\"glyphicon glyphicon-book\"></span>\n        </button>\n        \n        <ul id=\"" + (this.componentId("nav")) + "\" class=\"nav navbar-nav\"></ul>\n    </div>\n</div>\n\n<div class=\"tab-content\" id=\"" + (this.componentId("body")) + "\"></div>\n\n<footer>\n    <button type=\"button\" class=\"btn btn-default btn-close\" type=\"button\">" + Cruddy.lang.close + "</button>\n    <button type=\"button\" class=\"btn btn-primary btn-save\" type=\"button\" disabled></button>\n\n    <div class=\"progress\"><div class=\"progress-bar form-save-progress\"></div></div>\n</footer>";
     };
 
     Form.prototype.externalTemplate = function(href) {
       return "<a href=\"" + href + "\" class=\"btn btn-link navbar-btn pull-right\" title=\"" + Cruddy.lang.view_external + "\" target=\"_blank\">\n    " + (b_icon("eye-open")) + "\n</a>";
     };
 
-    Form.prototype.navTemplate = function(label, target, active) {
-      active = active ? " class=\"active\"" : "";
-      return "<li" + active + "><a href=\"#" + target + "\" data-toggle=\"tab\">" + label + "</a></li>";
-    };
-
     Form.prototype.remove = function() {
       this.trigger("remove", this);
       this.$el.one(TRANSITIONEND, (function(_this) {
         return function() {
-          _this.dispose();
           $(document).off("." + _this.cid);
           _this.trigger("removed", _this);
           return Form.__super__.remove.apply(_this, arguments);
         };
       })(this)).removeClass("opened");
-      return this;
-    };
-
-    Form.prototype.dispose = function() {
-      var fieldList, _i, _len, _ref1;
-      if (this.tabs != null) {
-        _ref1 = this.tabs;
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          fieldList = _ref1[_i];
-          fieldList.remove();
-        }
-      }
-      return this;
+      return Form.__super__.remove.apply(this, arguments);
     };
 
     return Form;
 
-  })(Backbone.View);
+  })(Cruddy.Layout.Layout);
 
   App = (function(_super) {
     __extends(App, _super);

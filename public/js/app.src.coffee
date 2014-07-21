@@ -497,50 +497,6 @@ class DataGrid extends Backbone.View
 
     renderCell: (col, item) ->
         """<td class="#{ col.getClass() }">#{ col.format item[col.id] }</td>"""
-# Displays a list of entity's fields
-class FieldList extends Backbone.View
-    className: "field-list"
-
-    initialize: (options) ->
-        @forceDisable = options.forceDisable ? false
-
-        this
-
-    # Focus first editable field
-    focus: ->
-        @primary?.focus()
-
-        this
-
-    render: ->
-        @dispose()
-
-        @$el.empty()
-        @$el.append field.el for field in @createFields()
-
-        this
-
-    createFields: ->
-        @fields = (field.createView(@model, @forceDisable).render() for field in @model.entity.fields.models when field.isVisible())
-
-        for view in @fields when view.isEditable
-            @primary = view
-            break
-
-        @fields
-
-    dispose: ->
-        field.remove() for field in @fields if @fields?
-
-        @fields = null
-        @primary = null
-
-        this
-
-    remove: ->
-        @dispose()
-
-        super
 class FilterList extends Backbone.View
     className: "filter-list"
 
@@ -1720,9 +1676,223 @@ class Cruddy.Inputs.DateTime extends Cruddy.Inputs.BaseText
 
         # We will always set input value because it may not be always parsed properly
         @applyChanges value, yes
+Cruddy.Layout = {}
+
+class Cruddy.Layout.Element extends Cruddy.View
+
+    constructor: (options, parent) ->
+        @parent = parent
+        @disable = options.disable ? no
+
+        super
+
+    isDisabled: ->
+        return yes if @disable
+        return @parent.isDisabled() if @parent
+
+        return no
+
+    initialize: ->
+        @model = @parent.model if not @model and @parent
+        @entity = @model.entity if @model
+
+        super
+
+    handleValidationError: (error) ->
+        @parent.handleValidationError error if @parent
+
+        return this
+
+class Cruddy.Layout.Container extends Cruddy.Layout.Element
+
+    defaultMethod: null
+
+    initialize: (options) ->
+        super
+
+        @$container = @$el
+        @items = []
+
+        @createItems options.items if options.items
+
+        return this
+
+    create: (options) ->
+        method = options.method or @defaultMethod
+
+        if not method or not _.isFunction this[method]
+            console.error "Couldn't resolve method ", method 
+
+            return
+
+        return this[method].call this, options
+
+    createItems: (items) ->
+        @create item for item in items
+
+        this
+
+    append: (element) ->
+        @items.push element
+
+        return element
+
+    renderElement: (element) ->
+        @$container.append element.render().$el
+
+        return this
+
+    render: ->
+        @renderElement element for element in @items if @items
+
+        super
+
+    remove: ->
+        item.remove() for item in @items
+
+        super
+
+    focus: ->
+        el.focus() if el = _.first @items
+
+        return this
+class Cruddy.Layout.BaseFieldContainer extends Cruddy.Layout.Container
+
+    constructor: (options) ->
+        @title = options.title ? null
+
+        super
+
+    field: (options) -> @append field.createView @model, @isDisabled(), this if (field = @entity.field(options.field)) and field.isVisible()
+
+    row: (options) -> @append new Cruddy.Layout.Row options, this
+class Cruddy.Layout.Fieldset extends Cruddy.Layout.BaseFieldContainer
+    tagName: "fieldset"
+
+    render: ->
+        @$el.html @template()
+
+        @$container = @$component "body"
+
+        super
+
+    template: ->
+        html = if @title then "<legend>" + escape(@title) + "</legend>" else ""
+
+        return html + "<div id='" + @componentId("body") + "'></div>"
+class Cruddy.Layout.TabPane extends Cruddy.Layout.BaseFieldContainer
+    className: "tab-pane"
+
+    initialize: (options) ->
+        super
+
+        @title = @entity.get("title").singular if not options.title
+        
+        @$el.attr "id", @cid
+
+        @header = new Cruddy.Layout.TabPane.Header model: this
+
+        @listenTo @model, "request", -> @header.resetErrors()
+
+        return this
+
+    fieldset: (options) -> @append new Cruddy.Layout.Fieldset options, this
+
+    activate: ->
+        @header.activate()
+
+        after_break => @focus()
+
+        return this
+
+    handleValidationError: ->
+        @header.incrementErrors()
+
+        super
+
+class Cruddy.Layout.TabPane.Header extends Cruddy.View
+    tagName: "li"
+
+    events:
+        "shown.bs.tab": ->
+            @model.focus()
+
+            return
+
+    initialize: ->
+        @errors = 0
+
+        super
+
+    incrementErrors: ->
+        @$badge.text ++@errors
+
+        return this
+
+    resetErrors: ->
+        @errors = 0
+        @$badge.text ""
+
+        return this
+
+    render: ->
+        @$el.html @template()
+
+        @$badge = @$component "badge"
+
+        super
+
+    template: -> """
+        <a href="##{ @model.cid }" role="tab" data-toggle="tab">
+            #{ @model.title }
+            <span class="badge" id="#{ @componentId "badge" }"></span>
+        </a>"""
+
+    activate: ->
+        @$("a").tab("show")
+
+        return this
+class Cruddy.Layout.Row extends Cruddy.Layout.Container
+    className: "row"
+
+    col: (options) -> @append new Cruddy.Layout.Col options, this
+class Cruddy.Layout.Col extends Cruddy.Layout.BaseFieldContainer
+
+    initialize: (options) ->
+        @$el.addClass "col-xs-" + options.span
+
+        super
+# Displays a list of entity's fields
+class FieldList extends Cruddy.Layout.BaseFieldContainer
+    className: "field-list"
+
+    initialize: ->
+        super
+
+        @field field: field.id for field in @entity.fields.models
+
+        return this
+class Cruddy.Layout.Layout extends Cruddy.Layout.Container
+
+    initialize: ->
+        super
+
+        @setupLayout()
+
+    setupLayout: ->
+        if @entity.attributes.layout
+            @createItems @entity.attributes.layout
+        else
+            @setupDefaultLayout()
+
+        return this
+
+    setupDefaultLayout: -> return this
+    
+    tab: (options) -> @append new Cruddy.Layout.TabPane options, this
 Cruddy.Fields = new Factory
 
-class Cruddy.Fields.BaseView extends Backbone.View
+class Cruddy.Fields.BaseView extends Cruddy.Layout.Element
 
     constructor: (options) ->
         @field = field = options.field
@@ -1777,7 +1947,9 @@ class Cruddy.Fields.BaseView extends Backbone.View
     showError: (message) ->
         @error.text(message).show()
 
-        this
+        @handleValidationError message
+
+        return this
 
     focus: -> this
 
@@ -1786,7 +1958,7 @@ class Cruddy.Fields.BaseView extends Backbone.View
             container: "body"
             placement: "left"
 
-        @error = @$ "##{ @cid }-error"
+        @error = @$component "error"
 
         this
 
@@ -1794,7 +1966,7 @@ class Cruddy.Fields.BaseView extends Backbone.View
         help = @field.getHelp()
         if help then """<span class="glyphicon glyphicon-question-sign field-help" title="#{ _.escape help }"></span>""" else ""
 
-    errorTemplate: -> """<span class="help-block error" id="#{ @cid }-error"></span>"""
+    errorTemplate: -> """<span class="help-block error" style="display:none;" id="#{ @componentId "error" }"></span>"""
 
     # Get whether the view is visible
     # The field is not visible when model is new and field is not editable or computed
@@ -1869,7 +2041,7 @@ class Cruddy.Fields.Base extends Attribute
     viewConstructor: Cruddy.Fields.InputView
 
     # Create a view that will represent this field in field list
-    createView: (model, forceDisable = no) -> new @viewConstructor { model: model, field: this, forceDisable: forceDisable }
+    createView: (model, forceDisable = no, parent) -> new @viewConstructor { model: model, field: this, forceDisable: forceDisable }, parent
 
     # Create an input that is used by default view
     createInput: (model, inputId, forceDisable = no) ->
@@ -2157,10 +2329,12 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
         this
 
     add: (model, collection, options) ->
-        @views[model.cid] = view = new Cruddy.Fields.EmbeddedItemView
+        itemOptions =
             model: model
             collection: @collection
-            disabled: not @isEditable
+            disable: not @isEditable
+
+        @views[model.cid] = view = new Cruddy.Fields.EmbeddedItemView itemOptions, this
 
         @body.append view.render().el
 
@@ -2185,7 +2359,7 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
         @dispose()
 
         @$el.html @template()
-        @body = @$ "##{ @cid }-body"
+        @body = @$component "body"
         @createButton = @$ ".btn-create"
 
         @add model for model in @collection.models
@@ -2207,7 +2381,7 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
             #{ @helpTemplate() }#{ _.escape @field.getLabel() } #{ buttons }
         </div>
         <div class="error-container has-error">#{ @errorTemplate() }</div>
-        <div class='body' id='#{ @cid }-body'></div>
+        <div class="body" id="#{ @componentId "body" }"></div>
         """
 
     dispose: ->
@@ -2227,15 +2401,14 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
 
         this
 
-class Cruddy.Fields.EmbeddedItemView extends Backbone.View
+class Cruddy.Fields.EmbeddedItemView extends Cruddy.Layout.Layout
     className: "has-many-item-view"
 
     events:
         "click .btn-delete": "deleteItem"
 
-    initialize: (options) ->
+    constructor: (options) ->
         @collection = options.collection
-        @disabled = options.disabled ? true
 
         super
 
@@ -2247,36 +2420,25 @@ class Cruddy.Fields.EmbeddedItemView extends Backbone.View
 
         this
 
-    render: ->
-        @dispose()
+    setupDefaultLayout: ->
+        @append new FieldList {}, this
 
+        return this
+
+    render: ->
         @$el.html @template()
 
-        @fieldList = new FieldList
-            model: @model
-            forceDisable: @disabled
-
-        @$el.prepend @fieldList.render().el
-
-        this
-
-    template: -> if not @disabled and (@model.entity.deletePermitted() or @model.isNew()) then b_btn(Cruddy.lang.delete, "trash", ["default", "sm", "delete"]) else ""
-
-    dispose: ->
-        @fieldList?.remove()
-        @fieldList = null
-
-        this
-
-    remove: ->
-        @dispose()
+        @$container = @$component "body"
 
         super
 
-    focus: ->
-        @fieldList?.focus()
+    template: ->
+        html = """<div id="#{ @componentId "body" }"></div>"""
 
-        this
+        if not @disabled and (@model.entity.deletePermitted() or @model.isNew())
+            html += b_btn(Cruddy.lang.delete, "trash", ["default", "sm", "delete"])
+
+        return html
 
 class Cruddy.Fields.RelatedCollection extends Backbone.Collection
 
@@ -2493,12 +2655,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
     # Get relation field
     getRelation: (id) ->
-        field = @fields.get id
-
-        if not field
-            console.error "The field #{id} is not found."
-
-            return
+        field = @field id
 
         if not field instanceof Cruddy.Fields.BaseRelation
             console.error "The field #{id} is not a relation."
@@ -2506,6 +2663,15 @@ class Cruddy.Entity.Entity extends Backbone.Model
             return
 
         field
+
+    # Get a field with specified id
+    field: (id) ->
+        if not field = @fields.get id
+            console.error "The field #{id} is not found."
+
+            return
+
+        return field
 
     search: (options = {}) -> new SearchDataSource {}, $.extend { url: @url() }, options
 
@@ -2809,7 +2975,7 @@ class Cruddy.Entity.Page extends Cruddy.View
 
         super
 # View that displays a form for an entity instance
-class Cruddy.Entity.Form extends Backbone.View
+class Cruddy.Entity.Form extends Cruddy.Layout.Layout
     className: "entity-form"
 
     events:
@@ -2824,6 +2990,8 @@ class Cruddy.Entity.Form extends Backbone.View
         super
 
     initialize: (options) ->
+        super
+
         @inner = options.inner ? no
 
         @listenTo @model, "destroy", @handleDestroy
@@ -2834,7 +3002,14 @@ class Cruddy.Entity.Form extends Backbone.View
 
         @hotkeys = $(document).on "keydown." + @cid, "body", $.proxy this, "hotkeys"
 
-        this
+        return this
+
+    setupDefaultLayout: ->
+        tab = @tab title: @model.entity.get("title").singular
+
+        tab.field field: field.id for field in @entity.fields.models
+
+        return this
 
     hotkeys: (e) ->
         # Ctrl + Z
@@ -2888,7 +3063,10 @@ class Cruddy.Entity.Form extends Backbone.View
 
     show: ->
         @$el.toggleClass "opened", true
-        @tabs[0].focus()
+
+        @items[0].activate()
+
+        @focus()
 
         this
 
@@ -2956,32 +3134,25 @@ class Cruddy.Entity.Form extends Backbone.View
         this
 
     render: ->
-        @dispose()
-
         @$el.html @template()
 
-        @nav = @$ ".navbar-nav"
+        @$container = @$component "body"
+
+        @nav = @$component "nav"
         @footer = @$ "footer"
         @submit = @$ ".btn-save"
         @destroy = @$ ".btn-destroy"
         @copy = @$ ".btn-copy"
         @progressBar = @$ ".form-save-progress"
 
-        @tabs = []
-        @renderTab @model, yes
-
-        # @renderTab related for key, related of @model.related
-
         @update()
 
-    renderTab: (model, active) ->
-        @tabs.push fieldList = new FieldList model: model
+        super
 
-        id = "tab-" + model.entity.id
-        fieldList.render().$el.insertBefore(@footer).wrap $ "<div></div>", { id: id, class: "wrap" + if active then " active" else "" }
-        @nav.append @navTemplate model.entity.get("title").singular, id, active
+    renderElement: (el) ->
+        @nav.append el.header.render().$el
 
-        this
+        super
 
     update: ->
         permit = @model.entity.getPermissions()
@@ -3014,9 +3185,11 @@ class Cruddy.Entity.Form extends Backbone.View
                     <span class="glyphicon glyphicon-book"></span>
                 </button>
                 
-                <ul class="nav navbar-nav"></ul>
+                <ul id="#{ @componentId "nav" }" class="nav navbar-nav"></ul>
             </div>
         </div>
+
+        <div class="tab-content" id="#{ @componentId "body" }"></div>
 
         <footer>
             <button type="button" class="btn btn-default btn-close" type="button">#{ Cruddy.lang.close }</button>
@@ -3032,18 +3205,10 @@ class Cruddy.Entity.Form extends Backbone.View
         </a>
         """
 
-    navTemplate: (label, target, active) ->
-        active = if active then " class=\"active\"" else ""
-        """
-        <li#{ active }><a href="##{ target }" data-toggle="tab">#{ label }</a></li>
-        """
-
     remove: ->
         @trigger "remove", @
         
         @$el.one(TRANSITIONEND, =>
-            @dispose()
-
             $(document).off "." + @cid
 
             @trigger "removed", @
@@ -3052,12 +3217,7 @@ class Cruddy.Entity.Form extends Backbone.View
         )
         .removeClass "opened"
 
-        this
-
-    dispose: ->
-        fieldList.remove() for fieldList in @tabs if @tabs?
-
-        this
+        super
 # Backend application file
 
 class App extends Backbone.Model

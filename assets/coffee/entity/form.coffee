@@ -1,5 +1,5 @@
 # View that displays a form for an entity instance
-class Cruddy.Entity.Form extends Backbone.View
+class Cruddy.Entity.Form extends Cruddy.Layout.Layout
     className: "entity-form"
 
     events:
@@ -14,6 +14,8 @@ class Cruddy.Entity.Form extends Backbone.View
         super
 
     initialize: (options) ->
+        super
+
         @inner = options.inner ? no
 
         @listenTo @model, "destroy", @handleDestroy
@@ -24,7 +26,14 @@ class Cruddy.Entity.Form extends Backbone.View
 
         @hotkeys = $(document).on "keydown." + @cid, "body", $.proxy this, "hotkeys"
 
-        this
+        return this
+
+    setupDefaultLayout: ->
+        tab = @tab title: @model.entity.get("title").singular
+
+        tab.field field: field.id for field in @entity.fields.models
+
+        return this
 
     hotkeys: (e) ->
         # Ctrl + Z
@@ -78,7 +87,10 @@ class Cruddy.Entity.Form extends Backbone.View
 
     show: ->
         @$el.toggleClass "opened", true
-        @tabs[0].focus()
+
+        @items[0].activate()
+
+        @focus()
 
         this
 
@@ -146,32 +158,25 @@ class Cruddy.Entity.Form extends Backbone.View
         this
 
     render: ->
-        @dispose()
-
         @$el.html @template()
 
-        @nav = @$ ".navbar-nav"
+        @$container = @$component "body"
+
+        @nav = @$component "nav"
         @footer = @$ "footer"
         @submit = @$ ".btn-save"
         @destroy = @$ ".btn-destroy"
         @copy = @$ ".btn-copy"
         @progressBar = @$ ".form-save-progress"
 
-        @tabs = []
-        @renderTab @model, yes
-
-        # @renderTab related for key, related of @model.related
-
         @update()
 
-    renderTab: (model, active) ->
-        @tabs.push fieldList = new FieldList model: model
+        super
 
-        id = "tab-" + model.entity.id
-        fieldList.render().$el.insertBefore(@footer).wrap $ "<div></div>", { id: id, class: "wrap" + if active then " active" else "" }
-        @nav.append @navTemplate model.entity.get("title").singular, id, active
+    renderElement: (el) ->
+        @nav.append el.header.render().$el
 
-        this
+        super
 
     update: ->
         permit = @model.entity.getPermissions()
@@ -204,9 +209,11 @@ class Cruddy.Entity.Form extends Backbone.View
                     <span class="glyphicon glyphicon-book"></span>
                 </button>
                 
-                <ul class="nav navbar-nav"></ul>
+                <ul id="#{ @componentId "nav" }" class="nav navbar-nav"></ul>
             </div>
         </div>
+
+        <div class="tab-content" id="#{ @componentId "body" }"></div>
 
         <footer>
             <button type="button" class="btn btn-default btn-close" type="button">#{ Cruddy.lang.close }</button>
@@ -222,18 +229,10 @@ class Cruddy.Entity.Form extends Backbone.View
         </a>
         """
 
-    navTemplate: (label, target, active) ->
-        active = if active then " class=\"active\"" else ""
-        """
-        <li#{ active }><a href="##{ target }" data-toggle="tab">#{ label }</a></li>
-        """
-
     remove: ->
         @trigger "remove", @
         
         @$el.one(TRANSITIONEND, =>
-            @dispose()
-
             $(document).off "." + @cid
 
             @trigger "removed", @
@@ -242,9 +241,4 @@ class Cruddy.Entity.Form extends Backbone.View
         )
         .removeClass "opened"
 
-        this
-
-    dispose: ->
-        fieldList.remove() for fieldList in @tabs if @tabs?
-
-        this
+        super

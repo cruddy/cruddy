@@ -42,12 +42,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
     # Get relation field
     getRelation: (id) ->
-        field = @fields.get id
-
-        if not field
-            console.error "The field #{id} is not found."
-
-            return
+        field = @field id
 
         if not field instanceof Cruddy.Fields.BaseRelation
             console.error "The field #{id} is not a relation."
@@ -55,6 +50,15 @@ class Cruddy.Entity.Entity extends Backbone.Model
             return
 
         field
+
+    # Get a field with specified id
+    field: (id) ->
+        if not field = @fields.get id
+            console.error "The field #{id} is not found."
+
+            return
+
+        return field
 
     search: (options = {}) -> new SearchDataSource {}, $.extend { url: @url() }, options
 

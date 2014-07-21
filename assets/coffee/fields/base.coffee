@@ -1,6 +1,6 @@
 Cruddy.Fields = new Factory
 
-class Cruddy.Fields.BaseView extends Backbone.View
+class Cruddy.Fields.BaseView extends Cruddy.Layout.Element
 
     constructor: (options) ->
         @field = field = options.field
@@ -55,7 +55,9 @@ class Cruddy.Fields.BaseView extends Backbone.View
     showError: (message) ->
         @error.text(message).show()
 
-        this
+        @handleValidationError message
+
+        return this
 
     focus: -> this
 
@@ -64,7 +66,7 @@ class Cruddy.Fields.BaseView extends Backbone.View
             container: "body"
             placement: "left"
 
-        @error = @$ "##{ @cid }-error"
+        @error = @$component "error"
 
         this
 
@@ -72,7 +74,7 @@ class Cruddy.Fields.BaseView extends Backbone.View
         help = @field.getHelp()
         if help then """<span class="glyphicon glyphicon-question-sign field-help" title="#{ _.escape help }"></span>""" else ""
 
-    errorTemplate: -> """<span class="help-block error" id="#{ @cid }-error"></span>"""
+    errorTemplate: -> """<span class="help-block error" style="display:none;" id="#{ @componentId "error" }"></span>"""
 
     # Get whether the view is visible
     # The field is not visible when model is new and field is not editable or computed
@@ -147,7 +149,7 @@ class Cruddy.Fields.Base extends Attribute
     viewConstructor: Cruddy.Fields.InputView
 
     # Create a view that will represent this field in field list
-    createView: (model, forceDisable = no) -> new @viewConstructor { model: model, field: this, forceDisable: forceDisable }
+    createView: (model, forceDisable = no, parent) -> new @viewConstructor { model: model, field: this, forceDisable: forceDisable }, parent
 
     # Create an input that is used by default view
     createInput: (model, inputId, forceDisable = no) ->

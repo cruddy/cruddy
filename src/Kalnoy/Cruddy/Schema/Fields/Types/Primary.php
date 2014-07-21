@@ -23,6 +23,11 @@ class Primary extends String {
 
     /**
      * {@inheritdoc}
+     */
+    public $disabled = true;
+
+    /**
+     * {@inheritdoc}
      * 
      * We will check for actual match rather than partial.
      */
@@ -40,6 +45,6 @@ class Primary extends String {
      */
     public function toArray()
     {
-        return ['unique' => true] + parent::toArray();
+        return [ 'unique' => true ] + parent::toArray();
     }
 }

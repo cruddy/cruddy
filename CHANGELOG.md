@@ -4,6 +4,7 @@ __0.3.0__
 *   [feature] Add possibility to provide extra attributes for embedded model
 *   [feature] Support Laravel 4.2
 *   [feature] A better date and time inputs
+*   [feature] A layout for forms
 *   [api] Removed `DateTime::format()`, the format is fixed now
 *   [api] Move lang-related stuff to `cruddy.lang` service
 *   [api] Move assets-related stuff to `cruddy.assets` service

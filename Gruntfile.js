@@ -28,7 +28,6 @@ module.exports = function(grunt) {
                     '<%= app %>/searchDataSource.coffee',
                     '<%= app %>/pagination.coffee',
                     '<%= app %>/datagrid.coffee',
-                    '<%= app %>/fieldList.coffee',
                     '<%= app %>/filterList.coffee',
 
                     // Inputs
@@ -48,6 +47,17 @@ module.exports = function(grunt) {
                     '<%= app %>/inputs/markdown.coffee',
                     '<%= app %>/inputs/numberFilter.coffee',
                     '<%= app %>/inputs/datetime.coffee',
+
+                    // Layout
+                    '<%= app %>/layout/element.coffee',
+                    '<%= app %>/layout/container.coffee',
+                    '<%= app %>/layout/baseFieldContainer.coffee',
+                    '<%= app %>/layout/fieldset.coffee',
+                    '<%= app %>/layout/tabPane.coffee',
+                    '<%= app %>/layout/row.coffee',
+                    '<%= app %>/layout/col.coffee',
+                    '<%= app %>/fieldList.coffee',
+                    '<%= app %>/layout/layout.coffee',
 
                     // Fields
                     '<%= app %>/fields/base.coffee',

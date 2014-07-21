@@ -123,29 +123,25 @@
         }
     }
 
-    .wrap {
+    > .tab-content {
         padding-top: @navbar-height;
         padding-bottom: @footer-height;
         height: 100%;
-        display: none;
+        
+        > .tab-pane {
+            padding: @modal-inner-padding;
+            padding-left: @modal-inner-padding * 1.5;
+            height: 100%;
+            overflow-y: auto;
 
-        &.active {
-            display: block;
+            .field-list {
+                padding: 0;
+                height: auto;
+                overflow: visible;
+            }
         }
     }
 
-    .field-list {
-        padding: @modal-inner-padding;
-        padding-left: @modal-inner-padding * 1.5;
-        height: 100%;
-        overflow-y: auto;
-
-        .field-list {
-            padding: 0;
-            height: auto;
-            overflow: visible;
-        }
-    }
 
     .field {
 
@@ -174,5 +170,3 @@
         }
     }
 }
-
-@import "fields.less";

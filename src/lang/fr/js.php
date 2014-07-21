@@ -34,6 +34,8 @@
     'markdown_source' => 'Source',
     'markdown_parsed' => 'Analysé',
 
+    'schema_failed' => 'Impossible de charger le schéma.',
+
     'entity_forbidden' => 'Vous n\'êtes pas autorisé à voir cette entité.',
     'entity_not_found' => 'Désolé, mais cette entité est introuvable.',
     'entity_new' => 'Nouveau ',

@@ -178,6 +178,32 @@ abstract class BaseSchema implements SchemaInterface {
     }
 
     /**
+     * Define a layout.
+     *
+     * @param \Kalnoy\Cruddy\Schema\Layout\Layout $l
+     *
+     * @return void
+     */
+    public function layout($l)
+    {
+        
+    }
+
+    /**
+     * Compile a layout.
+     *
+     * @return array|null
+     */
+    private function compileLayout()
+    {
+        $l = new Layout\Layout;
+
+        $this->layout($l);
+
+        return $l->isEmpty() ? null : $l->compileItems();
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function toArray()
@@ -187,6 +213,7 @@ abstract class BaseSchema implements SchemaInterface {
             'order_by' => $this->defaultOrder,
             'template' => $this->template,
             'filters' => $this->filters,
+            'layout' => $this->compileLayout(),
         ];
     }
 }

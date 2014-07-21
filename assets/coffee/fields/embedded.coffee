@@ -41,10 +41,12 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
         this
 
     add: (model, collection, options) ->
-        @views[model.cid] = view = new Cruddy.Fields.EmbeddedItemView
+        itemOptions =
             model: model
             collection: @collection
-            disabled: not @isEditable
+            disable: not @isEditable
+
+        @views[model.cid] = view = new Cruddy.Fields.EmbeddedItemView itemOptions, this
 
         @body.append view.render().el
 
@@ -69,7 +71,7 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
         @dispose()
 
         @$el.html @template()
-        @body = @$ "##{ @cid }-body"
+        @body = @$component "body"
         @createButton = @$ ".btn-create"
 
         @add model for model in @collection.models
@@ -91,7 +93,7 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
             #{ @helpTemplate() }#{ _.escape @field.getLabel() } #{ buttons }
         </div>
         <div class="error-container has-error">#{ @errorTemplate() }</div>
-        <div class='body' id='#{ @cid }-body'></div>
+        <div class="body" id="#{ @componentId "body" }"></div>
         """
 
     dispose: ->
@@ -111,15 +113,14 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
 
         this
 
-class Cruddy.Fields.EmbeddedItemView extends Backbone.View
+class Cruddy.Fields.EmbeddedItemView extends Cruddy.Layout.Layout
     className: "has-many-item-view"
 
     events:
         "click .btn-delete": "deleteItem"
 
-    initialize: (options) ->
+    constructor: (options) ->
         @collection = options.collection
-        @disabled = options.disabled ? true
 
         super
 
@@ -131,36 +132,25 @@ class Cruddy.Fields.EmbeddedItemView extends Backbone.View
 
         this
 
-    render: ->
-        @dispose()
+    setupDefaultLayout: ->
+        @append new FieldList {}, this
 
+        return this
+
+    render: ->
         @$el.html @template()
 
-        @fieldList = new FieldList
-            model: @model
-            forceDisable: @disabled
-
-        @$el.prepend @fieldList.render().el
-
-        this
-
-    template: -> if not @disabled and (@model.entity.deletePermitted() or @model.isNew()) then b_btn(Cruddy.lang.delete, "trash", ["default", "sm", "delete"]) else ""
-
-    dispose: ->
-        @fieldList?.remove()
-        @fieldList = null
-
-        this
-
-    remove: ->
-        @dispose()
+        @$container = @$component "body"
 
         super
 
-    focus: ->
-        @fieldList?.focus()
+    template: ->
+        html = """<div id="#{ @componentId "body" }"></div>"""
 
-        this
+        if not @disabled and (@model.entity.deletePermitted() or @model.isNew())
+            html += b_btn(Cruddy.lang.delete, "trash", ["default", "sm", "delete"])
+
+        return html
 
 class Cruddy.Fields.RelatedCollection extends Backbone.Collection
 

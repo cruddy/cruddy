@@ -38,6 +38,8 @@
     'entity_not_found' => 'Sorry, but this entity is not found.',
     'entity_new' => 'New ',
 
+    'schema_failed' => 'Couldn\'t load the schema.', 
+
     'confirm_discard' => 'Are you shure you want to discard all changes?',
     'confirm_abort' => 'Are you shure you want to abort request?',
     'confirm_delete' => 'Are you shure you want to delete the item? You will not be able to restore it!',

@@ -8,8 +8,6 @@ class Cruddy.Layout.TabPane extends Cruddy.Layout.BaseFieldContainer
         
         @$el.attr "id", @cid
 
-        @header = new Cruddy.Layout.TabPane.Header model: this
-
         @listenTo @model, "request", -> @header.resetErrors()
 
         return this
@@ -20,6 +18,11 @@ class Cruddy.Layout.TabPane extends Cruddy.Layout.BaseFieldContainer
         after_break => @focus()
 
         return this
+
+    getHeader: ->
+        @header = new Cruddy.Layout.TabPane.Header model: this if not @header
+
+        return @header
 
     handleValidationError: ->
         @header.incrementErrors()

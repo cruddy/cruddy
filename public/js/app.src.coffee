@@ -1793,8 +1793,6 @@ class Cruddy.Layout.TabPane extends Cruddy.Layout.BaseFieldContainer
         
         @$el.attr "id", @cid
 
-        @header = new Cruddy.Layout.TabPane.Header model: this
-
         @listenTo @model, "request", -> @header.resetErrors()
 
         return this
@@ -1805,6 +1803,11 @@ class Cruddy.Layout.TabPane extends Cruddy.Layout.BaseFieldContainer
         after_break => @focus()
 
         return this
+
+    getHeader: ->
+        @header = new Cruddy.Layout.TabPane.Header model: this if not @header
+
+        return @header
 
     handleValidationError: ->
         @header.incrementErrors()
@@ -3066,9 +3069,9 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         return this
 
     setupDefaultLayout: ->
-        tab = @tab title: @model.entity.get("title").singular
+        tab = @append new Cruddy.Layout.TabPane { title: @model.entity.get("title").singular }, this
 
-        tab.field field: field.id for field in @entity.fields.models
+        tab.append new Cruddy.Layout.Field { field: field.id }, tab for field in @entity.fields.models
 
         return this
 
@@ -3211,7 +3214,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         super
 
     renderElement: (el) ->
-        @nav.append el.header.render().$el
+        @nav.append el.getHeader().render().$el
 
         super
 

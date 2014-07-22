@@ -2556,9 +2556,6 @@
         this.title = this.entity.get("title").singular;
       }
       this.$el.attr("id", this.cid);
-      this.header = new Cruddy.Layout.TabPane.Header({
-        model: this
-      });
       this.listenTo(this.model, "request", function() {
         return this.header.resetErrors();
       });
@@ -2573,6 +2570,15 @@
         };
       })(this));
       return this;
+    };
+
+    TabPane.prototype.getHeader = function() {
+      if (!this.header) {
+        this.header = new Cruddy.Layout.TabPane.Header({
+          model: this
+        });
+      }
+      return this.header;
     };
 
     TabPane.prototype.handleValidationError = function() {
@@ -4679,15 +4685,15 @@
 
     Form.prototype.setupDefaultLayout = function() {
       var field, tab, _i, _len, _ref1;
-      tab = this.tab({
+      tab = this.append(new Cruddy.Layout.TabPane({
         title: this.model.entity.get("title").singular
-      });
+      }, this));
       _ref1 = this.entity.fields.models;
       for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
         field = _ref1[_i];
-        tab.field({
+        tab.append(new Cruddy.Layout.Field({
           field: field.id
-        });
+        }, tab));
       }
       return this;
     };
@@ -4864,7 +4870,7 @@
     };
 
     Form.prototype.renderElement = function(el) {
-      this.nav.append(el.header.render().$el);
+      this.nav.append(el.getHeader().render().$el);
       return Form.__super__.renderElement.apply(this, arguments);
     };
 

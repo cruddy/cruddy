@@ -56,6 +56,8 @@ module.exports = function(grunt) {
                     '<%= app %>/layout/tabPane.coffee',
                     '<%= app %>/layout/row.coffee',
                     '<%= app %>/layout/col.coffee',
+                    '<%= app %>/layout/field.coffee',
+                    '<%= app %>/layout/text.coffee',
                     '<%= app %>/fieldList.coffee',
                     '<%= app %>/layout/layout.coffee',
 

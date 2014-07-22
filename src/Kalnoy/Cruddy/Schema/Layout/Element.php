@@ -16,7 +16,7 @@ class Element {
      */
     public function compile()
     {
-        return [ 'method' => $this->class ];
+        return [ 'class' => $this->class ];
     }
 
 }

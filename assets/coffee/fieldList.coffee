@@ -5,6 +5,7 @@ class FieldList extends Cruddy.Layout.BaseFieldContainer
     initialize: ->
         super
 
-        @field field: field.id for field in @entity.fields.models
+        for field in @entity.fields.models
+            @create { class: "Field", field: field.id }
 
         return this

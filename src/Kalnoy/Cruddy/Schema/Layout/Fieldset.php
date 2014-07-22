@@ -7,7 +7,7 @@ class Fieldset extends BaseFieldset {
     /**
      * {@inheritdoc}
      */
-    protected $class = 'fieldset';
+    protected $class = 'Fieldset';
 
     /**
      * The title.

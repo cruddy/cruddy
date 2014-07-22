@@ -1686,12 +1686,6 @@ class Cruddy.Layout.Element extends Cruddy.View
 
         super
 
-    isDisabled: ->
-        return yes if @disable
-        return @parent.isDisabled() if @parent
-
-        return no
-
     initialize: ->
         @model = @parent.model if not @model and @parent
         @entity = @model.entity if @model
@@ -1703,9 +1697,18 @@ class Cruddy.Layout.Element extends Cruddy.View
 
         return this
 
-class Cruddy.Layout.Container extends Cruddy.Layout.Element
+    isDisabled: ->
+        return yes if @disable
+        return @parent.isDisabled() if @parent
 
-    defaultMethod: null
+        return no
+
+    # Get whether element is focusable
+    isFocusable: -> no
+
+    # Focus the element
+    focus: -> return this
+class Cruddy.Layout.Container extends Cruddy.Layout.Element
 
     initialize: (options) ->
         super
@@ -1718,14 +1721,14 @@ class Cruddy.Layout.Container extends Cruddy.Layout.Element
         return this
 
     create: (options) ->
-        method = options.method or @defaultMethod
+        constructor = Cruddy.Layout[options.class]
 
-        if not method or not _.isFunction this[method]
-            console.error "Couldn't resolve method ", method 
+        if not constructor or not _.isFunction constructor
+            console.error "Couldn't resolve element of type ", method 
 
             return
 
-        return this[method].call this, options
+        @append new constructor options, this
 
     createItems: (items) ->
         @create item for item in items
@@ -1733,7 +1736,7 @@ class Cruddy.Layout.Container extends Cruddy.Layout.Element
         this
 
     append: (element) ->
-        @items.push element
+        @items.push element if element
 
         return element
 
@@ -1752,8 +1755,12 @@ class Cruddy.Layout.Container extends Cruddy.Layout.Element
 
         super
 
+    getFocusable: -> _.find @items, (item) -> item.isFocusable()
+
+    isFocusable: -> return @getFocusable()?
+
     focus: ->
-        el.focus() if el = _.first @items
+        el.focus() if el = @getFocusable()
 
         return this
 class Cruddy.Layout.BaseFieldContainer extends Cruddy.Layout.Container
@@ -1762,10 +1769,6 @@ class Cruddy.Layout.BaseFieldContainer extends Cruddy.Layout.Container
         @title = options.title ? null
 
         super
-
-    field: (options) -> @append field.createView @model, @isDisabled(), this if (field = @entity.field(options.field)) and field.isVisible()
-
-    row: (options) -> @append new Cruddy.Layout.Row options, this
 class Cruddy.Layout.Fieldset extends Cruddy.Layout.BaseFieldContainer
     tagName: "fieldset"
 
@@ -1795,8 +1798,6 @@ class Cruddy.Layout.TabPane extends Cruddy.Layout.BaseFieldContainer
         @listenTo @model, "request", -> @header.resetErrors()
 
         return this
-
-    fieldset: (options) -> @append new Cruddy.Layout.Fieldset options, this
 
     activate: ->
         @header.activate()
@@ -1854,12 +1855,49 @@ class Cruddy.Layout.TabPane.Header extends Cruddy.View
         return this
 class Cruddy.Layout.Row extends Cruddy.Layout.Container
     className: "row"
-
-    col: (options) -> @append new Cruddy.Layout.Col options, this
 class Cruddy.Layout.Col extends Cruddy.Layout.BaseFieldContainer
 
     initialize: (options) ->
         @$el.addClass "col-xs-" + options.span
+
+        super
+class Cruddy.Layout.Field extends Cruddy.Layout.Element
+
+    initialize: (options) ->
+        super
+
+        @fieldView = null
+
+        if not @field = @entity.field options.field
+            console.error "The field #{ options.field } is not found in #{ @entity.id }."
+
+        return this
+
+    render: ->
+        if @field and @field.isVisible()
+            @fieldView = @field.createView @model, @isDisabled(), this
+
+        @$el.html @fieldView.render().$el if @fieldView
+
+        return this
+
+    remove: ->
+        @fieldView.remove() if @fieldView
+
+        super
+
+    isFocusable: -> @fieldView and @field.isEditable(@model)
+
+    focus: ->
+        @fieldView.focus() if @fieldView
+
+        return this
+class Cruddy.Layout.Text extends Cruddy.Layout.Element
+    tagName: "p"
+    className: "text-node"
+
+    initialize: (options) ->
+        @$el.html options.contents if options.contents
 
         super
 # Displays a list of entity's fields
@@ -1869,7 +1907,8 @@ class FieldList extends Cruddy.Layout.BaseFieldContainer
     initialize: ->
         super
 
-        @field field: field.id for field in @entity.fields.models
+        for field in @entity.fields.models
+            @create { class: "Field", field: field.id }
 
         return this
 class Cruddy.Layout.Layout extends Cruddy.Layout.Container
@@ -1888,8 +1927,6 @@ class Cruddy.Layout.Layout extends Cruddy.Layout.Container
         return this
 
     setupDefaultLayout: -> return this
-    
-    tab: (options) -> @append new Cruddy.Layout.TabPane options, this
 Cruddy.Fields = new Factory
 
 class Cruddy.Fields.BaseView extends Cruddy.Layout.Element

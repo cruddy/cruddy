@@ -14,5 +14,3 @@ class Cruddy.Layout.Layout extends Cruddy.Layout.Container
         return this
 
     setupDefaultLayout: -> return this
-    
-    tab: (options) -> @append new Cruddy.Layout.TabPane options, this

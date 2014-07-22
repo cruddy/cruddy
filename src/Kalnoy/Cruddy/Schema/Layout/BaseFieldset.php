@@ -34,7 +34,7 @@ class BaseFieldset extends Container {
 
         foreach ($id as $item)
         {
-            $this->add(new Field($item));
+            is_array($item) ? $this->row($item) : $this->add(new Field($item));
         }
 
         return $this;
@@ -50,6 +50,18 @@ class BaseFieldset extends Container {
     public function row($items)
     {
         return $this->add(new Row($items));
+    }
+
+    /**
+     * Add a text node.
+     *
+     * @param string $contents
+     *
+     * @return void
+     */
+    public function text($contents)
+    {
+        return $this->add(new Text($contents));
     }
 
 }

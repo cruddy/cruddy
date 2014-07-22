@@ -2372,16 +2372,6 @@
       Element.__super__.constructor.apply(this, arguments);
     }
 
-    Element.prototype.isDisabled = function() {
-      if (this.disable) {
-        return true;
-      }
-      if (this.parent) {
-        return this.parent.isDisabled();
-      }
-      return false;
-    };
-
     Element.prototype.initialize = function() {
       if (!this.model && this.parent) {
         this.model = this.parent.model;
@@ -2399,6 +2389,24 @@
       return this;
     };
 
+    Element.prototype.isDisabled = function() {
+      if (this.disable) {
+        return true;
+      }
+      if (this.parent) {
+        return this.parent.isDisabled();
+      }
+      return false;
+    };
+
+    Element.prototype.isFocusable = function() {
+      return false;
+    };
+
+    Element.prototype.focus = function() {
+      return this;
+    };
+
     return Element;
 
   })(Cruddy.View);
@@ -2409,8 +2417,6 @@
     function Container() {
       return Container.__super__.constructor.apply(this, arguments);
     }
-
-    Container.prototype.defaultMethod = null;
 
     Container.prototype.initialize = function(options) {
       Container.__super__.initialize.apply(this, arguments);
@@ -2423,13 +2429,13 @@
     };
 
     Container.prototype.create = function(options) {
-      var method;
-      method = options.method || this.defaultMethod;
-      if (!method || !_.isFunction(this[method])) {
-        console.error("Couldn't resolve method ", method);
+      var constructor;
+      constructor = Cruddy.Layout[options["class"]];
+      if (!constructor || !_.isFunction(constructor)) {
+        console.error("Couldn't resolve element of type ", method);
         return;
       }
-      return this[method].call(this, options);
+      return this.append(new constructor(options, this));
     };
 
     Container.prototype.createItems = function(items) {
@@ -2442,7 +2448,9 @@
     };
 
     Container.prototype.append = function(element) {
-      this.items.push(element);
+      if (element) {
+        this.items.push(element);
+      }
       return element;
     };
 
@@ -2473,9 +2481,19 @@
       return Container.__super__.remove.apply(this, arguments);
     };
 
+    Container.prototype.getFocusable = function() {
+      return _.find(this.items, function(item) {
+        return item.isFocusable();
+      });
+    };
+
+    Container.prototype.isFocusable = function() {
+      return this.getFocusable() != null;
+    };
+
     Container.prototype.focus = function() {
       var el;
-      if (el = _.first(this.items)) {
+      if (el = this.getFocusable()) {
         el.focus();
       }
       return this;
@@ -2493,17 +2511,6 @@
       this.title = (_ref1 = options.title) != null ? _ref1 : null;
       BaseFieldContainer.__super__.constructor.apply(this, arguments);
     }
-
-    BaseFieldContainer.prototype.field = function(options) {
-      var field;
-      if ((field = this.entity.field(options.field)) && field.isVisible()) {
-        return this.append(field.createView(this.model, this.isDisabled(), this));
-      }
-    };
-
-    BaseFieldContainer.prototype.row = function(options) {
-      return this.append(new Cruddy.Layout.Row(options, this));
-    };
 
     return BaseFieldContainer;
 
@@ -2556,10 +2563,6 @@
         return this.header.resetErrors();
       });
       return this;
-    };
-
-    TabPane.prototype.fieldset = function(options) {
-      return this.append(new Cruddy.Layout.Fieldset(options, this));
     };
 
     TabPane.prototype.activate = function() {
@@ -2640,10 +2643,6 @@
 
     Row.prototype.className = "row";
 
-    Row.prototype.col = function(options) {
-      return this.append(new Cruddy.Layout.Col(options, this));
-    };
-
     return Row;
 
   })(Cruddy.Layout.Container);
@@ -2664,6 +2663,76 @@
 
   })(Cruddy.Layout.BaseFieldContainer);
 
+  Cruddy.Layout.Field = (function(_super) {
+    __extends(Field, _super);
+
+    function Field() {
+      return Field.__super__.constructor.apply(this, arguments);
+    }
+
+    Field.prototype.initialize = function(options) {
+      Field.__super__.initialize.apply(this, arguments);
+      this.fieldView = null;
+      if (!(this.field = this.entity.field(options.field))) {
+        console.error("The field " + options.field + " is not found in " + this.entity.id + ".");
+      }
+      return this;
+    };
+
+    Field.prototype.render = function() {
+      if (this.field && this.field.isVisible()) {
+        this.fieldView = this.field.createView(this.model, this.isDisabled(), this);
+      }
+      if (this.fieldView) {
+        this.$el.html(this.fieldView.render().$el);
+      }
+      return this;
+    };
+
+    Field.prototype.remove = function() {
+      if (this.fieldView) {
+        this.fieldView.remove();
+      }
+      return Field.__super__.remove.apply(this, arguments);
+    };
+
+    Field.prototype.isFocusable = function() {
+      return this.fieldView && this.field.isEditable(this.model);
+    };
+
+    Field.prototype.focus = function() {
+      if (this.fieldView) {
+        this.fieldView.focus();
+      }
+      return this;
+    };
+
+    return Field;
+
+  })(Cruddy.Layout.Element);
+
+  Cruddy.Layout.Text = (function(_super) {
+    __extends(Text, _super);
+
+    function Text() {
+      return Text.__super__.constructor.apply(this, arguments);
+    }
+
+    Text.prototype.tagName = "p";
+
+    Text.prototype.className = "text-node";
+
+    Text.prototype.initialize = function(options) {
+      if (options.contents) {
+        this.$el.html(options.contents);
+      }
+      return Text.__super__.initialize.apply(this, arguments);
+    };
+
+    return Text;
+
+  })(Cruddy.Layout.Element);
+
   FieldList = (function(_super) {
     __extends(FieldList, _super);
 
@@ -2679,7 +2748,8 @@
       _ref1 = this.entity.fields.models;
       for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
         field = _ref1[_i];
-        this.field({
+        this.create({
+          "class": "Field",
           field: field.id
         });
       }
@@ -2713,10 +2783,6 @@
 
     Layout.prototype.setupDefaultLayout = function() {
       return this;
-    };
-
-    Layout.prototype.tab = function(options) {
-      return this.append(new Cruddy.Layout.TabPane(options, this));
     };
 
     return Layout;

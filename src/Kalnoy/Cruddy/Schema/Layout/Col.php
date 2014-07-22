@@ -7,7 +7,7 @@ class Col extends BaseFieldset {
     /**
      * {@inheritdoc}
      */
-    protected $class = 'col';
+    protected $class = 'Col';
 
     /**
      * Column span.

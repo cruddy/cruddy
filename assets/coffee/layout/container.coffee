@@ -1,7 +1,5 @@
 class Cruddy.Layout.Container extends Cruddy.Layout.Element
 
-    defaultMethod: null
-
     initialize: (options) ->
         super
 
@@ -13,14 +11,14 @@ class Cruddy.Layout.Container extends Cruddy.Layout.Element
         return this
 
     create: (options) ->
-        method = options.method or @defaultMethod
+        constructor = Cruddy.Layout[options.class]
 
-        if not method or not _.isFunction this[method]
-            console.error "Couldn't resolve method ", method 
+        if not constructor or not _.isFunction constructor
+            console.error "Couldn't resolve element of type ", method 
 
             return
 
-        return this[method].call this, options
+        @append new constructor options, this
 
     createItems: (items) ->
         @create item for item in items
@@ -28,7 +26,7 @@ class Cruddy.Layout.Container extends Cruddy.Layout.Element
         this
 
     append: (element) ->
-        @items.push element
+        @items.push element if element
 
         return element
 
@@ -47,7 +45,11 @@ class Cruddy.Layout.Container extends Cruddy.Layout.Element
 
         super
 
+    getFocusable: -> _.find @items, (item) -> item.isFocusable()
+
+    isFocusable: -> return @getFocusable()?
+
     focus: ->
-        el.focus() if el = _.first @items
+        el.focus() if el = @getFocusable()
 
         return this

@@ -7,7 +7,7 @@ class Field extends Element {
     /**
      * {@inheritdoc}
      */
-    protected $class = 'field';
+    protected $class = 'Field';
 
     /**
      * The id of the field.

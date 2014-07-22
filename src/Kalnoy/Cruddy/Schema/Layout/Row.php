@@ -9,7 +9,7 @@ class Row extends Container {
     /**
      * {@inheritdoc}
      */
-    protected $class = 'row';
+    protected $class = 'Row';
 
     /**
      * Init a row.

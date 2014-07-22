@@ -14,8 +14,6 @@ class Cruddy.Layout.TabPane extends Cruddy.Layout.BaseFieldContainer
 
         return this
 
-    fieldset: (options) -> @append new Cruddy.Layout.Fieldset options, this
-
     activate: ->
         @header.activate()
 

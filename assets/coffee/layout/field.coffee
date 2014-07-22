@@ -3,12 +3,16 @@ class Cruddy.Layout.Field extends Cruddy.Layout.Element
     initialize: (options) ->
         super
 
-        @field = @entity.field options.field
+        @fieldView = null
+
+        if not @field = @entity.field options.field
+            console.error "The field #{ options.field } is not found in #{ @entity.id }."
 
         return this
 
     render: ->
-        @fieldView = @field.createView @model if @field and @field.isVisible()
+        if @field and @field.isVisible()
+            @fieldView = @field.createView @model, @isDisabled(), this
 
         @$el.html @fieldView.render().$el if @fieldView
 
@@ -18,6 +22,8 @@ class Cruddy.Layout.Field extends Cruddy.Layout.Element
         @fieldView.remove() if @fieldView
 
         super
+
+    isFocusable: -> @fieldView and @field.isEditable(@model)
 
     focus: ->
         @fieldView.focus() if @fieldView

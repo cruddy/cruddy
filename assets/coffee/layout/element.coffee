@@ -8,12 +8,6 @@ class Cruddy.Layout.Element extends Cruddy.View
 
         super
 
-    isDisabled: ->
-        return yes if @disable
-        return @parent.isDisabled() if @parent
-
-        return no
-
     initialize: ->
         @model = @parent.model if not @model and @parent
         @entity = @model.entity if @model
@@ -24,3 +18,15 @@ class Cruddy.Layout.Element extends Cruddy.View
         @parent.handleValidationError error if @parent
 
         return this
+
+    isDisabled: ->
+        return yes if @disable
+        return @parent.isDisabled() if @parent
+
+        return no
+
+    # Get whether element is focusable
+    isFocusable: -> no
+
+    # Focus the element
+    focus: -> return this

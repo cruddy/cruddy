@@ -7,7 +7,7 @@ class TabPane extends Fieldset {
     /**
      * {@inheritdoc}
      */
-    protected $class = 'tab';
+    protected $class = 'TabPane';
 
     /**
      * Add a fieldset.

@@ -1,6 +1,6 @@
 <?php
 
-namespace Kalnoy\Cruddy;
+namespace Kalnoy\Cruddy\Controllers;
 
 use Illuminate\Support\Contracts\ArrayableInterface;
 use Illuminate\Support\Collection;

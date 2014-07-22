@@ -4142,9 +4142,8 @@
     Entity.prototype.initialize = function(attributes, options) {
       this.fields = this.createCollection(Cruddy.Fields, attributes.fields);
       this.columns = this.createCollection(Cruddy.Columns, attributes.columns);
-      if (this.get("label") === null) {
-        return this.set("label", humanize(this.id));
-      }
+      this.permissions = Cruddy.permissions[this.id];
+      return this;
     };
 
     Entity.prototype.createCollection = function(factory, items) {
@@ -4305,23 +4304,23 @@
     };
 
     Entity.prototype.getPermissions = function() {
-      return this.attributes.permissions;
+      return this.permissions;
     };
 
     Entity.prototype.updatePermitted = function() {
-      return this.attributes.permissions.update;
+      return this.permissions.update;
     };
 
     Entity.prototype.createPermitted = function() {
-      return this.attributes.permissions.create;
+      return this.permissions.create;
     };
 
     Entity.prototype.deletePermitted = function() {
-      return this.attributes.permissions["delete"];
+      return this.permissions["delete"];
     };
 
     Entity.prototype.viewPermitted = function() {
-      return this.attributes.permissions.view;
+      return this.permissions.view;
     };
 
     Entity.prototype.isSoftDeleting = function() {

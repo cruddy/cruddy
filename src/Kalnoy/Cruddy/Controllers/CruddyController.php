@@ -1,6 +1,6 @@
 <?php
 
-namespace Kalnoy\Cruddy;
+namespace Kalnoy\Cruddy\Controllers;
 
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\View;

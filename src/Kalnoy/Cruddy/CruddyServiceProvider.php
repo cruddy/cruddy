@@ -7,6 +7,8 @@ use Kalnoy\Cruddy\Service\MenuBuilder;
 use Kalnoy\Cruddy\Repo\BaseRepository;
 use Kalnoy\Cruddy\Service\Permissions\PermissionsManager;
 use Kalnoy\Cruddy\Console\GenerateSchemaCommand;
+use Kalnoy\Cruddy\Console\CompileCommand;
+use Kalnoy\Cruddy\Console\ClearCompiledCommand;
 
 class CruddyServiceProvider extends ServiceProvider {
 
@@ -53,6 +55,7 @@ class CruddyServiceProvider extends ServiceProvider {
         $this->registerRepository();
         $this->registerCruddy();
         $this->registerCommands();
+        $this->registerCompiler();
     }
 
     /**
@@ -238,6 +241,33 @@ class CruddyServiceProvider extends ServiceProvider {
             return new GenerateSchemaCommand($app['files']);
         });
 
-        $this->commands('cruddy.command.schema');
+        $this->app->bindShared('cruddy.command.compile', function ($app)
+        {
+            $app['cruddy'];
+            
+            return new CompileCommand($app['cruddy.compiler']);
+        });
+
+        $this->app->bindShared('cruddy.command.clearCompiled', function ($app)
+        {
+            return new ClearCompiledCommand($app['cruddy.compiler']);
+        });
+
+        $this->commands(
+            'cruddy.command.schema',
+            'cruddy.command.compile',
+            'cruddy.command.clearCompiled'
+        );
+    }
+
+    /**
+     * Register schema compiler.
+     */
+    public function registerCompiler()
+    {
+        $this->app->bindShared('cruddy.compiler', function ($app)
+        {
+            return new Compiler($app['cruddy.repository'], $app['files'], $app['cruddy.lang']);
+        });
     }
 }

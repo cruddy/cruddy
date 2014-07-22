@@ -206,6 +206,23 @@ class Environment implements JsonableInterface {
     }
 
     /**
+     * Get permissions for every entity.
+     *
+     * @return array
+     */
+    public function permissions()
+    {
+        $data = [];
+
+        foreach ($this->entities->resolveAll() as $entity)
+        {
+            $data[$entity->getId()] = $entity->getPermissions();
+        }
+
+        return $data;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function toJSON($options = 0)
@@ -217,6 +234,7 @@ class Environment implements JsonableInterface {
             'ace_theme' => $this->config('ace_theme', 'chrome'),
             'entities' => $this->entities->available(),
             'lang' => $this->lang->ui(),
+            'permissions' => $this->permissions(),
 
         ], $options);
     }

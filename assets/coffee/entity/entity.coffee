@@ -5,8 +5,9 @@ class Cruddy.Entity.Entity extends Backbone.Model
     initialize: (attributes, options) ->
         @fields = @createCollection Cruddy.Fields, attributes.fields
         @columns = @createCollection Cruddy.Columns, attributes.columns
+        @permissions = Cruddy.permissions[@id]
 
-        @set "label", humanize @id if @get("label") is null
+        return this
 
     createCollection: (factory, items) ->
         data = []
@@ -107,14 +108,14 @@ class Cruddy.Entity.Entity extends Backbone.Model
     # Get title in singular form
     getSingularTitle: -> @attributes.title.singular
 
-    getPermissions: -> @attributes.permissions
+    getPermissions: -> @permissions
 
-    updatePermitted: -> @attributes.permissions.update
+    updatePermitted: -> @permissions.update
 
-    createPermitted: -> @attributes.permissions.create
+    createPermitted: -> @permissions.create
 
-    deletePermitted: -> @attributes.permissions.delete
+    deletePermitted: -> @permissions.delete
 
-    viewPermitted: -> @attributes.permissions.view
+    viewPermitted: -> @permissions.view
 
     isSoftDeleting: -> @attributes.soft_deleting

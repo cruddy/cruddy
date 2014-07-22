@@ -813,6 +813,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
         $permissions = static::$env->getPermissions()->driver();
 
         $data = [];
+
         foreach (static::$actions as $action)
         {
             $data[$action] = $permissions->isPermitted($action, $this);
@@ -820,8 +821,6 @@ class Entity implements JsonableInterface, ArrayableInterface {
 
         return $data;
     }
-
-
 
     /**
      * {@inheritdoc}
@@ -838,12 +837,10 @@ class Entity implements JsonableInterface, ArrayableInterface {
             'soft_deleting' => false,
             'defaults' => $fields->extract($model),
             'title' => $this->getTitle(),
-            'permissions' => $this->getPermissions(),
 
             'fields' => array_values($fields->toArray()),
             'columns' => array_values($this->getColumns()->toArray()),
             'related' => array_keys($this->related),
-
 
         ] + $this->schema->toArray();
     }

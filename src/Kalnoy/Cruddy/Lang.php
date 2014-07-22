@@ -106,4 +106,24 @@ class Lang {
         return $this->getDefaultLang() + $this->lang;
     }
 
+    /**
+     * Get current locale.
+     *
+     * @return string
+     */
+    public function getLocale()
+    {
+        return $this->translator->getLocale();
+    }
+
+    /**
+     * Set current locale.
+     *
+     * @param string $locale
+     */
+    public function setLocale($locale)
+    {
+        $this->translator->setLocale($locale);
+    }
+
 }

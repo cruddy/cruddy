@@ -1,6 +1,6 @@
 <?php
 
-namespace Kalnoy\Cruddy;
+namespace Kalnoy\Cruddy\Controllers;
 
 use Exception;
 use Illuminate\Http\Response;
@@ -55,7 +55,7 @@ class EntityApiController extends ApiController {
      */
     public function schema()
     {
-        return $this->success($this->cruddy->schema());
+        return $this->success(app('cruddy.compiler')->schema());
     }
 
     /**

@@ -28,13 +28,6 @@ class String extends BaseTextField {
     public $mask;
 
     /**
-     * The input placeholder.
-     *
-     * @var string
-     */
-    public $placeholder;
-
-    /**
      * Set the mask.
      *
      * @param string $value
@@ -49,20 +42,6 @@ class String extends BaseTextField {
     }
 
     /**
-     * Set placeholder value.
-     *
-     * @param string $value
-     *
-     * @return $this
-     */
-    public function placeholder($value)
-    {
-        $this->placeholder = $value;
-
-        return $this;
-    }
-
-    /**
      * {@inheritdoc}
      */
     public function toArray()
@@ -70,7 +49,6 @@ class String extends BaseTextField {
         return
         [
             'mask' => $this->mask,
-            'placeholder' => $this->placeholder ? \Kalnoy\Cruddy\try_trans($this->placeholder) : null,
             
         ] + parent::toArray();
     }

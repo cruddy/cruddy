@@ -64,6 +64,7 @@ module.exports = function(grunt) {
                     // Fields
                     '<%= app %>/fields/base.coffee',
                     '<%= app %>/fields/input.coffee',
+                    '<%= app %>/fields/text.coffee',
                     '<%= app %>/fields/datetime.coffee',
                     '<%= app %>/fields/boolean.coffee',
                     '<%= app %>/fields/baseRelation.coffee',

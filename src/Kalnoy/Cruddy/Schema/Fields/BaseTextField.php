@@ -12,17 +12,12 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
  * 
  * @since 1.0.0
  */
-abstract class BaseTextField extends BaseField {
+abstract class BaseTextField extends BaseInput {
 
     /**
      * {@inheritdoc}
      */
     protected $class = 'Input';
-
-    /**
-     * {@inheritdoc}
-     */
-    protected $canOrder = true;
 
     /**
      * {@inheritdoc}
@@ -35,6 +30,27 @@ abstract class BaseTextField extends BaseField {
      * @var string
      */
     protected $inputType = 'text';
+
+    /**
+     * The input placeholder.
+     *
+     * @var string
+     */
+    public $placeholder;
+
+    /**
+     * Set placeholder value.
+     *
+     * @param string $value
+     *
+     * @return $this
+     */
+    public function placeholder($value)
+    {
+        $this->placeholder = $value;
+
+        return $this;
+    }
 
     /**
      * {@inheritdoc}
@@ -76,6 +92,7 @@ abstract class BaseTextField extends BaseField {
         return
         [
             'input_type' => $this->inputType,
+            'placeholder' => \Kalnoy\Cruddy\try_trans($this->placeholder),
 
         ] + parent::toArray();
     }

@@ -14,17 +14,12 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
  * 
  * @since 1.0.0
  */
-abstract class BaseNumber extends BaseField {
+abstract class BaseNumber extends BaseInput {
 
     /**
      * {@inheritdoc}
      */
     protected $class = 'Number';
-
-    /**
-     * {@inheritdoc}
-     */
-    protected $canOrder = true;
 
     /**
      * {@inheritdoc}

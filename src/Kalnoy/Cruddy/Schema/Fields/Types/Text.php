@@ -1,13 +1,15 @@
-<?php namespace Kalnoy\Cruddy\Schema\Fields\Types;
+<?php
 
-use Kalnoy\Cruddy\Schema\Fields\BaseTextField;
+namespace Kalnoy\Cruddy\Schema\Fields\Types;
+
+use Kalnoy\Cruddy\Schema\Fields\BaseField;
 
 /**
  * Base text field that is represented with textarea.
  * 
  * @since 1.0.0
  */
-class Text extends BaseTextField {
+class Text extends BaseField {
 
     /**
      * {@inheritdoc}
@@ -17,7 +19,7 @@ class Text extends BaseTextField {
     /**
      * {@inheritdoc}
      */
-    protected $inputType = 'textarea';
+    protected $class = 'Text';
 
     /**
      * The number of rows for the textarea.

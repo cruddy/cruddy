@@ -2,7 +2,7 @@
 
 namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
-use Kalnoy\Cruddy\Schema\Fields\BaseTextField;
+use Kalnoy\Cruddy\Schema\Fields\BaseField;
 
 /**
  * Slug field type.
@@ -11,7 +11,7 @@ use Kalnoy\Cruddy\Schema\Fields\BaseTextField;
  * 
  * @since 1.0.0
  */
-class Slug extends BaseTextField {
+class Slug extends BaseField {
 
     /**
      * {@inheritdoc}

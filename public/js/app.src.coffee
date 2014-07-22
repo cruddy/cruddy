@@ -2118,29 +2118,58 @@ class Cruddy.Fields.Base extends Attribute
 class Cruddy.Fields.Input extends Cruddy.Fields.Base
 
     createEditableInput: (model, inputId) ->
-        attributes =
+        input = @createBaseInput model, inputId
+
+        if @attributes.prepend or @attributes.append
+            return new Cruddy.Fields.Input.PrependAppendWrapper
+                prepend: @attributes.prepend
+                append: @attributes.append
+                input: input
+
+        return input
+
+    createBaseInput: (model, inputId) -> new Cruddy.Inputs.Text
+        model: model
+        key: @id
+        mask: @attributes.mask
+        attributes:
             placeholder: @attributes.placeholder
             id: inputId
-            
-        type = @attributes.input_type
+            type: @attributes.input_type or "input"
 
-        if type is "textarea"
-            attributes.rows = @attributes.rows
+    format: (value) ->
+        return NOT_AVAILABLE if value is null or value is ""
 
-            new Cruddy.Inputs.Textarea
-                model: model
-                key: @id
-                attributes: attributes
-        else
-            attributes.type = type
+        value += " " + @attributes.append if @attributes.append
+        value = @attributes.prepend + " " + value if @attributes.prepend
 
-            new Cruddy.Inputs.Text
-                model: model
-                key: @id
-                mask: @attributes.mask
-                attributes: attributes
+        return value
 
-    format: (value) -> if @attributes.input_type is "textarea" then "<pre class=\"limit-height\">#{ super }</pre>" else super
+class Cruddy.Fields.Input.PrependAppendWrapper extends Cruddy.View
+    className: "input-group"
+
+    initialize: (options) ->
+        @$el.append @createAddon options.prepend if options.prepend
+        @$el.append (@input = options.input).$el
+        @$el.append @createAddon options.append if options.append
+
+    render: ->
+        @input.render()
+
+        return this
+
+    createAddon: (text) -> "<span class=input-group-addon>" + _.escape(text) + "</span>"
+class Cruddy.Fields.Text extends Cruddy.Fields.Base
+
+    createEditableInput: (model, inputId) -> new Cruddy.Inputs.Textarea
+        model: model
+        key: @id
+        attributes:
+            placeholder: @attributes.placeholder
+            id: inputId
+            rows: @attributes.rows
+
+    format: (value) -> if value then """<pre class="limit-height">#{ value }</pre>""" else NOT_AVAILABLE
 class Cruddy.Fields.BaseDateTime extends Cruddy.Fields.Base
 
     inputFormat: null
@@ -2283,15 +2312,16 @@ class Cruddy.Fields.Slug extends Cruddy.Fields.Base
         
         attributes:
             placeholder: @attributes.placeholder
-class Cruddy.Fields.Enum extends Cruddy.Fields.Base
+class Cruddy.Fields.Enum extends Cruddy.Fields.Input
 
-    createEditableInput: (model, inputId) -> new Cruddy.Inputs.Select
+    createBaseInput: (model, inputId) -> new Cruddy.Inputs.Select
         model: model
         key: @id
         prompt: @attributes.prompt
         items: @attributes.items
         required: @attributes.required
-        attributes: id: inputId
+        attributes:
+            id: inputId
 
     createFilterInput: (model) -> new Cruddy.Inputs.Select
         model: model
@@ -2574,13 +2604,7 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
 
     isMultiple: -> @attributes.multiple
 
-class Cruddy.Fields.Number extends Cruddy.Fields.Base
-    createEditableInput: (model, inputId) -> new Cruddy.Inputs.Text
-        model: model
-        key: @id
-        attributes:
-            type: "text"
-            id: inputId
+class Cruddy.Fields.Number extends Cruddy.Fields.Input
 
     createFilterInput: (model) -> new Cruddy.Inputs.NumberFilter
         model: model

@@ -3040,39 +3040,108 @@
     }
 
     Input.prototype.createEditableInput = function(model, inputId) {
-      var attributes, type;
-      attributes = {
-        placeholder: this.attributes.placeholder,
-        id: inputId
-      };
-      type = this.attributes.input_type;
-      if (type === "textarea") {
-        attributes.rows = this.attributes.rows;
-        return new Cruddy.Inputs.Textarea({
-          model: model,
-          key: this.id,
-          attributes: attributes
-        });
-      } else {
-        attributes.type = type;
-        return new Cruddy.Inputs.Text({
-          model: model,
-          key: this.id,
-          mask: this.attributes.mask,
-          attributes: attributes
+      var input;
+      input = this.createBaseInput(model, inputId);
+      if (this.attributes.prepend || this.attributes.append) {
+        return new Cruddy.Fields.Input.PrependAppendWrapper({
+          prepend: this.attributes.prepend,
+          append: this.attributes.append,
+          input: input
         });
       }
+      return input;
+    };
+
+    Input.prototype.createBaseInput = function(model, inputId) {
+      return new Cruddy.Inputs.Text({
+        model: model,
+        key: this.id,
+        mask: this.attributes.mask,
+        attributes: {
+          placeholder: this.attributes.placeholder,
+          id: inputId,
+          type: this.attributes.input_type || "input"
+        }
+      });
     };
 
     Input.prototype.format = function(value) {
-      if (this.attributes.input_type === "textarea") {
-        return "<pre class=\"limit-height\">" + Input.__super__.format.apply(this, arguments) + "</pre>";
-      } else {
-        return Input.__super__.format.apply(this, arguments);
+      if (value === null || value === "") {
+        return NOT_AVAILABLE;
       }
+      if (this.attributes.append) {
+        value += " " + this.attributes.append;
+      }
+      if (this.attributes.prepend) {
+        value = this.attributes.prepend + " " + value;
+      }
+      return value;
     };
 
     return Input;
+
+  })(Cruddy.Fields.Base);
+
+  Cruddy.Fields.Input.PrependAppendWrapper = (function(_super) {
+    __extends(PrependAppendWrapper, _super);
+
+    function PrependAppendWrapper() {
+      return PrependAppendWrapper.__super__.constructor.apply(this, arguments);
+    }
+
+    PrependAppendWrapper.prototype.className = "input-group";
+
+    PrependAppendWrapper.prototype.initialize = function(options) {
+      if (options.prepend) {
+        this.$el.append(this.createAddon(options.prepend));
+      }
+      this.$el.append((this.input = options.input).$el);
+      if (options.append) {
+        return this.$el.append(this.createAddon(options.append));
+      }
+    };
+
+    PrependAppendWrapper.prototype.render = function() {
+      this.input.render();
+      return this;
+    };
+
+    PrependAppendWrapper.prototype.createAddon = function(text) {
+      return "<span class=input-group-addon>" + _.escape(text) + "</span>";
+    };
+
+    return PrependAppendWrapper;
+
+  })(Cruddy.View);
+
+  Cruddy.Fields.Text = (function(_super) {
+    __extends(Text, _super);
+
+    function Text() {
+      return Text.__super__.constructor.apply(this, arguments);
+    }
+
+    Text.prototype.createEditableInput = function(model, inputId) {
+      return new Cruddy.Inputs.Textarea({
+        model: model,
+        key: this.id,
+        attributes: {
+          placeholder: this.attributes.placeholder,
+          id: inputId,
+          rows: this.attributes.rows
+        }
+      });
+    };
+
+    Text.prototype.format = function(value) {
+      if (value) {
+        return "<pre class=\"limit-height\">" + value + "</pre>";
+      } else {
+        return NOT_AVAILABLE;
+      }
+    };
+
+    return Text;
 
   })(Cruddy.Fields.Base);
 
@@ -3396,7 +3465,7 @@
       return Enum.__super__.constructor.apply(this, arguments);
     }
 
-    Enum.prototype.createEditableInput = function(model, inputId) {
+    Enum.prototype.createBaseInput = function(model, inputId) {
       return new Cruddy.Inputs.Select({
         model: model,
         key: this.id,
@@ -3430,7 +3499,7 @@
 
     return Enum;
 
-  })(Cruddy.Fields.Base);
+  })(Cruddy.Fields.Input);
 
   Cruddy.Fields.Markdown = (function(_super) {
     __extends(Markdown, _super);
@@ -3862,17 +3931,6 @@
       return Number.__super__.constructor.apply(this, arguments);
     }
 
-    Number.prototype.createEditableInput = function(model, inputId) {
-      return new Cruddy.Inputs.Text({
-        model: model,
-        key: this.id,
-        attributes: {
-          type: "text",
-          id: inputId
-        }
-      });
-    };
-
     Number.prototype.createFilterInput = function(model) {
       return new Cruddy.Inputs.NumberFilter({
         model: model,
@@ -3882,7 +3940,7 @@
 
     return Number;
 
-  })(Cruddy.Fields.Base);
+  })(Cruddy.Fields.Input);
 
   Cruddy.Fields.Computed = (function(_super) {
     __extends(Computed, _super);

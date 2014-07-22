@@ -1,14 +1,14 @@
 <?php namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
 use Illuminate\Database\Query\Builder;
-use Kalnoy\Cruddy\Schema\Fields\BaseField;
+use Kalnoy\Cruddy\Schema\Fields\BaseInput;
 
 /**
  * The field for displaying select box.
  * 
  * @since 1.0.0
  */
-class Enum extends BaseField {
+class Enum extends BaseInput {
 
     /**
      * {@inheritdoc}

@@ -1798,7 +1798,7 @@ class Cruddy.Layout.TabPane extends Cruddy.Layout.BaseFieldContainer
         return this
 
     activate: ->
-        @header.activate()
+        @header?.activate()
 
         after_break => @focus()
 
@@ -1810,7 +1810,7 @@ class Cruddy.Layout.TabPane extends Cruddy.Layout.BaseFieldContainer
         return @header
 
     handleValidationError: ->
-        @header.incrementErrors()
+        @header?.incrementErrors()
 
         super
 

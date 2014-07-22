@@ -2563,7 +2563,10 @@
     };
 
     TabPane.prototype.activate = function() {
-      this.header.activate();
+      var _ref1;
+      if ((_ref1 = this.header) != null) {
+        _ref1.activate();
+      }
       after_break((function(_this) {
         return function() {
           return _this.focus();
@@ -2582,7 +2585,10 @@
     };
 
     TabPane.prototype.handleValidationError = function() {
-      this.header.incrementErrors();
+      var _ref1;
+      if ((_ref1 = this.header) != null) {
+        _ref1.incrementErrors();
+      }
       return TabPane.__super__.handleValidationError.apply(this, arguments);
     };
 

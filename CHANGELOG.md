@@ -1,7 +1,7 @@
 v0.3.0
 ======
 
-### Features
+### Improvements
 
 *   Add `states` column type for defining states for rows
 *   Add possibility to provide extra attributes for embedded model
@@ -14,6 +14,8 @@ v0.3.0
 *   Update to intervention/image 2.0
 *   A special button is used to display editing form rather than whole row
 *   Images in datagrid are clickable now
+*   More robust menu builder
+*   Allow do define extra properties for dropdown in the menu
 
 ### API changes
 

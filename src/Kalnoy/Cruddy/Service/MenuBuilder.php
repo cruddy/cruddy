@@ -75,40 +75,133 @@ class MenuBuilder {
      */
     public function render(array $items, $class = 'nav navbar-nav')
     {
-        $html = "";
+        $items = $this->normalizeItems($items);
 
-        foreach ($items as $key => $item)
+        if (empty($items)) return '';
+
+        return $this->renderMenu($items, $class);
+    }
+
+    /**
+     * Render a menu with normalized items.
+     *
+     * @param array  $items
+     * @param string $class
+     *
+     * @return string
+     */
+    protected function renderMenu(array $items, $class)
+    {
+        $html = array_reduce($items, function ($carry, $item)
         {
-            $html .= $this->item($item, $key);
-        }
+            return $carry.PHP_EOL.$this->renderItem($item);
 
-        if (empty($html)) return "";
+        }, '');
 
         return "<ul class=\"{$class}\">{$html}</ul>";
     }
 
     /**
-     * Render item.
+     * Normalize items.
+     *
+     * @param array $items
+     *
+     * @return array
+     */
+    protected function normalizeItems(array $items)
+    {
+        $data = [];
+
+        foreach ($items as $key => $value)
+        {
+            if ($item = $this->normalizeItem($key, $value)) $data[] = $item;
+        }
+
+        return $this->cleanItems($data);
+    }
+
+    /**
+     * Normalize an item to be consumable by `item` method.
      *
      * @param mixed $key
-     * @param mixed $item
+     * @param mixed $value
+     *
+     * @return array|string
+     */
+    protected function normalizeItem($key, $value)
+    {
+        if ($value === '-') return '-';
+
+        if (is_array($value))
+        {
+            if (is_string($key))
+            {
+                $value = [ 'label' => $key, 'items' => $value ];
+            }
+
+            if (isset($value['items']))
+            {
+                $value['items'] = $this->normalizeItems($value['items']);
+
+                if (empty($value['items'])) return null;
+            }
+
+            return $value;
+        }
+
+        if (is_string($key)) return [ 'label' => $key, 'url' => $value ];
+
+        return [ 'entity' => $value ];
+    }
+
+    /**
+     * Remove non-permitted items and repeated dividers.
+     *
+     * @param array $items
+     *
+     * @return array
+     */
+    protected function cleanItems(array $items)
+    {
+        $items = array_values(array_filter($items, [ $this, 'isPermitted' ]));
+
+        $data = [];
+        $i = 0;
+        $total = count($items);
+
+        while ($i < $total)
+        {
+            if ($items[$i] === '-')
+            {
+                if ( ! empty($data)) $data[] = '-';
+
+                // Skip repeated dividers
+                while (++$i < $total and $items[$i] === '-');
+            }
+            else
+            {
+                $data[] = $items[$i++];
+            }
+        }
+
+        // Remove last divider
+        if (end($data) === '-') array_pop($data);
+
+        return $data;
+    }
+
+    /**
+     * Render item.
+     *
+     * @param array $data
      *
      * @return string
      */
-    public function item($item, $key = null)
+    public function item(array $data)
     {
-        if ($item === '-') return '<li class="divider"></li>';
+        if ( ! $this->isPermitted($data)) return '';
 
-        if (is_array($item))
-        {
-            if (is_string($key)) return $this->dropdown($key, $item);
-
-            return $this->custom($item);
-        }
-
-        if (is_string($key)) return $this->custom([ 'label' => $key, 'url' => $item ]);
-
-        return $this->custom([ 'entity' => $item ]);
+        return $this->renderItem($data);
     }
 
     /**
@@ -121,43 +214,62 @@ class MenuBuilder {
      */
     public function dropdown($label, array $items)
     {
-        $inner = $this->render($items, 'dropdown-menu');
-
-        if (empty($inner)) return '';
-
+        $items = $this->normalizeItems($items);
         $label = $this->html->entities($this->lang->tryTranslate($label));
+
+        if (empty($items)) return '';
+
+        return $this->renderDropdown($label, $items);
+    }
+
+    /**
+     * Render a normalized dropdown.
+     *
+     * @param string $label
+     * @param array  $items
+     *
+     * @return string
+     */
+    protected function renderDropdown($label, array $items)
+    {
+        $inner = $this->renderMenu($items, 'dropdown-menu');
 
         return $this->wrap('<a href="#" class="dropdown-toggle" data-toggle="dropdown">'.$label.' <span class="caret"></span></a>'.$inner);
     }
 
     /**
-     * Render custom item.
+     * Render an item.
      *
-     * @param array $options
+     * @param mixed $data
      *
      * @return string
      */
-    protected function custom(array $options)
+    protected function renderItem($data)
     {
-        if ( ! $this->isPermitted($options)) return '';
+        if ($data === '-') return '<li class="divider"></li>';
 
-        $href = $this->getHref($options);
-        $label = $this->getLabel($options);
+        $label = $this->getLabel($data);
 
-        $options = array_except($options, $this->reserved);
+        if (isset($data['items'])) return $this->renderDropdown($label, $data['items']);
 
-        return $this->wrap('<a href="'.$href.'"'.$this->html->attributes($options).'>'.$label.'</a>');
+        $href = $this->getHref($data);
+
+        $data = array_except($data, $this->reserved);
+
+        return $this->wrap('<a href="'.$href.'"'.$this->html->attributes($data).'>'.$label.'</a>');
     }
 
     /**
      * Get whether the menu item is permitted to be visible.
      *
-     * @param array $options
+     * @param array|string $options
      *
      * @return bool
      */
-    protected function isPermitted(array $options)
+    protected function isPermitted($options)
     {
+        if ( ! is_array($options)) return true;
+
         if (isset($options['entity']))
         {
             $entity = $this->env->entity($options['entity']);

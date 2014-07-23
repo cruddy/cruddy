@@ -10,16 +10,6 @@ use Illuminate\Support\Manager;
 class PermissionsManager extends Manager {
 
     /**
-     * Create sentry driver.
-     *
-     * @return \Kalnoy\Cruddy\Service\Permissions\SentryPermissions
-     */
-    public function createSentryDriver()
-    {
-        return new SentryPermissions($this->app['sentry']);
-    }
-
-    /**
      * Create stub driver.
      *
      * @return \Kalnoy\Cruddy\Service\Permissions\Stub

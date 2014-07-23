@@ -14,7 +14,6 @@
     'uri' => 'backend',
 
     // The permissions driver.
-    // Two types available: `stub` and `sentry`.
     'permissions' => 'stub',
 
     // The name of the filter that will be used for authentication.

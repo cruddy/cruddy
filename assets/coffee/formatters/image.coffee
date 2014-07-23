@@ -9,5 +9,7 @@ class Cruddy.formatters.Image extends BaseFormatter
         value = value.title if _.isObject value
 
         """
-        <img src="#{ thumb value, @options.width, @options.height }" #{ if @options.width then " width=#{ @options.width }" else "" } #{ if @options.height then " height=#{ @options.height }" else "" } alt="#{ _.escape value }">
+        <a href="#{ Cruddy.root + "/" + value }" data-trigger="fancybox">
+            <img src="#{ thumb value, @options.width, @options.height }" #{ if @options.width then " width=#{ @options.width }" else "" } #{ if @options.height then " height=#{ @options.height }" else "" } alt="#{ _.escape value }">
+        </a>
         """

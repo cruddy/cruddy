@@ -9,6 +9,8 @@ use Kalnoy\Cruddy\Service\Permissions\PermissionsManager;
 use Kalnoy\Cruddy\Console\GenerateSchemaCommand;
 use Kalnoy\Cruddy\Console\CompileCommand;
 use Kalnoy\Cruddy\Console\ClearCompiledCommand;
+use Kalnoy\Cruddy\Service\ThumbnailFactory;
+use Intervention\Image\ImageManager;
 
 class CruddyServiceProvider extends ServiceProvider {
 
@@ -56,6 +58,7 @@ class CruddyServiceProvider extends ServiceProvider {
         $this->registerCruddy();
         $this->registerCommands();
         $this->registerCompiler();
+        $this->registerThumbnailFactory();
     }
 
     /**
@@ -263,11 +266,22 @@ class CruddyServiceProvider extends ServiceProvider {
     /**
      * Register schema compiler.
      */
-    public function registerCompiler()
+    protected function registerCompiler()
     {
         $this->app->bindShared('cruddy.compiler', function ($app)
         {
             return new Compiler($app['cruddy.repository'], $app['files'], $app['cruddy.lang']);
+        });
+    }
+
+    /**
+     * Register thumbnail factory.
+     */
+    protected function registerThumbnailFactory()
+    {
+        $this->app->bindShared('Kalnoy\Cruddy\Service\ThumbnailFactory', function ($app)
+        {
+            return new ThumbnailFactory(new ImageManager, $app['cache']->driver());
         });
     }
 }

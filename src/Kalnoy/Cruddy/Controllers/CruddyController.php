@@ -92,6 +92,9 @@ class CruddyController extends Controller {
         $width = Input::get('width');
         $height = Input::get('height');
 
+        if ($width !== null) $width = (int)$width;
+        if ($height !== null) $height = (int)$height;
+
         try
         {
             return $this->thumb->make(public_path($src), $width, $height)->response();

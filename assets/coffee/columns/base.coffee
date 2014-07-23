@@ -6,6 +6,8 @@ class Cruddy.Columns.Base extends Attribute
 
         super
 
+    render: (item) -> @format item[@id]
+
     # Return value's text representation
     format: (value) -> if @formatter? then @formatter.format value else _.escape value
 

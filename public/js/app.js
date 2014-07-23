@@ -34,7 +34,7 @@
 
   $(document.body).on("click", "[data-trigger=fancybox]", function(e) {
     if ($.fancybox.open(e.currentTarget) !== false) {
-      e.preventDefault();
+      return false;
     }
   });
 
@@ -625,8 +625,7 @@
     DataGrid.prototype.className = "table table-hover data-grid";
 
     DataGrid.prototype.events = {
-      "click .sortable": "setOrder",
-      "click .item": "navigate"
+      "click .sortable": "setOrder"
     };
 
     function DataGrid(options) {
@@ -639,6 +638,9 @@
       this.columns = this.entity.columns.models.filter(function(col) {
         return col.isVisible();
       });
+      this.columns.unshift(new Cruddy.Columns.Actions({
+        entity: this.entity
+      }));
       this.listenTo(this.model, "data", this.updateData);
       this.listenTo(this.model, "change:order_by change:order_dir", this.onOrderChange);
       return this.listenTo(this.entity, "change:instance", this.onInstanceChange);
@@ -694,7 +696,7 @@
       Cruddy.router.navigate(this.entity.link($(e.currentTarget).data("id")), {
         trigger: true
       });
-      return this;
+      return false;
     };
 
     DataGrid.prototype.updateData = function(datasource, data) {
@@ -772,7 +774,7 @@
     };
 
     DataGrid.prototype.renderCell = function(col, item) {
-      return "<td class=\"" + (col.getClass()) + "\">" + (col.format(item[col.id])) + "</td>";
+      return "<td class=\"" + (col.getClass()) + "\">" + (col.render(item)) + "</td>";
     };
 
     return DataGrid;
@@ -1874,7 +1876,7 @@
       } else {
         image = thumb(item, this.width, this.height);
       }
-      return "<a href=\"" + (item instanceof File ? item.data || "#" : Cruddy.root + '/' + item) + "\" data-trigger=\"fancybox\">\n    <img src=\"" + image + "\" id=\"" + id + "\">\n</a>";
+      return "<a href=\"" + (item instanceof File ? item.data || "#" : Cruddy.root + '/' + item) + "\" class=\"img-wrap\" data-trigger=\"fancybox\">\n    <img src=\"" + image + "\" id=\"" + id + "\">\n</a>";
     };
 
     ImageList.prototype.createPreviewLoader = function(item, id) {
@@ -3993,6 +3995,10 @@
       return Base.__super__.initialize.apply(this, arguments);
     };
 
+    Base.prototype.render = function(item) {
+      return this.format(item[this.id]);
+    };
+
     Base.prototype.format = function(value) {
       if (this.formatter != null) {
         return this.formatter.format(value);
@@ -4065,6 +4071,33 @@
 
   })(Cruddy.Columns.Base);
 
+  Cruddy.Columns.Actions = (function(_super) {
+    __extends(Actions, _super);
+
+    function Actions() {
+      return Actions.__super__.constructor.apply(this, arguments);
+    }
+
+    Actions.prototype.getHeader = function() {
+      return "";
+    };
+
+    Actions.prototype.getClass = function() {
+      return "col-actions";
+    };
+
+    Actions.prototype.canOrder = function() {
+      return false;
+    };
+
+    Actions.prototype.render = function(item) {
+      return "<div class=\"btn-group btn-group-xs\">\n    <a href=\"" + (Cruddy.baseUrl + "/" + this.entity.link(item.id)) + "\" data-action=\"edit\" class=\"btn btn-default\">\n        " + (b_icon("pencil")) + "\n    </a>\n</div>";
+    };
+
+    return Actions;
+
+  })(Attribute);
+
   Cruddy.formatters = new Factory;
 
   BaseFormatter = (function() {
@@ -4108,7 +4141,7 @@
       if (_.isObject(value)) {
         value = value.title;
       }
-      return "<img src=\"" + (thumb(value, this.options.width, this.options.height)) + "\" " + (this.options.width ? " width=" + this.options.width : "") + " " + (this.options.height ? " height=" + this.options.height : "") + " alt=\"" + (_.escape(value)) + "\">";
+      return "<a href=\"" + (Cruddy.root + "/" + value) + "\" data-trigger=\"fancybox\">\n    <img src=\"" + (thumb(value, this.options.width, this.options.height)) + "\" " + (this.options.width ? " width=" + this.options.width : "") + " " + (this.options.height ? " height=" + this.options.height : "") + " alt=\"" + (_.escape(value)) + "\">\n</a>";
     };
 
     return Image;
@@ -4292,7 +4325,7 @@
     };
 
     Entity.prototype.link = function(id) {
-      return ("" + this.id) + (id != null ? "/" + id : "");
+      return this.id + (id != null ? "/" + id : "");
     };
 
     Entity.prototype.getPluralTitle = function() {

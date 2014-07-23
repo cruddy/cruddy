@@ -12,8 +12,7 @@
         "php": ">=5.4.0",
         "laravel/framework": "~4.1",
         "cartalyst/sentry": "~2.0",
-        "intervention/image": "~1.5",
-        "intervention/imagecache": "~0.5"
+        "intervention/image": "~2.0"
     },
 
     "require-dev": {

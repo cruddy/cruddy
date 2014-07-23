@@ -27,7 +27,7 @@ $(document)
 
 $(document.body)
     .on "click", "[data-trigger=fancybox]", (e) ->
-        e.preventDefault() if $.fancybox.open(e.currentTarget) isnt false
+        return no if $.fancybox.open(e.currentTarget) isnt false
 
         return
 

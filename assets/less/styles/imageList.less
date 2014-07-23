@@ -11,20 +11,29 @@
         margin: 0 0 @thumbnail-padding @thumbnail-padding;
         position: relative;
 
-        height: 80px;
-        min-width: 80px;
+        > .img-wrap {
+            display: block;        
+    
+            height: 80px;
+            line-height: 80px;
+            min-width: 80px;
+            max-width: 100%;
+            
+            text-align: center;
+            text-decoration: none;
+            font-size: 0;
 
-        text-align: center;
+            > img {
+                max-height: 100%;
+                max-width: 100%;
+            }
+        }
 
         &:hover {
             border-color: @link-color;
         }
 
-        img {
-            max-height: 100%;
-        }
-
-        .action-delete {
+        > .action-delete {
             position: absolute;
             top: 1px;
             right: 1px;
@@ -40,12 +49,6 @@
                 background: #000;
                 color: #fff;
             }
-        }
-
-        .fancybox {
-            text-decoration: none;
-            display: block;
-            font-size: 0;
         }
     }
 }

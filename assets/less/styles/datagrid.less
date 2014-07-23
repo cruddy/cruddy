@@ -4,42 +4,66 @@
 
 .data-grid {
 
-    thead {
+    > thead {
         background: #fff;
+
+        > tr > th > .sortable {
+            color: @link-color;
+            cursor: pointer;
+
+            &:hover {
+                text-decoration: underline;
+            }
+
+            &:after {
+                &:extend(.glyphicon);
+
+                font-size: @font-size-small;
+                font-weight: normal;
+                color: @gray-light;
+                padding-left: 0.5em;
+            }
+
+            &.asc:after {
+                content: "\e094";
+            }
+
+            &.desc:after {
+                content: "\e093";
+            }
+        }
     }
 
-    .sortable {
-        color: @link-color;
-        cursor: pointer;
+    > .items > .item {
 
-        &:hover {
-            text-decoration: underline;
-        }
+        &.active {
+            > .col-actions {
+                [data-action=edit] {
+                    cursor: not-allowed;
+                    pointer-events: none; // Future-proof disabling of clicks
+                    .opacity(.65);
+                    .box-shadow(none);
+                }
+            }
 
-        &:after {
-            &:extend(.glyphicon);
+            > :first-child {
+                position: relative;
 
-            font-size: @font-size-small;
-            font-weight: normal;
-            color: @gray-light;
-            padding-left: 0.5em;
-        }
-
-        &.asc:after {
-            content: "\e094";
-        }
-
-        &.desc:after {
-            content: "\e093";
+                &:after {
+                    content: '';
+                    background: rgba(0, 180, 0, 0.65);
+                    position: absolute;
+                    top: 0;
+                    left: 0;
+                    width: 4px;
+                    height: 100%;
+                }
+            }
         }
     }
 
-    // th {
-    //     text-transform: capitalize;
-    // }
-
-    .item {
-        cursor: pointer;
+    .col-actions {
+        width: 1px;
     }
 
     .col-primary, .col-bool {

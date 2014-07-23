@@ -27,7 +27,7 @@ $(document)
 
 $(document.body)
     .on "click", "[data-trigger=fancybox]", (e) ->
-        e.preventDefault() if $.fancybox.open(e.currentTarget) isnt false
+        return no if $.fancybox.open(e.currentTarget) isnt false
 
         return
 
@@ -385,7 +385,6 @@ class DataGrid extends Backbone.View
 
     events: {
         "click .sortable": "setOrder"
-        "click .item": "navigate"
     }
 
     constructor: (options) ->
@@ -396,6 +395,7 @@ class DataGrid extends Backbone.View
     initialize: (options) ->
         @entity = options.entity
         @columns = @entity.columns.models.filter (col) -> col.isVisible()
+        @columns.unshift new Cruddy.Columns.Actions entity: @entity
 
         @listenTo @model, "data", @updateData
         @listenTo @model, "change:order_by change:order_dir", @onOrderChange
@@ -443,7 +443,7 @@ class DataGrid extends Backbone.View
     navigate: (e) ->
         Cruddy.router.navigate @entity.link($(e.currentTarget).data "id"), { trigger: true }
 
-        this
+        return false
 
     updateData: (datasource, data) ->
         @$(".items").replaceWith @renderBody @columns, data
@@ -496,7 +496,7 @@ class DataGrid extends Backbone.View
         return states
 
     renderCell: (col, item) ->
-        """<td class="#{ col.getClass() }">#{ col.format item[col.id] }</td>"""
+        """<td class="#{ col.getClass() }">#{ col.render item }</td>"""
 class FilterList extends Backbone.View
     className: "filter-list"
 
@@ -1324,7 +1324,7 @@ class Cruddy.Inputs.ImageList extends Cruddy.Inputs.FileList
             image = thumb item, @width, @height
 
         """
-        <a href="#{ if item instanceof File then item.data or "#" else Cruddy.root + '/' + item }" data-trigger="fancybox">
+        <a href="#{ if item instanceof File then item.data or "#" else Cruddy.root + '/' + item }" class="img-wrap" data-trigger="fancybox">
             <img src="#{ image }" id="#{ id }">
         </a>
         """
@@ -2624,6 +2624,8 @@ class Cruddy.Columns.Base extends Attribute
 
         super
 
+    render: (item) -> @format item[@id]
+
     # Return value's text representation
     format: (value) -> if @formatter? then @formatter.format value else _.escape value
 
@@ -2649,6 +2651,22 @@ class Cruddy.Columns.Proxy extends Cruddy.Columns.Base
     getClass: -> super + " col-" + @field.get "type"
 class Cruddy.Columns.Computed extends Cruddy.Columns.Base
     getClass: -> super + " col-computed"
+class Cruddy.Columns.Actions extends Attribute
+
+    getHeader: -> ""
+
+    getClass: -> "col-actions"
+
+    canOrder: -> false
+
+    render: (item) -> """
+        <div class="btn-group btn-group-xs">
+            <a href="#{ Cruddy.baseUrl + "/" + @entity.link item.id }" data-action="edit" class="btn btn-default">
+                #{ b_icon("pencil") }
+            </a>
+        </div>
+    """
+
 Cruddy.formatters = new Factory
 
 class BaseFormatter
@@ -2671,7 +2689,9 @@ class Cruddy.formatters.Image extends BaseFormatter
         value = value.title if _.isObject value
 
         """
-        <img src="#{ thumb value, @options.width, @options.height }" #{ if @options.width then " width=#{ @options.width }" else "" } #{ if @options.height then " height=#{ @options.height }" else "" } alt="#{ _.escape value }">
+        <a href="#{ Cruddy.root + "/" + value }" data-trigger="fancybox">
+            <img src="#{ thumb value, @options.width, @options.height }" #{ if @options.width then " width=#{ @options.width }" else "" } #{ if @options.height then " height=#{ @options.height }" else "" } alt="#{ _.escape value }">
+        </a>
         """
 class Cruddy.formatters.Plain extends BaseFormatter
     format: (value) -> _.escape value
@@ -2777,7 +2797,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
     url: (id) -> entity_url @id, id
 
     # Get link to this entity or to the item of the entity
-    link: (id) -> "#{ @id}" + if id? then "/#{ id }" else ""
+    link: (id) -> @id + if id? then "/" + id else ""
 
     # Get title in plural form
     getPluralTitle: -> @attributes.title.plural

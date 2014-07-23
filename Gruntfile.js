@@ -83,6 +83,7 @@ module.exports = function(grunt) {
                     '<%= app %>/columns/base.coffee',
                     '<%= app %>/columns/proxy.coffee',
                     '<%= app %>/columns/computed.coffee',
+                    '<%= app %>/columns/actions.coffee',
 
                     // Formatters
                     '<%= app %>/formatters/base.coffee',

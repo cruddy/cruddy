@@ -4,7 +4,6 @@ class DataGrid extends Backbone.View
 
     events: {
         "click .sortable": "setOrder"
-        "click .item": "navigate"
     }
 
     constructor: (options) ->
@@ -15,6 +14,7 @@ class DataGrid extends Backbone.View
     initialize: (options) ->
         @entity = options.entity
         @columns = @entity.columns.models.filter (col) -> col.isVisible()
+        @columns.unshift new Cruddy.Columns.Actions entity: @entity
 
         @listenTo @model, "data", @updateData
         @listenTo @model, "change:order_by change:order_dir", @onOrderChange
@@ -62,7 +62,7 @@ class DataGrid extends Backbone.View
     navigate: (e) ->
         Cruddy.router.navigate @entity.link($(e.currentTarget).data "id"), { trigger: true }
 
-        this
+        return false
 
     updateData: (datasource, data) ->
         @$(".items").replaceWith @renderBody @columns, data
@@ -115,4 +115,4 @@ class DataGrid extends Backbone.View
         return states
 
     renderCell: (col, item) ->
-        """<td class="#{ col.getClass() }">#{ col.format item[col.id] }</td>"""
+        """<td class="#{ col.getClass() }">#{ col.render item }</td>"""

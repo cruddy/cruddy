@@ -100,7 +100,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
     url: (id) -> entity_url @id, id
 
     # Get link to this entity or to the item of the entity
-    link: (id) -> "#{ @id}" + if id? then "/#{ id }" else ""
+    link: (id) -> @id + if id? then "/" + id else ""
 
     # Get title in plural form
     getPluralTitle: -> @attributes.title.plural

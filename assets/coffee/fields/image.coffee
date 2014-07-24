@@ -34,7 +34,7 @@ class Cruddy.Fields.Image.Formatter
         for image in value
             html += """
                 <li class="image-group-item">
-                    <a href="#{ @imageUrl image }" data-trigger="fancybox">
+                    <a href="#{ @imageUrl image }" class="img-wrap" data-trigger="fancybox">
                         <img src="#{ @imageThumb image }">
                     </a>
                 </li>

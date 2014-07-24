@@ -3441,7 +3441,7 @@
       }
       for (_i = 0, _len = value.length; _i < _len; _i++) {
         image = value[_i];
-        html += "<li class=\"image-group-item\">\n    <a href=\"" + (this.imageUrl(image)) + "\" data-trigger=\"fancybox\">\n        <img src=\"" + (this.imageThumb(image)) + "\">\n    </a>\n</li>";
+        html += "<li class=\"image-group-item\">\n    <a href=\"" + (this.imageUrl(image)) + "\" class=\"img-wrap\" data-trigger=\"fancybox\">\n        <img src=\"" + (this.imageThumb(image)) + "\">\n    </a>\n</li>";
       }
       return html + "</ul>";
     };

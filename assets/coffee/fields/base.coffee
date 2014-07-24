@@ -80,6 +80,8 @@ class Cruddy.Fields.BaseView extends Cruddy.Layout.Element
     # The field is not visible when model is new and field is not editable or computed
     isVisible: -> @isEditable or not @model.isNew()
 
+    isFocusable: -> @field.isEditable @model
+
     dispose: -> this
 
     remove: ->

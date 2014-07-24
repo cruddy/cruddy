@@ -23,7 +23,7 @@ class Cruddy.Layout.Field extends Cruddy.Layout.Element
 
         super
 
-    isFocusable: -> @fieldView and @field.isEditable(@model)
+    isFocusable: -> @fieldView and @fieldView.isFocusable()
 
     focus: ->
         @fieldView.focus() if @fieldView

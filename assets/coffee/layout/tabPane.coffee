@@ -34,7 +34,7 @@ class Cruddy.Layout.TabPane.Header extends Cruddy.View
 
     events:
         "shown.bs.tab": ->
-            @model.focus()
+            after_break => @model.focus()
 
             return
 

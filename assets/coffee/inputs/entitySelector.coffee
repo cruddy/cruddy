@@ -69,8 +69,6 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
         instance = @reference.createInstance attributes: @createAttributes
 
-        console.log instance
-
         @innerForm = new Cruddy.Entity.Form
             model: instance
             inner: yes

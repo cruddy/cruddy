@@ -1559,7 +1559,6 @@
       instance = this.reference.createInstance({
         attributes: this.createAttributes
       });
-      console.log(instance);
       this.innerForm = new Cruddy.Entity.Form({
         model: instance,
         inner: true
@@ -2611,7 +2610,11 @@
 
     Header.prototype.events = {
       "shown.bs.tab": function() {
-        this.model.focus();
+        after_break((function(_this) {
+          return function() {
+            return _this.model.focus();
+          };
+        })(this));
       }
     };
 
@@ -2713,7 +2716,7 @@
     };
 
     Field.prototype.isFocusable = function() {
-      return this.fieldView && this.field.isEditable(this.model);
+      return this.fieldView && this.fieldView.isFocusable();
     };
 
     Field.prototype.focus = function() {
@@ -2895,6 +2898,10 @@
 
     BaseView.prototype.isVisible = function() {
       return this.isEditable || !this.model.isNew();
+    };
+
+    BaseView.prototype.isFocusable = function() {
+      return this.field.isEditable(this.model);
     };
 
     BaseView.prototype.dispose = function() {
@@ -3677,10 +3684,13 @@
     };
 
     EmbeddedView.prototype.template = function() {
-      var buttons, ref;
-      ref = this.field.getReference();
-      buttons = this.isEditable && ref.createPermitted() ? b_btn("", "plus", ["default", "create"]) : "";
+      var buttons;
+      buttons = this.canCreate() ? b_btn("", "plus", ["default", "create"]) : "";
       return "<div class='header field-label'>\n    " + (this.helpTemplate()) + (_.escape(this.field.getLabel())) + " " + buttons + "\n</div>\n<div class=\"error-container has-error\">" + (this.errorTemplate()) + "</div>\n<div class=\"body\" id=\"" + (this.componentId("body")) + "\"></div>";
+    };
+
+    EmbeddedView.prototype.canCreate = function() {
+      return this.isEditable && this.field.getReference().createPermitted();
     };
 
     EmbeddedView.prototype.dispose = function() {
@@ -3700,10 +3710,23 @@
       return EmbeddedView.__super__.remove.apply(this, arguments);
     };
 
+    EmbeddedView.prototype.isFocusable = function() {
+      if (!EmbeddedView.__super__.isFocusable.apply(this, arguments)) {
+        return false;
+      }
+      return (this.field.isMultiple() && this.canCreate()) || (!this.field.isMultiple() && (this.focusable != null));
+    };
+
     EmbeddedView.prototype.focus = function() {
-      var _ref1;
-      if ((_ref1 = this.focusable) != null) {
-        _ref1.focus();
+      var _ref1, _ref2;
+      if (this.field.isMultiple()) {
+        if ((_ref1 = this.createButton[0]) != null) {
+          _ref1.focus();
+        }
+      } else {
+        if ((_ref2 = this.focusable) != null) {
+          _ref2.focus();
+        }
       }
       return this;
     };

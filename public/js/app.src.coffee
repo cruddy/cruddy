@@ -1083,8 +1083,6 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
         instance = @reference.createInstance attributes: @createAttributes
 
-        console.log instance
-
         @innerForm = new Cruddy.Entity.Form
             model: instance
             inner: yes
@@ -1819,7 +1817,7 @@ class Cruddy.Layout.TabPane.Header extends Cruddy.View
 
     events:
         "shown.bs.tab": ->
-            @model.focus()
+            after_break => @model.focus()
 
             return
 
@@ -1889,7 +1887,7 @@ class Cruddy.Layout.Field extends Cruddy.Layout.Element
 
         super
 
-    isFocusable: -> @fieldView and @field.isEditable(@model)
+    isFocusable: -> @fieldView and @fieldView.isFocusable()
 
     focus: ->
         @fieldView.focus() if @fieldView
@@ -2011,6 +2009,8 @@ class Cruddy.Fields.BaseView extends Cruddy.Layout.Element
     # Get whether the view is visible
     # The field is not visible when model is new and field is not editable or computed
     isVisible: -> @isEditable or not @model.isNew()
+
+    isFocusable: -> @field.isEditable @model
 
     dispose: -> this
 
@@ -2442,9 +2442,7 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
         this
 
     template: ->
-        ref = @field.getReference()
-
-        buttons = if @isEditable and ref.createPermitted() then b_btn("", "plus", ["default", "create"]) else ""
+        buttons = if @canCreate() then b_btn("", "plus", ["default", "create"]) else ""
 
         """
         <div class='header field-label'>
@@ -2453,6 +2451,8 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
         <div class="error-container has-error">#{ @errorTemplate() }</div>
         <div class="body" id="#{ @componentId "body" }"></div>
         """
+
+    canCreate: -> @isEditable and @field.getReference().createPermitted()
 
     dispose: ->
         view.remove() for cid, view of @views
@@ -2466,8 +2466,13 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
 
         super
 
+    isFocusable: ->
+        return no if not super
+
+        return (@field.isMultiple() and @canCreate()) or (not @field.isMultiple() and @focusable?)
+
     focus: ->
-        @focusable?.focus()
+        if @field.isMultiple() then @createButton[0]?.focus() else @focusable?.focus()
 
         this
 

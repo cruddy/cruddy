@@ -84,9 +84,7 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
         this
 
     template: ->
-        ref = @field.getReference()
-
-        buttons = if @isEditable and ref.createPermitted() then b_btn("", "plus", ["default", "create"]) else ""
+        buttons = if @canCreate() then b_btn("", "plus", ["default", "create"]) else ""
 
         """
         <div class='header field-label'>
@@ -95,6 +93,8 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
         <div class="error-container has-error">#{ @errorTemplate() }</div>
         <div class="body" id="#{ @componentId "body" }"></div>
         """
+
+    canCreate: -> @isEditable and @field.getReference().createPermitted()
 
     dispose: ->
         view.remove() for cid, view of @views
@@ -108,8 +108,13 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
 
         super
 
+    isFocusable: ->
+        return no if not super
+
+        return (@field.isMultiple() and @canCreate()) or (not @field.isMultiple() and @focusable?)
+
     focus: ->
-        @focusable?.focus()
+        if @field.isMultiple() then @createButton[0]?.focus() else @focusable?.focus()
 
         this
 

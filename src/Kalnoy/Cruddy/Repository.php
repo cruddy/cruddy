@@ -2,6 +2,7 @@
 
 namespace Kalnoy\Cruddy;
 
+use RuntimeException;
 use Illuminate\Container\Container;
 
 /**

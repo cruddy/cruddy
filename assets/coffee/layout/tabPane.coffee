@@ -8,7 +8,7 @@ class Cruddy.Layout.TabPane extends Cruddy.Layout.BaseFieldContainer
         
         @$el.attr "id", @cid
 
-        @listenTo @model, "request", -> @header.resetErrors()
+        @listenTo @model, "request", -> @header.resetErrors() if @header
 
         return this
 

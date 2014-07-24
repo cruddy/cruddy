@@ -2559,7 +2559,9 @@
       }
       this.$el.attr("id", this.cid);
       this.listenTo(this.model, "request", function() {
-        return this.header.resetErrors();
+        if (this.header) {
+          return this.header.resetErrors();
+        }
       });
       return this;
     };

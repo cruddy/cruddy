@@ -24,7 +24,7 @@ class Row extends Container {
         }
         else
         {
-            $this->fields($items);
+            $this->field($items);
         }
     }
 
@@ -35,9 +35,11 @@ class Row extends Container {
      *
      * @return $this
      */
-    public function fields($items)
+    public function field($items)
     {
-        foreach ((array)$items as $item)
+        $items = is_array($items) ? $items : func_get_args();
+
+        foreach ($items as $item)
         {
            $span = null;
 

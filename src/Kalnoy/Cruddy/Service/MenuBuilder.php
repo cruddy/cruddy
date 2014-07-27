@@ -49,7 +49,7 @@ class MenuBuilder {
      *
      * @var array
      */
-    protected $reserved = [ 'entity', 'href', 'route', 'url', 'permissions', 'icon', 'secure', 'label' ];
+    protected $reserved = [ 'entity', 'href', 'route', 'url', 'permissions', 'icon', 'secure', 'label', 'items' ];
 
     /**
      * Initialize menu.
@@ -69,28 +69,28 @@ class MenuBuilder {
      * Render nav.
      *
      * @param array  $items
-     * @param string $class
+     * @param array $options
      *
      * @return string
      */
-    public function render(array $items, $class = 'nav navbar-nav')
+    public function render(array $items, $options = 'nav navbar-nav')
     {
         $items = $this->normalizeItems($items);
 
         if (empty($items)) return '';
 
-        return $this->renderMenu($items, $class);
+        return $this->renderMenu($items, is_array($options) ? $options : [ 'class' => $options ]);
     }
 
     /**
      * Render a menu with normalized items.
      *
      * @param array  $items
-     * @param string $class
+     * @param array $options
      *
      * @return string
      */
-    protected function renderMenu(array $items, $class)
+    protected function renderMenu(array $items, array $options)
     {
         $html = array_reduce($items, function ($carry, $item)
         {
@@ -98,7 +98,9 @@ class MenuBuilder {
 
         }, '');
 
-        return "<ul class=\"{$class}\">{$html}</ul>";
+        $options = $this->html->attributes($options);
+
+        return "<ul{$options}>{$html}</ul>";
     }
 
     /**
@@ -215,11 +217,10 @@ class MenuBuilder {
     public function dropdown($label, array $items)
     {
         $items = $this->normalizeItems($items);
-        $label = $this->html->entities($this->lang->tryTranslate($label));
 
         if (empty($items)) return '';
 
-        return $this->renderDropdown($label, $items);
+        return $this->renderItem([ 'label' => $label, 'items' => $items]);
     }
 
     /**
@@ -249,14 +250,30 @@ class MenuBuilder {
         if ($data === '-') return '<li class="divider"></li>';
 
         $label = $this->getLabel($data);
-
-        if (isset($data['items'])) return $this->renderDropdown($label, $data['items']);
-
         $href = $this->getHref($data);
+        $inner = '';
+
+        if (isset($data['items']))
+        {
+            $inner = $this->renderMenu($data['items'], [ 'class' => 'dropdown-menu' ]);
+
+            $data['class'] = isset($data['class']) ? 'dropdown-toggle '.$data['class'] : 'dropdown-toggle';
+            $data['data-toggle'] = 'dropdown';
+        }
 
         $data = array_except($data, $this->reserved);
 
-        return $this->wrap('<a href="'.$href.'"'.$this->html->attributes($data).'>'.$label.'</a>');
+        return $this->wrap('<a href="'.$href.'"'.$this->html->attributes($data).'>'.$label.'</a>'.$inner);
+    }
+
+    /**
+     * Get a caret element.
+     *
+     * @return string
+     */
+    public function caret()
+    {
+        return '<span class="caret"></span>';
     }
 
     /**
@@ -294,6 +311,8 @@ class MenuBuilder {
      */
     protected function getHref(array $options)
     {
+        if (isset($options['items'])) return '#';
+
         if (isset($options['href'])) return $options['href'];
 
         if (isset($options['url']))
@@ -332,7 +351,7 @@ class MenuBuilder {
     }
 
     /**
-     * Get href from route.
+     * Get a href from route.
      *
      * @param string|array $route
      *
@@ -346,7 +365,7 @@ class MenuBuilder {
     }
 
     /**
-     * Get label from options.
+     * Get a label from options.
      *
      * @param array $options
      *
@@ -369,6 +388,11 @@ class MenuBuilder {
         if (isset($options['icon']))
         {
             $label = $this->icon($options['icon']).($label ? ' '.$label : '');
+        }
+
+        if (isset($options['items']))
+        {
+            $label .= ' '.$this->caret();
         }
 
         return $label;

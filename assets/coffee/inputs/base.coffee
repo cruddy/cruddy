@@ -33,3 +33,7 @@ class Cruddy.Inputs.Base extends Cruddy.View
         @model.set @key, value, options
 
         this
+
+    emptyValue: -> null
+
+    empty: -> @model.set @key, @emptyValue()

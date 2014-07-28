@@ -110,6 +110,7 @@ module.exports = function(grunt) {
                     '<%= vendor %>/jquery/jquery.js',
                     '<%= vendor %>/fancybox/source/jquery.fancybox.js',
                     '<%= vendor %>/jquery-maskedinput/dist/jquery.maskedinput.js',
+                    '<%= app %>/jquery.query.js',
 
                     '<%= vendor %>/underscore/underscore.js',
                     '<%= vendor %>/backbone/backbone.js',

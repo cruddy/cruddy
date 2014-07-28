@@ -43,4 +43,7 @@
     'confirm_discard' => 'Êtes-vous sûr de vouloir abandonner toutes les modifications ?',
     'confirm_abort' => 'Êtes-vous sûr de vouloir abandonner la demande ?',
     'confirm_delete' => 'Êtes-vous sûr de vouloir supprimer l\'élément ? Vous ne pourrez plus le récupérer !',
+
+    'filter_apply' => 'Aappliquer',
+    'filter_reset' => 'Remettre',
 ];

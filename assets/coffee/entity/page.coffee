@@ -4,6 +4,7 @@ class Cruddy.Entity.Page extends Cruddy.View
     events: {
         "click .btn-create": "create"
         "click .btn-refresh": "refresh"
+        "click [data-navigate]": "navigate"
     }
 
     constructor: (options) ->
@@ -12,27 +13,97 @@ class Cruddy.Entity.Page extends Cruddy.View
         super
 
     initialize: (options) ->
-        @listenTo @model, "change:instance", @toggleForm
+        @dataSource = @model.createDataSource @getDatasourceData()
+        
+        @listenTo @dataSource, "change", (model) -> Cruddy.router.refreshQuery @getDatasourceDefaults(), model.attributes
+
+        @listenTo Cruddy.router, "route:index", =>
+            @dataSource.holdFetch().set(@getDatasourceData()).fetch()
+
+            @_toggleForm()
 
         super
 
-    toggleForm: (entity, instance) ->
-        if @form?
-            @stopListening @form.model
+    getDatasourceDefaults: ->
+        return @dsDefaults if @dsDefaults
+
+        @dsDefaults = data =
+            current_page: 1
+            order_by: @model.get "order_by"
+            order_dir: "asc"
+            search: ""
+
+        if data.order_by and (col = @model.columns.get(data.order_by))
+            data.order_dir = col.get "order_dir"
+
+        return data
+
+    getDatasourceData: -> $.extend {}, @getDatasourceDefaults(), Cruddy.router.query.keys
+
+    navigate: (e) ->
+        @display $(e.currentTarget).data("navigate")
+
+        return false
+
+    display: (id) -> @_toggleForm(id).done => if id then Cruddy.router.setQuery "id", id else Cruddy.router.removeQuery "id"
+
+    _toggleForm: (instanceId) ->
+        instanceId = instanceId ? Cruddy.router.getQuery("id") or null
+
+        dfd = $.Deferred()
+
+        if @form
+            compareId = if @form.model.isNew() then "new" else @form.model.id
+
+            if instanceId is compareId or not @form.confirmClose()
+
+                dfd.reject()
+
+                return dfd.promise()
+
+        if @form
             @form.remove()
+            @form = null
+            @model.set "instance", null
 
-        if instance?
-            @listenTo instance, "sync", -> Cruddy.router.navigate instance.link()
+        if instanceId is "new"
+            @_displayForm instance = @model.createInstance()
 
-            @form = new Cruddy.Entity.Form model: instance
-            @$el.append @form.render().$el
+            dfd.resolve instance
 
-            after_break => @form.show()
+            return dfd.promise()
+
+        if instanceId
+            @model.load(instanceId)
+                .done (instance) =>
+                    @_displayForm instance
+                    dfd.resolve instance
+
+                .fail -> dfd.reject()
+        else
+            dfd.resolve()
+
+        return dfd.promise()
+
+    _displayForm: (instance) ->
+        @form = new Cruddy.Entity.Form model: instance
+        @$el.append @form.render().$el
+
+        @form.once "close", =>
+            Cruddy.router.removeQuery "id"
+            @_toggleForm()
+
+        @listenTo instance, "sync", (model) -> Cruddy.router.setQuery "id", model.id
+        @form.once "remove", => @stopListening instance
+
+        after_break => @form.show()
+
+        @model.set "instance", instance
 
         this
 
     create: ->
-        Cruddy.router.navigate @model.link("create"), trigger: true
+        @display "new"
 
         this
 
@@ -45,18 +116,14 @@ class Cruddy.Entity.Page extends Cruddy.View
         this
 
     render: ->
-        @dispose()
-
         @$el.html @template()
-
-        @dataSource = @model.createDataSource()
         
         @dataSource.fetch()
 
         # Search input
         @search = @createSearchInput @dataSource
 
-        @$component("search").append @search.render().el
+        @$component("search").append @search.render().$el
 
         # Filters
         if not _.isEmpty filters = @dataSource.entity.get "filters"
@@ -69,6 +136,8 @@ class Cruddy.Entity.Page extends Cruddy.View
         @pagination = @createPagination @dataSource
         
         @$component("body").append(@dataGrid.render().el).append(@pagination.render().el)
+
+        @_toggleForm()
 
         this
 
@@ -115,17 +184,12 @@ class Cruddy.Entity.Page extends Cruddy.View
 
         html
 
-    dispose: ->
+    remove: ->
         @form?.remove()
         @filterList?.remove()
         @dataGrid?.remove()
         @pagination?.remove()
         @search?.remove()
         @dataSource?.stopListening()
-
-        this
-
-    remove: ->
-        @dispose()
 
         super

@@ -155,17 +155,15 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
             model: @dataSource
             key: "search"
 
-        @$el.prepend @searchInput.render().el
+        @$el.prepend @searchInput.render().$el
 
-        @searchInput.$el.wrap "<div class='#{ if @allowCreate then "input-group" else "" } search-input-container'></div>"
+        @searchInput.$el.wrap "<div class=search-input-container></div>"
 
-        @searchInput.$el.after """
-            <div class='input-group-btn'>
-                <button type='button' class='btn btn-default btn-add' tabindex='-1'>
-                    <span class='glyphicon glyphicon-plus'></span>
-                </button>
-            </div>
-            """ if @allowCreate
+        @searchInput.appendButton """
+            <button type="button" class='btn btn-default btn-add' tabindex='-1'>
+                <span class='glyphicon glyphicon-plus'></span>
+            </button>
+        """ if @allowCreate
 
         this
 

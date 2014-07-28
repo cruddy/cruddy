@@ -90,34 +90,74 @@ class App extends Backbone.Model
 class Router extends Backbone.Router
 
     initialize: ->
+        @query = $.query
+
         entities = Cruddy.entities
 
         @addRoute "index", entities
-        @addRoute "update", entities, "([^/]+)"
-        @addRoute "create", entities, "create"
+        #@addRoute "update", entities, "([^/]+)"
+        #@addRoute "create", entities, "create"
 
         root = Cruddy.root + "/" + Cruddy.uri + "/"
         history = Backbone.history
-        hashStripper = /#.*$/
 
-        $(document.body).on "click", "a", (e) ->
-            fragment = e.currentTarget.href.replace hashStripper, ""
-            oldFragment = history.fragment
+        $(document.body).on "click", "a", (e) =>
+            fragment = e.currentTarget.href
+            
+            return if fragment.indexOf(root) isnt 0
 
-            if fragment.indexOf(root) is 0 and (fragment = fragment.slice root.length) and fragment isnt oldFragment
-                loaded = history.loadUrl fragment
+            fragment = history.getFragment fragment.slice root.length
 
-                # Backbone will set fragment even if no route matched so we need to
-                # restore old fragment
-                history.fragment = oldFragment
+            # Try to find a handler for the fragment and if it is found, navigate
+            # to it and cancel the default event
+            for handler in history.handlers when handler.route.test(fragment)
+                e.preventDefault()
+                history.navigate fragment, trigger: yes
 
-                if loaded
-                    e.preventDefault()
-                    history.navigate fragment
+                break
 
             return
 
         this
+
+    execute: ->
+        @query = $.query.parseNew location.search
+
+        super
+
+    navigate: (fragment) ->
+        @query = @query.load fragment
+
+        super
+
+    getQuery: (key) -> @query.GET key
+
+    setQuery: (key, value) -> @updateQuery @query.set key, value
+
+    refreshQuery: (defaults, actual) ->
+        q = @query.copy()
+
+        for key, val of defaults
+            if (value = actual[key]) isnt val
+                q.SET key, value
+            else
+                q.REMOVE key
+
+        @updateQuery q
+
+    removeQuery: (key) -> @updateQuery @query.remove key
+
+    updateQuery: (query) ->
+        if (qs = query.toString()) isnt @query.toString()
+            @query = query
+
+            path = location.pathname
+            uri = "/" + Cruddy.uri + "/"
+            path = path.slice uri.length if path.indexOf(uri) is 0
+
+            Backbone.history.navigate path + qs
+
+        return this
 
     createApp: ->
         if not Cruddy.app
@@ -129,7 +169,7 @@ class Router extends Backbone.Router
     addRoute: (name, entities, appendage = null) ->
         route = "^(#{ entities })"
         route += "/" + appendage if appendage
-        route += "$"
+        route += "(\\?.*)?$"
 
         @route new RegExp(route), name
 
@@ -150,9 +190,9 @@ class Router extends Backbone.Router
 
     index: (entity) -> @resolveEntity entity
 
-    create: (entity) -> @resolveEntity entity, (entity) -> entity.actionCreate()
+    #create: (entity) -> @resolveEntity entity, (entity) -> entity.actionCreate()
 
-    update: (entity, id) -> @resolveEntity entity, (entity) -> entity.actionUpdate id
+    #update: (entity, id) -> @resolveEntity entity, (entity) -> entity.actionUpdate id
 
 $ ->
     Cruddy.router = new Router

@@ -8,7 +8,7 @@ class Cruddy.Inputs.NumberFilter extends Cruddy.Inputs.Base
     initialize: ->
         @defaultOp = "="
 
-        @setValue @makeValue(@defaultOp, ""), silent: yes if not @getValue()
+        @setValue @emptyValue(), silent: yes if not @getValue()
 
         super
 
@@ -65,3 +65,5 @@ class Cruddy.Inputs.NumberFilter extends Cruddy.Inputs.Base
     """
 
     makeValue: (op, val) -> { op: op, val: val }
+
+    emptyValue: -> @makeValue @defaultOp, ""

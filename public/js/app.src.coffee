@@ -183,7 +183,7 @@ class DataSource extends Backbone.Model
         ) if @filter?
 
         @on "change", => @fetch() unless @_hold
-        @on "change:search", => @set current_page: 1, silent: yes
+        @on "change:search", => @set current_page: 1, silent: yes unless @_hold
 
     hasData: -> not _.isEmpty @get "data"
 
@@ -193,7 +193,14 @@ class DataSource extends Backbone.Model
 
     inProgress: -> @request?
 
+    holdFetch: ->
+        @_hold = yes
+
+        return this
+
     fetch: ->
+        @_hold = no
+
         @request.abort() if @request?
 
         @options.data = @data()
@@ -319,6 +326,8 @@ class Pagination extends Backbone.View
         "click a": "navigate"
 
     initialize: (options) ->
+        router = Cruddy.router
+
         @listenTo @model, "data", @render
         @listenTo @model, "request", @disable
 
@@ -502,11 +511,28 @@ class FilterList extends Backbone.View
 
     tagName: "fieldset"
 
+    events:
+        "click .btn-apply": "apply"
+        "click .btn-reset": "reset"
+
     initialize: (options) ->
         @entity = options.entity
         @availableFilters = options.filters
+        @filterModel = new Backbone.Model
+
+        @listenTo @model, "change", (model) -> @filterModel.set model.attributes
 
         this
+
+    apply: ->
+        @model.set @filterModel.attributes
+
+        return this
+
+    reset: ->
+        input.empty() for input in @filters
+
+        @apply()
 
     render: ->
         @dispose()
@@ -514,14 +540,18 @@ class FilterList extends Backbone.View
         @$el.html @template()
         @items = @$ ".filter-list-container"
 
-        for filter in @availableFilters when (field = @entity.fields.get filter) and field.canFilter() and (input = field.createFilterInput @model)
+        for filter in @availableFilters when (field = @entity.fields.get filter) and field.canFilter() and (input = field.createFilterInput @filterModel)
             @filters.push input
             @items.append input.render().el
             input.$el.wrap("""<div class="form-group filter filter-#{ field.id }"></div>""").parent().before "<label>#{ field.getFilterLabel() }</label>"
 
         this
 
-    template: -> """<div class="filter-list-container"></div>"""
+    template: -> """
+        <div class="filter-list-container"></div>
+        <button type="button" class="btn btn-primary btn-apply">#{ Cruddy.lang.filter_apply }</button>
+        <button type="button" class="btn btn-default btn-reset">#{ Cruddy.lang.filter_reset }</button>
+    """
 
     dispose: ->
         filter.remove() for filter in @filters if @filters?
@@ -569,6 +599,10 @@ class Cruddy.Inputs.Base extends Cruddy.View
         @model.set @key, value, options
 
         this
+
+    emptyValue: -> null
+
+    empty: -> @model.set @key, @emptyValue()
 # Renders formatted text and doesn't have any editing features.
 class Cruddy.Inputs.Static extends Cruddy.Inputs.Base
     tagName: "p"
@@ -1002,6 +1036,8 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         this
 
+    emptyValue: -> if @multiple then [] else null
+
     dispose: ->
         @selector?.remove()
         @innerForm?.remove()
@@ -1169,17 +1205,15 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
             model: @dataSource
             key: "search"
 
-        @$el.prepend @searchInput.render().el
+        @$el.prepend @searchInput.render().$el
 
-        @searchInput.$el.wrap "<div class='#{ if @allowCreate then "input-group" else "" } search-input-container'></div>"
+        @searchInput.$el.wrap "<div class=search-input-container></div>"
 
-        @searchInput.$el.after """
-            <div class='input-group-btn'>
-                <button type='button' class='btn btn-default btn-add' tabindex='-1'>
-                    <span class='glyphicon glyphicon-plus'></span>
-                </button>
-            </div>
-            """ if @allowCreate
+        @searchInput.appendButton """
+            <button type="button" class='btn btn-default btn-add' tabindex='-1'>
+                <span class='glyphicon glyphicon-plus'></span>
+            </button>
+        """ if @allowCreate
 
         this
 
@@ -1336,28 +1370,42 @@ class Cruddy.Inputs.ImageList extends Cruddy.Inputs.FileList
 
         reader
 # Search input implements "change when type" and also allows to clear text with Esc
-class Cruddy.Inputs.Search extends Cruddy.Inputs.Text
+class Cruddy.Inputs.Search extends Cruddy.View
+    className: "input-group"
 
-    attributes:
-        type: "search"
-        placeholder: Cruddy.lang.search
+    events:
+        "click .btn": "search"
 
-    scheduleChange: ->
-        clearTimeout @timeout if @timeout?
-        @timeout = setTimeout (=> @change()), 300
-
-        this
-
-    keydown: (e) ->
-
-        # Backspace
-        if e.keyCode is 8
-            @model.set @key, ""
-            return false
-
-        @scheduleChange()
+    initialize: (options) ->
+        @input = new Cruddy.Inputs.Text
+            model: @model
+            key: options.key
+            attributes:
+                type: "search"
+                placeholder: Cruddy.lang.search
 
         super
+
+    search: -> @input.change()
+
+    appendButton: (btn) -> @$btns.append btn
+
+    render: ->
+        @$el.append @input.render().$el
+        @$el.append @$btns = $ """<div class="input-group-btn"></div>"""
+
+        @appendButton """
+            <button type="button" class="btn btn-default">
+                <span class="glyphicon glyphicon-search"></span>
+            </button>
+        """
+
+        return this
+
+    focus: ->
+        @input.focus()
+
+        return this
 class Cruddy.Inputs.Slug extends Backbone.View
     events:
         "click .btn": "toggleSyncing"
@@ -1594,7 +1642,7 @@ class Cruddy.Inputs.NumberFilter extends Cruddy.Inputs.Base
     initialize: ->
         @defaultOp = "="
 
-        @setValue @makeValue(@defaultOp, ""), silent: yes if not @getValue()
+        @setValue @emptyValue(), silent: yes if not @getValue()
 
         super
 
@@ -1651,6 +1699,8 @@ class Cruddy.Inputs.NumberFilter extends Cruddy.Inputs.Base
     """
 
     makeValue: (op, val) -> { op: op, val: val }
+
+    emptyValue: -> @makeValue @defaultOp, ""
 class Cruddy.Inputs.DateTime extends Cruddy.Inputs.BaseText
     tagName: "input"
 
@@ -2666,7 +2716,7 @@ class Cruddy.Columns.Actions extends Attribute
 
     render: (item) -> """
         <div class="btn-group btn-group-xs">
-            <a href="#{ Cruddy.baseUrl + "/" + @entity.link item.id }" data-action="edit" class="btn btn-default">
+            <a href="#{ Cruddy.baseUrl + "/" + @entity.link() + "?id=" + item.id }" data-action="edit" data-navigate="#{ item.id }" class="btn btn-default">
                 #{ b_icon("pencil") }
             </a>
         </div>
@@ -2722,11 +2772,8 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
     # Create a datasource that will require specified columns and can be filtered
     # by specified filters
-    createDataSource: (columns = null) ->
-        data = { order_by: @get("order_by") }
-        data.order_dir = if data.order_by? then @columns.get(data.order_by).get "order_dir" else "asc"
-
-        new DataSource data, { entity: this, columns: columns, filter: new Backbone.Model }
+    createDataSource: (data) ->
+        new DataSource data, { entity: this, filter: new Backbone.Model }
 
     # Create filters for specified columns
     createFilters: (columns = @columns) ->
@@ -2766,7 +2813,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
     search: (options = {}) -> new SearchDataSource {}, $.extend { url: @url() }, options
 
     # Load a model
-    load: (id) ->
+    load: (id, success, fail) ->
         xhr = $.ajax
             url: @url(id)
             type: "GET"
@@ -2774,10 +2821,15 @@ class Cruddy.Entity.Entity extends Backbone.Model
             cache: yes
             displayLoading: yes
 
-        xhr.then (resp) =>
+        xhr = xhr.then (resp) =>
             resp = resp.data
 
             @createInstance resp
+
+        xhr.done success if success
+        xhr.fail fail if fail
+
+        return xhr
 
     # Load a model and set it as current
     actionUpdate: (id) -> @load(id).then (instance) =>
@@ -2939,6 +2991,7 @@ class Cruddy.Entity.Page extends Cruddy.View
     events: {
         "click .btn-create": "create"
         "click .btn-refresh": "refresh"
+        "click [data-navigate]": "navigate"
     }
 
     constructor: (options) ->
@@ -2947,27 +3000,97 @@ class Cruddy.Entity.Page extends Cruddy.View
         super
 
     initialize: (options) ->
-        @listenTo @model, "change:instance", @toggleForm
+        @dataSource = @model.createDataSource @getDatasourceData()
+        
+        @listenTo @dataSource, "change", (model) -> Cruddy.router.refreshQuery @getDatasourceDefaults(), model.attributes
+
+        @listenTo Cruddy.router, "route:index", =>
+            @dataSource.holdFetch().set(@getDatasourceData()).fetch()
+
+            @_toggleForm()
 
         super
 
-    toggleForm: (entity, instance) ->
-        if @form?
-            @stopListening @form.model
+    getDatasourceDefaults: ->
+        return @dsDefaults if @dsDefaults
+
+        @dsDefaults = data =
+            current_page: 1
+            order_by: @model.get "order_by"
+            order_dir: "asc"
+            search: ""
+
+        if data.order_by and (col = @model.columns.get(data.order_by))
+            data.order_dir = col.get "order_dir"
+
+        return data
+
+    getDatasourceData: -> $.extend {}, @getDatasourceDefaults(), Cruddy.router.query.keys
+
+    navigate: (e) ->
+        @display $(e.currentTarget).data("navigate")
+
+        return false
+
+    display: (id) -> @_toggleForm(id).done => if id then Cruddy.router.setQuery "id", id else Cruddy.router.removeQuery "id"
+
+    _toggleForm: (instanceId) ->
+        instanceId = instanceId ? Cruddy.router.getQuery("id") or null
+
+        dfd = $.Deferred()
+
+        if @form
+            compareId = if @form.model.isNew() then "new" else @form.model.id
+
+            if instanceId is compareId or not @form.confirmClose()
+
+                dfd.reject()
+
+                return dfd.promise()
+
+        if @form
             @form.remove()
+            @form = null
+            @model.set "instance", null
 
-        if instance?
-            @listenTo instance, "sync", -> Cruddy.router.navigate instance.link()
+        if instanceId is "new"
+            @_displayForm instance = @model.createInstance()
 
-            @form = new Cruddy.Entity.Form model: instance
-            @$el.append @form.render().$el
+            dfd.resolve instance
 
-            after_break => @form.show()
+            return dfd.promise()
+
+        if instanceId
+            @model.load(instanceId)
+                .done (instance) =>
+                    @_displayForm instance
+                    dfd.resolve instance
+
+                .fail -> dfd.reject()
+        else
+            dfd.resolve()
+
+        return dfd.promise()
+
+    _displayForm: (instance) ->
+        @form = new Cruddy.Entity.Form model: instance
+        @$el.append @form.render().$el
+
+        @form.once "close", =>
+            Cruddy.router.removeQuery "id"
+            @_toggleForm()
+
+        @listenTo instance, "sync", (model) -> Cruddy.router.setQuery "id", model.id
+        @form.once "remove", => @stopListening instance
+
+        after_break => @form.show()
+
+        @model.set "instance", instance
 
         this
 
     create: ->
-        Cruddy.router.navigate @model.link("create"), trigger: true
+        @display "new"
 
         this
 
@@ -2980,18 +3103,14 @@ class Cruddy.Entity.Page extends Cruddy.View
         this
 
     render: ->
-        @dispose()
-
         @$el.html @template()
-
-        @dataSource = @model.createDataSource()
         
         @dataSource.fetch()
 
         # Search input
         @search = @createSearchInput @dataSource
 
-        @$component("search").append @search.render().el
+        @$component("search").append @search.render().$el
 
         # Filters
         if not _.isEmpty filters = @dataSource.entity.get "filters"
@@ -3004,6 +3123,8 @@ class Cruddy.Entity.Page extends Cruddy.View
         @pagination = @createPagination @dataSource
         
         @$component("body").append(@dataGrid.render().el).append(@pagination.render().el)
+
+        @_toggleForm()
 
         this
 
@@ -3050,18 +3171,13 @@ class Cruddy.Entity.Page extends Cruddy.View
 
         html
 
-    dispose: ->
+    remove: ->
         @form?.remove()
         @filterList?.remove()
         @dataGrid?.remove()
         @pagination?.remove()
         @search?.remove()
         @dataSource?.stopListening()
-
-        this
-
-    remove: ->
-        @dispose()
 
         super
 # View that displays a form for an entity instance
@@ -3091,6 +3207,8 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         @listenTo model, "change",  @handleChange for key, model of @model.related
 
         @hotkeys = $(document).on "keydown." + @cid, "body", $.proxy this, "hotkeys"
+
+        $(window).on "beforeunload.#{ @cid }", => @confirmationMessage()
 
         return this
 
@@ -3192,16 +3310,18 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         this
 
     close: ->
-        if @request
-            confirmed = confirm Cruddy.lang.confirm_abort
-        else
-            confirmed = if @model.hasChangedSinceSync() then confirm(Cruddy.lang.confirm_discard) else yes
-
-        if confirmed
-            @request.abort() if @request
-            if @inner then @remove() else Cruddy.router.navigate @model.entity.link(), trigger: true
+        if @confirmClose()
+            @remove()
+            @trigger "close"
 
         this
+
+    confirmClose: -> not (message = @confirmationMessage()) or confirm message
+
+    confirmationMessage: ->
+        return Cruddy.lang.confirm_abort if @request
+
+        return Cruddy.lang.confirm_discard if @model.hasChangedSinceSync()
 
     destroy: ->
         return if @request or @model.isNew()
@@ -3298,8 +3418,11 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
     remove: ->
         @trigger "remove", @
         
+        @request.abort() if @request
+        
         @$el.one(TRANSITIONEND, =>
             $(document).off "." + @cid
+            $(window).off "." + @cid
 
             @trigger "removed", @
 
@@ -3400,34 +3523,74 @@ class App extends Backbone.Model
 class Router extends Backbone.Router
 
     initialize: ->
+        @query = $.query
+
         entities = Cruddy.entities
 
         @addRoute "index", entities
-        @addRoute "update", entities, "([^/]+)"
-        @addRoute "create", entities, "create"
+        #@addRoute "update", entities, "([^/]+)"
+        #@addRoute "create", entities, "create"
 
         root = Cruddy.root + "/" + Cruddy.uri + "/"
         history = Backbone.history
-        hashStripper = /#.*$/
 
-        $(document.body).on "click", "a", (e) ->
-            fragment = e.currentTarget.href.replace hashStripper, ""
-            oldFragment = history.fragment
+        $(document.body).on "click", "a", (e) =>
+            fragment = e.currentTarget.href
+            
+            return if fragment.indexOf(root) isnt 0
 
-            if fragment.indexOf(root) is 0 and (fragment = fragment.slice root.length) and fragment isnt oldFragment
-                loaded = history.loadUrl fragment
+            fragment = history.getFragment fragment.slice root.length
 
-                # Backbone will set fragment even if no route matched so we need to
-                # restore old fragment
-                history.fragment = oldFragment
+            # Try to find a handler for the fragment and if it is found, navigate
+            # to it and cancel the default event
+            for handler in history.handlers when handler.route.test(fragment)
+                e.preventDefault()
+                history.navigate fragment, trigger: yes
 
-                if loaded
-                    e.preventDefault()
-                    history.navigate fragment
+                break
 
             return
 
         this
+
+    execute: ->
+        @query = $.query.parseNew location.search
+
+        super
+
+    navigate: (fragment) ->
+        @query = @query.load fragment
+
+        super
+
+    getQuery: (key) -> @query.GET key
+
+    setQuery: (key, value) -> @updateQuery @query.set key, value
+
+    refreshQuery: (defaults, actual) ->
+        q = @query.copy()
+
+        for key, val of defaults
+            if (value = actual[key]) isnt val
+                q.SET key, value
+            else
+                q.REMOVE key
+
+        @updateQuery q
+
+    removeQuery: (key) -> @updateQuery @query.remove key
+
+    updateQuery: (query) ->
+        if (qs = query.toString()) isnt @query.toString()
+            @query = query
+
+            path = location.pathname
+            uri = "/" + Cruddy.uri + "/"
+            path = path.slice uri.length if path.indexOf(uri) is 0
+
+            Backbone.history.navigate path + qs
+
+        return this
 
     createApp: ->
         if not Cruddy.app
@@ -3439,7 +3602,7 @@ class Router extends Backbone.Router
     addRoute: (name, entities, appendage = null) ->
         route = "^(#{ entities })"
         route += "/" + appendage if appendage
-        route += "$"
+        route += "(\\?.*)?$"
 
         @route new RegExp(route), name
 
@@ -3460,9 +3623,9 @@ class Router extends Backbone.Router
 
     index: (entity) -> @resolveEntity entity
 
-    create: (entity) -> @resolveEntity entity, (entity) -> entity.actionCreate()
+    #create: (entity) -> @resolveEntity entity, (entity) -> entity.actionCreate()
 
-    update: (entity, id) -> @resolveEntity entity, (entity) -> entity.actionUpdate id
+    #update: (entity, id) -> @resolveEntity entity, (entity) -> entity.actionUpdate id
 
 $ ->
     Cruddy.router = new Router

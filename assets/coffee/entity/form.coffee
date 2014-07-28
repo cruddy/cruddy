@@ -26,6 +26,8 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         @hotkeys = $(document).on "keydown." + @cid, "body", $.proxy this, "hotkeys"
 
+        $(window).on "beforeunload.#{ @cid }", => @confirmationMessage()
+
         return this
 
     setupDefaultLayout: ->
@@ -126,16 +128,18 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         this
 
     close: ->
-        if @request
-            confirmed = confirm Cruddy.lang.confirm_abort
-        else
-            confirmed = if @model.hasChangedSinceSync() then confirm(Cruddy.lang.confirm_discard) else yes
-
-        if confirmed
-            @request.abort() if @request
-            if @inner then @remove() else Cruddy.router.navigate @model.entity.link(), trigger: true
+        if @confirmClose()
+            @remove()
+            @trigger "close"
 
         this
+
+    confirmClose: -> not (message = @confirmationMessage()) or confirm message
+
+    confirmationMessage: ->
+        return Cruddy.lang.confirm_abort if @request
+
+        return Cruddy.lang.confirm_discard if @model.hasChangedSinceSync()
 
     destroy: ->
         return if @request or @model.isNew()
@@ -232,8 +236,11 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
     remove: ->
         @trigger "remove", @
         
+        @request.abort() if @request
+        
         @$el.one(TRANSITIONEND, =>
             $(document).off "." + @cid
+            $(window).off "." + @cid
 
             @trigger "removed", @
 

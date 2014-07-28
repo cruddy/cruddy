@@ -29,7 +29,7 @@ class DataSource extends Backbone.Model
         ) if @filter?
 
         @on "change", => @fetch() unless @_hold
-        @on "change:search", => @set current_page: 1, silent: yes
+        @on "change:search", => @set current_page: 1, silent: yes unless @_hold
 
     hasData: -> not _.isEmpty @get "data"
 
@@ -39,7 +39,14 @@ class DataSource extends Backbone.Model
 
     inProgress: -> @request?
 
+    holdFetch: ->
+        @_hold = yes
+
+        return this
+
     fetch: ->
+        @_hold = no
+
         @request.abort() if @request?
 
         @options.data = @data()

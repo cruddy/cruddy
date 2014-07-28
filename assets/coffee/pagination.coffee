@@ -6,6 +6,8 @@ class Pagination extends Backbone.View
         "click a": "navigate"
 
     initialize: (options) ->
+        router = Cruddy.router
+
         @listenTo @model, "data", @render
         @listenTo @model, "request", @disable
 

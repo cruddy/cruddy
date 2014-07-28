@@ -1,23 +1,37 @@
 # Search input implements "change when type" and also allows to clear text with Esc
-class Cruddy.Inputs.Search extends Cruddy.Inputs.Text
+class Cruddy.Inputs.Search extends Cruddy.View
+    className: "input-group"
 
-    attributes:
-        type: "search"
-        placeholder: Cruddy.lang.search
+    events:
+        "click .btn": "search"
 
-    scheduleChange: ->
-        clearTimeout @timeout if @timeout?
-        @timeout = setTimeout (=> @change()), 300
-
-        this
-
-    keydown: (e) ->
-
-        # Backspace
-        if e.keyCode is 8
-            @model.set @key, ""
-            return false
-
-        @scheduleChange()
+    initialize: (options) ->
+        @input = new Cruddy.Inputs.Text
+            model: @model
+            key: options.key
+            attributes:
+                type: "search"
+                placeholder: Cruddy.lang.search
 
         super
+
+    search: -> @input.change()
+
+    appendButton: (btn) -> @$btns.append btn
+
+    render: ->
+        @$el.append @input.render().$el
+        @$el.append @$btns = $ """<div class="input-group-btn"></div>"""
+
+        @appendButton """
+            <button type="button" class="btn btn-default">
+                <span class="glyphicon glyphicon-search"></span>
+            </button>
+        """
+
+        return this
+
+    focus: ->
+        @input.focus()
+
+        return this

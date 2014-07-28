@@ -291,6 +291,8 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         this
 
+    emptyValue: -> if @multiple then [] else null
+
     dispose: ->
         @selector?.remove()
         @innerForm?.remove()

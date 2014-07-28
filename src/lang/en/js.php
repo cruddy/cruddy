@@ -43,4 +43,7 @@
     'confirm_discard' => 'Are you shure you want to discard all changes?',
     'confirm_abort' => 'Are you shure you want to abort request?',
     'confirm_delete' => 'Are you shure you want to delete the item? You will not be able to restore it!',
+
+    'filter_apply' => 'Apply',
+    'filter_reset' => 'Reset',
 ];

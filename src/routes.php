@@ -53,18 +53,4 @@ Route::group(['prefix' => Config::get('cruddy::uri')], function ()
         'uses' => 'Kalnoy\Cruddy\Controllers\CruddyController@show'
     ])
     ->where('entity', $entityPattern);
-
-    Route::get('{entity}/create',
-    [
-        'as' => 'cruddy.create',
-        'uses' => 'Kalnoy\Cruddy\Controllers\CruddyController@show',
-    ])
-    ->where('entity', $entityPattern);
-
-    Route::get('{entity}/{id}',
-    [
-        'as' => 'cruddy.show', 
-        'uses' => 'Kalnoy\Cruddy\Controllers\CruddyController@show'
-    ])
-    ->where('entity', $entityPattern);
 });

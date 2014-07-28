@@ -20,11 +20,8 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
     # Create a datasource that will require specified columns and can be filtered
     # by specified filters
-    createDataSource: (columns = null) ->
-        data = { order_by: @get("order_by") }
-        data.order_dir = if data.order_by? then @columns.get(data.order_by).get "order_dir" else "asc"
-
-        new DataSource data, { entity: this, columns: columns, filter: new Backbone.Model }
+    createDataSource: (data) ->
+        new DataSource data, { entity: this, filter: new Backbone.Model }
 
     # Create filters for specified columns
     createFilters: (columns = @columns) ->
@@ -64,7 +61,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
     search: (options = {}) -> new SearchDataSource {}, $.extend { url: @url() }, options
 
     # Load a model
-    load: (id) ->
+    load: (id, success, fail) ->
         xhr = $.ajax
             url: @url(id)
             type: "GET"
@@ -72,10 +69,15 @@ class Cruddy.Entity.Entity extends Backbone.Model
             cache: yes
             displayLoading: yes
 
-        xhr.then (resp) =>
+        xhr = xhr.then (resp) =>
             resp = resp.data
 
             @createInstance resp
+
+        xhr.done success if success
+        xhr.fail fail if fail
+
+        return xhr
 
     # Load a model and set it as current
     actionUpdate: (id) -> @load(id).then (instance) =>

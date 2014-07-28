@@ -16,6 +16,9 @@ v0.3.0
 *   Images in datagrid are clickable now
 *   More robust menu builder
 *   Allow do define extra properties for dropdown in the menu
+*   Some navigation-related data is included to the url for convinience
+*   Filters are applied using a special button now to avoid frequest requests
+*   Search input now has submit button and t
 
 ### API changes
 

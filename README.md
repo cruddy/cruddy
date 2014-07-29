@@ -8,6 +8,8 @@ __Highlights:__
 *   Embedded forms for editing related models
 *   and more
 
+__Links:__
+
 *   [Online demo](http://cruddy-demo.eu1.frbit.net)
 *   [Documentation & Getting Started](https://github.com/lazychaser/cruddy/wiki/Home)
 

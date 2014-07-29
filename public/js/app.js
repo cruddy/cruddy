@@ -1177,6 +1177,7 @@
       "click .ed-item>.input-group-btn>.btn-remove": "removeItem",
       "click .ed-item>.input-group-btn>.btn-edit": "editItem",
       "click .ed-item>.form-control": "executeFirstAction",
+      "keydown .ed-item>.form-control": "itemKeydown",
       "keydown [type=search]": "searchKeydown",
       "show.bs.dropdown": "renderDropdown",
       "shown.bs.dropdown": function() {
@@ -1297,6 +1298,13 @@
     EntityDropdown.prototype.searchKeydown = function(e) {
       if (e.keyCode === 27) {
         this.$el.dropdown("toggle");
+        return false;
+      }
+    };
+
+    EntityDropdown.prototype.itemKeydown = function(e) {
+      if (e.keyCode === 13) {
+        this.executeFirstAction(e);
         return false;
       }
     };
@@ -1484,7 +1492,15 @@
     };
 
     EntityDropdown.prototype.focus = function() {
-      this.$component("dropdown").trigger("click")[0].focus();
+      var $el;
+      $el = this.$component("dropdown");
+      if (!this.multiple) {
+        $el = $el.parent().prev();
+      }
+      $el[0].focus();
+      if (_.isEmpty(this.getValue())) {
+        $el.trigger("click");
+      }
       return this;
     };
 
@@ -3674,6 +3690,7 @@
       this.collection = collection = this.model.get(this.field.id);
       this.listenTo(collection, "add", this.add);
       this.listenTo(collection, "remove", this.removeItem);
+      this.listenTo(collection, "removeSoftly restore", this.update);
       return this;
     };
 
@@ -3745,7 +3762,7 @@
     };
 
     EmbeddedView.prototype.update = function() {
-      this.createButton.toggle(this.field.isMultiple() || this.collection.isEmpty());
+      this.createButton.toggle(this.field.isMultiple() || this.collection.hasSpots());
       return this;
     };
 
@@ -3807,19 +3824,36 @@
     EmbeddedItemView.prototype.className = "has-many-item-view";
 
     EmbeddedItemView.prototype.events = {
-      "click .btn-delete": "deleteItem"
+      "click .btn-toggle": "toggleItem"
     };
 
     function EmbeddedItemView(options) {
       this.collection = options.collection;
+      this.listenTo(this.collection, "restore removeSoftly", function(m) {
+        if (m !== this.model) {
+          return;
+        }
+        this.$container.toggle(!this.model.isDeleted);
+        return this.$btn.html(this.buttonContents());
+      });
       EmbeddedItemView.__super__.constructor.apply(this, arguments);
     }
 
-    EmbeddedItemView.prototype.deleteItem = function(e) {
-      e.preventDefault();
-      e.stopPropagation();
-      this.collection.remove(this.model);
-      return this;
+    EmbeddedItemView.prototype.toggleItem = function(e) {
+      if (this.model.isDeleted) {
+        this.collection.restore(this.model);
+      } else {
+        this.collection.removeSoftly(this.model);
+      }
+      return false;
+    };
+
+    EmbeddedItemView.prototype.buttonContents = function() {
+      if (this.model.isDeleted) {
+        return Cruddy.lang.restore;
+      } else {
+        return b_icon("trash") + " " + Cruddy.lang["delete"];
+      }
     };
 
     EmbeddedItemView.prototype.setupDefaultLayout = function() {
@@ -3830,6 +3864,7 @@
     EmbeddedItemView.prototype.render = function() {
       this.$el.html(this.template());
       this.$container = this.$component("body");
+      this.$btn = this.$component("btn");
       return EmbeddedItemView.__super__.render.apply(this, arguments);
     };
 
@@ -3837,7 +3872,7 @@
       var html;
       html = "<div id=\"" + (this.componentId("body")) + "\"></div>";
       if (!this.disabled && (this.model.entity.deletePermitted() || this.model.isNew())) {
-        html += b_btn(Cruddy.lang["delete"], "trash", ["default", "sm", "delete"]);
+        html += "<button type=\"button\" class=\"btn btn-default btn-sm btn-toggle\" id=\"" + (this.componentId("btn")) + "\">\n    " + (this.buttonContents()) + "\n</button>";
       }
       return html;
     };
@@ -3856,7 +3891,9 @@
     RelatedCollection.prototype.initialize = function(items, options) {
       this.owner = options.owner;
       this.field = options.field;
+      this.maxItems = options.maxItems;
       this.deleted = false;
+      this.removedSoftly = 0;
       this.listenTo(this.owner, "sync", (function(_this) {
         return function() {
           return _this.deleted = false;
@@ -3865,14 +3902,67 @@
       return RelatedCollection.__super__.initialize.apply(this, arguments);
     };
 
-    RelatedCollection.prototype.remove = function() {
+    RelatedCollection.prototype.add = function() {
+      if (this.maxItems && this.models.length >= this.maxItems) {
+        this.removeSoftDeleted();
+      }
+      return RelatedCollection.__super__.add.apply(this, arguments);
+    };
+
+    RelatedCollection.prototype.removeSoftDeleted = function() {
+      return this.remove(this.filter(function(m) {
+        return m.isDeleted;
+      }));
+    };
+
+    RelatedCollection.prototype.remove = function(m) {
+      var item, _i, _len;
       this.deleted = true;
+      if (_.isArray(m)) {
+        for (_i = 0, _len = m.length; _i < _len; _i++) {
+          item = m[_i];
+          if (item.isDeleted) {
+            this.removedSoftly--;
+          }
+        }
+      } else {
+        if (m.isDeleted) {
+          this.removedSoftly--;
+        }
+      }
       return RelatedCollection.__super__.remove.apply(this, arguments);
+    };
+
+    RelatedCollection.prototype.removeSoftly = function(m) {
+      if (m.isDeleted) {
+        return;
+      }
+      m.isDeleted = true;
+      this.removedSoftly++;
+      this.trigger("removeSoftly", m);
+      return this;
+    };
+
+    RelatedCollection.prototype.restore = function(m) {
+      if (!m.isDeleted) {
+        return;
+      }
+      m.isDeleted = false;
+      this.removedSoftly--;
+      this.trigger("restore", m);
+      return this;
+    };
+
+    RelatedCollection.prototype.hasSpots = function(num) {
+      if (num == null) {
+        num = 1;
+      }
+      return (this.maxItems == null) || this.models.length - this.removedSoftly + num <= this.maxItems;
     };
 
     RelatedCollection.prototype.hasChangedSinceSync = function() {
       var item, _i, _len, _ref1;
-      if (this.deleted) {
+      if (this.deleted || this.removedSoftly) {
         return true;
       }
       _ref1 = this.models;
@@ -3904,20 +3994,24 @@
     };
 
     RelatedCollection.prototype.serialize = function() {
-      var data, item, _i, _len, _ref1;
+      var data, item, models, _i, _len;
       if (this.field.isMultiple()) {
-        if (_.isEmpty(this.models)) {
+        models = this.filter(function(m) {
+          return !m.isDeleted;
+        });
+        if (_.isEmpty(models)) {
           return "";
         }
         data = {};
-        _ref1 = this.models;
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          item = _ref1[_i];
+        for (_i = 0, _len = models.length; _i < _len; _i++) {
+          item = models[_i];
           data[item.cid] = item;
         }
         return data;
       } else {
-        return this.first() || "";
+        return this.find(function(m) {
+          return !m.isDeleted;
+        }) || "";
       }
     };
 
@@ -3954,7 +4048,8 @@
       })();
       return new Cruddy.Fields.RelatedCollection(items, {
         owner: model,
-        field: this
+        field: this,
+        maxItems: this.isMultiple() ? null : 1
       });
     };
 

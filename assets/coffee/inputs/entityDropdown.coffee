@@ -5,6 +5,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
         "click .ed-item>.input-group-btn>.btn-remove": "removeItem"
         "click .ed-item>.input-group-btn>.btn-edit": "editItem"
         "click .ed-item>.form-control": "executeFirstAction"
+        "keydown .ed-item>.form-control": "itemKeydown"
         "keydown [type=search]": "searchKeydown"
         "show.bs.dropdown": "renderDropdown"
 
@@ -111,6 +112,15 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
         if (e.keyCode is 27)
             @$el.dropdown "toggle"
             return false
+
+        return
+
+    itemKeydown: (e) ->
+        if (e.keyCode is 13)
+            @executeFirstAction e
+            return false
+
+        return
 
     applyConstraint: (reset = no) ->
         if @selector
@@ -287,7 +297,12 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
         html
 
     focus: ->
-        @$component("dropdown").trigger("click")[0].focus()
+        $el = @$component("dropdown")
+        $el = $el.parent().prev() if not @multiple
+
+        $el[0].focus()
+
+        $el.trigger("click") if _.isEmpty @getValue()
 
         this
 

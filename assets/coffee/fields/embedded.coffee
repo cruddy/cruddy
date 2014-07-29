@@ -18,6 +18,7 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
 
         @listenTo collection, "add", @add
         @listenTo collection, "remove", @removeItem
+        @listenTo collection, "removeSoftly restore", @update
 
         return this
 
@@ -79,7 +80,7 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
         super
 
     update: ->
-        @createButton.toggle @field.isMultiple() or @collection.isEmpty()
+        @createButton.toggle @field.isMultiple() or @collection.hasSpots()
 
         this
 
@@ -122,20 +123,29 @@ class Cruddy.Fields.EmbeddedItemView extends Cruddy.Layout.Layout
     className: "has-many-item-view"
 
     events:
-        "click .btn-delete": "deleteItem"
+        "click .btn-toggle": "toggleItem"
 
     constructor: (options) ->
         @collection = options.collection
 
+        @listenTo @collection, "restore removeSoftly", (m) ->
+            return if m isnt @model
+
+            @$container.toggle not @model.isDeleted
+            @$btn.html @buttonContents()
+
         super
 
-    deleteItem: (e) ->
-        e.preventDefault()
-        e.stopPropagation()
+    toggleItem: (e) ->
+        if @model.isDeleted then @collection.restore @model else @collection.removeSoftly @model
 
-        @collection.remove @model
+        return false
 
-        this
+    buttonContents: ->
+        if @model.isDeleted
+            Cruddy.lang.restore
+        else
+            b_icon("trash") + " " + Cruddy.lang.delete
 
     setupDefaultLayout: ->
         @append new FieldList {}, this
@@ -146,6 +156,7 @@ class Cruddy.Fields.EmbeddedItemView extends Cruddy.Layout.Layout
         @$el.html @template()
 
         @$container = @$component "body"
+        @$btn = @$component "btn"
 
         super
 
@@ -153,7 +164,11 @@ class Cruddy.Fields.EmbeddedItemView extends Cruddy.Layout.Layout
         html = """<div id="#{ @componentId "body" }"></div>"""
 
         if not @disabled and (@model.entity.deletePermitted() or @model.isNew())
-            html += b_btn(Cruddy.lang.delete, "trash", ["default", "sm", "delete"])
+            html += """
+                <button type="button" class="btn btn-default btn-sm btn-toggle" id="#{ @componentId "btn" }">
+                    #{ @buttonContents() }
+                </button>
+            """
 
         return html
 
@@ -162,21 +177,57 @@ class Cruddy.Fields.RelatedCollection extends Backbone.Collection
     initialize: (items, options) ->
         @owner = options.owner
         @field = options.field
+        @maxItems = options.maxItems
 
         # The flag is set when user has deleted some items
         @deleted = no
+        @removedSoftly = 0
 
         @listenTo @owner, "sync", => @deleted = false
 
         super
 
-    remove: ->
-        @deleted = yes
+    add: ->
+        @removeSoftDeleted() if @maxItems and @models.length >= @maxItems
 
         super
 
+    removeSoftDeleted: -> @remove @filter((m) -> m.isDeleted)
+
+    remove: (m) ->
+        @deleted = yes
+
+        if _.isArray m
+            @removedSoftly-- for item in m when item.isDeleted
+        else
+            @removedSoftly-- if m.isDeleted
+
+        super
+
+    removeSoftly: (m) ->
+        return if m.isDeleted
+
+        m.isDeleted = yes
+        @removedSoftly++
+
+        @trigger "removeSoftly", m
+
+        return this
+
+    restore: (m) ->
+        return if not m.isDeleted
+
+        m.isDeleted = no
+        @removedSoftly--
+
+        @trigger "restore", m
+
+        return this
+
+    hasSpots: (num = 1)-> not @maxItems? or @models.length - @removedSoftly + num <= @maxItems
+
     hasChangedSinceSync: ->
-        return yes if @deleted
+        return yes if @deleted or @removedSoftly
         return yes for item in @models when item.hasChangedSinceSync()
 
         no
@@ -190,15 +241,17 @@ class Cruddy.Fields.RelatedCollection extends Backbone.Collection
 
     serialize: ->
         if @field.isMultiple()
-            return "" if _.isEmpty @models
+            models = @filter (m) -> not m.isDeleted
+
+            return "" if _.isEmpty models
 
             data = {}
 
-            data[item.cid] = item for item in @models
+            data[item.cid] = item for item in models
 
             data
         else
-            @first() or ""
+            @find((m) -> not m.isDeleted) or ""
 
 class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
 
@@ -215,6 +268,7 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
         new Cruddy.Fields.RelatedCollection items,
             owner: model
             field: this
+            maxItems: if @isMultiple() then null else 1
 
     applyValues: (collection, items) ->
         items = [ items ] if not @attributes.multiple

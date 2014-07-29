@@ -18,7 +18,10 @@ v0.3.0
 *   Allow do define extra properties for dropdown in the menu
 *   Some navigation-related data is included to the url for convinience
 *   Filters are applied using a special button now to avoid frequest requests
-*   Search input now has submit button and t
+*   Search input now has submit button
+*   When focusing entity selector, entity dropdown is displayed now only when value is not specified
+*   An item of entity selector now responds on pressing enter key
+*   Embedded items are now deleted softly and can be restored before saving the model
 
 ### API changes
 

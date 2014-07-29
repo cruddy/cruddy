@@ -1,8 +1,14 @@
-![The Cruddy](https://drive.google.com/uc?id=0B8WgmUNiDzmySlZEeGFlRVdwbzQ)
+Cruddy is a powerfull tool for backend applications. Based on [Laravel 4](http://laravel.com),
+allows to view, create and update your entities with less effort and coding.
 
-The Cruddy is your CRUD friend. It is made for managing your Laravel Eloquent models.
+__Highlights:__
 
-* [Demonstration](http://cruddy-demo.eu1.frbit.net)
-* [Documentation](https://github.com/lazychaser/cruddy/wiki/Home)
+*   Many field & column types, extendable via plugins
+*   JavaScript-enabled UI, completely asynchronous
+*   Embedded forms for editing related models
+*   and more
 
-__[Make a donation](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=4XER3ZN496WCU)__
+*   [Online demo](http://cruddy-demo.eu1.frbit.net)
+*   [Documentation & Getting Started](https://github.com/lazychaser/cruddy/wiki/Home)
+
+__[Support Cruddy](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=4XER3ZN496WCU)__

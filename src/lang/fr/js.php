@@ -5,6 +5,7 @@
     'create' => 'Créer',
     'close' => 'Fermer',
     'delete' => 'Supprimer',
+    'restore' => 'Restaurer',
     'copy' => 'Copier',
     'search' => 'Rechercher',
     'choose' => 'Choisir',

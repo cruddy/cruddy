@@ -7,6 +7,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         "click .btn-close": "close"
         "click .btn-destroy": "destroy"
         "click .btn-copy": "copy"
+        "click .btn-refresh": "refresh"
 
     constructor: (options) ->
         @className += " " + @className + "-" + options.model.entity.id
@@ -26,7 +27,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         @hotkeys = $(document).on "keydown." + @cid, "body", $.proxy this, "hotkeys"
 
-        $(window).on "beforeunload.#{ @cid }", => @confirmationMessage()
+        $(window).on "beforeunload.#{ @cid }", => @confirmationMessage(yes)
 
         return this
 
@@ -96,6 +97,11 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         this
 
+    refresh: ->
+        @model.fetch() if @confirmClose()
+
+        return this
+
     save: ->
         return if @request?
 
@@ -136,10 +142,10 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
     confirmClose: -> not (message = @confirmationMessage()) or confirm message
 
-    confirmationMessage: ->
-        return Cruddy.lang.confirm_abort if @request
+    confirmationMessage: (closing) ->
+        return (if closing then Cruddy.lang.onclose_abort else Cruddy.lang.confirm_abort) if @request
 
-        return Cruddy.lang.confirm_discard if @model.hasChangedSinceSync()
+        return (if closing then Cruddy.lang.onclose_discard else Cruddy.lang.confirm_discard) if @model.hasChangedSinceSync()
 
     destroy: ->
         return if @request or @model.isNew()
@@ -156,8 +162,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         this
 
     copy: ->
-        @model.entity.set "instance", copy = @model.copy()
-        Cruddy.router.navigate copy.link()
+        Cruddy.app.page.display @model.copy()
 
         this
 
@@ -171,6 +176,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         @submit = @$ ".btn-save"
         @destroy = @$ ".btn-destroy"
         @copy = @$ ".btn-copy"
+        @$refresh = @$ ".btn-refresh"
         @progressBar = @$ ".form-save-progress"
 
         @update()
@@ -184,18 +190,19 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
     update: ->
         permit = @model.entity.getPermissions()
+        isNew = @model.isNew()
 
         @$el.toggleClass "loading", @request?
 
-        @submit.text if @model.isNew() then Cruddy.lang.create else Cruddy.lang.save
+        @submit.text if isNew then Cruddy.lang.create else Cruddy.lang.save
         @submit.attr "disabled", @request?
-        @submit.toggle if @model.isNew() then permit.create else permit.update
+        @submit.toggle if isNew then permit.create else permit.update
 
         @destroy.attr "disabled", @request?
-        @destroy.html if @model.entity.isSoftDeleting() and @model.get "deleted_at" then "Восстановить" else "<span class='glyphicon glyphicon-trash' title='#{ Cruddy.lang.delete }'></span>"
-        @destroy.toggle not @model.isNew() and permit.delete
+        @destroy.toggle not isNew and permit.delete
         
-        @copy.toggle not @model.isNew() and permit.create
+        @copy.toggle not isNew and permit.create
+        @$refresh.toggle not isNew
 
         @external?.remove()
 
@@ -207,12 +214,6 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         """
         <div class="navbar navbar-default navbar-static-top" role="navigation">
             <div class="container-fluid">
-                <button type="button" class="btn btn-link btn-destroy navbar-btn pull-right" type="button"></button>
-                
-                <button type="button" tabindex="-1" class="btn btn-link btn-copy navbar-btn pull-right" title="#{ Cruddy.lang.copy }">
-                    <span class="glyphicon glyphicon-book"></span>
-                </button>
-                
                 <ul id="#{ @componentId "nav" }" class="nav navbar-nav"></ul>
             </div>
         </div>
@@ -220,8 +221,22 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         <div class="tab-content" id="#{ @componentId "body" }"></div>
 
         <footer>
-            <button type="button" class="btn btn-default btn-close" type="button">#{ Cruddy.lang.close }</button>
-            <button type="button" class="btn btn-primary btn-save" type="button" disabled></button>
+            <div class="pull-left">
+                <button type="button" class="btn btn-link btn-destroy" title="#{ Cruddy.lang.model_delete }">
+                    <span class="glyphicon glyphicon-trash"></span>
+                </button>
+                
+                <button type="button" tabindex="-1" class="btn btn-link btn-copy" title="#{ Cruddy.lang.model_copy }">
+                    <span class="glyphicon glyphicon-book"></span>
+                </button>
+                
+                <button type="button" class="btn btn-link btn-refresh" title="#{ Cruddy.lang.model_refresh }">
+                    <span class="glyphicon glyphicon-refresh"></span>
+                </button>
+            </div>
+
+            <button type="button" class="btn btn-default btn-close">#{ Cruddy.lang.close }</button>
+            <button type="button" class="btn btn-primary btn-save"></button>
 
             <div class="progress"><div class="progress-bar form-save-progress"></div></div>
         </footer>

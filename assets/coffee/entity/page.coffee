@@ -45,10 +45,20 @@ class Cruddy.Entity.Page extends Cruddy.View
 
         return false
 
-    display: (id) -> @_toggleForm(id).done => if id then Cruddy.router.setQuery "id", id else Cruddy.router.removeQuery "id"
+    display: (id) -> @_toggleForm(id).done =>
+
+        id = id.id or "new" if id instanceof Cruddy.Entity.Instance
+
+        if id then Cruddy.router.setQuery "id", id else Cruddy.router.removeQuery "id"
+
+        return
 
     _toggleForm: (instanceId) ->
         instanceId = instanceId ? Cruddy.router.getQuery("id") or null
+
+        if instanceId instanceof Cruddy.Entity.Instance
+            instance = instanceId
+            instanceId = instance.id or "new"
 
         dfd = $.Deferred()
 
@@ -66,20 +76,19 @@ class Cruddy.Entity.Page extends Cruddy.View
             @form = null
             @model.set "instance", null
 
-        if instanceId is "new"
-            @_displayForm instance = @model.createInstance()
-
+        resolve = (instance) =>
+            @_displayForm instance
             dfd.resolve instance
+
+        instance = @model.createInstance() if instanceId is "new" and not instance
+
+        if instance
+            resolve instance
 
             return dfd.promise()
 
         if instanceId
-            @model.load(instanceId)
-                .done (instance) =>
-                    @_displayForm instance
-                    dfd.resolve instance
-
-                .fail -> dfd.reject()
+            @model.load(instanceId).done(resolve).fail -> dfd.reject()
         else
             dfd.resolve()
 

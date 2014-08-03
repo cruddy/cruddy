@@ -1261,25 +1261,27 @@ class Cruddy.Inputs.FileList extends Cruddy.Inputs.Base
         @multiple = options.multiple ? false
         @formatter = options.formatter ? format: (value) -> if value instanceof File then value.name else value
         @accepts = options.accepts ? ""
+        @counter = 1
 
         super
 
     deleteFile: (e) ->
         if @multiple
-            value = _.clone @model.get @key
-            value.splice $(e.currentTarget).data("index"), 1
+            cid = $(e.currentTarget).data("cid")
+            @setValue _.reject @getValue(), (item) => @itemId(item) is cid
         else
-            value = ''
-
-        @model.set @key, value
+            @setValue null
 
         false
 
     appendFiles: (e) ->
         return if e.target.files.length is 0
 
+        file.cid = @cid + "_" + @counter++ for file in e.target.files        
+
         if @multiple
             value = _.clone @model.get @key
+
             value.push file for file in e.target.files
         else
             value = e.target.files[0]
@@ -1290,10 +1292,9 @@ class Cruddy.Inputs.FileList extends Cruddy.Inputs.Base
 
     render: ->
         value = @model.get @key
+
         html = ""
-
-        if @multiple then html += @renderItem item, i for item, i in value else html += @renderItem value if value
-
+        html += @renderItem item for item in if @multiple then value else [ value ]
         html = @wrapItems html if html
 
         html += @renderInput if @multiple then "<span class='glyphicon glyphicon-plus'></span> #{ Cruddy.lang.add }" else Cruddy.lang.choose
@@ -1312,16 +1313,18 @@ class Cruddy.Inputs.FileList extends Cruddy.Inputs.Base
         </div>
         """
 
-    renderItem: (item, i = 0) ->
+    renderItem: (item) ->
         label = @formatter.format item
 
         """
         <li class="list-group-item">
-            <a href="#" class="action-delete pull-right" data-index="#{ i }"><span class="glyphicon glyphicon-remove"></span></a>
+            <a href="#" class="action-delete pull-right" data-cid="#{ @itemId(item) }"><span class="glyphicon glyphicon-remove"></span></a>
 
             #{ label }
         </li>
         """
+
+    itemId: (item) -> if item instanceof File then item.cid else item
 
     focus: ->
         @$component("input")[0].focus()
@@ -1353,35 +1356,33 @@ class Cruddy.Inputs.ImageList extends Cruddy.Inputs.FileList
 
     wrapItems: (html) -> """<ul class="image-group">#{ html }</ul>"""
 
-    renderItem: (item, i = 0) ->
+    renderItem: (item) ->
         """
         <li class="image-group-item">
-            #{ @renderImage item, i }
-            <a href="#" class="action-delete" data-index="#{ i }"><span class="glyphicon glyphicon-remove"></span></a>
+            #{ @renderImage item }
+            <a href="#" class="action-delete" data-cid="#{ @itemId(item) }"><span class="glyphicon glyphicon-remove"></span></a>
         </li>
         """
 
-    renderImage: (item, i = 0) ->
-        id = @key + i
-
-        if item instanceof File
+    renderImage: (item) ->
+        if isFile = item instanceof File
             image = item.data or ""
-            @readers.push @createPreviewLoader item, id if not item.data?
+            @readers.push @createPreviewLoader item if not item.data?
         else
             image = thumb item, @width, @height
 
         """
-        <a href="#{ if item instanceof File then item.data or "#" else Cruddy.root + '/' + item }" class="img-wrap" data-trigger="fancybox">
-            <img src="#{ image }" id="#{ id }">
+        <a href="#{ if isFile then item.data or "#" else Cruddy.root + '/' + item }" class="img-wrap" data-trigger="fancybox">
+            <img src="#{ image }" #{ if isFile then "id='"+item.cid+"'" else "" }>
         </a>
         """
 
-    createPreviewLoader: (item, id) ->
+    createPreviewLoader: (item) ->
         reader = new FileReader
         reader.item = item
         reader.onload = (e) ->
             e.target.item.data = e.target.result
-            $("#" + id).attr("src", e.target.result).parent().attr "href", e.target.result
+            $("#" + item.cid).attr("src", e.target.result).parent().attr "href", e.target.result
 
         reader
 # Search input implements "change when type" and also allows to clear text with Esc
@@ -3101,10 +3102,20 @@ class Cruddy.Entity.Page extends Cruddy.View
 
         return false
 
-    display: (id) -> @_toggleForm(id).done => if id then Cruddy.router.setQuery "id", id else Cruddy.router.removeQuery "id"
+    display: (id) -> @_toggleForm(id).done =>
+
+        id = id.id or "new" if id instanceof Cruddy.Entity.Instance
+
+        if id then Cruddy.router.setQuery "id", id else Cruddy.router.removeQuery "id"
+
+        return
 
     _toggleForm: (instanceId) ->
         instanceId = instanceId ? Cruddy.router.getQuery("id") or null
+
+        if instanceId instanceof Cruddy.Entity.Instance
+            instance = instanceId
+            instanceId = instance.id or "new"
 
         dfd = $.Deferred()
 
@@ -3122,20 +3133,19 @@ class Cruddy.Entity.Page extends Cruddy.View
             @form = null
             @model.set "instance", null
 
-        if instanceId is "new"
-            @_displayForm instance = @model.createInstance()
-
+        resolve = (instance) =>
+            @_displayForm instance
             dfd.resolve instance
+
+        instance = @model.createInstance() if instanceId is "new" and not instance
+
+        if instance
+            resolve instance
 
             return dfd.promise()
 
         if instanceId
-            @model.load(instanceId)
-                .done (instance) =>
-                    @_displayForm instance
-                    dfd.resolve instance
-
-                .fail -> dfd.reject()
+            @model.load(instanceId).done(resolve).fail -> dfd.reject()
         else
             dfd.resolve()
 
@@ -3258,6 +3268,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         "click .btn-close": "close"
         "click .btn-destroy": "destroy"
         "click .btn-copy": "copy"
+        "click .btn-refresh": "refresh"
 
     constructor: (options) ->
         @className += " " + @className + "-" + options.model.entity.id
@@ -3277,7 +3288,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         @hotkeys = $(document).on "keydown." + @cid, "body", $.proxy this, "hotkeys"
 
-        $(window).on "beforeunload.#{ @cid }", => @confirmationMessage()
+        $(window).on "beforeunload.#{ @cid }", => @confirmationMessage(yes)
 
         return this
 
@@ -3347,6 +3358,11 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         this
 
+    refresh: ->
+        @model.fetch() if @confirmClose()
+
+        return this
+
     save: ->
         return if @request?
 
@@ -3387,10 +3403,10 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
     confirmClose: -> not (message = @confirmationMessage()) or confirm message
 
-    confirmationMessage: ->
-        return Cruddy.lang.confirm_abort if @request
+    confirmationMessage: (closing) ->
+        return (if closing then Cruddy.lang.onclose_abort else Cruddy.lang.confirm_abort) if @request
 
-        return Cruddy.lang.confirm_discard if @model.hasChangedSinceSync()
+        return (if closing then Cruddy.lang.onclose_discard else Cruddy.lang.confirm_discard) if @model.hasChangedSinceSync()
 
     destroy: ->
         return if @request or @model.isNew()
@@ -3407,8 +3423,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         this
 
     copy: ->
-        @model.entity.set "instance", copy = @model.copy()
-        Cruddy.router.navigate copy.link()
+        Cruddy.app.page.display @model.copy()
 
         this
 
@@ -3422,6 +3437,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         @submit = @$ ".btn-save"
         @destroy = @$ ".btn-destroy"
         @copy = @$ ".btn-copy"
+        @$refresh = @$ ".btn-refresh"
         @progressBar = @$ ".form-save-progress"
 
         @update()
@@ -3435,18 +3451,19 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
     update: ->
         permit = @model.entity.getPermissions()
+        isNew = @model.isNew()
 
         @$el.toggleClass "loading", @request?
 
-        @submit.text if @model.isNew() then Cruddy.lang.create else Cruddy.lang.save
+        @submit.text if isNew then Cruddy.lang.create else Cruddy.lang.save
         @submit.attr "disabled", @request?
-        @submit.toggle if @model.isNew() then permit.create else permit.update
+        @submit.toggle if isNew then permit.create else permit.update
 
         @destroy.attr "disabled", @request?
-        @destroy.html if @model.entity.isSoftDeleting() and @model.get "deleted_at" then "Восстановить" else "<span class='glyphicon glyphicon-trash' title='#{ Cruddy.lang.delete }'></span>"
-        @destroy.toggle not @model.isNew() and permit.delete
+        @destroy.toggle not isNew and permit.delete
         
-        @copy.toggle not @model.isNew() and permit.create
+        @copy.toggle not isNew and permit.create
+        @$refresh.toggle not isNew
 
         @external?.remove()
 
@@ -3458,12 +3475,6 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         """
         <div class="navbar navbar-default navbar-static-top" role="navigation">
             <div class="container-fluid">
-                <button type="button" class="btn btn-link btn-destroy navbar-btn pull-right" type="button"></button>
-                
-                <button type="button" tabindex="-1" class="btn btn-link btn-copy navbar-btn pull-right" title="#{ Cruddy.lang.copy }">
-                    <span class="glyphicon glyphicon-book"></span>
-                </button>
-                
                 <ul id="#{ @componentId "nav" }" class="nav navbar-nav"></ul>
             </div>
         </div>
@@ -3471,8 +3482,22 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         <div class="tab-content" id="#{ @componentId "body" }"></div>
 
         <footer>
-            <button type="button" class="btn btn-default btn-close" type="button">#{ Cruddy.lang.close }</button>
-            <button type="button" class="btn btn-primary btn-save" type="button" disabled></button>
+            <div class="pull-left">
+                <button type="button" class="btn btn-link btn-destroy" title="#{ Cruddy.lang.model_delete }">
+                    <span class="glyphicon glyphicon-trash"></span>
+                </button>
+                
+                <button type="button" tabindex="-1" class="btn btn-link btn-copy" title="#{ Cruddy.lang.model_copy }">
+                    <span class="glyphicon glyphicon-book"></span>
+                </button>
+                
+                <button type="button" class="btn btn-link btn-refresh" title="#{ Cruddy.lang.model_refresh }">
+                    <span class="glyphicon glyphicon-refresh"></span>
+                </button>
+            </div>
+
+            <button type="button" class="btn btn-default btn-close">#{ Cruddy.lang.close }</button>
+            <button type="button" class="btn btn-primary btn-save"></button>
 
             <div class="progress"><div class="progress-bar form-save-progress"></div></div>
         </footer>

@@ -1802,31 +1802,40 @@
         }
       };
       this.accepts = (_ref3 = options.accepts) != null ? _ref3 : "";
+      this.counter = 1;
       return FileList.__super__.initialize.apply(this, arguments);
     };
 
     FileList.prototype.deleteFile = function(e) {
-      var value;
+      var cid;
       if (this.multiple) {
-        value = _.clone(this.model.get(this.key));
-        value.splice($(e.currentTarget).data("index"), 1);
+        cid = $(e.currentTarget).data("cid");
+        this.setValue(_.reject(this.getValue(), (function(_this) {
+          return function(item) {
+            return _this.itemId(item) === cid;
+          };
+        })(this)));
       } else {
-        value = '';
+        this.setValue(null);
       }
-      this.model.set(this.key, value);
       return false;
     };
 
     FileList.prototype.appendFiles = function(e) {
-      var file, value, _i, _len, _ref1;
+      var file, value, _i, _j, _len, _len1, _ref1, _ref2;
       if (e.target.files.length === 0) {
         return;
       }
+      _ref1 = e.target.files;
+      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+        file = _ref1[_i];
+        file.cid = this.cid + "_" + this.counter++;
+      }
       if (this.multiple) {
         value = _.clone(this.model.get(this.key));
-        _ref1 = e.target.files;
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          file = _ref1[_i];
+        _ref2 = e.target.files;
+        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
+          file = _ref2[_j];
           value.push(file);
         }
       } else {
@@ -1840,18 +1849,13 @@
     };
 
     FileList.prototype.render = function() {
-      var html, i, item, value, _i, _len;
+      var html, item, value, _i, _len, _ref1;
       value = this.model.get(this.key);
       html = "";
-      if (this.multiple) {
-        for (i = _i = 0, _len = value.length; _i < _len; i = ++_i) {
-          item = value[i];
-          html += this.renderItem(item, i);
-        }
-      } else {
-        if (value) {
-          html += this.renderItem(value);
-        }
+      _ref1 = this.multiple ? value : [value];
+      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+        item = _ref1[_i];
+        html += this.renderItem(item);
       }
       if (html) {
         html = this.wrapItems(html);
@@ -1869,13 +1873,18 @@
       return "<div class=\"btn btn-sm btn-default file-list-input-wrap\">\n    <input type=\"file\" id=\"" + (this.componentId("input")) + "\" accept=\"" + this.accepts + "\"" + (this.multiple ? " multiple" : "") + ">\n    " + label + "\n</div>";
     };
 
-    FileList.prototype.renderItem = function(item, i) {
+    FileList.prototype.renderItem = function(item) {
       var label;
-      if (i == null) {
-        i = 0;
-      }
       label = this.formatter.format(item);
-      return "<li class=\"list-group-item\">\n    <a href=\"#\" class=\"action-delete pull-right\" data-index=\"" + i + "\"><span class=\"glyphicon glyphicon-remove\"></span></a>\n\n    " + label + "\n</li>";
+      return "<li class=\"list-group-item\">\n    <a href=\"#\" class=\"action-delete pull-right\" data-cid=\"" + (this.itemId(item)) + "\"><span class=\"glyphicon glyphicon-remove\"></span></a>\n\n    " + label + "\n</li>";
+    };
+
+    FileList.prototype.itemId = function(item) {
+      if (item instanceof File) {
+        return item.cid;
+      } else {
+        return item;
+      }
     };
 
     FileList.prototype.focus = function() {
@@ -1920,37 +1929,30 @@
       return "<ul class=\"image-group\">" + html + "</ul>";
     };
 
-    ImageList.prototype.renderItem = function(item, i) {
-      if (i == null) {
-        i = 0;
-      }
-      return "<li class=\"image-group-item\">\n    " + (this.renderImage(item, i)) + "\n    <a href=\"#\" class=\"action-delete\" data-index=\"" + i + "\"><span class=\"glyphicon glyphicon-remove\"></span></a>\n</li>";
+    ImageList.prototype.renderItem = function(item) {
+      return "<li class=\"image-group-item\">\n    " + (this.renderImage(item)) + "\n    <a href=\"#\" class=\"action-delete\" data-cid=\"" + (this.itemId(item)) + "\"><span class=\"glyphicon glyphicon-remove\"></span></a>\n</li>";
     };
 
-    ImageList.prototype.renderImage = function(item, i) {
-      var id, image;
-      if (i == null) {
-        i = 0;
-      }
-      id = this.key + i;
-      if (item instanceof File) {
+    ImageList.prototype.renderImage = function(item) {
+      var image, isFile;
+      if (isFile = item instanceof File) {
         image = item.data || "";
         if (item.data == null) {
-          this.readers.push(this.createPreviewLoader(item, id));
+          this.readers.push(this.createPreviewLoader(item));
         }
       } else {
         image = thumb(item, this.width, this.height);
       }
-      return "<a href=\"" + (item instanceof File ? item.data || "#" : Cruddy.root + '/' + item) + "\" class=\"img-wrap\" data-trigger=\"fancybox\">\n    <img src=\"" + image + "\" id=\"" + id + "\">\n</a>";
+      return "<a href=\"" + (isFile ? item.data || "#" : Cruddy.root + '/' + item) + "\" class=\"img-wrap\" data-trigger=\"fancybox\">\n    <img src=\"" + image + "\" " + (isFile ? "id='" + item.cid + "'" : "") + ">\n</a>";
     };
 
-    ImageList.prototype.createPreviewLoader = function(item, id) {
+    ImageList.prototype.createPreviewLoader = function(item) {
       var reader;
       reader = new FileReader;
       reader.item = item;
       reader.onload = function(e) {
         e.target.item.data = e.target.result;
-        return $("#" + id).attr("src", e.target.result).parent().attr("href", e.target.result);
+        return $("#" + item.cid).attr("src", e.target.result).parent().attr("href", e.target.result);
       };
       return reader;
     };
@@ -4780,18 +4782,25 @@
     Page.prototype.display = function(id) {
       return this._toggleForm(id).done((function(_this) {
         return function() {
+          if (id instanceof Cruddy.Entity.Instance) {
+            id = id.id || "new";
+          }
           if (id) {
-            return Cruddy.router.setQuery("id", id);
+            Cruddy.router.setQuery("id", id);
           } else {
-            return Cruddy.router.removeQuery("id");
+            Cruddy.router.removeQuery("id");
           }
         };
       })(this));
     };
 
     Page.prototype._toggleForm = function(instanceId) {
-      var compareId, dfd, instance;
+      var compareId, dfd, instance, resolve;
       instanceId = (instanceId != null ? instanceId : Cruddy.router.getQuery("id")) || null;
+      if (instanceId instanceof Cruddy.Entity.Instance) {
+        instance = instanceId;
+        instanceId = instance.id || "new";
+      }
       dfd = $.Deferred();
       if (this.form) {
         compareId = this.form.model.isNew() ? "new" : this.form.model.id;
@@ -4805,18 +4814,21 @@
         this.form = null;
         this.model.set("instance", null);
       }
-      if (instanceId === "new") {
-        this._displayForm(instance = this.model.createInstance());
-        dfd.resolve(instance);
+      resolve = (function(_this) {
+        return function(instance) {
+          _this._displayForm(instance);
+          return dfd.resolve(instance);
+        };
+      })(this);
+      if (instanceId === "new" && !instance) {
+        instance = this.model.createInstance();
+      }
+      if (instance) {
+        resolve(instance);
         return dfd.promise();
       }
       if (instanceId) {
-        this.model.load(instanceId).done((function(_this) {
-          return function(instance) {
-            _this._displayForm(instance);
-            return dfd.resolve(instance);
-          };
-        })(this)).fail(function() {
+        this.model.load(instanceId).done(resolve).fail(function() {
           return dfd.reject();
         });
       } else {
@@ -4963,7 +4975,8 @@
       "click .btn-save": "save",
       "click .btn-close": "close",
       "click .btn-destroy": "destroy",
-      "click .btn-copy": "copy"
+      "click .btn-copy": "copy",
+      "click .btn-refresh": "refresh"
     };
 
     function Form(options) {
@@ -4986,7 +4999,7 @@
       this.hotkeys = $(document).on("keydown." + this.cid, "body", $.proxy(this, "hotkeys"));
       $(window).on("beforeunload." + this.cid, (function(_this) {
         return function() {
-          return _this.confirmationMessage();
+          return _this.confirmationMessage(true);
         };
       })(this));
       return this;
@@ -5078,6 +5091,13 @@
       return this;
     };
 
+    Form.prototype.refresh = function() {
+      if (this.confirmClose()) {
+        this.model.fetch();
+      }
+      return this;
+    };
+
     Form.prototype.save = function() {
       if (this.request != null) {
         return;
@@ -5129,12 +5149,12 @@
       return !(message = this.confirmationMessage()) || confirm(message);
     };
 
-    Form.prototype.confirmationMessage = function() {
+    Form.prototype.confirmationMessage = function(closing) {
       if (this.request) {
-        return Cruddy.lang.confirm_abort;
+        return (closing ? Cruddy.lang.onclose_abort : Cruddy.lang.confirm_abort);
       }
       if (this.model.hasChangedSinceSync()) {
-        return Cruddy.lang.confirm_discard;
+        return (closing ? Cruddy.lang.onclose_discard : Cruddy.lang.confirm_discard);
       }
     };
 
@@ -5159,9 +5179,7 @@
     };
 
     Form.prototype.copy = function() {
-      var copy;
-      this.model.entity.set("instance", copy = this.model.copy());
-      Cruddy.router.navigate(copy.link());
+      Cruddy.app.page.display(this.model.copy());
       return this;
     };
 
@@ -5173,6 +5191,7 @@
       this.submit = this.$(".btn-save");
       this.destroy = this.$(".btn-destroy");
       this.copy = this.$(".btn-copy");
+      this.$refresh = this.$(".btn-refresh");
       this.progressBar = this.$(".form-save-progress");
       this.update();
       return Form.__super__.render.apply(this, arguments);
@@ -5184,16 +5203,17 @@
     };
 
     Form.prototype.update = function() {
-      var permit, _ref1;
+      var isNew, permit, _ref1;
       permit = this.model.entity.getPermissions();
+      isNew = this.model.isNew();
       this.$el.toggleClass("loading", this.request != null);
-      this.submit.text(this.model.isNew() ? Cruddy.lang.create : Cruddy.lang.save);
+      this.submit.text(isNew ? Cruddy.lang.create : Cruddy.lang.save);
       this.submit.attr("disabled", this.request != null);
-      this.submit.toggle(this.model.isNew() ? permit.create : permit.update);
+      this.submit.toggle(isNew ? permit.create : permit.update);
       this.destroy.attr("disabled", this.request != null);
-      this.destroy.html(this.model.entity.isSoftDeleting() && this.model.get("deleted_at") ? "Восстановить" : "<span class='glyphicon glyphicon-trash' title='" + Cruddy.lang["delete"] + "'></span>");
-      this.destroy.toggle(!this.model.isNew() && permit["delete"]);
-      this.copy.toggle(!this.model.isNew() && permit.create);
+      this.destroy.toggle(!isNew && permit["delete"]);
+      this.copy.toggle(!isNew && permit.create);
+      this.$refresh.toggle(!isNew);
       if ((_ref1 = this.external) != null) {
         _ref1.remove();
       }
@@ -5204,7 +5224,7 @@
     };
 
     Form.prototype.template = function() {
-      return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n        <button type=\"button\" class=\"btn btn-link btn-destroy navbar-btn pull-right\" type=\"button\"></button>\n        \n        <button type=\"button\" tabindex=\"-1\" class=\"btn btn-link btn-copy navbar-btn pull-right\" title=\"" + Cruddy.lang.copy + "\">\n            <span class=\"glyphicon glyphicon-book\"></span>\n        </button>\n        \n        <ul id=\"" + (this.componentId("nav")) + "\" class=\"nav navbar-nav\"></ul>\n    </div>\n</div>\n\n<div class=\"tab-content\" id=\"" + (this.componentId("body")) + "\"></div>\n\n<footer>\n    <button type=\"button\" class=\"btn btn-default btn-close\" type=\"button\">" + Cruddy.lang.close + "</button>\n    <button type=\"button\" class=\"btn btn-primary btn-save\" type=\"button\" disabled></button>\n\n    <div class=\"progress\"><div class=\"progress-bar form-save-progress\"></div></div>\n</footer>";
+      return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n        <ul id=\"" + (this.componentId("nav")) + "\" class=\"nav navbar-nav\"></ul>\n    </div>\n</div>\n\n<div class=\"tab-content\" id=\"" + (this.componentId("body")) + "\"></div>\n\n<footer>\n    <div class=\"pull-left\">\n        <button type=\"button\" class=\"btn btn-link btn-destroy\" title=\"" + Cruddy.lang.model_delete + "\">\n            <span class=\"glyphicon glyphicon-trash\"></span>\n        </button>\n        \n        <button type=\"button\" tabindex=\"-1\" class=\"btn btn-link btn-copy\" title=\"" + Cruddy.lang.model_copy + "\">\n            <span class=\"glyphicon glyphicon-book\"></span>\n        </button>\n        \n        <button type=\"button\" class=\"btn btn-link btn-refresh\" title=\"" + Cruddy.lang.model_refresh + "\">\n            <span class=\"glyphicon glyphicon-refresh\"></span>\n        </button>\n    </div>\n\n    <button type=\"button\" class=\"btn btn-default btn-close\">" + Cruddy.lang.close + "</button>\n    <button type=\"button\" class=\"btn btn-primary btn-save\"></button>\n\n    <div class=\"progress\"><div class=\"progress-bar form-save-progress\"></div></div>\n</footer>";
     };
 
     Form.prototype.externalTemplate = function(href) {

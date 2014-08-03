@@ -22,34 +22,32 @@ class Cruddy.Inputs.ImageList extends Cruddy.Inputs.FileList
 
     wrapItems: (html) -> """<ul class="image-group">#{ html }</ul>"""
 
-    renderItem: (item, i = 0) ->
+    renderItem: (item) ->
         """
         <li class="image-group-item">
-            #{ @renderImage item, i }
-            <a href="#" class="action-delete" data-index="#{ i }"><span class="glyphicon glyphicon-remove"></span></a>
+            #{ @renderImage item }
+            <a href="#" class="action-delete" data-cid="#{ @itemId(item) }"><span class="glyphicon glyphicon-remove"></span></a>
         </li>
         """
 
-    renderImage: (item, i = 0) ->
-        id = @key + i
-
-        if item instanceof File
+    renderImage: (item) ->
+        if isFile = item instanceof File
             image = item.data or ""
-            @readers.push @createPreviewLoader item, id if not item.data?
+            @readers.push @createPreviewLoader item if not item.data?
         else
             image = thumb item, @width, @height
 
         """
-        <a href="#{ if item instanceof File then item.data or "#" else Cruddy.root + '/' + item }" class="img-wrap" data-trigger="fancybox">
-            <img src="#{ image }" id="#{ id }">
+        <a href="#{ if isFile then item.data or "#" else Cruddy.root + '/' + item }" class="img-wrap" data-trigger="fancybox">
+            <img src="#{ image }" #{ if isFile then "id='"+item.cid+"'" else "" }>
         </a>
         """
 
-    createPreviewLoader: (item, id) ->
+    createPreviewLoader: (item) ->
         reader = new FileReader
         reader.item = item
         reader.onload = (e) ->
             e.target.item.data = e.target.result
-            $("#" + id).attr("src", e.target.result).parent().attr "href", e.target.result
+            $("#" + item.cid).attr("src", e.target.result).parent().attr "href", e.target.result
 
         reader

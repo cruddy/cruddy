@@ -1,3 +1,13 @@
+v0.3.1
+======
+
+*   Refactored image\file lists
+*   Extra form buttons moved from the header to the footer
+*   Added a button for syncing model with server data
+*   Refactored language lines a little bit
+*   FileUploader now returns empty array when no files were uploaded when using multiple uploads
+*   Copying now works
+
 v0.3.0
 ======
 

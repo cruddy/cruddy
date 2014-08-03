@@ -74,9 +74,9 @@ class FileUploader {
      */
     public function upload($value)
     {
-        if (empty($value)) return null;
-        
         if (is_array($value)) return $this->uploadMany($value);
+        
+        if (empty($value)) return null;
 
         return is_string($value) ? $value : $this->uploadFile($value);
     }

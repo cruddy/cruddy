@@ -16,6 +16,10 @@
     'refresh' => 'Refresh',
     'view_external' => 'View item on main site',
 
+    'model_refresh' => 'Sync model with the server.',
+    'model_delete' => 'Delete from the server.',
+    'model_copy' => 'Create a new model with same attributes.',
+
     'no_results' => 'No results',
     'more' => 'More',
 
@@ -45,6 +49,9 @@
     'confirm_abort' => 'Are you shure you want to abort request?',
     'confirm_delete' => 'Are you shure you want to delete the item? You will not be able to restore it!',
 
+    'onclose_discard' => 'All changes will be lost.',
+    'onclose_abort' => 'The request to the server will be aborted.',
+ 
     'filter_apply' => 'Apply',
     'filter_reset' => 'Reset',
 ];

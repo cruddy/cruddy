@@ -3467,7 +3467,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         @external?.remove()
 
-        @destroy.before @external = $ @externalTemplate @model.extra.external if @model.extra.external
+        @destroy.before @external = $ @externalLinkTemplate @model.extra.external if @model.extra.external
 
         this
 
@@ -3503,8 +3503,8 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         </footer>
         """
 
-    externalTemplate: (href) ->"""
-        <a href="#{ href }" class="btn btn-link navbar-btn pull-right" title="#{ Cruddy.lang.view_external }" target="_blank">
+    externalLinkTemplate: (href) -> """
+        <a href="#{ href }" class="btn btn-link" title="#{ Cruddy.lang.view_external }" target="_blank">
             #{ b_icon "eye-open" }
         </a>
         """

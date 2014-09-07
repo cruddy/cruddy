@@ -8,11 +8,14 @@ use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Redirect;
 use Intervention\Image\Exception\ImageNotFoundException;
+use Intervention\Image\Exception\RuntimeException;
+use Kalnoy\Cruddy\Environment;
 use Kalnoy\Cruddy\Service\ThumbnailFactory;
+use Log;
 
 /**
  * This controller handles base web-requests.
- * 
+ *
  * @since 1.0.0
  */
 class CruddyController extends Controller {
@@ -30,32 +33,17 @@ class CruddyController extends Controller {
     /**
      * Initialize the controller.
      *
+     * @param Environment                             $cruddy
      * @param \Kalnoy\Cruddy\Service\ThumbnailFactory $thumb
      */
-    public function __construct(ThumbnailFactory $thumb)
+    public function __construct(Environment $cruddy, ThumbnailFactory $thumb)
     {
-        $this->cruddy = app('cruddy');
+        $this->cruddy = $cruddy;
         $this->thumb = $thumb;
 
         $authFilter = $this->cruddy->config('auth_filter');
 
-        if ($authFilter) $this->beforeFilter($authFilter, ['except' => ['thumb']]);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    protected function setupLayout()
-    {
-        if ($this->layout === null)
-        {
-            $this->layout = $this->cruddy->config('layout');
-        }
-
-        if ($this->layout !== null)
-        {
-            $this->layout = View::make($this->layout);
-        }
+        if ($authFilter) $this->beforeFilter($authFilter, [ 'except' => 'thumb' ]);
     }
 
     /**
@@ -69,7 +57,7 @@ class CruddyController extends Controller {
         {
             if ($dashboard[0] === '@') return Redirect::route('cruddy.index', [ substr($dashboard, 1) ]);
 
-            $this->layout->content = View::make($dashboard, ['cruddy' => $this->cruddy]);
+            return view($dashboard, [ 'cruddy' => $this->cruddy ]);
         }
     }
 
@@ -78,7 +66,7 @@ class CruddyController extends Controller {
      */
     public function show()
     {
-        $this->layout->content = View::make('cruddy::loading');
+        return view('cruddy::loading');
     }
 
     /**
@@ -100,9 +88,11 @@ class CruddyController extends Controller {
             return $this->thumb->make(public_path($src), $width, $height)->response();
         }
 
-        catch (ImageNotFoundException $e)
+        catch (RuntimeException $e)
         {
-            App::abort(404);
+            Log::error($e);
+
+            App::abort(404, $e->getMessage());
         }
     }
 }

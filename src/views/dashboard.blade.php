@@ -1,3 +1,7 @@
-<div class="welcome">
-    
-</div>
+@extends('cruddy::layout')
+
+@section('content')
+    <div class="welcome">
+
+    </div>
+@stop

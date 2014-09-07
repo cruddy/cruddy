@@ -59,6 +59,7 @@ class CruddyServiceProvider extends ServiceProvider {
         $this->registerCommands();
         $this->registerCompiler();
         $this->registerThumbnailFactory();
+        $this->registerAliases();
     }
 
     /**
@@ -120,6 +121,9 @@ class CruddyServiceProvider extends ServiceProvider {
         });
     }
 
+    /**
+     *  Register entities repository.
+     */
     public function registerRepository()
     {
         $this->app->bindShared('cruddy.repository', function ($app)
@@ -279,9 +283,36 @@ class CruddyServiceProvider extends ServiceProvider {
      */
     protected function registerThumbnailFactory()
     {
-        $this->app->bindShared('Kalnoy\Cruddy\Service\ThumbnailFactory', function ($app)
+        $this->app->bindShared('cruddy.thumbs', function ($app)
         {
             return new ThumbnailFactory(new ImageManager, $app['cache']->driver());
         });
+    }
+
+    /**
+     * Register cruddy aliases.
+     */
+    protected function registerAliases()
+    {
+        $baseNamespace = 'Kalnoy\Cruddy\\';
+
+        $aliases =
+        [
+            'cruddy' => 'Environment',
+            'cruddy.compiler' => 'Compiler',
+            'cruddy.lang' => 'Lang',
+            'cruddy.thumbs' => 'Service\ThumbnailFactory',
+            'cruddy.repository' => 'Repository',
+            'cruddy.permissions' => 'Service\Permissions\PermissionsManager',
+            'cruddy.fields' => 'Schema\Fields\Factory',
+            'cruddy.columns' => 'Schema\Columns\Factory',
+            'cruddy.menu' => 'Service\MenuBuilder',
+            'cruddy.assets' => 'Assets',
+        ];
+
+        foreach ($aliases as $key => $alias)
+        {
+            $this->app->alias($key, $baseNamespace.$alias);
+        }
     }
 }

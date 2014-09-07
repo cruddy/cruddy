@@ -20,17 +20,14 @@
     // I.e. `auth.basic` or `auth`.
     'auth_filter' => null,
 
-    // The main layout view.
-    'layout' => 'cruddy::layout',
-
     // The default ace theme.
     'ace_theme' => 'chrome',
 
     // The list of key value pairs where key is the entity id and value is
     // an entity class name. For example:
-    // 
+    //
     // 'users' => 'UserEntity'
-    // 
+    //
     // Class is resolved through the IoC container.
     'entities' =>
     [
@@ -38,11 +35,11 @@
     ],
 
     // Main menu items.
-    // 
+    //
     // How to define menu items: https://github.com/lazychaser/cruddy/wiki/Menu
     'menu' =>
     [
-        
+
     ],
 
     // The menu that is displayed to the right of the main menu.

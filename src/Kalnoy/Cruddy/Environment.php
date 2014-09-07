@@ -2,7 +2,7 @@
 
 namespace Kalnoy\Cruddy;
 
-use Illuminate\Support\Contracts\JsonableInterface;
+use Illuminate\Contracts\Support\JsonableInterface;
 use Illuminate\Http\Request;
 use Illuminate\Config\Repository as Config;
 use Illuminate\Events\Dispatcher;
@@ -129,7 +129,7 @@ class Environment implements JsonableInterface {
      *
      * @param string $id
      *
-     * @throws RuntimeException
+     * @throws RuntimeException if field is not found.
      *
      * @return Schema\Fields\BaseField
      */

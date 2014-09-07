@@ -5,7 +5,7 @@ namespace Kalnoy\Cruddy\Schema;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
-use Illuminate\Support\Contracts\ArrayableInterface;
+use Illuminate\Contracts\Support\ArrayableInterface;
 
 /**
  * Base attribute interface.

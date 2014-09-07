@@ -4,8 +4,8 @@ namespace Kalnoy\Cruddy;
 
 use RuntimeException;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Contracts\JsonableInterface;
-use Illuminate\Support\Contracts\ArrayableInterface;
+use Illuminate\Contracts\Support\JsonableInterface;
+use Illuminate\Contracts\Support\ArrayableInterface;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Kalnoy\Cruddy\ModelNotFoundException;
 use Kalnoy\Cruddy\Schema\SchemaInterface;

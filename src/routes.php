@@ -1,56 +1,56 @@
 <?php
 
-Route::group(['prefix' => Config::get('cruddy::uri')], function ()
+Route::group(['prefix' => Config::get('cruddy::uri'), 'namespace' => 'Kalnoy\Cruddy\Controllers'], function ()
 {
     Route::group(['prefix' => 'api'], function ()
     {
         Route::get('_schema',
         [
             'as' => 'cruddy.api.schema',
-            'uses' => 'Kalnoy\Cruddy\Controllers\EntityApiController@schema',
+            'uses' => 'EntityApiController@schema',
         ]);
 
         Route::get('{entity}',
         [
             'as' => 'cruddy.api.entity.index',
-            'uses' => 'Kalnoy\Cruddy\Controllers\EntityApiController@index',
+            'uses' => 'EntityApiController@index',
         ]);
 
         Route::post('{entity}',
         [
             'as' => 'cruddy.api.entity.create',
-            'uses' => 'Kalnoy\Cruddy\Controllers\EntityApiController@create',
+            'uses' => 'EntityApiController@create',
         ]);
 
         Route::get('{entity}/{id}',
         [
             'as' => 'cruddy.api.entity.show',
-            'uses' => 'Kalnoy\Cruddy\Controllers\EntityApiController@show',
+            'uses' => 'EntityApiController@show',
         ]);
 
         Route::put('{entity}/{id}',
         [
             'as' => 'cruddy.api.entity.update',
-            'uses' => 'Kalnoy\Cruddy\Controllers\EntityApiController@update',
+            'uses' => 'EntityApiController@update',
         ]);
 
         Route::delete('{entity}/{id}',
         [
             'as' => 'cruddy.api.entity.destroy',
-            'uses' => 'Kalnoy\Cruddy\Controllers\EntityApiController@destroy',
+            'uses' => 'EntityApiController@destroy',
         ]);
     });
 
-    Route::get('/', 'Kalnoy\Cruddy\Controllers\CruddyController@index');
-    Route::get('thumb', 'Kalnoy\Cruddy\Controllers\CruddyController@thumb');
+    Route::get('/', 'CruddyController@index');
+    Route::get('thumb', 'CruddyController@thumb');
 
     $entityPattern = app('cruddy.repository')->available();
     $entityPattern = "({$entityPattern})";
 
     Route::get('{entity}',
     [
-        'as' => 'cruddy.index', 
-        'uses' => 'Kalnoy\Cruddy\Controllers\CruddyController@show'
+        'as' => 'cruddy.index',
+        'uses' => 'CruddyController@show'
     ])
     ->where('entity', $entityPattern);
 });

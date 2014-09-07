@@ -2,14 +2,14 @@
 
 namespace Kalnoy\Cruddy\Controllers;
 
-use Illuminate\Support\Contracts\ArrayableInterface;
+use Illuminate\Contracts\Support\ArrayableInterface;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Response;
 use Illuminate\Routing\Controller;
 
 /**
  * Base api controller.
- * 
+ *
  * @since 1.0.0
  */
 class ApiController extends Controller {
@@ -101,7 +101,7 @@ class ApiController extends Controller {
      * Get not found response.
      *
      * @param string $message
-     * 
+     *
      * @return Response
      */
     protected function notFound($message = null)

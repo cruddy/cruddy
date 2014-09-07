@@ -2,7 +2,7 @@
 
 namespace Kalnoy\Cruddy\Schema;
 
-use Illuminate\Support\Contracts\ArrayableInterface;
+use Illuminate\Contracts\Support\ArrayableInterface;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Kalnoy\Cruddy\Repo\RepositoryInterface;
 

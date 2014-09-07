@@ -10,7 +10,8 @@
     "keywords": ["dashboard", "crud", "administrator", "admin", "backend", "laravel", "eloquent", "cms"],
     "require": {
         "php": ">=5.4.0",
-        "laravel/framework": "~4.1",
+        "laravel/framework": "~4.3",
+        "illuminate/html": "~4.3",
         "intervention/image": "~2.0"
     },
 

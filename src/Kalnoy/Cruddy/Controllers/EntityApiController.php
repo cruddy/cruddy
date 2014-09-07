@@ -4,15 +4,18 @@ namespace Kalnoy\Cruddy\Controllers;
 
 use Exception;
 use Illuminate\Http\Response;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Config;
-use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\Compiler;
+use Kalnoy\Cruddy\EntityNotFoundException;
+use Kalnoy\Cruddy\Environment;
+use Kalnoy\Cruddy\ModelNotFoundException;
+use Kalnoy\Cruddy\OperationNotPermittedException;
 use Kalnoy\Cruddy\Service\Validation\ValidationException;
 
 /**
  * This controller handles requests to the api.
- * 
+ *
  * @since 1.0.0
  */
 class EntityApiController extends ApiController {
@@ -31,10 +34,12 @@ class EntityApiController extends ApiController {
 
     /**
      * Initialize the controller.
+     *
+     * @param Environment $cruddy
      */
-    public function __construct()
+    public function __construct(Environment $cruddy)
     {
-        $this->cruddy = app('cruddy');
+        $this->cruddy = $cruddy;
         $authFilter = $this->cruddy->config('auth_filter');
 
         if ($authFilter) $this->beforeFilter($authFilter);
@@ -53,9 +58,9 @@ class EntityApiController extends ApiController {
     /**
      * Get the schema.
      */
-    public function schema()
+    public function schema(Compiler $compiler)
     {
-        return $this->success(app('cruddy.compiler')->schema());
+        return $this->success($compiler->schema());
     }
 
     /**
@@ -102,7 +107,7 @@ class EntityApiController extends ApiController {
      */
     public function show($entity, $id)
     {
-        return $this->resolve($entity, 'view', function ($entity) use ($id) 
+        return $this->resolve($entity, 'view', function ($entity) use ($id)
         {
             return $this->success($entity->find($id));
         });

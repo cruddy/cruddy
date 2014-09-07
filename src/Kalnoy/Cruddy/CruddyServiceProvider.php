@@ -26,7 +26,7 @@ class CruddyServiceProvider extends ServiceProvider {
      *
      * @var int
      */
-    protected $build = 7;
+    protected $build = 8;
 
 	/**
 	 * Bootstrap the application events.
@@ -170,7 +170,7 @@ class CruddyServiceProvider extends ServiceProvider {
             $baseDir = $app['config']->get('cruddy::assets', 'packages/kalnoy/cruddy');
 
             $assets = new Assets;
-            
+
             $assets->css($this->getCssFiles($baseDir));
             $assets->js($this->getJsFiles($baseDir));
 
@@ -224,10 +224,10 @@ class CruddyServiceProvider extends ServiceProvider {
     {
         $suffix = $this->app['config']->get('app.debug') ? '' : '.min';
 
-        return $this->assets($baseDir.'/js', 
+        return $this->assets($baseDir.'/js',
         [
             'ace/ace.js',
-            "vendor{$suffix}.js", 
+            "vendor{$suffix}.js",
             "app{$suffix}.js",
         ]);
     }
@@ -247,7 +247,7 @@ class CruddyServiceProvider extends ServiceProvider {
         $this->app->bindShared('cruddy.command.compile', function ($app)
         {
             $app['cruddy'];
-            
+
             return new CompileCommand($app['cruddy.compiler']);
         });
 

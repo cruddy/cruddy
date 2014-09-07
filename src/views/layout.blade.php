@@ -11,10 +11,10 @@
             <div class="navbar-header">
                 <a href="{{ $brand_url }}" class="navbar-brand">{{ $brand }}</a>
             </div>
-            
+
             <div class="navbar-collapse">
                 {{ $menu->render($mainMenu) }}
-            
+
                 @if ($serviceMenu)
                     {{ $menu->render($serviceMenu, 'nav navbar-nav navbar-right') }}
                 @endif
@@ -27,6 +27,7 @@
     <script>
     Cruddy = {{ $cruddyJSON }};
     Cruddy.root = '{{ Request::root() }}';
+    Cruddy.baseUrl = '{{ Request::getBaseUrl() }}';
     </script>
 
     {{ $assets->scripts() }}

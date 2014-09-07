@@ -1,6 +1,6 @@
 Cruddy = window.Cruddy || {}
 
-Cruddy.baseUrl = Cruddy.root + "/" + Cruddy.uri
+Cruddy.backendRoot = Cruddy.root + "/" + Cruddy.uri
 
 API_URL = "/backend/api/v1"
 TRANSITIONEND = "transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd"
@@ -37,7 +37,7 @@ humanize = (id) => id.replace(/_-/, " ")
 
 # Get url for an entity action
 entity_url = (id, extra) ->
-    url = Cruddy.baseUrl + "/api/" + id;
+    url = Cruddy.backendRoot + "/api/" + id;
     url += "/" + extra if extra
 
     url
@@ -47,7 +47,7 @@ after_break = (callback) -> setTimeout callback, 50
 
 # Get thumb link
 thumb = (src, width, height) ->
-    url = "#{ Cruddy.baseUrl }/thumb?src=#{ encodeURIComponent(src) }"
+    url = "#{ Cruddy.backendRoot }/thumb?src=#{ encodeURIComponent(src) }"
     url += "&amp;width=#{ width }" if width
     url += "&amp;height=#{ height }" if height
 
@@ -3630,7 +3630,7 @@ class Router extends Backbone.Router
 
         $(document.body).on "click", "a", (e) =>
             fragment = e.currentTarget.href
-            
+
             return if fragment.indexOf(root) isnt 0
 
             fragment = history.getFragment fragment.slice root.length
@@ -3723,8 +3723,8 @@ class Router extends Backbone.Router
 
 $ ->
     Cruddy.router = new Router
-    
+
     Backbone.history.start
-        root: Cruddy.uri
+        root: Cruddy.baseUrl + "/" + Cruddy.uri
         pushState: true
         hashChange: false

@@ -5,7 +5,7 @@
 
   Cruddy = window.Cruddy || {};
 
-  Cruddy.baseUrl = Cruddy.root + "/" + Cruddy.uri;
+  Cruddy.backendRoot = Cruddy.root + "/" + Cruddy.uri;
 
   API_URL = "/backend/api/v1";
 
@@ -50,7 +50,7 @@
 
   entity_url = function(id, extra) {
     var url;
-    url = Cruddy.baseUrl + "/api/" + id;
+    url = Cruddy.backendRoot + "/api/" + id;
     if (extra) {
       url += "/" + extra;
     }
@@ -63,7 +63,7 @@
 
   thumb = function(src, width, height) {
     var url;
-    url = "" + Cruddy.baseUrl + "/thumb?src=" + (encodeURIComponent(src));
+    url = "" + Cruddy.backendRoot + "/thumb?src=" + (encodeURIComponent(src));
     if (width) {
       url += "&amp;width=" + width;
     }
@@ -5504,7 +5504,7 @@
   $(function() {
     Cruddy.router = new Router;
     return Backbone.history.start({
-      root: Cruddy.uri,
+      root: Cruddy.baseUrl + "/" + Cruddy.uri,
       pushState: true,
       hashChange: false
     });

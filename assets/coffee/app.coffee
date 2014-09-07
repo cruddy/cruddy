@@ -103,7 +103,7 @@ class Router extends Backbone.Router
 
         $(document.body).on "click", "a", (e) =>
             fragment = e.currentTarget.href
-            
+
             return if fragment.indexOf(root) isnt 0
 
             fragment = history.getFragment fragment.slice root.length
@@ -196,8 +196,8 @@ class Router extends Backbone.Router
 
 $ ->
     Cruddy.router = new Router
-    
+
     Backbone.history.start
-        root: Cruddy.uri
+        root: Cruddy.baseUrl + "/" + Cruddy.uri
         pushState: true
         hashChange: false

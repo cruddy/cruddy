@@ -2819,7 +2819,9 @@ class Cruddy.formatters.Image extends BaseFormatter
         </a>
         """
 class Cruddy.formatters.Plain extends BaseFormatter
-    format: (value) -> _.escape value
+    # Plain formatter now uses not escaped value to support feature in issue #46
+    # https://github.com/lazychaser/cruddy/issues/46
+    format: (value) -> value
 Cruddy.Entity = {}
 
 class Cruddy.Entity.Entity extends Backbone.Model

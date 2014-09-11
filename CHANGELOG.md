@@ -1,3 +1,8 @@
+v0.4.0
+======
+
+*   Plain formatter now doesn't use escaping
+
 v0.3.2
 ======
 

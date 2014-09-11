@@ -4344,7 +4344,7 @@
     }
 
     Plain.prototype.format = function(value) {
-      return _.escape(value);
+      return value;
     };
 
     return Plain;

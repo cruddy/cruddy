@@ -1852,12 +1852,14 @@
       var html, item, value, _i, _len, _ref1;
       value = this.model.get(this.key);
       html = "";
-      _ref1 = this.multiple ? value : [value];
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        item = _ref1[_i];
-        html += this.renderItem(item);
+      if (value) {
+        _ref1 = this.multiple ? value : [value];
+        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+          item = _ref1[_i];
+          html += this.renderItem(item);
+        }
       }
-      if (html) {
+      if (html.length) {
         html = this.wrapItems(html);
       }
       html += this.renderInput(this.multiple ? "<span class='glyphicon glyphicon-plus'></span> " + Cruddy.lang.add : Cruddy.lang.choose);

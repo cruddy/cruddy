@@ -25,7 +25,7 @@ class Cruddy.Inputs.FileList extends Cruddy.Inputs.Base
     appendFiles: (e) ->
         return if e.target.files.length is 0
 
-        file.cid = @cid + "_" + @counter++ for file in e.target.files        
+        file.cid = @cid + "_" + @counter++ for file in e.target.files
 
         if @multiple
             value = _.clone @model.get @key
@@ -42,8 +42,11 @@ class Cruddy.Inputs.FileList extends Cruddy.Inputs.Base
         value = @model.get @key
 
         html = ""
-        html += @renderItem item for item in if @multiple then value else [ value ]
-        html = @wrapItems html if html
+
+        if value
+            html += @renderItem item for item in if @multiple then value else [ value ]
+
+        html = @wrapItems html if html.length
 
         html += @renderInput if @multiple then "<span class='glyphicon glyphicon-plus'></span> #{ Cruddy.lang.add }" else Cruddy.lang.choose
 

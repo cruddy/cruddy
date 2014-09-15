@@ -56,7 +56,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         this
 
-    handleChange: -> 
+    handleChange: ->
         # @$el.toggleClass "dirty", @model.hasChangedSinceSync()
 
         this
@@ -200,13 +200,13 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         @destroy.attr "disabled", @request?
         @destroy.toggle not isNew and permit.delete
-        
+
         @copy.toggle not isNew and permit.create
         @$refresh.toggle not isNew
 
         @external?.remove()
 
-        @destroy.before @external = $ @externalLinkTemplate @model.extra.external if @model.extra.external
+        @$refresh.after @external = $ @externalLinkTemplate @model.extra.external if @model.extra.external
 
         this
 
@@ -225,11 +225,11 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
                 <button type="button" class="btn btn-link btn-destroy" title="#{ Cruddy.lang.model_delete }">
                     <span class="glyphicon glyphicon-trash"></span>
                 </button>
-                
+
                 <button type="button" tabindex="-1" class="btn btn-link btn-copy" title="#{ Cruddy.lang.model_copy }">
                     <span class="glyphicon glyphicon-book"></span>
                 </button>
-                
+
                 <button type="button" class="btn btn-link btn-refresh" title="#{ Cruddy.lang.model_refresh }">
                     <span class="glyphicon glyphicon-refresh"></span>
                 </button>
@@ -250,9 +250,9 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
     remove: ->
         @trigger "remove", @
-        
+
         @request.abort() if @request
-        
+
         @$el.one(TRANSITIONEND, =>
             $(document).off "." + @cid
             $(window).off "." + @cid

@@ -3,6 +3,7 @@ develop
 
 *   Plain formatter now doesn't use escaping
 *   #49: fixed image displayed when no data provided
+*   External link is moved to after refresh button
 
 v0.3.2
 ======

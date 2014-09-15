@@ -5220,13 +5220,13 @@
         _ref1.remove();
       }
       if (this.model.extra.external) {
-        this.destroy.before(this.external = $(this.externalLinkTemplate(this.model.extra.external)));
+        this.$refresh.after(this.external = $(this.externalLinkTemplate(this.model.extra.external)));
       }
       return this;
     };
 
     Form.prototype.template = function() {
-      return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n        <ul id=\"" + (this.componentId("nav")) + "\" class=\"nav navbar-nav\"></ul>\n    </div>\n</div>\n\n<div class=\"tab-content\" id=\"" + (this.componentId("body")) + "\"></div>\n\n<footer>\n    <div class=\"pull-left\">\n        <button type=\"button\" class=\"btn btn-link btn-destroy\" title=\"" + Cruddy.lang.model_delete + "\">\n            <span class=\"glyphicon glyphicon-trash\"></span>\n        </button>\n        \n        <button type=\"button\" tabindex=\"-1\" class=\"btn btn-link btn-copy\" title=\"" + Cruddy.lang.model_copy + "\">\n            <span class=\"glyphicon glyphicon-book\"></span>\n        </button>\n        \n        <button type=\"button\" class=\"btn btn-link btn-refresh\" title=\"" + Cruddy.lang.model_refresh + "\">\n            <span class=\"glyphicon glyphicon-refresh\"></span>\n        </button>\n    </div>\n\n    <button type=\"button\" class=\"btn btn-default btn-close\">" + Cruddy.lang.close + "</button>\n    <button type=\"button\" class=\"btn btn-primary btn-save\"></button>\n\n    <div class=\"progress\"><div class=\"progress-bar form-save-progress\"></div></div>\n</footer>";
+      return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n        <ul id=\"" + (this.componentId("nav")) + "\" class=\"nav navbar-nav\"></ul>\n    </div>\n</div>\n\n<div class=\"tab-content\" id=\"" + (this.componentId("body")) + "\"></div>\n\n<footer>\n    <div class=\"pull-left\">\n        <button type=\"button\" class=\"btn btn-link btn-destroy\" title=\"" + Cruddy.lang.model_delete + "\">\n            <span class=\"glyphicon glyphicon-trash\"></span>\n        </button>\n\n        <button type=\"button\" tabindex=\"-1\" class=\"btn btn-link btn-copy\" title=\"" + Cruddy.lang.model_copy + "\">\n            <span class=\"glyphicon glyphicon-book\"></span>\n        </button>\n\n        <button type=\"button\" class=\"btn btn-link btn-refresh\" title=\"" + Cruddy.lang.model_refresh + "\">\n            <span class=\"glyphicon glyphicon-refresh\"></span>\n        </button>\n    </div>\n\n    <button type=\"button\" class=\"btn btn-default btn-close\">" + Cruddy.lang.close + "</button>\n    <button type=\"button\" class=\"btn btn-primary btn-save\"></button>\n\n    <div class=\"progress\"><div class=\"progress-bar form-save-progress\"></div></div>\n</footer>";
     };
 
     Form.prototype.externalLinkTemplate = function(href) {

@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 class FileUploader {
 
     /**
-     * @var \Illuminate\Filesystem\Filesystem
+     * @var Filesystem
      */
     protected $file;
 
@@ -54,7 +54,7 @@ class FileUploader {
     protected $uploaded = [];
 
     /**
-     * @param \Illuminate\Filesystem\Filesystem $file
+     * @param Filesystem $file
      */
     function __construct(Filesystem $file)
     {
@@ -68,14 +68,14 @@ class FileUploader {
      * `$value` can be either a string or UploadedFile.
      * The string is considered as old filename and returned as is.
      *
-     * @param array|string|\Symfony\Component\HttpFoundation\File\UploadedFile $value
+     * @param array|string|UploadedFile $value
      *
      * @return array|string
      */
     public function upload($value)
     {
         if (is_array($value)) return $this->uploadMany($value);
-        
+
         if (empty($value)) return null;
 
         return is_string($value) ? $value : $this->uploadFile($value);
@@ -84,7 +84,7 @@ class FileUploader {
     /**
      * Upload multiple files.
      *
-     * @param Symfony\Component\HttpFoundation\File\UploadedFile[] $files
+     * @param UploadedFile[] $files
      *
      * @return array
      */
@@ -110,7 +110,7 @@ class FileUploader {
     /**
      * Move UploadedFile to a required directory and return path.
      *
-     * @param Symfony\Component\HttpFoundation\File\UploadedFile $file
+     * @param UploadedFile $file
      *
      * @return string|null
      */
@@ -154,7 +154,7 @@ class FileUploader {
     /**
      * Get a name for a file.
      *
-     * @param \Symfony\Component\HttpFoundation\File\UploadedFile $file
+     * @param UploadedFile $file
      *
      * @return string
      */

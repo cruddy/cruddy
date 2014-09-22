@@ -8,7 +8,7 @@ use Kalnoy\Cruddy\Entity;
 
 /**
  * Field Factory class.
- * 
+ *
  * @since 1.0.0
  */
 class Factory extends BaseFactory {
@@ -35,13 +35,13 @@ class Factory extends BaseFactory {
 
     /**
      * Generate timestamp columns.
-     * 
+     *
      * They are disabled by default.
      *
-     * @param \Kalnoy\Cruddy\Entity                $entity
-     * @param \Kalnoy\Cruddy\Schema\BaseCollection $collection
-     * @param bool                                 $hide
-     * @param bool                                 $disable
+     * @param \Kalnoy\Cruddy\Entity $entity
+     * @param Collection            $collection
+     * @param bool                  $hide
+     * @param bool                  $disable
      *
      * @return void
      */
@@ -61,34 +61,38 @@ class Factory extends BaseFactory {
     /**
      * Add relation field type.
      *
-     * @param \Kalnoy\Cruddy\Entity                $entity
-     * @param \Kalnoy\Cruddy\Schema\BaseCollection $collection
-     * @param string                               $id
-     * @param string                               $ref
-     * @param bool                                 $inline
+     * @param \Kalnoy\Cruddy\Entity $entity
+     * @param Collection            $collection
+     * @param string                $id
+     * @param string                $ref
+     * @param bool                  $inline
      *
-     * @return \Kalnoy\Cruddy\Schema\Fields\Types\Relation
+     * @return BasicRelation
      */
     public function relates($entity, $collection, $id, $ref = null, $inline = false)
     {
-        if ($ref === null) $ref = \str_plural($id);
+        if ($ref === null) $ref = str_plural($id);
 
         $ref = Entity::getEnvironment()->entity($ref);
         $model = $entity->getRepository()->newModel();
 
         if ( ! method_exists($model, $id))
         {
-            throw new \RuntimeException("The target model {get_class($model)} doesn't have relation {$id} defined.");
+            $className = get_class($model);
+
+            throw new \RuntimeException("The target model [{$className}] doesn't have relation [{$id}] defined.");
         }
 
         $relation = $model->$id();
 
         if ( ! $relation instanceof Relation)
         {
-            throw new \RuntimeException("The method {$id} of model {get_class($model)} did not return valid relation.");
+            $className = get_class($model);
+
+            throw new \RuntimeException("The method [{$id}] of model [{$className}] did not return valid relation.");
         }
 
-        $relationClassName = \class_basename($relation);
+        $relationClassName = class_basename($relation);
         $className = 'Kalnoy\Cruddy\Schema\Fields\Types\\' . $relationClassName;
 
         if ($inline) $className .= 'Inline';
@@ -110,12 +114,12 @@ class Factory extends BaseFactory {
     /**
      * Create inline relation field.
      *
-     * @param \Kalnoy\Cruddy\Entity                $entity
-     * @param \Kalnoy\Cruddy\Schema\BaseCollection $collection
-     * @param string                               $id
-     * @param string                               $ref
+     * @param \Kalnoy\Cruddy\Entity $entity
+     * @param Collection            $collection
+     * @param string                $id
+     * @param string                $ref
      *
-     * @return \Kalnoy\Cruddy\Schema\Fields\Types\Relation
+     * @return InlineRelation
      */
     public function embed($entity, $collection, $id, $ref = null)
     {
@@ -125,12 +129,12 @@ class Factory extends BaseFactory {
     /**
      * Create slug field.
      *
-     * @param \Kalnoy\Cruddy\Entity                $entity
-     * @param \Kalnoy\Cruddy\Schema\BaseCollection $collection
-     * @param string                               $id
-     * @param array|string                         $ref
+     * @param \Kalnoy\Cruddy\Entity $entity
+     * @param Collection            $collection
+     * @param string                $id
+     * @param array|string          $ref
      *
-     * @return \Kalnoy\Cruddy\Fields\Types\Slug
+     * @return Types\Slug
      */
     public function slug($entity, $collection, $id, $ref = null)
     {
@@ -146,12 +150,12 @@ class Factory extends BaseFactory {
     /**
      * Create enum field.
      *
-     * @param \Kalnoy\Cruddy\Entity                $entity
-     * @param \Kalnoy\Cruddy\Schema\BaseCollection $collection
-     * @param string                               $id
-     * @param array|\Closure                       $items
+     * @param \Kalnoy\Cruddy\Entity $entity
+     * @param Collection            $collection
+     * @param string                $id
+     * @param array|\Closure        $items
      *
-     * @return \Kalnoy\Cruddy\Fields\Types\Enum
+     * @return Types\Enum
      */
     public function enum($entity, $collection, $id, $items)
     {
@@ -167,12 +171,12 @@ class Factory extends BaseFactory {
     /**
      * Create computed field.
      *
-     * @param \Kalnoy\Cruddy\Entity                $entity
-     * @param \Kalnoy\Cruddy\Schema\BaseCollection $collection
-     * @param string                               $id
-     * @param string|\Closure                     $accessor
+     * @param \Kalnoy\Cruddy\Entity $entity
+     * @param Collection            $collection
+     * @param string                $id
+     * @param string|\Closure       $accessor
      *
-     * @return \Kalnoy\Cruddy\Fields\Types\Computed
+     * @return Types\Computed
      */
     public function computed($entity, $collection, $id, $accessor = null)
     {
@@ -180,7 +184,7 @@ class Factory extends BaseFactory {
 
         if ($accessor === null)
         {
-            $accessor = 'get'.\camel_case($id);
+            $accessor = 'get'.camel_case($id);
         }
 
         $instance->accessor = $accessor;

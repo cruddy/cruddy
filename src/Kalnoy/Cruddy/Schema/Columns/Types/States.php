@@ -20,10 +20,14 @@ class States extends Attribute implements ColumnInterface {
     /**
      * The list of states of the row.
      *
-     * @var array|Closure
+     * @var array|\Closure
      */
     protected $states;
 
+    /**
+     * @param Entity $entity
+     * @param string $states
+     */
     public function __construct(Entity $entity, $states)
     {
         parent::__construct($entity, '_states');
@@ -56,12 +60,12 @@ class States extends Attribute implements ColumnInterface {
     /**
      * Get whether model has specified state.
      *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     * @param string $state
+     * @param Eloquent $model
+     * @param string   $state
      *
      * @return bool
      */
-    protected function hasState($model, $state)
+    protected function hasState(Eloquent $model, $state)
     {
         if ($state instanceof \Closure) return $state($model);
 

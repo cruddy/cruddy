@@ -12,8 +12,8 @@ interface SearchProcessorInterface {
     /**
      * Apply search conditions to the builder.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $builder
-     * @param array                                 $options
+     * @param Builder $builder
+     * @param array   $options
      *
      * @return void
      */

@@ -32,8 +32,8 @@ interface PermissionsInterface {
     /**
      * Get whether a user is allowed to perform an action on entity.
      *
-     * @param string               $action
-     * @param \Kalnoy\Cruddy\Entity $entity
+     * @param string $action
+     * @param Entity $entity
      *
      * @return bool
      */

@@ -9,9 +9,9 @@ use Illuminate\Support\Contracts\ArrayableInterface;
 
 /**
  * Base attribute interface.
- * 
+ *
  * Attributes extract data, can order data lists.
- * 
+ *
  * @since 1.0.0
  */
 interface AttributeInterface extends ArrayableInterface {
@@ -19,7 +19,7 @@ interface AttributeInterface extends ArrayableInterface {
     /**
      * Get model's corresponding value.
      *
-     * @param \Illuminate\Database\Eloquent\Model $model
+     * @param Eloquent $model
      *
      * @return mixed
      */
@@ -28,7 +28,7 @@ interface AttributeInterface extends ArrayableInterface {
     /**
      * Modify eloquent query before requesting any data.
      *
-     * @param \Illuminate\Database\Eloquent\Builder $builder
+     * @param EloquentBuilder $builder
      *
      * @return $this
      */
@@ -37,8 +37,8 @@ interface AttributeInterface extends ArrayableInterface {
     /**
      * Apply an order to the query builder.
      *
-     * @param \Illuminate\Database\Query\Builder $builder
-     * @param string                             $direction
+     * @param QueryBuilder $builder
+     * @param string       $direction
      *
      * @return $this
      */

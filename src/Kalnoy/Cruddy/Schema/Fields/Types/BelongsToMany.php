@@ -7,7 +7,7 @@ use Kalnoy\Cruddy\Schema\Fields\BasicRelation;
 
 /**
  * Handles belongs to many relation.
- * 
+ *
  * @since 1.0.0
  */
 class BelongsToMany extends BasicRelation {
@@ -40,8 +40,8 @@ class BelongsToMany extends BasicRelation {
     /**
      * Init nested query for filter.
      *
-     * @param \Illuminate\Database\Query\Builder $query
-     * @param mixed                              $data
+     * @param QueryBuilder $query
+     * @param mixed        $data
      *
      * @return void
      */

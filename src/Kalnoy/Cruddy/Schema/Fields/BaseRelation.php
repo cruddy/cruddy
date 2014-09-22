@@ -10,10 +10,10 @@ use Kalnoy\Cruddy\Service\Permissions\PermissionsInterface;
 
 /**
  * Base relation field class.
- * 
+ *
  * This field type is provided with references entity and corresponding relation
  * object.
- * 
+ *
  * @since 1.0.0
  */
 abstract class BaseRelation extends BaseField {
@@ -21,23 +21,24 @@ abstract class BaseRelation extends BaseField {
     /**
      * The entity that this relation refers to.
      *
-     * @var \Kalnoy\Cruddy\Entity\Entity
+     * @var Entity
      */
     protected $reference;
 
     /**
      * The relation object.
      *
-     * @var \Illuminate\Database\Eloquent\Relations\Relation
+     * @var Relation
      */
     protected $relation;
 
     /**
      * Init field.
      *
-     * @param \Kalnoy\Cruddy\Entity $entity
-     * @param string                $id
-     * @param \Kalnoy\Cruddy\Entity $reference
+     * @param Entity   $entity
+     * @param string   $id
+     * @param Entity   $reference
+     * @param Relation $relation
      */
     public function __construct(Entity $entity, $id, Entity $reference, Relation $relation)
     {
@@ -65,9 +66,9 @@ abstract class BaseRelation extends BaseField {
     /**
      * Start new relational query for specified model.
      *
-     * @param \Illuminate\Database\Eloquent\Model $model
+     * @param Eloquent $model
      *
-     * @return \Illuminate\Database\Eloquent\Relations\Relation
+     * @return Relation
      */
     public function newRelationalQuery(Eloquent $model = null)
     {
@@ -114,7 +115,7 @@ abstract class BaseRelation extends BaseField {
     /**
      * Get referenced entity instance.
      *
-     * @return \Kalnoy\Cruddy\Entity
+     * @return Entity
      */
     public function getReference()
     {
@@ -124,7 +125,7 @@ abstract class BaseRelation extends BaseField {
     /**
      * The relation object.
      *
-     * @return \Illuminate\Database\Eloquent\Relations\Relation
+     * @return Relation
      */
     public function getRelation()
     {
@@ -143,7 +144,7 @@ abstract class BaseRelation extends BaseField {
 
     /**
      * {@inheritdoc}
-     * 
+     *
      * Relational fields are always fillable since they are not actual attribute
      * on the model.
      */

@@ -7,7 +7,7 @@ use RuntimeException;
 
 /**
  * Validation exception that provides validation errors.
- * 
+ *
  * @since 1.0.0
  */
 class ValidationException extends RuntimeException {
@@ -22,10 +22,10 @@ class ValidationException extends RuntimeException {
     /**
      * Init exception.
      *
-     * @param array  $errors
-     * @param string $message
-     * @param int    $code
-     * @param \Exception $previous
+     * @param array     $errors
+     * @param string    $message
+     * @param int       $code
+     * @param Exception $previous
      */
     function __construct(array $errors, $message = '', $code = 0, Exception $previous = null)
     {

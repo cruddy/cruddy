@@ -4,7 +4,7 @@ namespace Kalnoy\Cruddy\Schema;
 
 /**
  * Base factory for all kinds of attributes.
- * 
+ *
  * @since 1.0.0
  */
 class BaseFactory {
@@ -29,12 +29,12 @@ class BaseFactory {
     /**
      * Resolve attribute instance.
      *
-     * @param string                                $macro
-     * @param \Kalnoy\Cruddy\Entity                 $entity
-     * @param \Kalnoy\Cruddy\Schema\BaseCollection  $collection
-     * @param array                                 $params
+     * @param string                $macro
+     * @param \Kalnoy\Cruddy\Entity $entity
+     * @param BaseCollection        $collection
+     * @param array                 $params
      *
-     * @return \Kalnoy\Cruddy\Scheme\AttributeInterface
+     * @return AttributeInterface
      */
     public function resolve($macro, $entity, $collection, array $params)
     {
@@ -65,12 +65,12 @@ class BaseFactory {
     /**
      * Evaluate callback.
      *
-     * @param mixed                                 $callback
-     * @param \Kalnoy\Cruddy\Entity                 $entity
-     * @param \Kalnoy\Cruddy\Schema\BaseCollection  $collection
-     * @param array                                 $params
+     * @param mixed                 $callback
+     * @param \Kalnoy\Cruddy\Entity $entity
+     * @param BaseCollection        $collection
+     * @param array                 $params
      *
-     * @return \Kalnoy\Cruddy\Schema\AttributeInterface
+     * @return AttributeInterface
      */
     protected function evaluate($callback, $entity, $collection, array $params)
     {

@@ -8,10 +8,10 @@ use Kalnoy\Cruddy\Schema\ColumnInterface;
 /**
  * Base column class.
  *
- * @since 1.0.0 
+ * @since 1.0.0
  */
 abstract class BaseColumn extends Attribute implements ColumnInterface {
-    
+
     /**
      * The column width in pixels or percents.
      *
@@ -73,7 +73,7 @@ abstract class BaseColumn extends Attribute implements ColumnInterface {
     /**
      * Set the default order direction.
      *
-     * @param asc|desc $value
+     * @param string $value
      *
      * @return $this
      */
@@ -86,13 +86,13 @@ abstract class BaseColumn extends Attribute implements ColumnInterface {
 
     /**
      * Set descending order direction.
-     * 
+     *
      * @return $this
      */
     public function reversed()
     {
         $this->orderDir = 'desc';
-        
+
         return $this;
     }
 

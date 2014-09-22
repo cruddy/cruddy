@@ -9,10 +9,11 @@ use Illuminate\Events\Dispatcher;
 use Kalnoy\Cruddy\Schema\Fields\Factory as FieldFactory;
 use Kalnoy\Cruddy\Schema\Columns\Factory as ColumnFactory;
 use Kalnoy\Cruddy\Service\Permissions\PermissionsManager;
+use RuntimeException;
 
 /**
  * Cruddy environment.
- * 
+ *
  * @since 1.0.0
  */
 class Environment implements JsonableInterface {
@@ -25,31 +26,31 @@ class Environment implements JsonableInterface {
     /**
      * The entities repository.
      *
-     * @var \Kalnoy\Cruddy\Repository
+     * @var Repository
      */
     protected $entities;
 
     /**
      * The field factory.
      *
-     * @var \Kalnoy\Cruddy\Schema\Fields\Factory
+     * @var Schema\Fields\Factory
      */
     protected $fields;
 
     /**
      * The column factory.
      *
-     * @var \Kalnoy\Cruddy\Schema\Columns\Factory
+     * @var Schema\Columns\Factory
      */
     protected $columns;
 
     /**
-     * @var \Kalnoy\Cruddy\Service\Permissions\PermissionsManager
+     * @var Service\Permissions\PermissionsManager
      */
     protected $permissions;
 
     /**
-     * @var \Kalnoy\Cruddy\Lang
+     * @var Lang
      */
     protected $lang;
 
@@ -60,6 +61,15 @@ class Environment implements JsonableInterface {
      */
     protected $dispatcher;
 
+    /**
+     * @param Config             $config
+     * @param Repository         $entities
+     * @param FieldFactory       $fields
+     * @param ColumnFactory      $columns
+     * @param PermissionsManager $permissions
+     * @param Lang               $lang
+     * @param Dispatcher         $dispatcher
+     */
     public function __construct(
         Config $config, Repository $entities, FieldFactory $fields, ColumnFactory $columns,
         PermissionsManager $permissions, Lang $lang, Dispatcher $dispatcher)
@@ -78,7 +88,7 @@ class Environment implements JsonableInterface {
      *
      * @param $id
      *
-     * @return \Kalnoy\Cruddy\Entity
+     * @return Entity
      */
     public function entity($id)
     {
@@ -113,15 +123,15 @@ class Environment implements JsonableInterface {
 
     /**
      * Find a field with given id.
-     * 
+     *
      * The full field id consists of two parts: the entity id and the field id.
      * I.e. `users.password`.
      *
      * @param string $id
      *
-     * @return \Kalnoy\Cruddy\Schema\Fields\BaseField
-     * 
-     * @throws \RuntimeException if field is not found.
+     * @throws RuntimeException
+     *
+     * @return Schema\Fields\BaseField
      */
     public function field($id)
     {
@@ -141,8 +151,8 @@ class Environment implements JsonableInterface {
     /**
      * Get whether the action for an entity is permitted.
      *
-     * @param string                $action
-     * @param \Kalnoy\Cruddy\Entity $entity
+     * @param string $action
+     * @param Entity $entity
      *
      * @return bool
      */
@@ -154,7 +164,7 @@ class Environment implements JsonableInterface {
     /**
      * Get field factory.
      *
-     * @return \Kalnoy\Cruddy\Schema\Fields\Factory
+     * @return Schema\Fields\Factory
      */
     public function getFieldFactory()
     {
@@ -164,7 +174,7 @@ class Environment implements JsonableInterface {
     /**
      * Get column factory.
      *
-     * @return \Kalnoy\Cruddy\Schema\Columns\Factory
+     * @return Schema\Columns\Factory
      */
     public function getColumnFactory()
     {
@@ -174,7 +184,7 @@ class Environment implements JsonableInterface {
     /**
      * Permissions object.
      *
-     * @return \Kalnoy\Cruddy\Service\Permissions\PermissionsManager
+     * @return Service\Permissions\PermissionsManager
      */
     public function getPermissions()
     {
@@ -184,7 +194,7 @@ class Environment implements JsonableInterface {
     /**
      * Get entity repository.
      *
-     * @return \Kalnoy\Cruddy\Repository
+     * @return Repository
      */
     public function getEntities()
     {
@@ -198,7 +208,7 @@ class Environment implements JsonableInterface {
      */
     public function schema()
     {
-        return array_map(function ($entity)
+        return array_map(function (Entity $entity)
         {
             return $entity->toArray();
 

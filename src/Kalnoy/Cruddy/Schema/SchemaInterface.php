@@ -8,10 +8,10 @@ use Kalnoy\Cruddy\Repo\RepositoryInterface;
 
 /**
  * The schema interface.
- * 
+ *
  * Schema is used by the entity to initialize components. It also provides additional
  * configuration for the UI.
- * 
+ *
  * @since 1.0.0
  */
 interface SchemaInterface extends ArrayableInterface {
@@ -26,7 +26,7 @@ interface SchemaInterface extends ArrayableInterface {
     /**
      * Initialize fields.
      *
-     * @param \Kalnoy\Cruddy\Schema\InstanceFactory $schema
+     * @param Fields\InstanceFactory $schema
      *
      * @return void
      */
@@ -35,7 +35,7 @@ interface SchemaInterface extends ArrayableInterface {
     /**
      * Initialize columns.
      *
-     * @param \Kalnoy\Cruddy\Schema\InstanceFactory $schema
+     * @param Columns\InstanceFactory $schema
      *
      * @return void
      */
@@ -51,7 +51,7 @@ interface SchemaInterface extends ArrayableInterface {
     /**
      * Create validator.
      *
-     * @return \Kalnoy\Cruddy\Support\Validation\ValidableInterface
+     * @return \Kalnoy\Cruddy\Service\Validation\ValidableInterface
      */
     public function validator();
 

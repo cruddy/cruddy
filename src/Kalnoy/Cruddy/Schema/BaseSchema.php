@@ -12,11 +12,11 @@ use Kalnoy\Cruddy\Entity;
 
 /**
  * Base schema.
- * 
+ *
  * @since 1.0.0
  */
 abstract class BaseSchema implements SchemaInterface {
-    
+
     /**
      * The state of model when it is new.
      */
@@ -64,9 +64,9 @@ abstract class BaseSchema implements SchemaInterface {
 
     /**
      * The number of items per page.
-     * 
+     *
      * Set this value to override default model's value.
-     * 
+     *
      * @var int
      */
     protected $perPage;
@@ -156,7 +156,7 @@ abstract class BaseSchema implements SchemaInterface {
     }
 
     /**
-     * Get the url to the model on main site.   
+     * Get the url to the model on main site.
      *
      * @param \Illuminate\Database\Eloquent\Model $model
      *
@@ -180,13 +180,13 @@ abstract class BaseSchema implements SchemaInterface {
     /**
      * Define a layout.
      *
-     * @param \Kalnoy\Cruddy\Schema\Layout\Layout $l
+     * @param Layout\Layout $l
      *
      * @return void
      */
     public function layout($l)
     {
-        
+
     }
 
     /**

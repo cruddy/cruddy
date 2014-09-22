@@ -27,7 +27,7 @@ class Repository {
     /**
      * The list of resolved entities.
      *
-     * @var \Kalnoy\Cruddy\Schema\SchemaInterface[]
+     * @var Schema\SchemaInterface[]
      */
     protected $resolved = [];
 
@@ -55,7 +55,7 @@ class Repository {
      *
      * @param string $id
      *
-     * @return \Kalnoy\Cruddy\Entity
+     * @return Entity
      */
     public function resolve($id)
     {
@@ -76,7 +76,7 @@ class Repository {
      *
      * @param string $id
      *
-     * @return \Kalnoy\Cruddy\Entity
+     * @return Entity
      */
     protected function resolveEntity($id)
     {
@@ -98,8 +98,8 @@ class Repository {
 
     /**
      * Resolve all entities.
-     * 
-     * @return array
+     *
+     * @return Entity[]
      */
     public function resolveAll()
     {

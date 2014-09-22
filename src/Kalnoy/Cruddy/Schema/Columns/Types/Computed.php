@@ -9,7 +9,7 @@ use Kalnoy\Cruddy\Entity;
 
 /**
  * Computed column that extracts data using a closure.
- * 
+ *
  * @since 1.0.0
  */
 class Computed extends BaseColumn {
@@ -40,9 +40,9 @@ class Computed extends BaseColumn {
     /**
      * Init column.
      *
-     * @param \Kalnoy\Cruddy\Entity  $entity
-     * @param string                 $id
-     * @param \Closure               $value
+     * @param Entity   $entity
+     * @param string   $id
+     * @param \Closure $value
      */
     public function __construct(Entity $entity, $id, \Closure $value)
     {
@@ -54,7 +54,7 @@ class Computed extends BaseColumn {
     /**
      * Set column clause to support order.
      *
-     * @param string|\Illuminate\Database\Expression $value
+     * @param string|\Illuminate\Database\Query\Expression $value
      *
      * @return $this
      */

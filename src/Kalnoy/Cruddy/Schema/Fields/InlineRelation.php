@@ -11,7 +11,7 @@ use Kalnoy\Cruddy\Entity;
 
 /**
  * Inline relation allows to edit related models inlinely.
- * 
+ *
  * @since 1.0.0
  */
 abstract class InlineRelation extends BaseRelation implements InlineRelationInterface {
@@ -36,13 +36,13 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     /**
      * Extra attributes that will be set on model.
      *
-     * @var array|Closure
+     * @var array|\Closure
      */
     public $extra = [];
 
     /**
      * Set an extra attributes that will be set on model.
-     * 
+     *
      * Note that this attributes will not overwrite request data.
      *
      * @param array $value
@@ -78,7 +78,7 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
 
     /**
      * {@inheritdoc}
-     * 
+     *
      * Inline relations are not sent to the repository.
      */
     public function sendToRepository($action)
@@ -112,12 +112,12 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
 
         foreach ($input as $cid => $item)
         {
-            try 
+            try
             {
                 $result[] = $this->reference->process($item);
-            } 
+            }
 
-            catch (ValidationException $e) 
+            catch (ValidationException $e)
             {
                 // Remember errors by cid since we might be creating new items
                 // that don't have an id
@@ -162,10 +162,10 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
 
     /**
      * Merge data with some extra attributes that user may have provided.
-     * 
+     *
      * @param string $action
      * @param array $data
-     * 
+     *
      * @return array
      */
     protected function mergeExtra($action, array $data)

@@ -21,7 +21,7 @@ class Image extends File {
     /**
      * {@inheritdoc}
      */
-    public $accepts = 'image/*';
+    public $accepts = 'image/*,image/jpeg';
 
     /**
      * The max width of the thumbnail.

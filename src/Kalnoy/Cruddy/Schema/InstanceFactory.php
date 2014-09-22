@@ -6,7 +6,7 @@ use Kalnoy\Cruddy\Entity;
 
 /**
  * Instance factory connects attribute collection, entity and actual factory.
- * 
+ *
  * @since 1.0.0
  */
 class InstanceFactory {
@@ -14,30 +14,30 @@ class InstanceFactory {
     /**
      * The factory.
      *
-     * @var \Kalnoy\Cruddy\Schema\BaseFactory
+     * @var BaseFactory
      */
     protected $factory;
 
     /**
      * The entity.
      *
-     * @var \Kalnoy\Cruddy\Entity
+     * @var Entity
      */
     protected $entity;
 
     /**
      * The collection to where attributes are placed.
      *
-     * @var \Kalnoy\Cruddy\Schema\BaseCollection
+     * @var BaseCollection
      */
     protected $collection;
 
     /**
      * Init instance factory.
      *
-     * @param \Kalnoy\Cruddy\Schema\BaseFactory    $factory
-     * @param \Kalnoy\Cruddy\Entity                $entity
-     * @param \Kalnoy\Cruddy\Schema\BaseCollection $collection
+     * @param BaseFactory    $factory
+     * @param Entity         $entity
+     * @param BaseCollection $collection
      */
     public function __construct(BaseFactory $factory, Entity $entity, BaseCollection $collection)
     {
@@ -50,9 +50,9 @@ class InstanceFactory {
      * Try to resolve macro.
      *
      * @param string $method
-     * @param array $parameters
+     * @param array  $parameters
      *
-     * @return \Kalnoy\Cruddy\Scheme\AttributeInterface
+     * @return AttributeInterface
      */
     public function __call($method, $parameters)
     {

@@ -57,7 +57,7 @@ class BaseFieldset extends Container {
      *
      * @param string $contents
      *
-     * @return void
+     * @return $this
      */
     public function text($contents)
     {

@@ -6,9 +6,9 @@ use Illuminate\Database\Eloquent\Model as Eloquent;
 
 /**
  * Inline relation interface.
- * 
+ *
  * These objects are used by entity to process and save embedded entities.
- * 
+ *
  * @since 1.0.0
  */
 interface InlineRelationInterface extends FieldInterface {
@@ -25,8 +25,8 @@ interface InlineRelationInterface extends FieldInterface {
     /**
      * Save previously processed data.
      *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     * @param array $data
+     * @param Eloquent $model
+     * @param array    $data
      *
      * @return void
      */

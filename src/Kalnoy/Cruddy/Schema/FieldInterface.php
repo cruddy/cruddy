@@ -7,7 +7,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /**
  * Base interface for all fields.
- * 
+ *
  * @since 1.0.0
  */
 interface FieldInterface extends AttributeInterface {
@@ -29,9 +29,9 @@ interface FieldInterface extends AttributeInterface {
 
     /**
      * Extract data from a model for column.
-     * 
-     * @param \Illuminate\Database\Eloquent\Model $model
-     * 
+     *
+     * @param Eloquent $model
+     *
      * @return mixed
      */
     public function extractForColumn(Eloquent $model);
@@ -65,8 +65,8 @@ interface FieldInterface extends AttributeInterface {
     /**
      * Apply constraints to the query builder.
      *
-     * @param \Illuminate\Database\Query\Builder $query
-     * @param mixed                              $data
+     * @param QueryBuilder $query
+     * @param mixed        $data
      *
      * @return $this
      */

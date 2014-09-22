@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Chained search processor for using multiple search processor.
- * 
+ *
  * @since 1.0.0
  */
 class ChainedSearchProcessor implements SearchProcessorInterface {
@@ -14,13 +14,13 @@ class ChainedSearchProcessor implements SearchProcessorInterface {
     /**
      * The list of processors.
      *
-     * @var \Kalnoy\Cruddy\Repo\SearchProcessorInterface[]
+     * @var SearchProcessorInterface[]
      */
     protected $processors;
 
     /**
      * Init object.
-     * 
+     *
      * @param array $processors
      */
     public function __construct(array $processors = [])
@@ -31,7 +31,7 @@ class ChainedSearchProcessor implements SearchProcessorInterface {
     /**
      * Add a processor to the queue.
      *
-     * @param \Kalnoy\Cruddy\Repo\SearchProcessorInterface $processor
+     * @param SearchProcessorInterface $processor
      */
     public function add(SearchProcessorInterface $processor)
     {

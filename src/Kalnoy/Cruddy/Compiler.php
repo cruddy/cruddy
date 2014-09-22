@@ -7,7 +7,7 @@ use Illuminate\Filesystem\Filesystem;
 class Compiler {
 
     /**
-     * @var \Kalnoy\Cruddy\Repository
+     * @var Repository
      */
     protected $entities;
 
@@ -17,7 +17,7 @@ class Compiler {
     protected $file;
 
     /**
-     * @var \Kalnoy\Cruddy\Lang
+     * @var Lang
      */
     protected $lang;
 
@@ -88,7 +88,7 @@ class Compiler {
         foreach ($locales as $locale)
         {
             $filename = $this->filename($locale);
-            
+
             $this->file->put($filename, serialize($this->fresh($locale)));
         }
     }

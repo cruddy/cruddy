@@ -5,7 +5,7 @@ use Kalnoy\Cruddy\Schema\Fields\BaseField;
 
 /**
  * File input field.
- * 
+ *
  * @since 1.0.0
  */
 class File extends BaseField {
@@ -63,7 +63,7 @@ class File extends BaseField {
     /**
      * Set accepts attribute for the <input> element.
      *
-     * @param stirng $value
+     * @param string $value
      *
      * @return $this
      */

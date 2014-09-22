@@ -14,7 +14,7 @@ use RuntimeException;
 
 /**
  * Base repository class.
- * 
+ *
  * @since 1.0.0
  */
 abstract class BaseRepository implements RepositoryInterface {
@@ -22,25 +22,25 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * Filesystem object.
      *
-     * @var \Illuminate\Filesystem\Filesystem
+     * @var Filesystem
      */
     protected static $file;
 
     /**
      * Paginator factory.
      *
-     * @var \Illuminate\Pagination\Factory
+     * @var PaginationFactory
      */
     protected static $paginator;
 
     /**
-     * @var \Kalnoy\Cruddy\Service\FileUploader[]
+     * @var FileUploader[]
      */
     protected $files = [];
 
     /**
      * The handlers that are called after the model is saved.
-     * 
+     *
      * @var \Callable[]
      */
     protected $postSave = [];
@@ -48,12 +48,12 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * The mode instance.
      *
-     * @var \Illuminate\Database\Eloquent\Model
+     * @var Eloquent
      */
     protected $model;
 
     /**
-     * Init repo.
+     * Init the repo.
      */
     public function __construct()
     {
@@ -63,10 +63,10 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * Fill the model attributes.
      *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     * @param array                               $input
+     * @param Eloquent $model
+     * @param array    $input
      *
-     * @return \Illuminate\Database\Eloquent\Model
+     * @return Eloquent
      */
     protected function fill(Eloquent $model, array $input)
     {
@@ -159,7 +159,7 @@ abstract class BaseRepository implements RepositoryInterface {
 
     /**
      * Get per page items count.
-     * 
+     *
      * @return int
      */
     public function getPerPage()
@@ -188,12 +188,12 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * Save a model.
      *
-     * @param \Illuminate\Database\Eloquent\Model $instance
-     * @param array                               $input
+     * @param Eloquent $instance
+     * @param array    $input
      *
-     * @return \Illuminate\Database\Eloquent\Model
-     * 
-     * @throws \Kalnoy\Cruddy\ModelNotSavedException
+     * @throws Exception
+     *
+     * @return Eloquent
      */
     protected function save(Eloquent $instance, array $input)
     {
@@ -217,7 +217,7 @@ abstract class BaseRepository implements RepositoryInterface {
 
             throw $e;
         }
-        
+
         // Now when the instance is saved, we can run post-save events that are
         // defined by relations
         $this->firePostSaveCallbacks($instance);
@@ -228,8 +228,8 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * Sync relationships.
      *
-     * @param \Illuminate\Database\Eloquent\Model $instance
-     * @param array                               $input
+     * @param Eloquent $instance
+     * @param array    $input
      *
      * @return $this
      */
@@ -249,8 +249,8 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * Get relationship query.
      *
-     * @param \Illuminate\Database\Eloquent\Model $instance
-     * @param string                              $key
+     * @param Eloquent $instance
+     * @param string   $key
      *
      * @return null|\Illuminate\Database\Eloquent\Relations\Relation
      */
@@ -268,8 +268,7 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * Get whether an attribute on model is a relation.
      *
-     * @param \Illuminate\Database\Eloquent\Model $instance
-     * @param string                              $key
+     * @param string $key
      *
      * @return bool
      */
@@ -281,7 +280,7 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * Sync one given relationship.
      *
-     * @param \Illuminate\Database\Eloquent\Model              $instance
+     * @param Eloquent                                         $instance
      * @param \Illuminate\Database\Eloquent\Relations\Relation $relation
      * @param string                                           $key
      * @param array                                            $data
@@ -299,9 +298,9 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * Sync BelongsToMany relationship.
      *
-     * @param \Illuminate\Database\Eloquent\Model $instance
-     * @param string                              $key
-     * @param array                               $data
+     * @param Eloquent $instance
+     * @param string   $key
+     * @param array    $data
      *
      * @return $this
      */
@@ -321,9 +320,9 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * Sync MorphToMany relationship.
      *
-     * @param \Illuminate\Database\Eloquent\Model $instance
-     * @param string                              $key
-     * @param array                               $data
+     * @param Eloquent $instance
+     * @param string   $key
+     * @param array    $data
      *
      * @return  $this
      */
@@ -335,9 +334,9 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * Sync BelongsTo relationship.
      *
-     * @param \Illuminate\Database\Eloquent\Model $instance
-     * @param string                              $key
-     * @param int                                 $data
+     * @param Eloquent $instance
+     * @param string   $key
+     * @param int      $data
      *
      * @return $this
      */
@@ -369,9 +368,9 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * Fire post save callbacks.
      *
-     * @param \Illuminate\Database\Eloquent\Model $instance
+     * @param Eloquent $instance
      *
-     * @return \Illuminate\Database\Eloquent\Model
+     * @return Eloquent
      */
     protected function firePostSaveCallbacks(Eloquent $instance)
     {
@@ -418,9 +417,9 @@ abstract class BaseRepository implements RepositoryInterface {
 
     /**
      * Get whether specified key is a file that needs to be uploaded.
-     * 
+     *
      * @param string $key
-     * 
+     *
      * @return bool
      */
     protected function isFile($key)
@@ -464,20 +463,20 @@ abstract class BaseRepository implements RepositoryInterface {
 
     /**
      * Set pagination factory.
-     * 
-     * @param \Illuminate\Pagination\Factory $factory
+     *
+     * @param PaginationFactory $factory
      */
-    public static function setPaginationFactory($factory)
+    public static function setPaginationFactory(PaginationFactory $factory)
     {
         self::$paginator = $factory;
     }
 
     /**
      * Set filesystem object.
-     * 
-     * @param \Illuminate\Filesystem\Filesystem $files
+     *
+     * @param Filesystem $files
      */
-    public static function setFiles($files)
+    public static function setFiles(Filesystem $files)
     {
         self::$file = $files;
     }

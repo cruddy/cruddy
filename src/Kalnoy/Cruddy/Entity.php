@@ -17,7 +17,7 @@ use Kalnoy\Cruddy\Repo\ChainedSearchProcessor;
 
 /**
  * The entity class that is responsible for operations on model.
- * 
+ *
  * @since 1.0.0
  */
 class Entity implements JsonableInterface, ArrayableInterface {
@@ -25,14 +25,14 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Cruddy environment.
      *
-     * @var \Kalnoy\Cruddy\Environment
+     * @var Environment
      */
     protected static $env;
 
     /**
      * The schema.
      *
-     * @var \Kalnoy\Cruddy\Schema\SchemaInterface
+     * @var Schema\SchemaInterface
      */
     protected $schema;
 
@@ -46,41 +46,41 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * The field list.
      *
-     * @var \Kalnoy\Cruddy\Schema\Fields\Collection
+     * @var Schema\Fields\Collection
      */
     private $fields;
 
     /**
      * The column list.
      *
-     * @var \Kalnoy\Cruddy\Schema\Columns\Collection
+     * @var Schema\Columns\Collection
      */
     private $columns;
 
     /**
      * The repository.
      *
-     * @var \Kalnoy\Cruddy\Repo\RepositoryInterface
+     * @var Repo\RepositoryInterface
      */
     private $repo;
 
     /**
      * The validator.
      *
-     * @var \Kalnoy\Cruddy\Service\Validation\ValidableInterface
+     * @var Service\Validation\ValidableInterface
      */
     private $validator;
 
     /**
      * The list of related entities.
      *
-     * @var \Kalnoy\Cruddy\Schema\InlineRelationInterface[]
+     * @var Schema\InlineRelationInterface[]
      */
     protected $related = [];
 
     /**
      * The list of all actions.
-     * 
+     *
      * @var array
      */
     protected static $actions = [ 'view', 'update', 'create', 'delete' ];
@@ -88,7 +88,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Init entity.
      *
-     * @param \Kalnoy\Cruddy\Schema\SchemaInterface $schema
+     * @param Schema\SchemaInterface $schema
      */
     public function __construct(SchemaInterface $schema)
     {
@@ -102,7 +102,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
      *
      * @return array
      *
-     * @throws \Kalnoy\Cruddy\ModelNotFoundException
+     * @throws ModelNotFoundException
      */
     public function find($id)
     {
@@ -161,7 +161,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
      *     from the model
      * - `order` -- the array of key-value pairs where key is a column id and value
      *     is order direction:
-     *     
+     *
      *     ```php
      *     ['name' => 'asc']
      *     ```
@@ -197,7 +197,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
      *
      * @param array $options
      *
-     * @return \Kalnoy\Cruddy\Repo\SearchProcessorInterface
+     * @return Repo\SearchProcessorInterface
      */
     protected function getSearchProcessor(array $options)
     {
@@ -260,9 +260,9 @@ class Entity implements JsonableInterface, ArrayableInterface {
 
     /**
      * Create new model and return extracted attributes.
-     * 
+     *
      * @param array $attributes
-     * 
+     *
      * @return array
      */
     public function create(array $attributes)
@@ -272,10 +272,10 @@ class Entity implements JsonableInterface, ArrayableInterface {
 
     /**
      * Update a model and return its extracted attributes.
-     * 
+     *
      * @param mixed $id
      * @param array $attributes
-     * 
+     *
      * @return array
      */
     public function update($id, array $attributes)
@@ -290,8 +290,8 @@ class Entity implements JsonableInterface, ArrayableInterface {
      *
      * @return \Illuminate\Database\Eloquent\Model
      *
-     * @throws \Kalnoy\Cruddy\ModelNotFoundException
-     * @throws \Kalnoy\Cruddy\ModelNotSavedException
+     * @throws ModelNotFoundException
+     * @throws ModelNotSavedException
      */
     public function save(array $data)
     {
@@ -390,12 +390,11 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Perform validation and return processed data that can be then saved.
      *
-     * @param string $action
      * @param array  $input
      *
      * @return array
      *
-     * @throws \Kalnoy\Cruddy\Service\Validation\ValidationException
+     * @throws Service\Validation\ValidationException
      */
     public function process(array $input)
     {
@@ -453,7 +452,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
 
     /**
      * Process and validate related items.
-     * 
+     *
      * If corresponding input key doesn't exists, nothing will happen with the
      * related items (i.e. they will not be removed).
      *
@@ -506,7 +505,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
 
     /**
      * Process, save and return extracted attributes of the model.
-     * 
+     *
      * If $input contains `id` attribute it is condisdered that model is exists
      * and Cruddy will try to update it; it will create a new model otherwise.
      *
@@ -534,9 +533,9 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Translate line.
      *
-     * If key isn't namespaced, looks for a key under entity's id namespace, 
+     * If key isn't namespaced, looks for a key under entity's id namespace,
      * then under `entities` namespace. Othwerwise, just translates line as is.
-     * 
+     *
      * @param string $key
      * @param string $default
      *
@@ -563,7 +562,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Add inline relation.
      *
-     * @param \Kalnoy\Cruddy\Schema\InlineRelationInterface $relation
+     * @param Schema\InlineRelationInterface $relation
      *
      * @return $this
      */
@@ -577,7 +576,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Get field collection.
      *
-     * @return \Kalnoy\Cruddy\Schema\Fields\Collection
+     * @return Schema\Fields\Collection
      */
     public function getFields()
     {
@@ -589,7 +588,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Create field collection.
      *
-     * @return \Kalnoy\Cruddy\Schema\Fields\Collection
+     * @return Schema\Fields\Collection
      */
     protected function createFields()
     {
@@ -607,7 +606,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Get column collection.
      *
-     * @return \Kalnoy\Cruddy\Schema\Columns\Collection
+     * @return Schema\Columns\Collection
      */
     public function getColumns()
     {
@@ -619,7 +618,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Create column collection.
      *
-     * @return \Kalnoy\Cruddy\Schema\Columns\Collection
+     * @return Schema\Columns\Collection
      */
     public function createColumns()
     {
@@ -637,9 +636,9 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Ensure that primary column is exists.
      *
-     * @param \Kalnoy\Cruddy\Schema\Columns\Collection $collection
+     * @param Schema\Columns\Collection $collection
      *
-     * @return \Kalnoy\Cruddy\Schema\Columns\Collection
+     * @return Schema\Columns\Collection
      */
     protected function ensurePrimaryColumn($collection)
     {
@@ -660,7 +659,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Get the repository.
      *
-     * @return \Kalnoy\Cruddy\Repo\RepositoryInterface
+     * @return Repo\RepositoryInterface
      */
     public function getRepository()
     {
@@ -675,7 +674,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Get the validator.
      *
-     * @return \Kalnoy\Cruddy\Service\Validation\ValidableInterface
+     * @return Service\Validation\ValidableInterface
      */
     public function getValidator()
     {
@@ -690,7 +689,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Get cruddy environment instance.
      *
-     * @return \Kalnoy\Cruddy\Environment
+     * @return Environment
      */
     public static function getEnvironment()
     {
@@ -700,7 +699,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Set environment instance.
      *
-     * @param \Kalnoy\Cruddy\Environment $env
+     * @param Environment $env
      */
     public static function setEnvironment(Environment $env)
     {
@@ -710,7 +709,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Get entity's schema.
      *
-     * @return \Kalnoy\Cruddy\Schema\SchemaInterface
+     * @return Schema\SchemaInterface
      */
     public function getSchema()
     {
@@ -798,7 +797,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
 
         if ($result !== null) return $result;
 
-        $func = "\str_{$plurality}";
+        $func = "str_{$plurality}";
 
         return ucfirst(prettify_string($func($this->id)));
     }

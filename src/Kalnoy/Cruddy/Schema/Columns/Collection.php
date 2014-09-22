@@ -10,17 +10,17 @@ use Kalnoy\Cruddy\Repo\SearchProcessorInterface;
 
 /**
  * Columns collection class.
- * 
+ *
  * This collections implements SearchProcessorInterface for applying order.
- * 
+ *
  * @since 1.0.0
  */
 class Collection extends BaseCollection implements SearchProcessorInterface {
 
     /**
-     * Apply modifications to the query 
+     * Apply modifications to the query
      *
-     * @param \Illuminate\Database\Eloquent\Builder $builder
+     * @param EloquentBuilder $builder
      *
      * @return void
      */
@@ -35,8 +35,8 @@ class Collection extends BaseCollection implements SearchProcessorInterface {
     /**
      * Apply order to the query builder.
      *
-     * @param \Illuminate\Database\Query\Builder $builder
-     * @param array                              $data
+     * @param QueryBuilder $builder
+     * @param array        $data
      *
      * @return void
      */
@@ -62,7 +62,7 @@ class Collection extends BaseCollection implements SearchProcessorInterface {
 
         $query = $builder->getQuery();
 
-        if ($value = \array_get($options, 'order'))
+        if ($value = array_get($options, 'order'))
         {
             $this->order($query, $value);
         }

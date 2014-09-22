@@ -6,11 +6,14 @@ use Kalnoy\Cruddy\Schema\BaseFactory;
 
 /**
  * The column factory.
- * 
+ *
  * @since 1.0.0
  */
 class Factory extends BaseFactory {
 
+    /**
+     * @var array
+     */
     protected $macros =
     [
         'states' => 'Kalnoy\Cruddy\Schema\Columns\Types\States',
@@ -19,12 +22,12 @@ class Factory extends BaseFactory {
     /**
      * Create computed column.
      *
-     * @param \Kalnoy\Cruddy\Entity                $entity
-     * @param \Kalnoy\Cruddy\Schema\BaseCollection $collection
-     * @param int                                  $id
-     * @param \Closure                             $value
+     * @param \Kalnoy\Cruddy\Entity $entity
+     * @param Collection            $collection
+     * @param int                   $id
+     * @param \Closure              $value
      *
-     * @return \Kalnoy\Cruddy\Schema\Columns\Types\Computed
+     * @return Types\Computed
      */
     public function compute($entity, $collection, $id, \Closure $value)
     {
@@ -38,11 +41,11 @@ class Factory extends BaseFactory {
     /**
      * Create new proxy column.
      *
-     * @param \Kalnoy\Cruddy\Entity                $entity
-     * @param \Kalnoy\Cruddy\Schema\BaseCollection $collection
-     * @param string                               $id
+     * @param \Kalnoy\Cruddy\Entity $entity
+     * @param Collection            $collection
+     * @param string                $id
      *
-     * @return \Kalnoy\Cruddy\Schema\Columns\Types\Proxy
+     * @return Types\Proxy
      */
     public function col($entity, $collection, $id)
     {

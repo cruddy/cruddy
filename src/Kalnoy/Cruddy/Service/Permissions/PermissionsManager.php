@@ -6,13 +6,15 @@ use Illuminate\Support\Manager;
 
 /**
  * Permissions provider.
+ *
+ * @method bool isPermitted(string $action, \Kalnoy\Cruddy\Entity $entity)
  */
 class PermissionsManager extends Manager {
 
     /**
      * Create stub driver.
      *
-     * @return \Kalnoy\Cruddy\Service\Permissions\Stub
+     * @return Stub
      */
     public function createStubDriver()
     {

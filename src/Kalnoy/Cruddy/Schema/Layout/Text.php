@@ -16,6 +16,9 @@ class Text extends Element {
      */
     public $contents;
 
+    /**
+     * @param $contents
+     */
     public function __construct($contents)
     {
         $this->contents = $contents;

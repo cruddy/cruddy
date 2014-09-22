@@ -7,11 +7,15 @@ use Illuminate\Support\Fluent;
 
 /**
  * Fluent validator for validating input.
- * 
+ *
  * This is basic implementation that uses laravel validator with few usefull features.
- * 
+ *
  * @see https://github.com/lazychaser/cruddy/wiki/Validation for expanded documentation.
- * 
+ *
+ * @method $this    rules(array $rules)
+ * @method $this    create(array $rules)
+ * @method $this    update(array $rules)
+ *
  * @since 1.0.0
  */
 class FluentValidator extends Fluent implements ValidableInterface {
@@ -44,7 +48,7 @@ class FluentValidator extends Fluent implements ValidableInterface {
     public function validFor($action, array $input, array $labels)
     {
         $this->errors = [];
- 
+
         if ($rules = $this->resolveRules($action))
         {
             $rules    = $this->processRules($rules, $input);
@@ -157,7 +161,7 @@ class FluentValidator extends Fluent implements ValidableInterface {
      * @return $this
      */
     public function always(array $rules)
-    {   
+    {
         $this->attributes['rules'] = $rules;
 
         return $this;

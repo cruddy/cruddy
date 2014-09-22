@@ -4,6 +4,9 @@ namespace Kalnoy\Cruddy\Schema\Layout;
 
 class Row extends Container {
 
+    /**
+     *  The maximum span for the elements.
+     */
     const MAX_SPAN = 12;
 
     /**
@@ -103,7 +106,7 @@ class Row extends Container {
     }
 
     /**
-     * Make sure that total span doesn't exceeds 12 columns.
+     * Make sure that total span doesn't exceeds max columns.
      *
      * @return $this
      */

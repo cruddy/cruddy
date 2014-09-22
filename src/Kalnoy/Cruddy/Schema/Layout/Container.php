@@ -18,7 +18,7 @@ class Container extends Element {
      */
     public function compileItems()
     {
-        return array_map(function ($item)
+        return array_map(function (Element $item)
         {
             return $item->compile();
 
@@ -28,7 +28,9 @@ class Container extends Element {
     /**
      * Add an item.
      *
-     * @param \Kalnoy\Cruddy\Schema\Layout\Element $item
+     * @param Element $item
+     *
+     * @return $this
      */
     public function add(Element $item)
     {

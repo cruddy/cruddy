@@ -11,7 +11,7 @@ use Kalnoy\Cruddy\Entity;
 
 /**
  * Proxy relies on a field to do stuff. It just passes calls to the field.
- * 
+ *
  * @since 1.0.0
  */
 class Proxy extends BaseColumn {
@@ -19,7 +19,7 @@ class Proxy extends BaseColumn {
     /**
      * The field instance.
      *
-     * @var \Kalnoy\Cruddy\Schema\FieldInterface
+     * @var FieldInterface
      */
     protected $field;
 
@@ -36,9 +36,9 @@ class Proxy extends BaseColumn {
     /**
      * Init column.
      *
-     * @param \Kalnoy\Cruddy\Entity                $entity
-     * @param string                               $id
-     * @param \Kalnoy\Cruddy\Schema\FieldInterface $field
+     * @param Entity         $entity
+     * @param string         $id
+     * @param FieldInterface $field
      */
     public function __construct(Entity $entity, $id, FieldInterface $field)
     {

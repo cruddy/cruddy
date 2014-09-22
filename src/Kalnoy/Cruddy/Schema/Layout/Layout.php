@@ -2,12 +2,18 @@
 
 namespace Kalnoy\Cruddy\Schema\Layout;
 
+/**
+ * @method $this    row(mixed $items)
+ * @method $this    field(mixed $id)
+ * @method $this    text(string $contents)
+ * @method $this    fieldset(string $title, mixed $items)
+ */
 class Layout extends Container {
 
     /**
      * The default tab.
      *
-     * @var \Kalnoy\Cruddy\Schema\TabPane
+     * @var TabPane
      */
     private $defaultTab;
 
@@ -27,7 +33,7 @@ class Layout extends Container {
     /**
      * Get a default tab.
      *
-     * @return \Kalnoy\Cruddy\Schema\TabPane
+     * @return TabPane
      */
     public function getDefaultTab()
     {

@@ -6,7 +6,7 @@ use Illuminate\Support\Collection;
 
 /**
  * Base collection for any kind of attributes.
- * 
+ *
  * @since 1.0.0
  */
 class BaseCollection extends Collection {
@@ -14,7 +14,9 @@ class BaseCollection extends Collection {
     /**
      * Add attribute to the collection.
      *
-     * @param \Kalnoy\Cruddy\Schema\AttributeInterface $item
+     * @param AttributeInterface $item
+     *
+     * @return $this
      */
     public function add(AttributeInterface $item)
     {
@@ -79,8 +81,8 @@ class BaseCollection extends Collection {
      * Get new collection that contains only items specified in an array.
      *
      * @param array $columns
-     * 
-     * @return \Kalnoy\Cruddy\Schema\BaseCollection
+     *
+     * @return BaseCollection
      */
     public function only(array $columns)
     {

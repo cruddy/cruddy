@@ -4,9 +4,9 @@ namespace Kalnoy\Cruddy\Repo;
 
 /**
  * Basic repository class.
- * 
+ *
  * You can provide model's default attributes and override per page value.
- * 
+ *
  * @since 1.0.0
  */
 class Stub extends BaseRepository {
@@ -27,7 +27,7 @@ class Stub extends BaseRepository {
 
     /**
      * Override the per page value.
-     * 
+     *
      * @var int
      */
     public $perPage;
@@ -35,10 +35,9 @@ class Stub extends BaseRepository {
     /**
      * Init repo.
      *
-     * @param string                            $className
-     * @param array                             $defaults
-     * @param \Illuminate\Filesystem\Filesystem $file
-     */ 
+     * @param string $className
+     * @param array  $defaults
+     */
     public function __construct($className, array $defaults = [])
     {
         $this->className = $className;

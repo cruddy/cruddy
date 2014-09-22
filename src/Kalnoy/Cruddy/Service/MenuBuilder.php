@@ -10,7 +10,7 @@ use Kalnoy\Cruddy\Lang;
 
 /**
  * The menu builder class for rendering menus.
- * 
+ *
  * @since 1.0.0
  */
 class MenuBuilder {
@@ -18,17 +18,17 @@ class MenuBuilder {
     /**
      * The environment.
      *
-     * @var \Kalnoy\Cruddy\Environment
+     * @var Environment
      */
     protected $env;
 
     /**
-     * @var \Illuminate\Html\HtmlBuilder
+     * @var HtmlBuilder
      */
     protected $html;
 
     /**
-     * @var \Illuminate\Routing\UrlGenerator
+     * @var UrlGenerator
      */
     protected $url;
 
@@ -40,7 +40,7 @@ class MenuBuilder {
     protected $permissions;
 
     /**
-     * @var \Kalnoy\Cruddy\Lang
+     * @var Lang
      */
     protected $lang;
 
@@ -54,7 +54,7 @@ class MenuBuilder {
     /**
      * Initialize menu.
      *
-     * @param \Kalnoy\Cruddy\Environment $env
+     * @param Environment $env
      */
     public function __construct(Environment $env, Lang $lang, HtmlBuilder $html, UrlGenerator $url)
     {
@@ -68,8 +68,8 @@ class MenuBuilder {
     /**
      * Render nav.
      *
-     * @param array  $items
-     * @param array $options
+     * @param array        $items
+     * @param array|string $options
      *
      * @return string
      */
@@ -321,12 +321,12 @@ class MenuBuilder {
 
             return $this->hrefFromUrl($options['url'], $secure);
         }
-        
+
         if (isset($options['route']))
         {
             return $this->hrefFromRoute($options['route']);
         }
-     
+
         if (isset($options['entity']))
         {
             return $this->hrefFromRoute([ 'cruddy.index', $options['entity'] ]);

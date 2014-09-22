@@ -6,7 +6,7 @@ use Kalnoy\Cruddy\Schema\Fields\BaseField;
 
 /**
  * Code editor based on {@link http://http://ace.c9.io/ ACE}.
- * 
+ *
  * @since 1.0.0
  */
 class Code extends BaseField {
@@ -34,7 +34,7 @@ class Code extends BaseField {
      * Default value is set globally in the package configuration.
      *
      * @var  string
-     */ 
+     */
     public $theme;
 
     /**
@@ -77,7 +77,7 @@ class Code extends BaseField {
      */
     public function theme($value)
     {
-        $this->theme = $theme;
+        $this->theme = $value;
 
         return $this;
     }

@@ -4,6 +4,7 @@ develop
 *   Plain formatter now doesn't use escaping
 *   #49: fixed image displayed when no data provided
 *   External link is moved to after refresh button
+*   Added automatic resolution of whether the field is required
 
 v0.3.2
 ======

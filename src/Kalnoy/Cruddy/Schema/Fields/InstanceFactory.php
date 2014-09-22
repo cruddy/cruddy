@@ -25,7 +25,7 @@ namespace Kalnoy\Cruddy\Schema\Fields;
  * @method Types\Slug       slug(string $id, string $refFieldId = null)
  * @method Types\Enum       enum(string $id, mixed $items)
  * @method Types\Computed   computed(string $id, mixed $accessor)
- * 
+ *
  * @method \Kalnoy\Cruddy\CKEditor\CKEditor ckedit(string $id)
  */
 class InstanceFactory extends \Kalnoy\Cruddy\Schema\InstanceFactory {

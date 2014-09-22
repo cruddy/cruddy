@@ -33,6 +33,11 @@ class FluentValidator extends Fluent implements ValidableInterface {
     protected $errors = [];
 
     /**
+     * @var array
+     */
+    private $required;
+
+    /**
      * Init validator.
      *
      * @param \Illuminate\Validation\Factory $validator
@@ -193,5 +198,79 @@ class FluentValidator extends Fluent implements ValidableInterface {
         $this->attributes['update'] = $rules;
 
         return $this;
+    }
+
+    /**
+     * Get whether the required state of the field.
+     *
+     * @param string $fieldId
+     *
+     * @return bool|string
+     */
+    public function getRequiredState($fieldId)
+    {
+        $required = $this->getRequiredFields();
+
+        return isset($required[$fieldId]) ? $required[$fieldId] : false;
+    }
+
+    /**
+     * @return array
+     */
+    protected function getRequiredFields()
+    {
+        if ($this->required === null)
+        {
+            return $this->required = $this->collectRequiredFields();
+        }
+
+        return $this->required;
+    }
+
+    /**
+     * @return array
+     */
+    protected function collectRequiredFields()
+    {
+        return $this->collectFieldsWithRule('required', $this->get('rules'), true)
+            + $this->collectFieldsWithRule('required', $this->get('create'), 'create')
+            + $this->collectFieldsWithRule('required', $this->get('update'), 'update');
+    }
+
+    /**
+     * @param $rule
+     * @param $rules
+     * @param $value
+     *
+     * @return array
+     */
+    protected function collectFieldsWithRule($rule, $rules, $value)
+    {
+        if (empty($rules)) return [];
+
+        $result = [];
+
+        foreach ($rules as $attr => $ruleSet)
+        {
+            if ($this->hasRule($rule, $ruleSet))
+            {
+                $result[$attr] = $value;
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param $rule
+     * @param $ruleSet
+     *
+     * @return bool
+     */
+    protected function hasRule($rule, $ruleSet)
+    {
+        if ( ! is_array($ruleSet)) $ruleSet = explode('|', $ruleSet);
+
+        return in_array($rule, $ruleSet);
     }
 }

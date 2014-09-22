@@ -4,9 +4,9 @@ namespace Kalnoy\Cruddy\Service\Validation;
 
 /**
  * Validable interface.
- * 
+ *
  * The objects of that interface are used to validate input for specified action.
- * 
+ *
  * @since 1.0.0
  */
 interface ValidableInterface {
@@ -17,7 +17,7 @@ interface ValidableInterface {
     const CREATE = 'create';
 
     /**
-     * Update action.   
+     * Update action.
      */
     const UPDATE = 'update';
 
@@ -38,4 +38,13 @@ interface ValidableInterface {
      * @return array
      */
     public function errors();
+
+    /**
+     * Get whether the required state of the field.
+     *
+     * @param string $fieldId
+     *
+     * @return bool|string
+     */
+    public function getRequiredState($fieldId);
 }

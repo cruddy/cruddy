@@ -9,19 +9,19 @@ use Kalnoy\Cruddy\Schema\FieldInterface;
 
 /**
  * A base class for all fields.
- * 
+ *
  * @since 1.0.0
  */
 abstract class BaseField extends Attribute implements FieldInterface {
-    
+
     /**
      * Get whether the field is required.
-     * 
+     *
      * Field can be required based on the state of the model. {@see $disabled}.
      *
      * @var bool|string
      */
-    public $required = false;
+    public $required;
 
     /**
      * Whether the field is unique for instance and therefore cannot be copied.
@@ -32,13 +32,13 @@ abstract class BaseField extends Attribute implements FieldInterface {
 
     /**
      * Whether the editing is disabled.
-     * 
+     *
      * The field can be disabled for specified state of the model; if set to
      * {@see \Kalnoy\Cruddy\Schema\BaseSchema::WHEN_EXISTS} the field will be
      * disabled when model is exists; if set to
      * {@see \Kalnoy\Cruddy\Schema\BaseSchema::WHEN_NEW} the field will not be
      * shown at all when model is new.
-     * 
+     *
      * @var bool|string
      */
     public $disabled = false;
@@ -179,13 +179,23 @@ abstract class BaseField extends Attribute implements FieldInterface {
     }
 
     /**
+     * @return bool|string
+     */
+    protected function isRequired()
+    {
+        if ($this->required !== null) return $this->required;
+
+        return $this->entity->getValidator()->getRequiredState($this->id);
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function toArray()
     {
         return
         [
-            'required' => $this->required,
+            'required' => $this->isRequired(),
             'unique' => $this->unique,
             'disabled' => $this->disabled,
             'label' => $this->getLabel(),
@@ -204,9 +214,9 @@ abstract class BaseField extends Attribute implements FieldInterface {
 
     /**
      * Get whether the field is disabled for specified action.
-     * 
+     *
      * @param string $action
-     * 
+     *
      * @return bool
      */
     public function isDisabled($action)

@@ -6,7 +6,12 @@ use Kalnoy\Cruddy\Schema\Fields\BaseTextField;
 
 /**
  * Basic string field type.
- * 
+ *
+ * @link http://digitalbush.com/projects/masked-input-plugin
+ *
+ * @property string $mask
+ * @method $this mask(string $value)
+ *
  * @since 1.0.0
  */
 class String extends BaseTextField {
@@ -19,37 +24,14 @@ class String extends BaseTextField {
     protected $type = 'string';
 
     /**
-     * The input mask.
-     *
-     * {@link http://digitalbush.com/projects/masked-input-plugin}
-     *
-     * @var string
-     */
-    public $mask;
-
-    /**
-     * Set the mask.
-     *
-     * @param string $value
-     *
-     * @return $this
-     */
-    public function mask($value)
-    {
-        $this->mask = $value;
-
-        return $this;
-    }
-
-    /**
      * {@inheritdoc}
      */
     public function toArray()
     {
         return
         [
-            'mask' => $this->mask,
-            
+            'mask' => $this->get('mask'),
+
         ] + parent::toArray();
     }
 }

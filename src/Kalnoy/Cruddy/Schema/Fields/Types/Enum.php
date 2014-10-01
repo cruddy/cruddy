@@ -5,7 +5,10 @@ use Kalnoy\Cruddy\Schema\Fields\BaseInput;
 
 /**
  * The field for displaying select box.
- * 
+ *
+ * @property string $prompt
+ * @method $this prompt(string $value)
+ *
  * @since 1.0.0
  */
 class Enum extends BaseInput {
@@ -31,11 +34,6 @@ class Enum extends BaseInput {
     public $items;
 
     /**
-     * @var string
-     */
-    public $prompt;
-
-    /**
      * {@inheritdoc}
      */
     public function process($value)
@@ -53,20 +51,6 @@ class Enum extends BaseInput {
     public function filter(Builder $query, $data)
     {
         $query->where($this->id, $data);
-
-        return $this;
-    }
-
-    /**
-     * Set prompt value. The value will be translated if it has dots.
-     *
-     * @param string $value
-     *
-     * @return $this
-     */
-    public function prompt($value)
-    {
-        $this->prompt = $value;
 
         return $this;
     }
@@ -95,7 +79,7 @@ class Enum extends BaseInput {
     {
         return
         [
-            'prompt' => \Kalnoy\Cruddy\try_trans($this->prompt),
+            'prompt' => \Kalnoy\Cruddy\try_trans($this->get('prompt')),
             'items' => $this->translateItems(value($this->items)),
 
         ] + parent::toArray();

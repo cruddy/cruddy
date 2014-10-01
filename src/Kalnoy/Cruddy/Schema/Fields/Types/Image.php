@@ -5,6 +5,11 @@ use Kalnoy\Cruddy\Schema\Fields\AbstractField;
 
 /**
  * The field for uploading and displaying images.
+ *
+ * @method $this width(int $value)
+ * @method $this height(int $value)
+ * @property int $width
+ * @property int $height
  */
 class Image extends File {
 
@@ -21,21 +26,7 @@ class Image extends File {
     /**
      * {@inheritdoc}
      */
-    public $accepts = 'image/*,image/jpeg';
-
-    /**
-     * The max width of the thumbnail.
-     *
-     * @var int
-     */
-    public $width;
-
-    /**
-     * The max height of the thumbnail.
-     *
-     * @var int
-     */
-    public $height = 80;
+    protected static $defaultAccepts = 'image/*,image/jpeg';
 
     /**
      * {@inheritdoc}
@@ -44,8 +35,8 @@ class Image extends File {
     {
         return
         [
-            'width' => $this->width,
-            'height' => $this->height,
+            'width' => $this->get('width', null),
+            'height' => $this->get('height', 80),
 
         ] + parent::toArray();
     }

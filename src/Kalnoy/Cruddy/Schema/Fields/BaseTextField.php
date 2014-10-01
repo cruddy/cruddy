@@ -7,9 +7,12 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /**
  * Base text field class.
- * 
+ *
  * This kind of fields don't have complex filters.
- * 
+ *
+ * @method $this placeholder(string $value)
+ * @property string $placeholder
+ *
  * @since 1.0.0
  */
 abstract class BaseTextField extends BaseInput {
@@ -30,27 +33,6 @@ abstract class BaseTextField extends BaseInput {
      * @var string
      */
     protected $inputType = 'text';
-
-    /**
-     * The input placeholder.
-     *
-     * @var string
-     */
-    public $placeholder;
-
-    /**
-     * Set placeholder value.
-     *
-     * @param string $value
-     *
-     * @return $this
-     */
-    public function placeholder($value)
-    {
-        $this->placeholder = $value;
-
-        return $this;
-    }
 
     /**
      * {@inheritdoc}
@@ -74,7 +56,7 @@ abstract class BaseTextField extends BaseInput {
 
     /**
      * {@inheritdoc}
-     * 
+     *
      * Simple keywords search.
      */
     public function filter(QueryBuilder $builder, $data)
@@ -92,7 +74,7 @@ abstract class BaseTextField extends BaseInput {
         return
         [
             'input_type' => $this->inputType,
-            'placeholder' => \Kalnoy\Cruddy\try_trans($this->placeholder),
+            'placeholder' => \Kalnoy\Cruddy\try_trans($this->get('placeholder')),
 
         ] + parent::toArray();
     }

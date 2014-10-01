@@ -8,51 +8,15 @@ use Kalnoy\Cruddy\Schema\ColumnInterface;
 /**
  * Base column class.
  *
+ * @method $this width(int $value)
+ * @property int $width
+ * @property string $orderDir
+ * @property string $formatter
+ * @property mixed $formatterOptions
+ *
  * @since 1.0.0
  */
 abstract class BaseColumn extends Attribute implements ColumnInterface {
-
-    /**
-     * The column width in pixels or percents.
-     *
-     * @var int
-     */
-    public $width;
-
-    /**
-     * Default order direction.
-     *
-     * @var string
-     */
-    public $orderDir = 'asc';
-
-    /**
-     * The formatter JavaScript class under `Cruddy.Formatters` namespace.
-     *
-     * @var string
-     */
-    public $formatter;
-
-    /**
-     * Optional formatter options.
-     *
-     * @var mixed
-     */
-    public $formatterOptions;
-
-    /**
-     * Set the column width in pixels or percents.
-     *
-     * @param int $value
-     *
-     * @return $this
-     */
-    public function width($value)
-    {
-        $this->width = $value;
-
-        return $this;
-    }
 
     /**
      * Set formatter class for the column.
@@ -79,7 +43,7 @@ abstract class BaseColumn extends Attribute implements ColumnInterface {
      */
     public function orderDirection($value)
     {
-        $this->orderDir = $value;
+        $this->set('orderDir', $value);
 
         return $this;
     }
@@ -91,7 +55,7 @@ abstract class BaseColumn extends Attribute implements ColumnInterface {
      */
     public function reversed()
     {
-        $this->orderDir = 'desc';
+        $this->set('orderDir', 'desc');
 
         return $this;
     }
@@ -103,6 +67,11 @@ abstract class BaseColumn extends Attribute implements ColumnInterface {
      */
     public function getHeader()
     {
+        if ($header = $this->get('header'))
+        {
+            return \Kalnoy\Cruddy\try_trans($header);
+        }
+
         return $this->translate('columns') ?: $this->generateLabel();
     }
 
@@ -115,11 +84,11 @@ abstract class BaseColumn extends Attribute implements ColumnInterface {
     {
         return
         [
-            'width' => $this->width,
+            'width' => $this->get('width'),
             'header' => $this->getHeader(),
-            'order_dir' => $this->orderDir,
-            'formatter' => $this->formatter,
-            'formatter_options' => $this->formatterOptions,
+            'order_dir' => $this->get('orderDir', 'asc'),
+            'formatter' => $this->get('formatter'),
+            'formatter_options' => $this->get('formatterOptions'),
 
         ] + parent::toArray();
     }

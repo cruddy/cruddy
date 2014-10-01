@@ -10,45 +10,18 @@ use Kalnoy\Cruddy\Schema\FieldInterface;
 /**
  * A base class for all fields.
  *
+ * @property string $label
+ * @method $this label(string $value)
+ * @property bool $required
+ * @method $this required(bool $value = true)
+ * @property bool $unique
+ * @method $this unique(bool $value = true)
+ * @property string $disable
+ * @method $this disable(mixed $value = true)
+ *
  * @since 1.0.0
  */
 abstract class BaseField extends Attribute implements FieldInterface {
-
-    /**
-     * Get whether the field is required.
-     *
-     * Field can be required based on the state of the model. {@see $disabled}.
-     *
-     * @var bool|string
-     */
-    public $required;
-
-    /**
-     * Whether the field is unique for instance and therefore cannot be copied.
-     *
-     * @var bool
-     */
-    public $unique = false;
-
-    /**
-     * Whether the editing is disabled.
-     *
-     * The field can be disabled for specified state of the model; if set to
-     * {@see \Kalnoy\Cruddy\Schema\BaseSchema::WHEN_EXISTS} the field will be
-     * disabled when model is exists; if set to
-     * {@see \Kalnoy\Cruddy\Schema\BaseSchema::WHEN_NEW} the field will not be
-     * shown at all when model is new.
-     *
-     * @var bool|string
-     */
-    public $disabled = false;
-
-    /**
-     * The label.
-     *
-     * @var string
-     */
-    protected $label;
 
     /**
      * The filter type.
@@ -82,74 +55,18 @@ abstract class BaseField extends Attribute implements FieldInterface {
     }
 
     /**
-     * Set required value.
-     *
-     * @param bool $value
-     *
-     * @return $this
-     */
-    public function required($value = true)
-    {
-        $this->required = $value;
-
-        return $this;
-    }
-
-    /**
-     * Set unique value.
-     *
-     * @param bool $value
-     *
-     * @return $this
-     */
-    public function unique($value = true)
-    {
-        $this->unique = $value;
-
-        return $this;
-    }
-
-    /**
-     * Set disabled value.
-     *
-     * @param bool $value
-     *
-     * @return $this
-     */
-    public function disable($value = true)
-    {
-        $this->disabled = $value;
-
-        return $this;
-    }
-
-    /**
-     * Set label.
-     *
-     * @param string $value
-     *
-     * @return $this
-     */
-    public function label($value)
-    {
-        $this->label = $value;
-
-        return $this;
-    }
-
-    /**
      * Get field label.
      *
      * @return string
      */
     public function getLabel()
     {
-        if ($this->label === null)
+        if ($label = $this->get('label'))
         {
-            $this->label = $this->generateLabel();
+            return \Kalnoy\Cruddy\try_trans($label);
         }
 
-        return $this->label;
+        return $this->generateLabel();
     }
 
     /**
@@ -183,7 +100,9 @@ abstract class BaseField extends Attribute implements FieldInterface {
      */
     protected function isRequired()
     {
-        if ($this->required !== null) return $this->required;
+        $required = $this->get('required');
+
+        if ($required !== null) return $required;
 
         return $this->entity->getValidator()->getRequiredState($this->id);
     }
@@ -196,8 +115,8 @@ abstract class BaseField extends Attribute implements FieldInterface {
         return
         [
             'required' => $this->isRequired(),
-            'unique' => $this->unique,
-            'disabled' => $this->disabled,
+            'unique' => $this->get('unique'),
+            'disabled' => $this->get('disable'),
             'label' => $this->getLabel(),
             'filter_type' => $this->getFilterType(),
 

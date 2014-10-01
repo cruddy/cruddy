@@ -29,7 +29,7 @@ class {name} extends BaseSchema {
     public function fields($schema)
     {
         $schema->increments('id');
-        
+
         $schema->timestamps();
     }
 
@@ -42,7 +42,7 @@ class {name} extends BaseSchema {
     {
         $schema->col('id');
 
-        $schema->col('updated_at')->orderDirection('desc');
+        $schema->col('updated_at')->reversed();
     }
 
     /**
@@ -62,7 +62,7 @@ class {name} extends BaseSchema {
      */
     public function rules($v)
     {
-        $v->rules(
+        $v->always(
         [
 
         ]);

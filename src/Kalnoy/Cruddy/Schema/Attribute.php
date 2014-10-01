@@ -8,11 +8,16 @@ use Kalnoy\Cruddy\Entity;
 
 /**
  * Base attribute class.
- * 
+ *
+ * @property string $help
+ * @property string $hide
+ * @method $this help(string $value)
+ * @method $this hide(bool $value = true)
+ *
  * @since 1.0.0
  */
 abstract class Attribute implements AttributeInterface {
-    
+
     /**
      * The entity.
      *
@@ -36,7 +41,7 @@ abstract class Attribute implements AttributeInterface {
 
     /**
      * The attribute type.
-     * 
+     *
      * It's used to distinguish fields by type so it is possible to differentiate
      * styling.
      *
@@ -52,11 +57,9 @@ abstract class Attribute implements AttributeInterface {
     protected $canOrder = false;
 
     /**
-     * Whether to hide this attribute.
-     *
-     * @var bool
+     * @var array
      */
-    public $hide = false;
+    protected $attributes = [];
 
     /**
      * Init attribute.
@@ -71,17 +74,29 @@ abstract class Attribute implements AttributeInterface {
     }
 
     /**
-     * Set hide property.
+     * Set the value of the attribute.
      *
-     * @param bool $value
+     * @param string $name
+     * @param mixed $value
      *
      * @return $this
      */
-    public function hide($value = true)
+    public function set($name, $value)
     {
-        $this->hide = $value;
+        $this->attributes[$name] = $value;
 
         return $this;
+    }
+
+    /**
+     * @param string $name
+     * @param mixed $default
+     *
+     * @return mixed
+     */
+    public function get($name, $default = null)
+    {
+        return isset($this->attributes[$name]) ? $this->attributes[$name] : $default;
     }
 
     /**
@@ -98,7 +113,7 @@ abstract class Attribute implements AttributeInterface {
     public function order(QueryBuilder $builder, $direction)
     {
         $builder->orderBy($this->id, $direction);
-        
+
         return $this;
     }
 
@@ -139,7 +154,9 @@ abstract class Attribute implements AttributeInterface {
      */
     public function getHelp()
     {
-        return $this->translate('help');
+        $help = $this->get('help');
+
+        return $help ? \Kalnoy\Cruddy\try_trans($help) : $this->translate('help');
     }
 
     /**
@@ -161,7 +178,7 @@ abstract class Attribute implements AttributeInterface {
 
     /**
      * Generate a label from the id.
-     * 
+     *
      * @return string
      */
     protected function generateLabel()
@@ -187,10 +204,59 @@ abstract class Attribute implements AttributeInterface {
             'class' => $this->class,
             'id' => $this->id,
             'type' => $this->type,
-            'hide' => $this->hide,
+            'hide' => $this->get('hide', false),
             'help' => $this->getHelp(),
             'can_order' => $this->canOrder(),
         ];
     }
 
+    /**
+     * @param string $name
+     * @param array $arguments
+     *
+     * @return $this
+     */
+    function __call($name, $arguments)
+    {
+        return $this->set($name, empty($arguments) ? true : reset($arguments));
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return mixed
+     */
+    function __get($name)
+    {
+        return $this->get($name);
+    }
+
+    /**
+     * @param string $name
+     * @param mixed $value
+     *
+     * @return $this
+     */
+    function __set($name, $value)
+    {
+        return $this->set($name, $value);
+    }
+
+    /**
+     * @param string $name
+     *
+     * @return bool
+     */
+    function __isset($name)
+    {
+        return isset($this->attributes[$name]);
+    }
+
+    /**
+     * @param string $name
+     */
+    function __unset($name)
+    {
+        unset($this->attributes[$name]);
+    }
 }

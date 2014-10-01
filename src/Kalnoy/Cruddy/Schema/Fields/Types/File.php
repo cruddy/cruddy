@@ -6,6 +6,9 @@ use Kalnoy\Cruddy\Schema\Fields\BaseField;
 /**
  * File input field.
  *
+ * @property string $accepts
+ * @method $this accepts(string $value)
+ *
  * @since 1.0.0
  */
 class File extends BaseField {
@@ -21,18 +24,16 @@ class File extends BaseField {
     protected $type = 'file';
 
     /**
+     * The default value for "accepts".
+     */
+    protected static $defaultAccepts;
+
+    /**
      * Whether there going to be a few files.
      *
      * @var bool
      */
     public $multiple = false;
-
-    /**
-     * What kind of files the field accepts.
-     *
-     * @var string
-     */
-    public $accepts;
 
     /**
      * {@inheritdoc}
@@ -61,20 +62,6 @@ class File extends BaseField {
     }
 
     /**
-     * Set accepts attribute for the <input> element.
-     *
-     * @param string $value
-     *
-     * @return $this
-     */
-    public function accepts($value)
-    {
-        $this->accepts = $value;
-
-        return $this;
-    }
-
-    /**
      * Set multiple value.
      *
      * @param bool $value
@@ -96,7 +83,7 @@ class File extends BaseField {
         return
         [
             'multiple' => $this->multiple,
-            'accepts' => $this->accepts,
+            'accepts' => $this->get('accepts', static::$defaultAccepts),
             'unique' => true,
 
         ] + parent::toArray();

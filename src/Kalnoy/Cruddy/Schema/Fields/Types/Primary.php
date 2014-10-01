@@ -1,10 +1,11 @@
 <?php namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
 use Illuminate\Database\Query\Builder;
+use Kalnoy\Cruddy\Entity;
 
 /**
  * Primary field type.
- * 
+ *
  * @since 1.0.0
  */
 class Primary extends String {
@@ -15,20 +16,19 @@ class Primary extends String {
     protected $type = 'primary';
 
     /**
+     * @param Entity $entity
+     * @param string $id
+     */
+    public function __construct(Entity $entity, $id)
+    {
+        parent::__construct($entity, $id);
+
+        $this->hide()->disable();
+    }
+
+    /**
      * {@inheritdoc}
      *
-     * Primary field is hidden by default.
-     */
-    public $hide = true;
-
-    /**
-     * {@inheritdoc}
-     */
-    public $disabled = true;
-
-    /**
-     * {@inheritdoc}
-     * 
      * We will check for actual match rather than partial.
      */
     public function filter(Builder $builder, $data)

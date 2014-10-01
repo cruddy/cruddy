@@ -6,7 +6,10 @@ use Kalnoy\Cruddy\Schema\Fields\BaseField;
 
 /**
  * Base text field that is represented with textarea.
- * 
+ *
+ * @method $this rows(int $count)
+ * @property int $rows
+ *
  * @since 1.0.0
  */
 class Text extends BaseField {
@@ -22,31 +25,10 @@ class Text extends BaseField {
     protected $class = 'Text';
 
     /**
-     * The number of rows for the textarea.
-     *
-     * @var int
-     */
-    public $rows = 3;
-
-    /**
-     * Set the number of rows.
-     *
-     * @param int $value
-     *
-     * @return $this
-     */
-    public function rows($value)
-    {
-        $this->rows = $value;
-
-        return $this;
-    }
-
-    /**
      * {@inheritdoc}
      */
     public function toArray()
     {
-        return ['rows' => $this->rows]  + parent::toArray();
+        return [ 'rows' => $this->get('rows', 3) ]  + parent::toArray();
     }
 }

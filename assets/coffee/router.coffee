@@ -8,10 +8,8 @@ class Router extends Backbone.Router
         entities = Cruddy.entities
 
         @addRoute "index", entities
-        #@addRoute "update", entities, "([^/]+)"
-        #@addRoute "create", entities, "create"
 
-        root = Cruddy.root + "/" + Cruddy.uri + "/"
+        root = Cruddy.baseUrl
         history = Backbone.history
 
         $(document.body).on "click", "a", (e) =>
@@ -110,6 +108,6 @@ $ ->
     Cruddy.router = new Router
 
     Backbone.history.start
-        root: Cruddy.uri
+        root: Cruddy.getHistoryRoot()
         pushState: true
         hashChange: false

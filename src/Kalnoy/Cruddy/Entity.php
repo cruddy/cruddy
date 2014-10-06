@@ -4,10 +4,9 @@ namespace Kalnoy\Cruddy;
 
 use RuntimeException;
 use Illuminate\Support\Collection;
-use Illuminate\Contracts\Support\JsonableInterface;
-use Illuminate\Contracts\Support\ArrayableInterface;
+use Illuminate\Contracts\Support\Jsonable;
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Model as Eloquent;
-use Kalnoy\Cruddy\ModelNotFoundException;
 use Kalnoy\Cruddy\Schema\SchemaInterface;
 use Kalnoy\Cruddy\Schema\InstanceFactory;
 use Kalnoy\Cruddy\Schema\InlineRelationInterface;
@@ -20,7 +19,7 @@ use Kalnoy\Cruddy\Repo\ChainedSearchProcessor;
  *
  * @since 1.0.0
  */
-class Entity implements JsonableInterface, ArrayableInterface {
+class Entity implements Jsonable, Arrayable {
 
     /**
      * Cruddy environment.
@@ -398,11 +397,13 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function process(array $input)
     {
+        extract($input);
+
         $action = $this->actionFromData($input);
 
         // We will process an input by a collection of fields to remove any
         // garbage
-        $attributes = $this->getFields()->process($input['attributes']);
+        $attributes = $this->getFields()->process($attributes);
 
         // Now we will validate those attributes
         $errors = $this->validate($action, $attributes);
@@ -849,4 +850,5 @@ class Entity implements JsonableInterface, ArrayableInterface {
     {
         return json_encode($this->toArray(), $options);
     }
+
 }

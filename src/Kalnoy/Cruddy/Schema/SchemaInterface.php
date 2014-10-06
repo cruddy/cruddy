@@ -2,9 +2,7 @@
 
 namespace Kalnoy\Cruddy\Schema;
 
-use Illuminate\Contracts\Support\ArrayableInterface;
-use Illuminate\Database\Eloquent\Model as Eloquent;
-use Kalnoy\Cruddy\Repo\RepositoryInterface;
+use Illuminate\Contracts\Support\Arrayable;
 
 /**
  * The schema interface.
@@ -14,7 +12,7 @@ use Kalnoy\Cruddy\Repo\RepositoryInterface;
  *
  * @since 1.0.0
  */
-interface SchemaInterface extends ArrayableInterface {
+interface SchemaInterface extends Arrayable {
 
     /**
      * Create an entity object.

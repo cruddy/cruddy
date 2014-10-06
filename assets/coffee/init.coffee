@@ -1,8 +1,5 @@
 Cruddy = window.Cruddy || {}
 
-Cruddy.backendRoot = Cruddy.root + "/" + Cruddy.uri
-
-API_URL = "/backend/api/v1"
 TRANSITIONEND = "transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd"
 NOT_AVAILABLE = "&mdash;"
 moment.lang Cruddy.locale ? "en"
@@ -33,3 +30,7 @@ $(document.body)
 
 $.extend $.fancybox.defaults,
     openEffect: "elastic"
+
+$.extend Cruddy,
+
+    getHistoryRoot: -> @baseUrl.substr @root.length

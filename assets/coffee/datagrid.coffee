@@ -43,7 +43,8 @@ class DataGrid extends Backbone.View
 
         if curr?
             @$("#item-#{ curr.id }").addClass "active"
-            curr.on "sync destroy", (=> @model.fetch()), this
+            curr.on "sync", ( (model, data, options) => @model.fetch() if options.data), this
+            curr.on "destroy", ( => @model.fetch()), this
 
         this
 

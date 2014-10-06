@@ -2,8 +2,7 @@
 
 namespace Kalnoy\Cruddy;
 
-use Illuminate\Contracts\Support\JsonableInterface;
-use Illuminate\Http\Request;
+use Illuminate\Contracts\Support\Jsonable;
 use Illuminate\Config\Repository as Config;
 use Illuminate\Events\Dispatcher;
 use Kalnoy\Cruddy\Schema\Fields\Factory as FieldFactory;
@@ -16,7 +15,7 @@ use RuntimeException;
  *
  * @since 1.0.0
  */
-class Environment implements JsonableInterface {
+class Environment implements Jsonable {
 
     /**
      * @var \Illuminate\Config\Repository
@@ -129,7 +128,7 @@ class Environment implements JsonableInterface {
      *
      * @param string $id
      *
-     * @throws RuntimeException if field is not found.
+     * @throws RuntimeException
      *
      * @return Schema\Fields\BaseField
      */
@@ -237,16 +236,7 @@ class Environment implements JsonableInterface {
      */
     public function toJSON($options = 0)
     {
-        return json_encode(
-        [
-            'locale' => $this->config->get('app.locale'),
-            'uri' => $this->config('uri'),
-            'ace_theme' => $this->config('ace_theme', 'chrome'),
-            'entities' => $this->entities->available(),
-            'lang' => $this->lang->ui(),
-            'permissions' => $this->permissions(),
-
-        ], $options);
+        return json_encode($this->data(), $options);
     }
 
     /**
@@ -260,29 +250,18 @@ class Environment implements JsonableInterface {
     }
 
     /**
-     * Register saving event handler.
-     *
-     * @param string $id
-     * @param mixed $callback
-     *
-     * @return void
+     * @return array
      */
-    public function saving($id, $callback)
+    public function data()
     {
-        Entity::saving($id, $callback);
-    }
-
-    /**
-     * Register saved event handler.
-     *
-     * @param string $id
-     * @param mixed $callback
-     *
-     * @return void
-     */
-    public function saved($id, $callback)
-    {
-        Entity::saved($id, $callback);
+        return [
+            'locale' => $this->config->get('app.locale'),
+            'uri' => $this->config('uri'),
+            'ace_theme' => $this->config('ace_theme', 'chrome'),
+            'entities' => $this->entities->available(),
+            'lang' => $this->lang->ui(),
+            'permissions' => $this->permissions(),
+        ];
     }
 
 }

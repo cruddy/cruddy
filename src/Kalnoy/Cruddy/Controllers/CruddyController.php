@@ -2,14 +2,13 @@
 
 namespace Kalnoy\Cruddy\Controllers;
 
-use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\View;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Input;
 use Illuminate\Support\Facades\Redirect;
-use Intervention\Image\Exception\ImageNotFoundException;
 use Intervention\Image\Exception\RuntimeException;
 use Kalnoy\Cruddy\Environment;
+use Kalnoy\Cruddy\Compiler;
 use Kalnoy\Cruddy\Service\ThumbnailFactory;
 use Log;
 
@@ -18,10 +17,10 @@ use Log;
  *
  * @since 1.0.0
  */
-class CruddyController extends Controller {
+class CruddyController {
 
     /**
-     * @var \Kalnoy\Cruddy\Environment
+     * @var Environment
      */
     protected $cruddy;
 
@@ -33,17 +32,13 @@ class CruddyController extends Controller {
     /**
      * Initialize the controller.
      *
-     * @param Environment                             $cruddy
-     * @param \Kalnoy\Cruddy\Service\ThumbnailFactory $thumb
+     * @param Environment $cruddy
+     * @param ThumbnailFactory $thumb
      */
     public function __construct(Environment $cruddy, ThumbnailFactory $thumb)
     {
         $this->cruddy = $cruddy;
         $this->thumb = $thumb;
-
-        $authFilter = $this->cruddy->config('auth_filter');
-
-        if ($authFilter) $this->beforeFilter($authFilter, [ 'except' => 'thumb' ]);
     }
 
     /**
@@ -62,11 +57,15 @@ class CruddyController extends Controller {
     }
 
     /**
-     * Show an entity.
+     * Get the schema.
+     *
+     * @param Compiler $compiler
+     *
+     * @return \Symfony\Component\HttpFoundation\Response
      */
-    public function show()
+    public function schema(Compiler $compiler)
     {
-        return view('cruddy::loading');
+        return response($compiler->schema());
     }
 
     /**
@@ -74,11 +73,11 @@ class CruddyController extends Controller {
      *
      * @return \Illuminate\Http\Response
      */
-    public function thumb()
+    public function thumb(Request $input)
     {
-        $src = Input::get('src');
-        $width = Input::get('width');
-        $height = Input::get('height');
+        $src = $input->get('src');
+        $width = $input->get('width');
+        $height = $input->get('height');
 
         if ($width !== null) $width = (int)$width;
         if ($height !== null) $height = (int)$height;

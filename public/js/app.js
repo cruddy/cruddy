@@ -1,13 +1,9 @@
 (function() {
-  var API_URL, AdvFormData, Alert, App, Attribute, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, NOT_AVAILABLE, Pagination, Router, SearchDataSource, TRANSITIONEND, after_break, b_btn, b_icon, entity_url, humanize, thumb, _ref,
+  var AdvFormData, Alert, App, Attribute, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, NOT_AVAILABLE, Pagination, Router, SearchDataSource, TRANSITIONEND, after_break, b_btn, b_icon, entity_url, humanize, thumb, _ref,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Cruddy = window.Cruddy || {};
-
-  Cruddy.backendRoot = Cruddy.root + "/" + Cruddy.uri;
-
-  API_URL = "/backend/api/v1";
 
   TRANSITIONEND = "transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd";
 
@@ -42,6 +38,12 @@
     openEffect: "elastic"
   });
 
+  $.extend(Cruddy, {
+    getHistoryRoot: function() {
+      return this.baseUrl.substr(this.root.length);
+    }
+  });
+
   humanize = (function(_this) {
     return function(id) {
       return id.replace(/_-/, " ");
@@ -50,7 +52,7 @@
 
   entity_url = function(id, extra) {
     var url;
-    url = Cruddy.backendRoot + "/api/" + id;
+    url = Cruddy.baseUrl + "/" + id;
     if (extra) {
       url += "/" + extra;
     }
@@ -63,7 +65,7 @@
 
   thumb = function(src, width, height) {
     var url;
-    url = "" + Cruddy.backendRoot + "/thumb?src=" + (encodeURIComponent(src));
+    url = "" + Cruddy.thumbUrl + "?src=" + (encodeURIComponent(src));
     if (width) {
       url += "&amp;width=" + width;
     }
@@ -306,9 +308,9 @@
         success: (function(_this) {
           return function(resp) {
             _this._hold = true;
-            _this.set(resp.data);
+            _this.set(resp);
             _this._hold = false;
-            return _this.trigger("data", _this, resp.data.data);
+            return _this.trigger("data", _this, resp.data);
           };
         })(this),
         error: (function(_this) {
@@ -692,7 +694,14 @@
       }
       if (curr != null) {
         this.$("#item-" + curr.id).addClass("active");
-        curr.on("sync destroy", ((function(_this) {
+        curr.on("sync", ((function(_this) {
+          return function(model, data, options) {
+            if (options.data) {
+              return _this.model.fetch();
+            }
+          };
+        })(this)), this);
+        curr.on("destroy", ((function(_this) {
           return function() {
             return _this.model.fetch();
           };
@@ -4533,7 +4542,6 @@
       });
       xhr = xhr.then((function(_this) {
         return function(resp) {
-          resp = resp.data;
           return _this.createInstance(resp);
         };
       })(this));
@@ -4650,7 +4658,7 @@
 
     Instance.prototype.handleSyncEvent = function(model, resp) {
       this.original = _.clone(this.attributes);
-      this.extra = resp.data.extra;
+      this.extra = resp.extra;
       return this;
     };
 
@@ -4681,10 +4689,16 @@
       return this;
     };
 
+<<<<<<< HEAD
     Instance.prototype.handleErrorEvent = function(model, xhr) {
       var _ref1;
       if (((_ref1 = xhr.responseJSON) != null ? _ref1.error : void 0) === "VALIDATION") {
         this.trigger("invalid", this, xhr.responseJSON.data);
+=======
+    Instance.prototype.processError = function(model, xhr) {
+      if (xhr.status === 400) {
+        this.trigger("invalid", this, xhr.responseJSON);
+>>>>>>> Updated
       }
     };
 
@@ -4695,10 +4709,6 @@
     Instance.prototype.validate = function() {
       this.set("errors", {});
       return null;
-    };
-
-    Instance.prototype.link = function() {
-      return this.entity.link(this.isNew() ? "create" : this.id);
     };
 
     Instance.prototype.url = function() {
@@ -4741,7 +4751,7 @@
     };
 
     Instance.prototype.parse = function(resp) {
-      return resp.data.attributes;
+      return resp.attributes;
     };
 
     Instance.prototype.copy = function() {
@@ -4799,8 +4809,14 @@
     Page.prototype.className = "page entity-page";
 
     Page.prototype.events = {
+<<<<<<< HEAD
       "click .ep-btn-create": "create",
       "click .ep-btn-refresh": "refreshData"
+=======
+      "click .btn-create": "create",
+      "click .btn-entity-refresh": "refresh",
+      "click [data-navigate]": "navigate"
+>>>>>>> Updated
     };
 
     function Page(options) {
@@ -5000,7 +5016,11 @@
 
     Page.prototype.buttonsTemplate = function() {
       var html;
+<<<<<<< HEAD
       html = "<button type=\"button\" class=\"btn btn-default ep-btn-refresh\" title=\"" + Cruddy.lang.refresh + "\">" + (b_icon("refresh")) + "</button>";
+=======
+      html = "<button type=\"button\" class=\"btn btn-default btn-entity-refresh\" title=\"" + Cruddy.lang.refresh + "\">" + (b_icon("refresh")) + "</button>";
+>>>>>>> Updated
       if (this.model.createPermitted()) {
         html += " <button type=\"button\" class=\"btn btn-primary ep-btn-create\" title=\"" + Cruddy.lang.add + "\">" + (b_icon("plus")) + "</button>";
       }
@@ -5117,8 +5137,7 @@
     };
 
     Form.prototype.displayError = function(xhr) {
-      var _ref1;
-      if (((_ref1 = xhr.responseJSON) != null ? _ref1.error : void 0) !== "VALIDATION") {
+      if (xhr.status !== 400) {
         return this.displayAlert(Cruddy.lang.failure, "danger", 5000);
       }
     };
@@ -5334,15 +5353,14 @@
     App.prototype.loadSchema = function() {
       var req;
       req = $.ajax({
-        url: entity_url("_schema"),
+        url: Cruddy.schemaUrl,
         displayLoading: true
       });
       req.done((function(_this) {
         return function(resp) {
-          var entity, _i, _len, _ref1;
-          _ref1 = resp.data;
-          for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-            entity = _ref1[_i];
+          var entity, _i, _len;
+          for (_i = 0, _len = resp.length; _i < _len; _i++) {
+            entity = resp[_i];
             _this.entities[entity.id] = new Cruddy.Entity.Entity(entity);
           }
           _this.dfd.resolve(_this);
@@ -5432,7 +5450,7 @@
       this.query = $.query;
       entities = Cruddy.entities;
       this.addRoute("index", entities);
-      root = Cruddy.root + "/" + Cruddy.uri + "/";
+      root = Cruddy.baseUrl;
       history = Backbone.history;
       $(document.body).on("click", "a", (function(_this) {
         return function(e) {
@@ -5558,7 +5576,11 @@
   $(function() {
     Cruddy.router = new Router;
     return Backbone.history.start({
+<<<<<<< HEAD
       root: Cruddy.uri,
+=======
+      root: Cruddy.getHistoryRoot(),
+>>>>>>> Updated
       pushState: true,
       hashChange: false
     });

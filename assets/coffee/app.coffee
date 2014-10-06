@@ -22,11 +22,11 @@ class App extends Backbone.Model
 
     loadSchema: ->
         req = $.ajax
-            url: entity_url "_schema"
+            url: Cruddy.schemaUrl
             displayLoading: yes
 
         req.done (resp) =>
-            @entities[entity.id] = new Cruddy.Entity.Entity entity for entity in resp.data
+            @entities[entity.id] = new Cruddy.Entity.Entity entity for entity in resp
 
             @dfd.resolve this
 

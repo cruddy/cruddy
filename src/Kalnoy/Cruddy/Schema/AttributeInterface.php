@@ -5,7 +5,7 @@ namespace Kalnoy\Cruddy\Schema;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
-use Illuminate\Contracts\Support\ArrayableInterface;
+use Illuminate\Contracts\Support\Arrayable;
 
 /**
  * Base attribute interface.
@@ -14,7 +14,7 @@ use Illuminate\Contracts\Support\ArrayableInterface;
  *
  * @since 1.0.0
  */
-interface AttributeInterface extends ArrayableInterface {
+interface AttributeInterface extends Arrayable {
 
     /**
      * Get model's corresponding value.

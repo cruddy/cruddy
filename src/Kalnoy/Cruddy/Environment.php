@@ -258,4 +258,31 @@ class Environment implements JsonableInterface {
     {
         return $this->dispatcher;
     }
+
+    /**
+     * Register saving event handler.
+     *
+     * @param string $id
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public function saving($id, $callback)
+    {
+        Entity::saving($id, $callback);
+    }
+
+    /**
+     * Register saved event handler.
+     *
+     * @param string $id
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public function saved($id, $callback)
+    {
+        Entity::saved($id, $callback);
+    }
+
 }

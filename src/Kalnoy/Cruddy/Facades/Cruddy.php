@@ -11,32 +11,6 @@ use Kalnoy\Cruddy\Entity;
 class Cruddy extends Facade {
 
     /**
-     * Register saving event handler.
-     *
-     * @param string $id
-     * @param mixed $callback
-     *
-     * @return void
-     */
-    public static function saving($id, $callback)
-    {
-        Entity::saving($id, $callback);
-    }
-
-    /**
-     * Register saved event handler.
-     *
-     * @param string $id
-     * @param mixed $callback
-     *
-     * @return void
-     */
-    public static function saved($id, $callback)
-    {
-        Entity::saved($id, $callback);
-    }
-
-    /**
      * Register new field type.
      *
      * @param string          $macro
@@ -46,7 +20,7 @@ class Cruddy extends Facade {
     {
         app('cruddy.fields')->register($macro, $callback);
     }
-    
+
     /**
      * Register new column type.
      *

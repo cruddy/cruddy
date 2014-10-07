@@ -7,6 +7,7 @@ develop
 *   Added automatic resolution of whether the field is required
 *   \#9: fixed entity drop down sending extra request
 *   Refactored drop downs
+*   \#59: fixed entity events not always registered
 
 v0.3.2
 ======

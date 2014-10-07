@@ -25,7 +25,7 @@
         font-size: @font-size-small;
         line-height: @item-height;
 
-        .item {
+        > .item {
             cursor: pointer;
             color: @dropdown-link-color;
             padding: 0 @padding-small-horizontal;
@@ -47,22 +47,41 @@
             }
         }
 
-        .empty, .more {
+        > .empty, > .more {
             text-align: center;
             font-style: italic;
         }
 
-        .more {
+        > .more {
             cursor: pointer;
-
-            &.loading {
-                text-indent: -9999px;
-                background: url("../img/loader-bars.gif") center center no-repeat;
-            }
 
             &:hover {
                 text-decoration: underline;
             }
         }
     }
+
+    &.loading {
+
+        .items > .more {
+            text-indent: -9999px;
+            background: url("../img/loader-bars.gif") center center no-repeat;
+        }
+
+        .btn-refresh > .glyphicon {
+            .animation(loading 1s ease-in-out infinite);
+        }
+    }
+}
+
+@keyframes loading
+{
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
+}
+
+@-webkit-keyframes loading /* Safari and Chrome */
+{
+    from { -webkit-transform: rotate(0deg); }
+    to   { -webkit-transform: rotate(360deg); }
 }

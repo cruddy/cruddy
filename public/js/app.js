@@ -446,6 +446,11 @@
     };
 
     SearchDataSource.prototype.initialize = function(attributes, options) {
+      this.resetData = false;
+      this.needsRefresh = false;
+      this.data = [];
+      this.page = null;
+      this.more = true;
       this.filters = new Backbone.Model;
       this.options = {
         url: options.url,
@@ -458,6 +463,9 @@
           return function(resp) {
             var item, _i, _len, _ref1;
             resp = resp.data;
+            if (_this.resetData) {
+              _this.data = [];
+            }
             _ref1 = resp.data;
             for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
               item = _ref1[_i];
@@ -481,24 +489,17 @@
       if (options.ajaxOptions != null) {
         $.extend(true, this.options, options.ajaxOptions);
       }
-      this.reset();
       this.on("change:search", this.refresh, this);
       this.listenTo(this.filters, "change", this.refresh);
       return this;
     };
 
     SearchDataSource.prototype.refresh = function() {
-      return this.reset().next();
+      this.resetData = true;
+      return this.fetchPage(1);
     };
 
-    SearchDataSource.prototype.reset = function() {
-      this.data = [];
-      this.page = null;
-      this.more = true;
-      return this;
-    };
-
-    SearchDataSource.prototype.fetch = function(q, page, filters) {
+    SearchDataSource.prototype._fetch = function(q, page, filters) {
       if (this.request != null) {
         this.request.abort();
       }
@@ -511,17 +512,30 @@
       return this.request;
     };
 
+    SearchDataSource.prototype.fetchPage = function(page) {
+      return this._fetch(this.get("search"), page, this.filters.attributes);
+    };
+
     SearchDataSource.prototype.next = function() {
-      var page;
-      if (this.more) {
-        page = this.page != null ? this.page + 1 : 1;
-        this.fetch(this.get("search"), page, this.filters.attributes);
-      }
+      this.fetchPage(this.page != null ? this.page + 1 : this.more ? 1 : void 0);
       return this;
     };
 
     SearchDataSource.prototype.inProgress = function() {
       return this.request != null;
+    };
+
+    SearchDataSource.prototype.isEmpty = function() {
+      return this.page === null && !this.request;
+    };
+
+    SearchDataSource.prototype.getById = function(id) {
+      if (!id.length) {
+        id = id.toString();
+      }
+      return _.find(this.data, function(item) {
+        return item.id.toString() === id;
+      });
     };
 
     return SearchDataSource;
@@ -1265,24 +1279,24 @@
       btn.prop("disabled", true);
       this.editing = this.reference.load(item.id).done((function(_this) {
         return function(instance) {
-          _this.innerForm = new Cruddy.Entity.Form({
+          _this.newModelForm = new Cruddy.Entity.Form({
             model: instance,
             inner: true
           });
-          _this.innerForm.render().$el.appendTo(document.body);
+          _this.newModelForm.render().$el.appendTo(document.body);
           after_break(function() {
-            return _this.innerForm.show();
+            return _this.newModelForm.show();
           });
           _this.listenTo(instance, "sync", function(model, resp) {
             if (resp.data) {
               btn.parent().siblings("input").val(resp.data.title);
-              return _this.innerForm.remove();
+              return _this.newModelForm.remove();
             } else {
               return _this.removeItem(e);
             }
           });
-          return _this.listenTo(_this.innerForm, "remove", function() {
-            return _this.innerForm = null;
+          return _this.listenTo(_this.newModelForm, "remove", function() {
+            return _this.newModelForm = null;
           });
         };
       })(this));
@@ -1319,7 +1333,7 @@
         if ((_ref1 = this.selector.dataSource) != null) {
           _ref1.filters.set(this.constraint.otherField, value);
         }
-        this.selector.createAttributes[this.constraint.otherField] = value;
+        this.selector.attributesForNewModel[this.constraint.otherField] = value;
       }
       if (reset) {
         this.model.set(this.key, this.multiple ? [] : null);
@@ -1359,7 +1373,6 @@
     };
 
     EntityDropdown.prototype.renderDropdown = function(e) {
-      var dataSource;
       if (this.disableDropdown) {
         e.preventDefault();
         return;
@@ -1379,11 +1392,7 @@
         }
         this.$el.append(this.selector.render().el);
       }
-      dataSource = this.selector.dataSource;
-      if (!dataSource.inProgress()) {
-        dataSource.refresh();
-      }
-      return this.toggleOpenDirection();
+      this.toggleOpenDirection();
     };
 
     EntityDropdown.prototype.toggleOpenDirection = function() {
@@ -1517,7 +1526,7 @@
       if ((_ref1 = this.selector) != null) {
         _ref1.remove();
       }
-      if ((_ref2 = this.innerForm) != null) {
+      if ((_ref2 = this.newModelForm) != null) {
         _ref2.remove();
       }
       return this;
@@ -1542,9 +1551,10 @@
     EntitySelector.prototype.className = "entity-selector";
 
     EntitySelector.prototype.events = {
-      "click .item": "check",
-      "click .more": "more",
-      "click .btn-add": "add",
+      "click .items>.item": "checkItem",
+      "click .more": "loadMore",
+      "click .btn-add": "showNewForm",
+      "click .btn-refresh": "refresh",
       "click [type=search]": function() {
         return false;
       }
@@ -1558,9 +1568,8 @@
       this.reference = options.reference;
       this.allowSearch = (_ref3 = options.allowSearch) != null ? _ref3 : true;
       this.allowCreate = ((_ref4 = options.allowCreate) != null ? _ref4 : true) && this.reference.createPermitted();
-      this.createAttributes = {};
-      this.data = [];
-      this.buildSelected(this.model.get(this.key));
+      this.attributesForNewModel = {};
+      this.makeSelectedMap(this.getValue());
       if (this.reference.viewPermitted()) {
         this.primaryKey = "id";
         this.dataSource = this.reference.search({
@@ -1570,31 +1579,51 @@
             }
           }
         });
-        this.listenTo(this.dataSource, "request", this.loading);
+        this.listenTo(this.dataSource, "request", this.displayLoading);
         this.listenTo(this.dataSource, "data", this.renderItems);
         this.listenTo(this.dataSource, "error", this.displayError);
       }
       return this;
     };
 
-    EntitySelector.prototype.checkForMore = function() {
-      if ((this.moreElement != null) && this.items.parent().height() + 50 > this.moreElement.position().top) {
-        this.more();
+    EntitySelector.prototype.displayError = function(dataSource, xhr) {};
+
+    EntitySelector.prototype.displayLoading = function(dataSource, xhr) {
+      this.$el.addClass("loading");
+      xhr.always((function(_this) {
+        return function() {
+          return _this.$el.removeClass("loading");
+        };
+      })(this));
+      return this;
+    };
+
+    EntitySelector.prototype.maybeLoadMore = function() {
+      if ((this.$more != null) && this.items.parent().height() + 50 > this.$more.position().top) {
+        this.loadMore();
       }
       return this;
     };
 
-    EntitySelector.prototype.check = function(e) {
-      var id;
-      id = $(e.target).data("id").toString();
-      this.select(_.find(this.dataSource.data, function(item) {
-        return item.id.toString() === id;
-      }));
-      return false;
+    EntitySelector.prototype.refresh = function(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      this.dataSource.refresh();
     };
 
-    EntitySelector.prototype.select = function(item) {
+    EntitySelector.prototype.checkItem = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.selectItem(this.dataSource.getById($(e.target).data("id")));
+    };
+
+    EntitySelector.prototype.selectItem = function(item) {
       var value;
+      if (!item) {
+        return;
+      }
       if (this.multiple) {
         if (item.id in this.selected) {
           value = _.filter(this.model.get(this.key), function(item) {
@@ -1610,7 +1639,7 @@
       return this.setValue(value);
     };
 
-    EntitySelector.prototype.more = function() {
+    EntitySelector.prototype.loadMore = function() {
       if (!this.dataSource || this.dataSource.inProgress()) {
         return;
       }
@@ -1618,47 +1647,49 @@
       return false;
     };
 
-    EntitySelector.prototype.add = function(e) {
-      var instance;
-      e.preventDefault();
-      e.stopPropagation();
+    EntitySelector.prototype.showNewForm = function(e) {
+      var form, instance;
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      if (this.newModelForm) {
+        return;
+      }
       instance = this.reference.createInstance({
-        attributes: this.createAttributes
+        attributes: this.attributesForNewModel
       });
-      this.innerForm = new Cruddy.Entity.Form({
+      this.newModelForm = form = new Cruddy.Entity.Form({
         model: instance,
         inner: true
       });
-      this.innerForm.render().$el.appendTo(document.body);
-      after_break((function(_this) {
+      form.render().$el.appendTo(document.body);
+      after_break(function() {
+        return form.show();
+      });
+      this.listenToOnce(form, "remove", (function(_this) {
         return function() {
-          return _this.innerForm.show();
-        };
-      })(this));
-      this.listenToOnce(this.innerForm, "remove", (function(_this) {
-        return function() {
-          return _this.innerForm = null;
+          return _this.newModelForm = null;
         };
       })(this));
       this.listenToOnce(instance, "sync", (function(_this) {
         return function(instance, resp) {
-          _this.select({
+          _this.selectItem({
             id: instance.id,
             title: resp.data.title
           });
-          _this.dataSource.set("search", "");
-          return _this.innerForm.remove();
+          form.remove();
         };
       })(this));
       return this;
     };
 
     EntitySelector.prototype.applyChanges = function(data) {
-      this.buildSelected(data);
+      this.makeSelectedMap(data);
       return this.renderItems();
     };
 
-    EntitySelector.prototype.buildSelected = function(data) {
+    EntitySelector.prototype.makeSelectedMap = function(data) {
       var item, _i, _len;
       this.selected = {};
       if (this.multiple) {
@@ -1674,17 +1705,9 @@
       return this;
     };
 
-    EntitySelector.prototype.loading = function() {
-      var _ref1;
-      if ((_ref1 = this.moreElement) != null) {
-        _ref1.addClass("loading");
-      }
-      return this;
-    };
-
     EntitySelector.prototype.renderItems = function() {
       var html, item, _i, _len, _ref1;
-      this.moreElement = null;
+      this.$more = null;
       html = "";
       if (this.dataSource.data.length || this.dataSource.more) {
         _ref1 = this.dataSource.data;
@@ -1693,15 +1716,15 @@
           html += this.renderItem(item);
         }
         if (this.dataSource.more) {
-          html += "<li class=\"more " + (this.dataSource.inProgress() ? "loading" : "") + "\">" + Cruddy.lang.more + "</li>";
+          html += "<li class=\"more\">" + Cruddy.lang.more + "</li>";
         }
       } else {
-        html += "<li class='empty'>" + Cruddy.lang.no_results + "</li>";
+        html += "<li class=\"empty\">" + Cruddy.lang.no_results + "</li>";
       }
       this.items.html(html);
       if (this.dataSource.more) {
-        this.moreElement = this.items.children(".more");
-        this.checkForMore();
+        this.$more = this.items.children(".more");
+        this.maybeLoadMore();
       }
       return this;
     };
@@ -1718,9 +1741,12 @@
         this.$el.html(this.template());
         this.items = this.$(".items");
         this.renderItems();
-        this.items.parent().on("scroll", $.proxy(this, "checkForMore"));
+        this.items.parent().on("scroll", $.proxy(this, "maybeLoadMore"));
         if (this.allowSearch) {
           this.renderSearch();
+        }
+        if (this.dataSource.isEmpty()) {
+          this.dataSource.refresh();
         }
       } else {
         this.$el.html("<span class=error>" + Cruddy.lang.forbidden + "</span>");
@@ -1735,6 +1761,7 @@
       });
       this.$el.prepend(this.searchInput.render().$el);
       this.searchInput.$el.wrap("<div class=search-input-container></div>");
+      this.searchInput.appendButton("<button type=\"button\" class=\"btn btn-default btn-refresh\" tabindex=\"-1\">\n    <span class=\"glyphicon glyphicon-refresh\"></span>\n</button>");
       if (this.allowCreate) {
         this.searchInput.appendButton("<button type=\"button\" class='btn btn-default btn-add' tabindex='-1'>\n    <span class='glyphicon glyphicon-plus'></span>\n</button>");
       }
@@ -1742,7 +1769,7 @@
     };
 
     EntitySelector.prototype.template = function() {
-      return "<div class=\"items-container\"><ul class=\"items\"><li class=\"more loading\"></li></ul></div>";
+      return "<div class=\"items-container\"><ul class=\"items\"></ul></div>";
     };
 
     EntitySelector.prototype.focus = function() {
@@ -1760,7 +1787,7 @@
       if ((_ref1 = this.searchInput) != null) {
         _ref1.remove();
       }
-      if ((_ref2 = this.innerForm) != null) {
+      if ((_ref2 = this.newModelForm) != null) {
         _ref2.remove();
       }
       return this;
@@ -1973,7 +2000,7 @@
     Search.prototype.className = "input-group";
 
     Search.prototype.events = {
-      "click .btn": "search"
+      "click .btn-search": "search"
     };
 
     Search.prototype.initialize = function(options) {
@@ -1988,8 +2015,12 @@
       return Search.__super__.initialize.apply(this, arguments);
     };
 
-    Search.prototype.search = function() {
-      return this.input.change();
+    Search.prototype.search = function(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      this.input.change();
     };
 
     Search.prototype.appendButton = function(btn) {
@@ -1999,7 +2030,7 @@
     Search.prototype.render = function() {
       this.$el.append(this.input.render().$el);
       this.$el.append(this.$btns = $("<div class=\"input-group-btn\"></div>"));
-      this.appendButton("<button type=\"button\" class=\"btn btn-default\">\n    <span class=\"glyphicon glyphicon-search\"></span>\n</button>");
+      this.appendButton("<button type=\"button\" class=\"btn btn-default btn-search\">\n    <span class=\"glyphicon glyphicon-search\"></span>\n</button>");
       return this;
     };
 

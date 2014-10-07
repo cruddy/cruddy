@@ -3,7 +3,7 @@ class Cruddy.Inputs.Search extends Cruddy.View
     className: "input-group"
 
     events:
-        "click .btn": "search"
+        "click .btn-search": "search"
 
     initialize: (options) ->
         @input = new Cruddy.Inputs.Text
@@ -15,7 +15,14 @@ class Cruddy.Inputs.Search extends Cruddy.View
 
         super
 
-    search: -> @input.change()
+    search: (e) ->
+        if e
+            e.preventDefault()
+            e.stopPropagation()
+
+        @input.change()
+
+        return
 
     appendButton: (btn) -> @$btns.append btn
 
@@ -24,7 +31,7 @@ class Cruddy.Inputs.Search extends Cruddy.View
         @$el.append @$btns = $ """<div class="input-group-btn"></div>"""
 
         @appendButton """
-            <button type="button" class="btn btn-default">
+            <button type="button" class="btn btn-default btn-search">
                 <span class="glyphicon glyphicon-search"></span>
             </button>
         """

@@ -5,6 +5,8 @@ develop
 *   #49: fixed image displayed when no data provided
 *   External link is moved to after refresh button
 *   Added automatic resolution of whether the field is required
+*   \#9: fixed entity drop down sending extra request
+*   Refactored drop downs
 
 v0.3.2
 ======

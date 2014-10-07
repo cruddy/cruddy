@@ -3,6 +3,12 @@ class SearchDataSource extends Backbone.Model
         search: ""
 
     initialize: (attributes, options) ->
+        @resetData = no
+        @needsRefresh = no
+        @data = []
+        @page = null
+        @more = yes
+
         @filters = new Backbone.Model
 
         @options =
@@ -16,44 +22,41 @@ class SearchDataSource extends Backbone.Model
             success: (resp) =>
                 resp = resp.data
 
+                if @resetData
+                    @data = []
+
                 @data.push item for item in resp.data
 
                 @page = resp.current_page
                 @more = resp.current_page < resp.last_page
                 @request = null
 
-                @trigger "data", this, @data
+                @trigger "data", @, @data
 
                 this
 
             error: (xhr) =>
                 @request = null
-                @trigger "error", this, xhr
+                @trigger "error", @, xhr
 
                 this
 
         $.extend yes, @options, options.ajaxOptions if options.ajaxOptions?
-
-        @reset()
 
         @on "change:search", @refresh, this
         @listenTo @filters, "change", @refresh
 
         this
 
-    refresh: -> @reset().next()
+    refresh: ->
+        @resetData = yes
 
-    reset: ->
-        @data = []
-        @page = null
-        @more = yes
+        @fetchPage 1
 
-        this
-
-    fetch: (q, page, filters) ->
+    _fetch: (q, page, filters) ->
         @request.abort() if @request?
 
-        $.extend @options.data, 
+        $.extend @options.data,
             page: page
             keywords: q
             filters: filters
@@ -62,12 +65,18 @@ class SearchDataSource extends Backbone.Model
 
         @request
 
-    next: ->
-        if @more
-            page = if @page? then @page + 1 else 1
+    fetchPage: (page) -> @_fetch @get("search"), page, @filters.attributes
 
-            @fetch @get("search"), page, @filters.attributes
+    next: ->
+        @fetchPage if @page? then @page + 1 else 1 if @more
 
         this
 
     inProgress: -> @request?
+
+    isEmpty: -> @page is null and not @request
+
+    getById: (id) ->
+        id = id.toString() if not id.length
+
+        return _.find @data, (item) -> item.id.toString() == id

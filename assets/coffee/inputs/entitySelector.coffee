@@ -2,9 +2,10 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
     className: "entity-selector"
 
     events:
-        "click .item": "check"
-        "click .more": "more"
-        "click .btn-add": "add"
+        "click .items>.item": "checkItem"
+        "click .more": "loadMore"
+        "click .btn-add": "showNewForm"
+        "click .btn-refresh": "refresh"
         "click [type=search]": -> false
 
     initialize: (options) ->
@@ -17,34 +18,57 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         @allowSearch = options.allowSearch ? yes
         @allowCreate = options.allowCreate ? yes and @reference.createPermitted()
 
-        @createAttributes = {}
+        @attributesForNewModel = {}
 
-        @data = []
-        @buildSelected @model.get @key
+        @makeSelectedMap @getValue()
 
         if @reference.viewPermitted()
             @primaryKey = "id"
 
             @dataSource = @reference.search ajaxOptions: data: owner: options.owner
 
-            @listenTo @dataSource, "request", @loading
+            @listenTo @dataSource, "request", @displayLoading
             @listenTo @dataSource, "data",    @renderItems
             @listenTo @dataSource, "error",   @displayError
 
         this
 
-    checkForMore: ->
-        @more() if @moreElement? and @items.parent().height() + 50 > @moreElement.position().top
+    displayError: (dataSource, xhr) ->
+
+        return
+
+    displayLoading: (dataSource, xhr) ->
+        @$el.addClass "loading"
+
+        xhr.always => @$el.removeClass "loading"
 
         this
 
-    check: (e) ->
-        id = $(e.target).data("id").toString()
-        @select _.find @dataSource.data, (item) -> item.id.toString() == id
+    maybeLoadMore: ->
+        @loadMore() if @$more? and @items.parent().height() + 50 > @$more.position().top
 
-        false
+        this
 
-    select: (item) ->
+    refresh: (e) ->
+        if e
+            e.preventDefault()
+            e.stopPropagation()
+
+        @dataSource.refresh()
+
+        return
+
+    checkItem: (e) ->
+        e.preventDefault()
+        e.stopPropagation()
+
+        @selectItem @dataSource.getById $(e.target).data("id")
+
+        return
+
+    selectItem: (item) ->
+        return if not item
+
         if @multiple
             if item.id of @selected
                 value = _.filter @model.get(@key), (item) -> item.id != id
@@ -56,43 +80,48 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
         @setValue value
 
-    more: ->
+    loadMore: ->
         return if not @dataSource or @dataSource.inProgress()
 
         @dataSource.next()
 
         false
 
-    add: (e) ->
-        e.preventDefault()
-        e.stopPropagation()
+    showNewForm: (e) ->
+        if e
+            e.preventDefault()
+            e.stopPropagation()
 
-        instance = @reference.createInstance attributes: @createAttributes
+        return if @newModelForm
 
-        @innerForm = new Cruddy.Entity.Form
+        instance = @reference.createInstance attributes: @attributesForNewModel
+
+        @newModelForm = form = new Cruddy.Entity.Form
             model: instance
             inner: yes
 
-        @innerForm.render().$el.appendTo document.body
-        after_break => @innerForm.show()
+        form.render().$el.appendTo document.body
 
-        @listenToOnce @innerForm, "remove", => @innerForm = null
+        after_break -> form.show()
+
+        @listenToOnce form, "remove", => @newModelForm = null
 
         @listenToOnce instance, "sync", (instance, resp) =>
-            @select
+            @selectItem
                 id: instance.id
                 title: resp.data.title
 
-            @dataSource.set "search", ""
-            @innerForm.remove()
+            form.remove()
+
+            return
 
         this
 
     applyChanges: (data) ->
-        @buildSelected data
+        @makeSelectedMap data
         @renderItems()
 
-    buildSelected: (data) ->
+    makeSelectedMap: (data) ->
         @selected = {}
 
         if @multiple
@@ -102,28 +131,23 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
         this
 
-    loading: ->
-        @moreElement?.addClass "loading"
-
-        this
-
     renderItems: ->
-        @moreElement = null
+        @$more = null
 
         html = ""
 
         if @dataSource.data.length or @dataSource.more
             html += @renderItem item for item in @dataSource.data
 
-            html += """<li class="more #{ if @dataSource.inProgress() then "loading" else "" }">#{ Cruddy.lang.more }</li>""" if @dataSource.more
+            html += """<li class="more">#{ Cruddy.lang.more }</li>""" if @dataSource.more
         else
-            html += "<li class='empty'>#{ Cruddy.lang.no_results }</li>"
+            html += """<li class="empty">#{ Cruddy.lang.no_results }</li>"""
 
         @items.html html
 
         if @dataSource.more
-            @moreElement = @items.children ".more"
-            @checkForMore()
+            @$more = @items.children ".more"
+            @maybeLoadMore()
 
         this
 
@@ -142,9 +166,11 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
             @renderItems()
 
-            @items.parent().on "scroll", $.proxy this, "checkForMore"
+            @items.parent().on "scroll", $.proxy this, "maybeLoadMore"
 
             @renderSearch() if @allowSearch
+
+            @dataSource.refresh() if @dataSource.isEmpty()
         else
             @$el.html "<span class=error>#{ Cruddy.lang.forbidden }</span>"
 
@@ -160,6 +186,12 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         @searchInput.$el.wrap "<div class=search-input-container></div>"
 
         @searchInput.appendButton """
+            <button type="button" class="btn btn-default btn-refresh" tabindex="-1">
+                <span class="glyphicon glyphicon-refresh"></span>
+            </button>
+        """
+
+        @searchInput.appendButton """
             <button type="button" class='btn btn-default btn-add' tabindex='-1'>
                 <span class='glyphicon glyphicon-plus'></span>
             </button>
@@ -167,7 +199,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
         this
 
-    template: -> """<div class="items-container"><ul class="items"><li class="more loading"></li></ul></div>"""
+    template: -> """<div class="items-container"><ul class="items"></ul></div>"""
 
     focus: ->
         @searchInput?.focus() or @entity.done => @searchInput.focus()
@@ -176,7 +208,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
     dispose: ->
         @searchInput?.remove()
-        @innerForm?.remove()
+        @newModelForm?.remove()
 
         this
 

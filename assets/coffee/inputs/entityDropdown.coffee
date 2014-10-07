@@ -85,22 +85,22 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
         btn.prop "disabled", yes
 
         @editing = @reference.load(item.id).done (instance) =>
-            @innerForm = new Cruddy.Entity.Form
+            @newModelForm = new Cruddy.Entity.Form
                 model: instance
                 inner: yes
 
-            @innerForm.render().$el.appendTo document.body
-            after_break => @innerForm.show()
+            @newModelForm.render().$el.appendTo document.body
+            after_break => @newModelForm.show()
 
             @listenTo instance, "sync", (model, resp) =>
                 # Check whether the model was destroyed
                 if resp.data
                     btn.parent().siblings("input").val resp.data.title
-                    @innerForm.remove()
+                    @newModelForm.remove()
                 else
                     @removeItem e
 
-            @listenTo @innerForm, "remove", => @innerForm = null
+            @listenTo @newModelForm, "remove", => @newModelForm = null
 
         @editing.always =>
             @editing = no
@@ -118,6 +118,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     itemKeydown: (e) ->
         if (e.keyCode is 13)
             @executeFirstAction e
+
             return false
 
         return
@@ -126,7 +127,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
         if @selector
             value = @model.get @constraint.field
             @selector.dataSource?.filters.set @constraint.otherField, value
-            @selector.createAttributes[@constraint.otherField] = value
+            @selector.attributesForNewModel[@constraint.otherField] = value
 
         @model.set(@key, if @multiple then [] else null) if reset
 
@@ -178,11 +179,9 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
             @$el.append @selector.render().el
 
-        dataSource = @selector.dataSource
-
-        dataSource.refresh() if not dataSource.inProgress()
-
         @toggleOpenDirection()
+
+        return
 
     toggleOpenDirection: ->
         return if not @opened
@@ -310,7 +309,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
     dispose: ->
         @selector?.remove()
-        @innerForm?.remove()
+        @newModelForm?.remove()
 
         this
 

@@ -21,7 +21,7 @@ class Cruddy.Fields.BaseView extends Cruddy.Layout.Element
         super
 
     initialize: (options) ->
-        @listenTo @model, "sync",    @handleSync
+        @listenTo @model, "sync",    @handleSyncEvent
         @listenTo @model, "request", @handleRequest
         @listenTo @model, "invalid", @handleInvalid
 
@@ -94,7 +94,7 @@ class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
 
     updateContainer: ->
         isEditable = @isEditable
-        
+
         super
 
         @render() if isEditable? and isEditable isnt @isEditable
@@ -126,7 +126,7 @@ class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
 
     label: (label) ->
         label ?= @field.getLabel()
-        
+
         """
         <label for="#{ @inputId }" class="field-label">
             #{ @helpTemplate() }#{ _.escape label }

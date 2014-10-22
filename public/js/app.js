@@ -649,7 +649,8 @@
     DataGrid.prototype.className = "table table-hover data-grid";
 
     DataGrid.prototype.events = {
-      "click .sortable": "setOrder"
+      "click .sortable": "setOrder",
+      "click [data-action]": "executeAction"
     };
 
     function DataGrid(options) {
@@ -714,13 +715,6 @@
         order_dir: orderDir
       });
       return this;
-    };
-
-    DataGrid.prototype.navigate = function(e) {
-      Cruddy.router.navigate(this.entity.link($(e.currentTarget).data("id")), {
-        trigger: true
-      });
-      return false;
     };
 
     DataGrid.prototype.updateData = function(datasource, data) {
@@ -799,6 +793,33 @@
 
     DataGrid.prototype.renderCell = function(col, item) {
       return "<td class=\"" + (col.getClass()) + "\">" + (col.render(item)) + "</td>";
+    };
+
+    DataGrid.prototype.executeAction = function(e) {
+      var $el;
+      e.preventDefault();
+      $el = $(e.currentTarget);
+      this[$el.data("action")].call(this, $el);
+    };
+
+    DataGrid.prototype.deleteItem = function($el) {
+      var id;
+      id = $el.data("id");
+      $.ajax({
+        url: Cruddy.backendRoot + "/api/" + this.entity.id + "/" + $el.data("id"),
+        type: "POST",
+        dataType: "json",
+        displayLoading: true,
+        data: {
+          _method: "DELETE"
+        },
+        success: (function(_this) {
+          return function() {
+            $el.closest("tr").fadeOut();
+            return _this.model.fetch();
+          };
+        })(this)
+      });
     };
 
     return DataGrid;
@@ -2945,7 +2966,7 @@
     }
 
     BaseView.prototype.initialize = function(options) {
-      this.listenTo(this.model, "sync", this.handleSync);
+      this.listenTo(this.model, "sync", this.handleSyncEvent);
       this.listenTo(this.model, "request", this.handleRequest);
       this.listenTo(this.model, "invalid", this.handleInvalid);
       return this.updateContainer();
@@ -4312,7 +4333,26 @@
     };
 
     Actions.prototype.render = function(item) {
-      return "<div class=\"btn-group btn-group-xs\">\n    <a href=\"" + (Cruddy.baseUrl + "/" + this.entity.link() + "?id=" + item.id) + "\" data-action=\"edit\" data-navigate=\"" + item.id + "\" class=\"btn btn-default\">\n        " + (b_icon("pencil")) + "\n    </a>\n</div>";
+      return "<div class=\"btn-group btn-group-xs\">" + (this.renderActions(item)) + "</div>";
+    };
+
+    Actions.prototype.renderActions = function(item) {
+      var html;
+      html = "";
+      if (this.entity.viewPermitted()) {
+        html += this.renderEditAction(item);
+      }
+      if (this.entity.deletePermitted()) {
+        return html += this.renderDeleteAction(item);
+      }
+    };
+
+    Actions.prototype.renderDeleteAction = function(item) {
+      return "<a href=\"#\" data-action=\"deleteItem\" data-id=\"" + item.id + "\" class=\"btn btn-default\">" + (b_icon("trash")) + "</a>";
+    };
+
+    Actions.prototype.renderEditAction = function(item) {
+      return "<a href=\"" + (Cruddy.backendRoot + "/" + this.entity.link() + "?id=" + item.id) + "\" data-action=\"edit\" class=\"btn btn-default\">\n    " + (b_icon("pencil")) + "\n</a>";
     };
 
     return Actions;
@@ -4596,16 +4636,10 @@
       var event, _i, _len, _ref1, _ref2;
       this.original = _.clone(attributes);
       this.extra = (_ref1 = options.extra) != null ? _ref1 : {};
-      this.on("error", this.processError, this);
-      this.on("invalid", this.processInvalid, this);
-      this.on("sync", this.handleSync, this);
-      this.on("destroy", (function(_this) {
-        return function() {
-          if (_this.entity.get("soft_deleting")) {
-            return _this.set("deleted_at", moment().unix());
-          }
-        };
-      })(this));
+      this.on("error", this.handleErrorEvent, this);
+      this.on("invalid", this.handleInvalidEvent, this);
+      this.on("sync", this.handleSyncEvent, this);
+      this.on("destroy", this.handleDestroyEvent, this);
       _ref2 = ["sync", "request"];
       for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
         event = _ref2[_i];
@@ -4614,7 +4648,7 @@
       return this;
     };
 
-    Instance.prototype.handleSync = function(model, resp) {
+    Instance.prototype.handleSyncEvent = function(model, resp) {
       this.original = _.clone(this.attributes);
       this.extra = resp.data.extra;
       return this;
@@ -4635,7 +4669,7 @@
       };
     };
 
-    Instance.prototype.processInvalid = function(model, errors) {
+    Instance.prototype.handleInvalidEvent = function(model, errors) {
       var id, _ref1;
       _ref1 = this.related;
       for (id in _ref1) {
@@ -4647,12 +4681,15 @@
       return this;
     };
 
-    Instance.prototype.processError = function(model, xhr) {
+    Instance.prototype.handleErrorEvent = function(model, xhr) {
       var _ref1;
       if (((_ref1 = xhr.responseJSON) != null ? _ref1.error : void 0) === "VALIDATION") {
         this.trigger("invalid", this, xhr.responseJSON.data);
       }
-      return this;
+    };
+
+    Instance.prototype.handleDestroyEvent = function(model) {
+      this.isDeleted = true;
     };
 
     Instance.prototype.validate = function() {
@@ -4762,9 +4799,8 @@
     Page.prototype.className = "page entity-page";
 
     Page.prototype.events = {
-      "click .btn-create": "create",
-      "click .btn-refresh": "refresh",
-      "click [data-navigate]": "navigate"
+      "click .ep-btn-create": "create",
+      "click .ep-btn-refresh": "refreshData"
     };
 
     function Page(options) {
@@ -4780,7 +4816,7 @@
       this.listenTo(Cruddy.router, "route:index", (function(_this) {
         return function() {
           _this.dataSource.holdFetch().set(_this.getDatasourceData()).fetch();
-          return _this._toggleForm();
+          return _this._displayForm();
         };
       })(this));
       return Page.__super__.initialize.apply(this, arguments);
@@ -4807,27 +4843,24 @@
       return $.extend({}, this.getDatasourceDefaults(), Cruddy.router.query.keys);
     };
 
-    Page.prototype.navigate = function(e) {
-      this.display($(e.currentTarget).data("navigate"));
-      return false;
-    };
-
-    Page.prototype.display = function(id) {
-      return this._toggleForm(id).done((function(_this) {
-        return function() {
-          if (id instanceof Cruddy.Entity.Instance) {
-            id = id.id || "new";
-          }
+    Page.prototype.displayForm = function(id) {
+      return this._displayForm(id).done((function(_this) {
+        return function(instance) {
+          id = instance.id || "new";
           if (id) {
-            Cruddy.router.setQuery("id", id);
+            Cruddy.router.setQuery("id", id, {
+              trigger: false
+            });
           } else {
-            Cruddy.router.removeQuery("id");
+            Cruddy.router.removeQuery("id", {
+              trigger: false
+            });
           }
         };
       })(this));
     };
 
-    Page.prototype._toggleForm = function(instanceId) {
+    Page.prototype._displayForm = function(instanceId) {
       var compareId, dfd, instance, resolve;
       instanceId = (instanceId != null ? instanceId : Cruddy.router.getQuery("id")) || null;
       if (instanceId instanceof Cruddy.Entity.Instance) {
@@ -4842,14 +4875,9 @@
           return dfd.promise();
         }
       }
-      if (this.form) {
-        this.form.remove();
-        this.form = null;
-        this.model.set("instance", null);
-      }
       resolve = (function(_this) {
         return function(instance) {
-          _this._displayForm(instance);
+          _this._createAndRenderForm(instance);
           return dfd.resolve(instance);
         };
       })(this);
@@ -4870,15 +4898,20 @@
       return dfd.promise();
     };
 
-    Page.prototype._displayForm = function(instance) {
+    Page.prototype._createAndRenderForm = function(instance) {
+      var _ref1;
+      if ((_ref1 = this.form) != null) {
+        _ref1.remove();
+      }
       this.form = new Cruddy.Entity.Form({
         model: instance
       });
       this.$el.append(this.form.render().$el);
       this.form.once("close", (function(_this) {
         return function() {
-          Cruddy.router.removeQuery("id");
-          return _this._toggleForm();
+          return Cruddy.router.removeQuery("id", {
+            trigger: false
+          });
         };
       })(this));
       this.listenTo(instance, "sync", function(model) {
@@ -4886,24 +4919,26 @@
       });
       this.form.once("remove", (function(_this) {
         return function() {
+          _this.form = null;
+          _this.model.set("instance", null);
           return _this.stopListening(instance);
         };
       })(this));
+      this.model.set("instance", instance);
       after_break((function(_this) {
         return function() {
           return _this.form.show();
         };
       })(this));
-      this.model.set("instance", instance);
       return this;
     };
 
     Page.prototype.create = function() {
-      this.display("new");
+      this.displayForm("new");
       return this;
     };
 
-    Page.prototype.refresh = function(e) {
+    Page.prototype.refreshData = function(e) {
       var btn;
       btn = $(e.currentTarget);
       btn.prop("disabled", true);
@@ -4926,7 +4961,7 @@
       this.dataGrid = this.createDataGrid(this.dataSource);
       this.pagination = this.createPagination(this.dataSource);
       this.$component("body").append(this.dataGrid.render().el).append(this.pagination.render().el);
-      this._toggleForm();
+      this._displayForm();
       return this;
     };
 
@@ -4965,9 +5000,9 @@
 
     Page.prototype.buttonsTemplate = function() {
       var html;
-      html = "<button type=\"button\" class=\"btn btn-default btn-refresh\" title=\"" + Cruddy.lang.refresh + "\">" + (b_icon("refresh")) + "</button>";
+      html = "<button type=\"button\" class=\"btn btn-default ep-btn-refresh\" title=\"" + Cruddy.lang.refresh + "\">" + (b_icon("refresh")) + "</button>";
       if (this.model.createPermitted()) {
-        html += " <button type=\"button\" class=\"btn btn-primary btn-create\" title=\"" + Cruddy.lang.add + "\">" + (b_icon("plus")) + "</button>";
+        html += " <button type=\"button\" class=\"btn btn-primary ep-btn-create\" title=\"" + Cruddy.lang.add + "\">" + (b_icon("plus")) + "</button>";
       }
       return html;
     };
@@ -5018,17 +5053,11 @@
     }
 
     Form.prototype.initialize = function(options) {
-      var key, model, _ref1, _ref2;
+      var _ref1;
       Form.__super__.initialize.apply(this, arguments);
       this.inner = (_ref1 = options.inner) != null ? _ref1 : false;
-      this.listenTo(this.model, "destroy", this.handleDestroy);
-      this.listenTo(this.model, "invalid", this.displayInvalid);
-      this.listenTo(this.model, "change", this.handleChange);
-      _ref2 = this.model.related;
-      for (key in _ref2) {
-        model = _ref2[key];
-        this.listenTo(model, "change", this.handleChange);
-      }
+      this.listenTo(this.model, "destroy", this.handleModelDestroyEvent);
+      this.listenTo(this.model, "invalid", this.handleModelInvalidEvent);
       this.hotkeys = $(document).on("keydown." + this.cid, "body", $.proxy(this, "hotkeys"));
       $(window).on("beforeunload." + this.cid, (function(_this) {
         return function() {
@@ -5069,10 +5098,6 @@
       return this;
     };
 
-    Form.prototype.handleChange = function() {
-      return this;
-    };
-
     Form.prototype.displayAlert = function(message, type, timeout) {
       if (this.alert != null) {
         this.alert.remove();
@@ -5091,10 +5116,6 @@
       return this.displayAlert(Cruddy.lang.success, "success", 3000);
     };
 
-    Form.prototype.displayInvalid = function() {
-      return this.displayAlert(Cruddy.lang.invalid, "warning", 5000);
-    };
-
     Form.prototype.displayError = function(xhr) {
       var _ref1;
       if (((_ref1 = xhr.responseJSON) != null ? _ref1.error : void 0) !== "VALIDATION") {
@@ -5102,18 +5123,12 @@
       }
     };
 
-    Form.prototype.handleDestroy = function() {
-      if (this.model.entity.get("soft_deleting")) {
-        this.update();
-      } else {
-        if (this.inner) {
-          this.remove();
-        } else {
-          Cruddy.router.navigate(this.model.entity.link(), {
-            trigger: true
-          });
-        }
-      }
+    Form.prototype.handleModelInvalidEvent = function() {
+      return this.displayAlert(Cruddy.lang.invalid, "warning", 5000);
+    };
+
+    Form.prototype.handleModelDestroyEvent = function() {
+      this.update();
       return this;
     };
 
@@ -5183,6 +5198,9 @@
     };
 
     Form.prototype.confirmationMessage = function(closing) {
+      if (this.model.isDeleted) {
+        return;
+      }
       if (this.request) {
         return (closing ? Cruddy.lang.onclose_abort : Cruddy.lang.confirm_abort);
       }
@@ -5212,7 +5230,7 @@
     };
 
     Form.prototype.copy = function() {
-      Cruddy.app.page.display(this.model.copy());
+      Cruddy.app.page.displayForm(this.model.copy());
       return this;
     };
 
@@ -5222,6 +5240,7 @@
       this.nav = this.$component("nav");
       this.footer = this.$("footer");
       this.submit = this.$(".btn-save");
+      this.$deletedMsg = this.$component("deleted-message");
       this.destroy = this.$(".btn-destroy");
       this.copy = this.$(".btn-copy");
       this.$refresh = this.$(".btn-refresh");
@@ -5236,17 +5255,19 @@
     };
 
     Form.prototype.update = function() {
-      var isNew, permit, _ref1;
+      var isDeleted, isNew, permit, _ref1;
       permit = this.model.entity.getPermissions();
       isNew = this.model.isNew();
+      isDeleted = this.model.isDeleted || false;
       this.$el.toggleClass("loading", this.request != null);
       this.submit.text(isNew ? Cruddy.lang.create : Cruddy.lang.save);
       this.submit.attr("disabled", this.request != null);
-      this.submit.toggle(isNew ? permit.create : permit.update);
+      this.submit.toggle(!isDeleted && (isNew ? permit.create : permit.update));
       this.destroy.attr("disabled", this.request != null);
-      this.destroy.toggle(!isNew && permit["delete"]);
+      this.destroy.toggle(!isDeleted && !isNew && permit["delete"]);
+      this.$deletedMsg.toggle(isDeleted);
       this.copy.toggle(!isNew && permit.create);
-      this.$refresh.toggle(!isNew);
+      this.$refresh.toggle(!isNew && !isDeleted);
       if ((_ref1 = this.external) != null) {
         _ref1.remove();
       }
@@ -5257,7 +5278,7 @@
     };
 
     Form.prototype.template = function() {
-      return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n        <ul id=\"" + (this.componentId("nav")) + "\" class=\"nav navbar-nav\"></ul>\n    </div>\n</div>\n\n<div class=\"tab-content\" id=\"" + (this.componentId("body")) + "\"></div>\n\n<footer>\n    <div class=\"pull-left\">\n        <button type=\"button\" class=\"btn btn-link btn-destroy\" title=\"" + Cruddy.lang.model_delete + "\">\n            <span class=\"glyphicon glyphicon-trash\"></span>\n        </button>\n\n        <button type=\"button\" tabindex=\"-1\" class=\"btn btn-link btn-copy\" title=\"" + Cruddy.lang.model_copy + "\">\n            <span class=\"glyphicon glyphicon-book\"></span>\n        </button>\n\n        <button type=\"button\" class=\"btn btn-link btn-refresh\" title=\"" + Cruddy.lang.model_refresh + "\">\n            <span class=\"glyphicon glyphicon-refresh\"></span>\n        </button>\n    </div>\n\n    <button type=\"button\" class=\"btn btn-default btn-close\">" + Cruddy.lang.close + "</button>\n    <button type=\"button\" class=\"btn btn-primary btn-save\"></button>\n\n    <div class=\"progress\"><div class=\"progress-bar form-save-progress\"></div></div>\n</footer>";
+      return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n        <ul id=\"" + (this.componentId("nav")) + "\" class=\"nav navbar-nav\"></ul>\n    </div>\n</div>\n\n<div class=\"tab-content\" id=\"" + (this.componentId("body")) + "\"></div>\n\n<footer>\n    <div class=\"pull-left\">\n        <button type=\"button\" class=\"btn btn-link btn-destroy\" title=\"" + Cruddy.lang.model_delete + "\">\n            <span class=\"glyphicon glyphicon-trash\"></span>\n        </button>\n\n        <button type=\"button\" tabindex=\"-1\" class=\"btn btn-link btn-copy\" title=\"" + Cruddy.lang.model_copy + "\">\n            <span class=\"glyphicon glyphicon-book\"></span>\n        </button>\n\n        <button type=\"button\" class=\"btn btn-link btn-refresh\" title=\"" + Cruddy.lang.model_refresh + "\">\n            <span class=\"glyphicon glyphicon-refresh\"></span>\n        </button>\n    </div>\n\n    <span class=\"fs-deleted-message\" id=\"" + (this.componentId("deleted-message")) + "\">" + Cruddy.lang.model_deleted + "</span>\n    <button type=\"button\" class=\"btn btn-default btn-close\">" + Cruddy.lang.close + "</button>\n    <button type=\"button\" class=\"btn btn-primary btn-save\"></button>\n\n    <div class=\"progress\"><div class=\"progress-bar form-save-progress\"></div></div>\n</footer>";
     };
 
     Form.prototype.externalLinkTemplate = function(href) {
@@ -5452,8 +5473,8 @@
       return this.query.GET(key);
     };
 
-    Router.prototype.setQuery = function(key, value) {
-      return this.updateQuery(this.query.set(key, value));
+    Router.prototype.setQuery = function(key, value, options) {
+      return this.updateQuery(this.query.set(key, value), options);
     };
 
     Router.prototype.refreshQuery = function(defaults, actual) {
@@ -5470,11 +5491,11 @@
       return this.updateQuery(q);
     };
 
-    Router.prototype.removeQuery = function(key) {
-      return this.updateQuery(this.query.remove(key));
+    Router.prototype.removeQuery = function(key, options) {
+      return this.updateQuery(this.query.remove(key), options);
     };
 
-    Router.prototype.updateQuery = function(query) {
+    Router.prototype.updateQuery = function(query, options) {
       var path, qs, uri;
       if ((qs = query.toString()) !== this.query.toString()) {
         this.query = query;
@@ -5483,7 +5504,7 @@
         if (path.indexOf(uri) === 0) {
           path = path.slice(uri.length);
         }
-        Backbone.history.navigate(path + qs);
+        Backbone.history.navigate(path + qs, options);
       }
       return this;
     };
@@ -5537,7 +5558,7 @@
   $(function() {
     Cruddy.router = new Router;
     return Backbone.history.start({
-      root: Cruddy.baseUrl + "/" + Cruddy.uri,
+      root: Cruddy.uri,
       pushState: true,
       hashChange: false
     });

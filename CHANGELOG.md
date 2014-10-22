@@ -8,6 +8,7 @@ develop
 *   \#9: fixed entity drop down sending extra request
 *   Refactored drop downs
 *   \#59: fixed entity events not always registered
+*   Added delete action in data grid
 
 v0.3.2
 ======

@@ -4,28 +4,28 @@ class Cruddy.Entity.Instance extends Backbone.Model
         @related = {}
 
         super
-        
+
     initialize: (attributes, options) ->
         @original = _.clone attributes
         @extra = options.extra ? {}
 
-        @on "error", @processError, this
-        @on "invalid", @processInvalid, this
-        @on "sync", @handleSync, this
-        @on "destroy", => @set "deleted_at", moment().unix() if @entity.get "soft_deleting"
+        @on "error", @handleErrorEvent, this
+        @on "invalid", @handleInvalidEvent, this
+        @on "sync", @handleSyncEvent, this
+        @on "destroy", @handleDestroyEvent, this
 
         @on event, @triggerRelated(event), this for event in ["sync", "request"]
 
         this
 
-    handleSync: (model, resp) ->
+    handleSyncEvent: (model, resp) ->
         @original = _.clone @attributes
         @extra = resp.data.extra
 
         this
 
     # Get a function handler that passes events to the related models
-    triggerRelated: (event) -> 
+    triggerRelated: (event) ->
         slice = Array.prototype.slice
 
         (model) ->
@@ -35,16 +35,21 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
             this
 
-    processInvalid: (model, errors) ->
+    handleInvalidEvent: (model, errors) ->
         # Trigger errors for related models
         @entity.getRelation(id).processErrors model, errors[id] for id, model of @related when id of errors
 
         this
 
-    processError: (model, xhr) ->
+    handleErrorEvent: (model, xhr) ->
         @trigger "invalid", this, xhr.responseJSON.data if xhr.responseJSON?.error is "VALIDATION"
 
-        this
+        return
+
+    handleDestroyEvent: (model) ->
+        @isDeleted = yes
+
+        return
 
     validate: ->
         @set "errors", {}

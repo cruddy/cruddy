@@ -19,11 +19,8 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         @inner = options.inner ? no
 
-        @listenTo @model, "destroy", @handleDestroy
-        @listenTo @model, "invalid", @displayInvalid
-        @listenTo @model, "change",  @handleChange
-
-        @listenTo model, "change",  @handleChange for key, model of @model.related
+        @listenTo @model, "destroy", @handleModelDestroyEvent
+        @listenTo @model, "invalid", @handleModelInvalidEvent
 
         @hotkeys = $(document).on "keydown." + @cid, "body", $.proxy this, "hotkeys"
 
@@ -56,11 +53,6 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         this
 
-    handleChange: ->
-        # @$el.toggleClass "dirty", @model.hasChangedSinceSync()
-
-        this
-
     displayAlert: (message, type, timeout) ->
         @alert.remove() if @alert?
 
@@ -76,15 +68,12 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
     displaySuccess: -> @displayAlert Cruddy.lang.success, "success", 3000
 
-    displayInvalid: -> @displayAlert Cruddy.lang.invalid, "warning", 5000
-
     displayError: (xhr) -> @displayAlert Cruddy.lang.failure, "danger", 5000 unless xhr.responseJSON?.error is "VALIDATION"
 
-    handleDestroy: ->
-        if @model.entity.get "soft_deleting"
-            @update()
-        else
-            if @inner then @remove() else Cruddy.router.navigate @model.entity.link(), trigger: true
+    handleModelInvalidEvent: -> @displayAlert Cruddy.lang.invalid, "warning", 5000
+
+    handleModelDestroyEvent: ->
+        @update()
 
         this
 
@@ -143,6 +132,8 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
     confirmClose: -> not (message = @confirmationMessage()) or confirm message
 
     confirmationMessage: (closing) ->
+        return if @model.isDeleted
+
         return (if closing then Cruddy.lang.onclose_abort else Cruddy.lang.confirm_abort) if @request
 
         return (if closing then Cruddy.lang.onclose_discard else Cruddy.lang.confirm_discard) if @model.hasChangedSinceSync()
@@ -162,7 +153,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         this
 
     copy: ->
-        Cruddy.app.page.display @model.copy()
+        Cruddy.app.page.displayForm @model.copy()
 
         this
 
@@ -174,6 +165,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         @nav = @$component "nav"
         @footer = @$ "footer"
         @submit = @$ ".btn-save"
+        @$deletedMsg = @$component "deleted-message"
         @destroy = @$ ".btn-destroy"
         @copy = @$ ".btn-copy"
         @$refresh = @$ ".btn-refresh"
@@ -191,18 +183,21 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
     update: ->
         permit = @model.entity.getPermissions()
         isNew = @model.isNew()
+        isDeleted = @model.isDeleted or false
 
         @$el.toggleClass "loading", @request?
 
         @submit.text if isNew then Cruddy.lang.create else Cruddy.lang.save
         @submit.attr "disabled", @request?
-        @submit.toggle if isNew then permit.create else permit.update
+        @submit.toggle not isDeleted and if isNew then permit.create else permit.update
 
         @destroy.attr "disabled", @request?
-        @destroy.toggle not isNew and permit.delete
+        @destroy.toggle not isDeleted and not isNew and permit.delete
+
+        @$deletedMsg.toggle isDeleted
 
         @copy.toggle not isNew and permit.create
-        @$refresh.toggle not isNew
+        @$refresh.toggle not isNew and not isDeleted
 
         @external?.remove()
 
@@ -235,6 +230,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
                 </button>
             </div>
 
+            <span class="fs-deleted-message" id="#{ @componentId "deleted-message" }">#{ Cruddy.lang.model_deleted }</span>
             <button type="button" class="btn btn-default btn-close">#{ Cruddy.lang.close }</button>
             <button type="button" class="btn btn-primary btn-save"></button>
 

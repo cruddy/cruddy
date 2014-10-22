@@ -4,6 +4,7 @@ class DataGrid extends Backbone.View
 
     events: {
         "click .sortable": "setOrder"
+        "click [data-action]": "executeAction"
     }
 
     constructor: (options) ->
@@ -59,11 +60,6 @@ class DataGrid extends Backbone.View
 
         this
 
-    navigate: (e) ->
-        Cruddy.router.navigate @entity.link($(e.currentTarget).data "id"), { trigger: true }
-
-        return false
-
     updateData: (datasource, data) ->
         @$(".items").replaceWith @renderBody @columns, data
 
@@ -107,7 +103,7 @@ class DataGrid extends Backbone.View
         html += @renderCell col, item for col in columns
         html += "</tr>"
 
-    states: (item) -> 
+    states: (item) ->
         states = if item._states then item._states else ""
 
         states += " active" if (instance = @entity.get "instance")? and item.id == instance.id
@@ -116,3 +112,30 @@ class DataGrid extends Backbone.View
 
     renderCell: (col, item) ->
         """<td class="#{ col.getClass() }">#{ col.render item }</td>"""
+
+    executeAction: (e) ->
+        e.preventDefault()
+
+        $el = $ e.currentTarget
+
+        this[$el.data "action"].call this, $el
+
+        return
+
+    deleteItem: ($el) ->
+        id = $el.data "id"
+
+        $.ajax
+            url: Cruddy.backendRoot + "/api/" + @entity.id + "/" + $el.data("id")
+            type: "POST"
+            dataType: "json"
+            displayLoading: yes
+
+            data:
+                _method: "DELETE"
+
+            success: =>
+                $el.closest("tr").fadeOut()
+                @model.fetch()
+
+        return

@@ -2,9 +2,8 @@ class Cruddy.Entity.Page extends Cruddy.View
     className: "page entity-page"
 
     events: {
-        "click .btn-create": "create"
-        "click .btn-refresh": "refresh"
-        "click [data-navigate]": "navigate"
+        "click .ep-btn-create": "create"
+        "click .ep-btn-refresh": "refreshData"
     }
 
     constructor: (options) ->
@@ -14,13 +13,13 @@ class Cruddy.Entity.Page extends Cruddy.View
 
     initialize: (options) ->
         @dataSource = @model.createDataSource @getDatasourceData()
-        
+
         @listenTo @dataSource, "change", (model) -> Cruddy.router.refreshQuery @getDatasourceDefaults(), model.attributes
 
         @listenTo Cruddy.router, "route:index", =>
             @dataSource.holdFetch().set(@getDatasourceData()).fetch()
 
-            @_toggleForm()
+            @_displayForm()
 
         super
 
@@ -40,20 +39,15 @@ class Cruddy.Entity.Page extends Cruddy.View
 
     getDatasourceData: -> $.extend {}, @getDatasourceDefaults(), Cruddy.router.query.keys
 
-    navigate: (e) ->
-        @display $(e.currentTarget).data("navigate")
+    displayForm: (id) -> @_displayForm(id).done (instance) =>
 
-        return false
+        id = instance.id or "new"
 
-    display: (id) -> @_toggleForm(id).done =>
-
-        id = id.id or "new" if id instanceof Cruddy.Entity.Instance
-
-        if id then Cruddy.router.setQuery "id", id else Cruddy.router.removeQuery "id"
+        if id then Cruddy.router.setQuery("id", id, trigger: no) else Cruddy.router.removeQuery("id", trigger: no)
 
         return
 
-    _toggleForm: (instanceId) ->
+    _displayForm: (instanceId) ->
         instanceId = instanceId ? Cruddy.router.getQuery("id") or null
 
         if instanceId instanceof Cruddy.Entity.Instance
@@ -71,13 +65,8 @@ class Cruddy.Entity.Page extends Cruddy.View
 
                 return dfd.promise()
 
-        if @form
-            @form.remove()
-            @form = null
-            @model.set "instance", null
-
         resolve = (instance) =>
-            @_displayForm instance
+            @_createAndRenderForm instance
             dfd.resolve instance
 
         instance = @model.createInstance() if instanceId is "new" and not instance
@@ -94,29 +83,33 @@ class Cruddy.Entity.Page extends Cruddy.View
 
         return dfd.promise()
 
-    _displayForm: (instance) ->
+    _createAndRenderForm: (instance) ->
+        @form?.remove()
+
         @form = new Cruddy.Entity.Form model: instance
         @$el.append @form.render().$el
 
-        @form.once "close", =>
-            Cruddy.router.removeQuery "id"
-            @_toggleForm()
+        @form.once "close", => Cruddy.router.removeQuery "id", trigger: no
 
         @listenTo instance, "sync", (model) -> Cruddy.router.setQuery "id", model.id
-        @form.once "remove", => @stopListening instance
 
-        after_break => @form.show()
+        @form.once "remove", =>
+            @form = null
+            @model.set "instance", null
+            @stopListening instance
 
         @model.set "instance", instance
+
+        after_break => @form.show()
 
         this
 
     create: ->
-        @display "new"
+        @displayForm "new"
 
         this
 
-    refresh: (e) ->
+    refreshData: (e) ->
         btn = $ e.currentTarget
         btn.prop "disabled", yes
 
@@ -126,7 +119,7 @@ class Cruddy.Entity.Page extends Cruddy.View
 
     render: ->
         @$el.html @template()
-        
+
         @dataSource.fetch()
 
         # Search input
@@ -143,10 +136,10 @@ class Cruddy.Entity.Page extends Cruddy.View
         # Data grid
         @dataGrid = @createDataGrid @dataSource
         @pagination = @createPagination @dataSource
-        
+
         @$component("body").append(@dataGrid.render().el).append(@pagination.render().el)
 
-        @_toggleForm()
+        @_displayForm()
 
         this
 
@@ -180,7 +173,7 @@ class Cruddy.Entity.Page extends Cruddy.View
                     <div class="entity-search-box" id="#{ @componentId "search" }"></div>
                 </div>
             </div>
-            
+
             <div class="content-body">
                 <div class="column column-main" id="#{ @componentId "body" }"></div>
                 <div class="column column-extra" id="#{ @componentId "filters" }"></div>
@@ -188,8 +181,8 @@ class Cruddy.Entity.Page extends Cruddy.View
         """
 
     buttonsTemplate: ->
-        html = """<button type="button" class="btn btn-default btn-refresh" title="#{ Cruddy.lang.refresh }">#{ b_icon "refresh" }</button>"""
-        html += """ <button type="button" class="btn btn-primary btn-create" title="#{ Cruddy.lang.add }">#{ b_icon "plus" }</button>""" if @model.createPermitted()
+        html = """<button type="button" class="btn btn-default ep-btn-refresh" title="#{ Cruddy.lang.refresh }">#{ b_icon "refresh" }</button>"""
+        html += """ <button type="button" class="btn btn-primary ep-btn-create" title="#{ Cruddy.lang.add }">#{ b_icon "plus" }</button>""" if @model.createPermitted()
 
         html
 

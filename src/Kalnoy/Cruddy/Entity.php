@@ -398,13 +398,11 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function process(array $input)
     {
-        extract($input);
-
         $action = $this->actionFromData($input);
 
         // We will process an input by a collection of fields to remove any
         // garbage
-        $attributes = $this->getFields()->process($attributes);
+        $attributes = $this->getFields()->process($input['attributes']);
 
         // Now we will validate those attributes
         $errors = $this->validate($action, $attributes);

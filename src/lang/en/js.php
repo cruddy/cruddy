@@ -19,6 +19,7 @@
     'model_refresh' => 'Sync model with the server.',
     'model_delete' => 'Delete from the server.',
     'model_copy' => 'Create a new model with same attributes.',
+    'model_deleted' => 'Model is destroyed.',
 
     'no_results' => 'No results',
     'more' => 'More',
@@ -35,7 +36,7 @@
     'no'  => 'No',
 
     'slug_sync' => 'Synchronize',
-    
+
     'markdown_source' => 'Source',
     'markdown_parsed' => 'Parsed',
 
@@ -43,7 +44,7 @@
     'entity_not_found' => 'Sorry, but this entity is not found.',
     'entity_new' => 'New ',
 
-    'schema_failed' => 'Couldn\'t load the schema.', 
+    'schema_failed' => 'Couldn\'t load the schema.',
 
     'confirm_discard' => 'Are you shure you want to discard all changes?',
     'confirm_abort' => 'Are you shure you want to abort request?',
@@ -51,7 +52,7 @@
 
     'onclose_discard' => 'All changes will be lost.',
     'onclose_abort' => 'The request to the server will be aborted.',
- 
+
     'filter_apply' => 'Apply',
     'filter_reset' => 'Reset',
 ];

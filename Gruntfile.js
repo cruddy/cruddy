@@ -97,6 +97,7 @@ module.exports = function(grunt) {
                     '<%= app %>/entity/form.coffee',
 
                     '<%= app %>/app.coffee',
+                    '<%= app %>/router.coffee',
                 ],
 
                 dest: 'public/js/app.js',

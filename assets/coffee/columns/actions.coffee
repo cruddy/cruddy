@@ -6,10 +6,20 @@ class Cruddy.Columns.Actions extends Attribute
 
     canOrder: -> false
 
-    render: (item) -> """
-        <div class="btn-group btn-group-xs">
-            <a href="#{ Cruddy.baseUrl + "/" + @entity.link() + "?id=" + item.id }" data-action="edit" data-navigate="#{ item.id }" class="btn btn-default">
-                #{ b_icon("pencil") }
-            </a>
-        </div>
+    render: (item) -> """<div class="btn-group btn-group-xs">#{ @renderActions item }</div>"""
+
+    renderActions: (item) ->
+        html = ""
+
+        html += @renderEditAction item if @entity.viewPermitted()
+        html += @renderDeleteAction item if @entity.deletePermitted()
+
+
+    renderDeleteAction: (item) ->
+        """<a href="#" data-action="deleteItem" data-id="#{ item.id }" class="btn btn-default">#{ b_icon "trash" }</a>"""
+
+    renderEditAction: (item) -> """
+        <a href="#{ Cruddy.backendRoot + "/" + @entity.link() + "?id=" + item.id }" data-action="edit" class="btn btn-default">
+            #{ b_icon("pencil") }
+        </a>
     """

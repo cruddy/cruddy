@@ -20,7 +20,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
     handleSyncEvent: (model, resp) ->
         @original = _.clone @attributes
-        @extra = resp.data.extra
+        @extra = resp.extra
 
         this
 
@@ -42,7 +42,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
         this
 
     handleErrorEvent: (model, xhr) ->
-        @trigger "invalid", this, xhr.responseJSON.data if xhr.responseJSON?.error is "VALIDATION"
+        @trigger "invalid", this, xhr.responseJSON if xhr.status is 400
 
         return
 
@@ -90,7 +90,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
         super
 
-    parse: (resp) -> resp.data.attributes
+    parse: (resp) -> resp.attributes
 
     copy: ->
         copy = @entity.createInstance()

@@ -20,8 +20,6 @@ class SearchDataSource extends Backbone.Model
                 simple: 1
 
             success: (resp) =>
-                resp = resp.data
-
                 if @resetData
                     @data = []
 

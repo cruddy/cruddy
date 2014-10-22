@@ -1,17 +1,15 @@
 Cruddy = window.Cruddy || {}
 
-Cruddy.backendRoot = Cruddy.root + "/" + Cruddy.uri
+$.extend Cruddy,
 
-API_URL = "/backend/api/v1"
+    getHistoryRoot: -> @baseUrl.substr @root.length
+
 TRANSITIONEND = "transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd"
 NOT_AVAILABLE = "&mdash;"
 moment.lang Cruddy.locale ? "en"
 
 Backbone.emulateHTTP = true
 Backbone.emulateJSON = true
-
-#$(document).ajaxError (e, xhr, options) =>
-#    location.href = "/login" if xhr.status is 403 and not options.dontRedirect
 
 $(document)
     .ajaxSend (e, xhr, options) ->
@@ -37,7 +35,7 @@ humanize = (id) => id.replace(/_-/, " ")
 
 # Get url for an entity action
 entity_url = (id, extra) ->
-    url = Cruddy.backendRoot + "/api/" + id;
+    url = Cruddy.baseUrl + "/" + id;
     url += "/" + extra if extra
 
     url
@@ -47,7 +45,7 @@ after_break = (callback) -> setTimeout callback, 50
 
 # Get thumb link
 thumb = (src, width, height) ->
-    url = "#{ Cruddy.backendRoot }/thumb?src=#{ encodeURIComponent(src) }"
+    url = "#{ Cruddy.thumbUrl }?src=#{ encodeURIComponent(src) }"
     url += "&amp;width=#{ width }" if width
     url += "&amp;height=#{ height }" if height
 
@@ -170,10 +168,10 @@ class DataSource extends Backbone.Model
 
             success: (resp) =>
                 @_hold = true
-                @set resp.data
+                @set resp
                 @_hold = false
 
-                @trigger "data", this, resp.data.data
+                @trigger "data", this, resp.data
 
             error: (xhr) => @trigger "error", this, xhr
 
@@ -267,8 +265,6 @@ class SearchDataSource extends Backbone.Model
                 simple: 1
 
             success: (resp) =>
-                resp = resp.data
-
                 if @resetData
                     @data = []
 
@@ -442,7 +438,8 @@ class DataGrid extends Backbone.View
 
         if curr?
             @$("#item-#{ curr.id }").addClass "active"
-            curr.on "sync destroy", (=> @model.fetch()), this
+            curr.on "sync", ( (model, data, options) => @model.fetch() if options.data), this
+            curr.on "destroy", ( => @model.fetch()), this
 
         this
 
@@ -513,11 +510,13 @@ class DataGrid extends Backbone.View
         """<td class="#{ col.getClass() }">#{ col.render item }</td>"""
 
     executeAction: (e) ->
-        e.preventDefault()
-
         $el = $ e.currentTarget
+        action = $el.data "action"
 
-        this[$el.data "action"].call this, $el
+        if action and action = this[action]
+            e.preventDefault()
+
+            action.call this, $el
 
         return
 
@@ -525,7 +524,7 @@ class DataGrid extends Backbone.View
         id = $el.data "id"
 
         $.ajax
-            url: Cruddy.backendRoot + "/api/" + @entity.id + "/" + $el.data("id")
+            url: Cruddy.baseUrl + "/" + @entity.id + "/" + $el.data("id")
             type: "POST"
             dataType: "json"
             displayLoading: yes
@@ -2870,7 +2869,7 @@ class Cruddy.Columns.Actions extends Attribute
         """<a href="#" data-action="deleteItem" data-id="#{ item.id }" class="btn btn-default">#{ b_icon "trash" }</a>"""
 
     renderEditAction: (item) -> """
-        <a href="#{ Cruddy.backendRoot + "/" + @entity.link() + "?id=" + item.id }" data-action="edit" class="btn btn-default">
+        <a href="#{ @entity.url() + "?id=" + item.id }" data-action="edit" class="btn btn-default">
             #{ b_icon("pencil") }
         </a>
     """
@@ -2939,7 +2938,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
     createInstance: (attributes = {}, options = {}) ->
         options.extra = attributes.extra
         options.entity = this
-        
+
         attributes = _.extend {}, @get("defaults"), attributes.attributes
 
         new Cruddy.Entity.Instance attributes, options
@@ -2975,10 +2974,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
             cache: yes
             displayLoading: yes
 
-        xhr = xhr.then (resp) =>
-            resp = resp.data
-
-            @createInstance resp
+        xhr = xhr.then (resp) => @createInstance resp
 
         xhr.done success if success
         xhr.fail fail if fail
@@ -2987,9 +2983,9 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
     # Load a model and set it as current
     actionUpdate: (id) -> @load(id).then (instance) =>
-            @set "instance", instance
+        @set "instance", instance
 
-            instance
+        instance
 
     # Create new model and set it as current
     actionCreate: -> @set "instance", @createInstance()
@@ -3049,7 +3045,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
     handleSyncEvent: (model, resp) ->
         @original = _.clone @attributes
-        @extra = resp.data.extra
+        @extra = resp.extra
 
         this
 
@@ -3071,7 +3067,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
         this
 
     handleErrorEvent: (model, xhr) ->
-        @trigger "invalid", this, xhr.responseJSON.data if xhr.responseJSON?.error is "VALIDATION"
+        @trigger "invalid", this, xhr.responseJSON if xhr.status is 400
 
         return
 
@@ -3119,7 +3115,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
         super
 
-    parse: (resp) -> resp.data.attributes
+    parse: (resp) -> resp.attributes
 
     copy: ->
         copy = @entity.createInstance()
@@ -3350,7 +3346,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         "click .btn-close": "close"
         "click .btn-destroy": "destroy"
         "click .btn-copy": "copy"
-        "click .btn-refresh": "refresh"
+        "click .fs-btn-refresh": "refresh"
 
     constructor: (options) ->
         @className += " " + @className + "-" + options.model.entity.id
@@ -3411,7 +3407,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
     displaySuccess: -> @displayAlert Cruddy.lang.success, "success", 3000
 
-    displayError: (xhr) -> @displayAlert Cruddy.lang.failure, "danger", 5000 unless xhr.responseJSON?.error is "VALIDATION"
+    displayError: (xhr) -> @displayAlert Cruddy.lang.failure, "danger", 5000 unless xhr.status is 400
 
     handleModelInvalidEvent: -> @displayAlert Cruddy.lang.invalid, "warning", 5000
 
@@ -3430,14 +3426,16 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         this
 
     refresh: ->
-        @model.fetch() if @confirmClose()
+        return if @request?
+
+        @setupRequest @model.fetch() if @confirmClose()
 
         return this
 
     save: ->
         return if @request?
 
-        @request = @model.save null,
+        @setupRequest @model.save null,
             displayLoading: yes
 
             xhr: =>
@@ -3446,22 +3444,26 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
                 xhr
 
-        @request.done($.proxy this, "displaySuccess").fail($.proxy this, "displayError")
+        return this
 
-        @request.always =>
+    setupRequest: (request) ->
+        request.done($.proxy this, "displaySuccess").fail($.proxy this, "displayError")
+
+        request.always =>
             @request = null
-            @progressBar.parent().hide()
             @update()
 
-        @update()
+        @request = request
 
-        this
+        @update()
 
     progressCallback: (e) ->
         if e.lengthComputable
             width = (e.loaded * 100) / e.total
 
             @progressBar.width(width + '%').parent().show()
+
+            @progressBar.parent().hide() if width is 100
 
         this
 
@@ -3511,7 +3513,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         @$deletedMsg = @$component "deleted-message"
         @destroy = @$ ".btn-destroy"
         @copy = @$ ".btn-copy"
-        @$refresh = @$ ".btn-refresh"
+        @$refresh = @$ ".fs-btn-refresh"
         @progressBar = @$ ".form-save-progress"
 
         @update()
@@ -3540,6 +3542,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         @$deletedMsg.toggle isDeleted
 
         @copy.toggle not isNew and permit.create
+        @$refresh.attr "disabled", @request?
         @$refresh.toggle not isNew and not isDeleted
 
         @external?.remove()
@@ -3568,7 +3571,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
                     <span class="glyphicon glyphicon-book"></span>
                 </button>
 
-                <button type="button" class="btn btn-link btn-refresh" title="#{ Cruddy.lang.model_refresh }">
+                <button type="button" class="btn btn-link fs-btn-refresh" title="#{ Cruddy.lang.model_refresh }">
                     <span class="glyphicon glyphicon-refresh"></span>
                 </button>
             </div>
@@ -3614,9 +3617,22 @@ class App extends Backbone.Model
         @entities = {}
         @dfd = $.Deferred()
 
+        @$error = $(@errorTemplate()).appendTo @container
+
+        @$error.on "click", ".close", => @$error.stop(yes).fadeOut()
+
         @on "change:entity", @displayEntity, this
 
+        $(document).ajaxError (event, xhr, xhrOptions) => @handleAjaxError xhr, xhrOptions
+
         this
+
+    errorTemplate: -> """
+        <p class="alert alert-danger cruddy-global-error">
+            <button type="button" class="close">&times;</button>
+            <span class="data"></span>
+        </p>
+    """
 
     init: ->
         @loadSchema()
@@ -3627,11 +3643,11 @@ class App extends Backbone.Model
 
     loadSchema: ->
         req = $.ajax
-            url: entity_url "_schema"
+            url: Cruddy.schemaUrl
             displayLoading: yes
 
         req.done (resp) =>
-            @entities[entity.id] = new Cruddy.Entity.Entity entity for entity in resp.data
+            @entities[entity.id] = new Cruddy.Entity.Entity entity for entity in resp
 
             @dfd.resolve this
 
@@ -3657,6 +3673,12 @@ class App extends Backbone.Model
         @mainContent.html("<p class='alert alert-danger'>#{ error }</p>").show()
 
         this
+
+    handleAjaxError: (xhr) ->
+        if xhr.responseJSON?.error
+            @$error.children(".data").text(xhr.responseJSON.error).end().stop(yes).fadeIn()
+
+        return
 
     startLoading: ->
         @loading = setTimeout (=>
@@ -3704,7 +3726,7 @@ class Router extends Backbone.Router
         #@addRoute "update", entities, "([^/]+)"
         #@addRoute "create", entities, "create"
 
-        root = Cruddy.root + "/" + Cruddy.uri + "/"
+        root = Cruddy.baseUrl
         history = Backbone.history
 
         $(document.body).on "click", "a", (e) =>
@@ -3788,7 +3810,6 @@ class Router extends Backbone.Router
         entity = app.entity(id)
 
         if entity.viewPermitted()
-            entity.set "instance", null
             Cruddy.app.set "entity", entity
 
             callback.call this, entity if callback
@@ -3803,6 +3824,6 @@ $ ->
     Cruddy.router = new Router
 
     Backbone.history.start
-        root: Cruddy.uri
+        root: Cruddy.getHistoryRoot()
         pushState: true
         hashChange: false

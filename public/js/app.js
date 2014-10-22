@@ -1,13 +1,15 @@
 (function() {
-  var API_URL, AdvFormData, Alert, App, Attribute, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, NOT_AVAILABLE, Pagination, Router, SearchDataSource, TRANSITIONEND, after_break, b_btn, b_icon, entity_url, humanize, thumb, _ref,
+  var AdvFormData, Alert, App, Attribute, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, NOT_AVAILABLE, Pagination, Router, SearchDataSource, TRANSITIONEND, after_break, b_btn, b_icon, entity_url, humanize, thumb, _ref,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Cruddy = window.Cruddy || {};
 
-  Cruddy.backendRoot = Cruddy.root + "/" + Cruddy.uri;
-
-  API_URL = "/backend/api/v1";
+  $.extend(Cruddy, {
+    getHistoryRoot: function() {
+      return this.baseUrl.substr(this.root.length);
+    }
+  });
 
   TRANSITIONEND = "transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd";
 
@@ -50,7 +52,7 @@
 
   entity_url = function(id, extra) {
     var url;
-    url = Cruddy.backendRoot + "/api/" + id;
+    url = Cruddy.baseUrl + "/" + id;
     if (extra) {
       url += "/" + extra;
     }
@@ -63,7 +65,7 @@
 
   thumb = function(src, width, height) {
     var url;
-    url = "" + Cruddy.backendRoot + "/thumb?src=" + (encodeURIComponent(src));
+    url = "" + Cruddy.thumbUrl + "?src=" + (encodeURIComponent(src));
     if (width) {
       url += "&amp;width=" + width;
     }
@@ -306,9 +308,9 @@
         success: (function(_this) {
           return function(resp) {
             _this._hold = true;
-            _this.set(resp.data);
+            _this.set(resp);
             _this._hold = false;
-            return _this.trigger("data", _this, resp.data.data);
+            return _this.trigger("data", _this, resp.data);
           };
         })(this),
         error: (function(_this) {
@@ -462,7 +464,6 @@
         success: (function(_this) {
           return function(resp) {
             var item, _i, _len, _ref1;
-            resp = resp.data;
             if (_this.resetData) {
               _this.data = [];
             }
@@ -692,7 +693,14 @@
       }
       if (curr != null) {
         this.$("#item-" + curr.id).addClass("active");
-        curr.on("sync destroy", ((function(_this) {
+        curr.on("sync", ((function(_this) {
+          return function(model, data, options) {
+            if (options.data) {
+              return _this.model.fetch();
+            }
+          };
+        })(this)), this);
+        curr.on("destroy", ((function(_this) {
           return function() {
             return _this.model.fetch();
           };
@@ -796,17 +804,20 @@
     };
 
     DataGrid.prototype.executeAction = function(e) {
-      var $el;
-      e.preventDefault();
+      var $el, action;
       $el = $(e.currentTarget);
-      this[$el.data("action")].call(this, $el);
+      action = $el.data("action");
+      if (action && (action = this[action])) {
+        e.preventDefault();
+        action.call(this, $el);
+      }
     };
 
     DataGrid.prototype.deleteItem = function($el) {
       var id;
       id = $el.data("id");
       $.ajax({
-        url: Cruddy.backendRoot + "/api/" + this.entity.id + "/" + $el.data("id"),
+        url: Cruddy.baseUrl + "/" + this.entity.id + "/" + $el.data("id"),
         type: "POST",
         dataType: "json",
         displayLoading: true,
@@ -4352,7 +4363,7 @@
     };
 
     Actions.prototype.renderEditAction = function(item) {
-      return "<a href=\"" + (Cruddy.backendRoot + "/" + this.entity.link() + "?id=" + item.id) + "\" data-action=\"edit\" class=\"btn btn-default\">\n    " + (b_icon("pencil")) + "\n</a>";
+      return "<a href=\"" + (this.entity.url() + "?id=" + item.id) + "\" data-action=\"edit\" class=\"btn btn-default\">\n    " + (b_icon("pencil")) + "\n</a>";
     };
 
     return Actions;
@@ -4533,7 +4544,6 @@
       });
       xhr = xhr.then((function(_this) {
         return function(resp) {
-          resp = resp.data;
           return _this.createInstance(resp);
         };
       })(this));
@@ -4650,7 +4660,7 @@
 
     Instance.prototype.handleSyncEvent = function(model, resp) {
       this.original = _.clone(this.attributes);
-      this.extra = resp.data.extra;
+      this.extra = resp.extra;
       return this;
     };
 
@@ -4682,9 +4692,8 @@
     };
 
     Instance.prototype.handleErrorEvent = function(model, xhr) {
-      var _ref1;
-      if (((_ref1 = xhr.responseJSON) != null ? _ref1.error : void 0) === "VALIDATION") {
-        this.trigger("invalid", this, xhr.responseJSON.data);
+      if (xhr.status === 400) {
+        this.trigger("invalid", this, xhr.responseJSON);
       }
     };
 
@@ -4741,7 +4750,7 @@
     };
 
     Instance.prototype.parse = function(resp) {
-      return resp.data.attributes;
+      return resp.attributes;
     };
 
     Instance.prototype.copy = function() {
@@ -5044,7 +5053,7 @@
       "click .btn-close": "close",
       "click .btn-destroy": "destroy",
       "click .btn-copy": "copy",
-      "click .btn-refresh": "refresh"
+      "click .fs-btn-refresh": "refresh"
     };
 
     function Form(options) {
@@ -5117,8 +5126,7 @@
     };
 
     Form.prototype.displayError = function(xhr) {
-      var _ref1;
-      if (((_ref1 = xhr.responseJSON) != null ? _ref1.error : void 0) !== "VALIDATION") {
+      if (xhr.status !== 400) {
         return this.displayAlert(Cruddy.lang.failure, "danger", 5000);
       }
     };
@@ -5140,8 +5148,11 @@
     };
 
     Form.prototype.refresh = function() {
+      if (this.request != null) {
+        return;
+      }
       if (this.confirmClose()) {
-        this.model.fetch();
+        this.setupRequest(this.model.fetch());
       }
       return this;
     };
@@ -5150,7 +5161,7 @@
       if (this.request != null) {
         return;
       }
-      this.request = this.model.save(null, {
+      this.setupRequest(this.model.save(null, {
         displayLoading: true,
         xhr: (function(_this) {
           return function() {
@@ -5162,17 +5173,20 @@
             return xhr;
           };
         })(this)
-      });
-      this.request.done($.proxy(this, "displaySuccess")).fail($.proxy(this, "displayError"));
-      this.request.always((function(_this) {
+      }));
+      return this;
+    };
+
+    Form.prototype.setupRequest = function(request) {
+      request.done($.proxy(this, "displaySuccess")).fail($.proxy(this, "displayError"));
+      request.always((function(_this) {
         return function() {
           _this.request = null;
-          _this.progressBar.parent().hide();
           return _this.update();
         };
       })(this));
-      this.update();
-      return this;
+      this.request = request;
+      return this.update();
     };
 
     Form.prototype.progressCallback = function(e) {
@@ -5180,6 +5194,9 @@
       if (e.lengthComputable) {
         width = (e.loaded * 100) / e.total;
         this.progressBar.width(width + '%').parent().show();
+        if (width === 100) {
+          this.progressBar.parent().hide();
+        }
       }
       return this;
     };
@@ -5243,7 +5260,7 @@
       this.$deletedMsg = this.$component("deleted-message");
       this.destroy = this.$(".btn-destroy");
       this.copy = this.$(".btn-copy");
-      this.$refresh = this.$(".btn-refresh");
+      this.$refresh = this.$(".fs-btn-refresh");
       this.progressBar = this.$(".form-save-progress");
       this.update();
       return Form.__super__.render.apply(this, arguments);
@@ -5267,6 +5284,7 @@
       this.destroy.toggle(!isDeleted && !isNew && permit["delete"]);
       this.$deletedMsg.toggle(isDeleted);
       this.copy.toggle(!isNew && permit.create);
+      this.$refresh.attr("disabled", this.request != null);
       this.$refresh.toggle(!isNew && !isDeleted);
       if ((_ref1 = this.external) != null) {
         _ref1.remove();
@@ -5278,7 +5296,7 @@
     };
 
     Form.prototype.template = function() {
-      return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n        <ul id=\"" + (this.componentId("nav")) + "\" class=\"nav navbar-nav\"></ul>\n    </div>\n</div>\n\n<div class=\"tab-content\" id=\"" + (this.componentId("body")) + "\"></div>\n\n<footer>\n    <div class=\"pull-left\">\n        <button type=\"button\" class=\"btn btn-link btn-destroy\" title=\"" + Cruddy.lang.model_delete + "\">\n            <span class=\"glyphicon glyphicon-trash\"></span>\n        </button>\n\n        <button type=\"button\" tabindex=\"-1\" class=\"btn btn-link btn-copy\" title=\"" + Cruddy.lang.model_copy + "\">\n            <span class=\"glyphicon glyphicon-book\"></span>\n        </button>\n\n        <button type=\"button\" class=\"btn btn-link btn-refresh\" title=\"" + Cruddy.lang.model_refresh + "\">\n            <span class=\"glyphicon glyphicon-refresh\"></span>\n        </button>\n    </div>\n\n    <span class=\"fs-deleted-message\" id=\"" + (this.componentId("deleted-message")) + "\">" + Cruddy.lang.model_deleted + "</span>\n    <button type=\"button\" class=\"btn btn-default btn-close\">" + Cruddy.lang.close + "</button>\n    <button type=\"button\" class=\"btn btn-primary btn-save\"></button>\n\n    <div class=\"progress\"><div class=\"progress-bar form-save-progress\"></div></div>\n</footer>";
+      return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n        <ul id=\"" + (this.componentId("nav")) + "\" class=\"nav navbar-nav\"></ul>\n    </div>\n</div>\n\n<div class=\"tab-content\" id=\"" + (this.componentId("body")) + "\"></div>\n\n<footer>\n    <div class=\"pull-left\">\n        <button type=\"button\" class=\"btn btn-link btn-destroy\" title=\"" + Cruddy.lang.model_delete + "\">\n            <span class=\"glyphicon glyphicon-trash\"></span>\n        </button>\n\n        <button type=\"button\" tabindex=\"-1\" class=\"btn btn-link btn-copy\" title=\"" + Cruddy.lang.model_copy + "\">\n            <span class=\"glyphicon glyphicon-book\"></span>\n        </button>\n\n        <button type=\"button\" class=\"btn btn-link fs-btn-refresh\" title=\"" + Cruddy.lang.model_refresh + "\">\n            <span class=\"glyphicon glyphicon-refresh\"></span>\n        </button>\n    </div>\n\n    <span class=\"fs-deleted-message\" id=\"" + (this.componentId("deleted-message")) + "\">" + Cruddy.lang.model_deleted + "</span>\n    <button type=\"button\" class=\"btn btn-default btn-close\">" + Cruddy.lang.close + "</button>\n    <button type=\"button\" class=\"btn btn-primary btn-save\"></button>\n\n    <div class=\"progress\"><div class=\"progress-bar form-save-progress\"></div></div>\n</footer>";
     };
 
     Form.prototype.externalLinkTemplate = function(href) {
@@ -5318,8 +5336,23 @@
       this.loadingRequests = 0;
       this.entities = {};
       this.dfd = $.Deferred();
+      this.$error = $(this.errorTemplate()).appendTo(this.container);
+      this.$error.on("click", ".close", (function(_this) {
+        return function() {
+          return _this.$error.stop(true).fadeOut();
+        };
+      })(this));
       this.on("change:entity", this.displayEntity, this);
+      $(document).ajaxError((function(_this) {
+        return function(event, xhr, xhrOptions) {
+          return _this.handleAjaxError(xhr, xhrOptions);
+        };
+      })(this));
       return this;
+    };
+
+    App.prototype.errorTemplate = function() {
+      return "<p class=\"alert alert-danger cruddy-global-error\">\n    <button type=\"button\" class=\"close\">&times;</button>\n    <span class=\"data\"></span>\n</p>";
     };
 
     App.prototype.init = function() {
@@ -5334,15 +5367,14 @@
     App.prototype.loadSchema = function() {
       var req;
       req = $.ajax({
-        url: entity_url("_schema"),
+        url: Cruddy.schemaUrl,
         displayLoading: true
       });
       req.done((function(_this) {
         return function(resp) {
-          var entity, _i, _len, _ref1;
-          _ref1 = resp.data;
-          for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-            entity = _ref1[_i];
+          var entity, _i, _len;
+          for (_i = 0, _len = resp.length; _i < _len; _i++) {
+            entity = resp[_i];
             _this.entities[entity.id] = new Cruddy.Entity.Entity(entity);
           }
           _this.dfd.resolve(_this);
@@ -5371,6 +5403,13 @@
       this.dispose();
       this.mainContent.html("<p class='alert alert-danger'>" + error + "</p>").show();
       return this;
+    };
+
+    App.prototype.handleAjaxError = function(xhr) {
+      var _ref1;
+      if ((_ref1 = xhr.responseJSON) != null ? _ref1.error : void 0) {
+        this.$error.children(".data").text(xhr.responseJSON.error).end().stop(true).fadeIn();
+      }
     };
 
     App.prototype.startLoading = function() {
@@ -5432,7 +5471,7 @@
       this.query = $.query;
       entities = Cruddy.entities;
       this.addRoute("index", entities);
-      root = Cruddy.root + "/" + Cruddy.uri + "/";
+      root = Cruddy.baseUrl;
       history = Backbone.history;
       $(document.body).on("click", "a", (function(_this) {
         return function(e) {
@@ -5536,7 +5575,6 @@
         var entity;
         entity = app.entity(id);
         if (entity.viewPermitted()) {
-          entity.set("instance", null);
           Cruddy.app.set("entity", entity);
           if (callback) {
             callback.call(this, entity);
@@ -5558,7 +5596,7 @@
   $(function() {
     Cruddy.router = new Router;
     return Backbone.history.start({
-      root: Cruddy.uri,
+      root: Cruddy.getHistoryRoot(),
       pushState: true,
       hashChange: false
     });

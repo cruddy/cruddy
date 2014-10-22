@@ -33,7 +33,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
     createInstance: (attributes = {}, options = {}) ->
         options.extra = attributes.extra
         options.entity = this
-        
+
         attributes = _.extend {}, @get("defaults"), attributes.attributes
 
         new Cruddy.Entity.Instance attributes, options
@@ -69,10 +69,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
             cache: yes
             displayLoading: yes
 
-        xhr = xhr.then (resp) =>
-            resp = resp.data
-
-            @createInstance resp
+        xhr = xhr.then (resp) => @createInstance resp
 
         xhr.done success if success
         xhr.fail fail if fail
@@ -81,9 +78,9 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
     # Load a model and set it as current
     actionUpdate: (id) -> @load(id).then (instance) =>
-            @set "instance", instance
+        @set "instance", instance
 
-            instance
+        instance
 
     # Create new model and set it as current
     actionCreate: -> @set "instance", @createInstance()

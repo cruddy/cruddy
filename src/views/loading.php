@@ -1,1 +1,0 @@
-<span class="loading"><?php echo trans('cruddy::app.loading') ?></span>

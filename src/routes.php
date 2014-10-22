@@ -1,56 +1,47 @@
 <?php
 
-Route::group(['prefix' => Config::get('cruddy::uri')], function ()
-{
-    Route::group(['prefix' => 'api'], function ()
-    {
-        Route::get('_schema',
-        [
-            'as' => 'cruddy.api.schema',
-            'uses' => 'Kalnoy\Cruddy\Controllers\EntityApiController@schema',
-        ]);
+/**
+ * @var \Illuminate\Routing\Router $router
+ */
 
-        Route::get('{entity}',
-        [
-            'as' => 'cruddy.api.entity.index',
-            'uses' => 'Kalnoy\Cruddy\Controllers\EntityApiController@index',
-        ]);
+$namespace = 'Kalnoy\Cruddy\Controllers\\';
 
-        Route::post('{entity}',
-        [
-            'as' => 'cruddy.api.entity.create',
-            'uses' => 'Kalnoy\Cruddy\Controllers\EntityApiController@create',
-        ]);
+$router->get('/', [
+    'as' => 'cruddy.home',
+    'uses' => $namespace.'CruddyController@index',
+]);
 
-        Route::get('{entity}/{id}',
-        [
-            'as' => 'cruddy.api.entity.show',
-            'uses' => 'Kalnoy\Cruddy\Controllers\EntityApiController@show',
-        ]);
+$router->get('_schema', [
+    'as' => 'cruddy.schema',
+    'uses' => $namespace.'CruddyController@schema',
+]);
 
-        Route::put('{entity}/{id}',
-        [
-            'as' => 'cruddy.api.entity.update',
-            'uses' => 'Kalnoy\Cruddy\Controllers\EntityApiController@update',
-        ]);
+$router->get('_thumb', [
+    'as' => 'cruddy.thumb',
+    'uses' => $namespace.'CruddyController@thumb',
+]);
 
-        Route::delete('{entity}/{id}',
-        [
-            'as' => 'cruddy.api.entity.destroy',
-            'uses' => 'Kalnoy\Cruddy\Controllers\EntityApiController@destroy',
-        ]);
-    });
+$router->get('{entity}', [
+    'as' => 'cruddy.index',
+    'uses' => $namespace.'EntityController@index',
+]);
 
-    Route::get('/', 'Kalnoy\Cruddy\Controllers\CruddyController@index');
-    Route::get('thumb', 'Kalnoy\Cruddy\Controllers\CruddyController@thumb');
+$router->get('{entity}/{id}', [
+    'as' => 'cruddy.show',
+    'uses' => $namespace.'EntityController@show',
+]);
 
-    $entityPattern = app('cruddy.repository')->available();
-    $entityPattern = "({$entityPattern})";
+$router->post('{entity}', [
+    'as' => 'cruddy.store',
+    'uses' => $namespace.'EntityController@store',
+]);
 
-    Route::get('{entity}',
-    [
-        'as' => 'cruddy.index', 
-        'uses' => 'Kalnoy\Cruddy\Controllers\CruddyController@show'
-    ])
-    ->where('entity', $entityPattern);
-});
+$router->put('{entity}/{id}', [
+    'as' => 'cruddy.update',
+    'uses' => $namespace.'EntityController@update',
+]);
+
+$router->delete('{entity}/{id}', [
+    'as' => 'cruddy.destroy',
+    'uses' => $namespace.'EntityController@destroy',
+]);

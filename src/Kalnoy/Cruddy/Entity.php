@@ -412,6 +412,8 @@ class Entity implements JsonableInterface, ArrayableInterface {
 
         if ( ! empty($errors)) throw new ValidationException($errors);
 
+        $id = array_get($input, 'id');
+
         return compact('id', 'attributes', 'related');
     }
 

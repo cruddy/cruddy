@@ -9,6 +9,8 @@ develop
 *   Refactored drop downs
 *   \#59: fixed entity events not always registered
 *   Added delete action in data grid
+*   Refactored routes and controllers
+*   Refactored forms
 
 v0.3.2
 ======

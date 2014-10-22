@@ -2,8 +2,6 @@
 
 namespace Kalnoy\Cruddy;
 
-use Illuminate\Support\Contracts\JsonableInterface;
-use Illuminate\Http\Request;
 use Illuminate\Config\Repository as Config;
 use Illuminate\Events\Dispatcher;
 use Kalnoy\Cruddy\Schema\Fields\Factory as FieldFactory;
@@ -16,7 +14,7 @@ use RuntimeException;
  *
  * @since 1.0.0
  */
-class Environment implements JsonableInterface {
+class Environment {
 
     /**
      * @var \Illuminate\Config\Repository
@@ -233,20 +231,18 @@ class Environment implements JsonableInterface {
     }
 
     /**
-     * {@inheritdoc}
+     * @return array
      */
-    public function toJSON($options = 0)
+    public function data()
     {
-        return json_encode(
-        [
+        return [
             'locale' => $this->config->get('app.locale'),
             'uri' => $this->config('uri'),
             'ace_theme' => $this->config('ace_theme', 'chrome'),
             'entities' => $this->entities->available(),
             'lang' => $this->lang->ui(),
             'permissions' => $this->permissions(),
-
-        ], $options);
+        ];
     }
 
     /**

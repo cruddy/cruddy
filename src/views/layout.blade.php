@@ -22,12 +22,12 @@
         </div>
     </nav>
 
-    <div class="main-content" id="content">@yield('content', $content)</div>
+    <div class="main-content" id="content">
+        @yield('content')
+    </div>
 
     <script>
-    Cruddy = {{ $cruddyJSON }};
-    Cruddy.root = '{{ Request::root() }}';
-    Cruddy.baseUrl = '{{ Request::getBaseUrl() }}';
+    Cruddy = {{ json_encode($cruddyData) }};
     </script>
 
     {{ $assets->scripts() }}

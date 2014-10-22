@@ -43,7 +43,8 @@ class DataGrid extends Backbone.View
 
         if curr?
             @$("#item-#{ curr.id }").addClass "active"
-            curr.on "sync destroy", (=> @model.fetch()), this
+            curr.on "sync", ( (model, data, options) => @model.fetch() if options.data), this
+            curr.on "destroy", ( => @model.fetch()), this
 
         this
 
@@ -114,11 +115,13 @@ class DataGrid extends Backbone.View
         """<td class="#{ col.getClass() }">#{ col.render item }</td>"""
 
     executeAction: (e) ->
-        e.preventDefault()
-
         $el = $ e.currentTarget
+        action = $el.data "action"
 
-        this[$el.data "action"].call this, $el
+        if action and action = this[action]
+            e.preventDefault()
+
+            action.call this, $el
 
         return
 
@@ -126,7 +129,7 @@ class DataGrid extends Backbone.View
         id = $el.data "id"
 
         $.ajax
-            url: Cruddy.backendRoot + "/api/" + @entity.id + "/" + $el.data("id")
+            url: Cruddy.baseUrl + "/" + @entity.id + "/" + $el.data("id")
             type: "POST"
             dataType: "json"
             displayLoading: yes

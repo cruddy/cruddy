@@ -11,7 +11,7 @@ class Router extends Backbone.Router
         #@addRoute "update", entities, "([^/]+)"
         #@addRoute "create", entities, "create"
 
-        root = Cruddy.root + "/" + Cruddy.uri + "/"
+        root = Cruddy.baseUrl
         history = Backbone.history
 
         $(document.body).on "click", "a", (e) =>
@@ -95,7 +95,6 @@ class Router extends Backbone.Router
         entity = app.entity(id)
 
         if entity.viewPermitted()
-            entity.set "instance", null
             Cruddy.app.set "entity", entity
 
             callback.call this, entity if callback
@@ -110,6 +109,6 @@ $ ->
     Cruddy.router = new Router
 
     Backbone.history.start
-        root: Cruddy.uri
+        root: Cruddy.getHistoryRoot()
         pushState: true
         hashChange: false

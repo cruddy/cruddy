@@ -2,7 +2,9 @@
 
 namespace Kalnoy\Cruddy;
 
+use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Config\Repository as Config;
 use Kalnoy\Cruddy\Service\MenuBuilder;
 use Kalnoy\Cruddy\Repo\BaseRepository;
 use Kalnoy\Cruddy\Service\Permissions\PermissionsManager;
@@ -26,7 +28,7 @@ class CruddyServiceProvider extends ServiceProvider {
      *
      * @var int
      */
-    protected $build = 11;
+    protected $build = 12;
 
 	/**
 	 * Bootstrap the application events.
@@ -37,7 +39,8 @@ class CruddyServiceProvider extends ServiceProvider {
 	{
 		$this->package('kalnoy/cruddy');
 
-        include __DIR__."/../../routes.php";
+        $this->registerRoutes($this->app['router'], $this->app['config']);
+
         include __DIR__."/../../composers.php";
 	}
 
@@ -59,6 +62,7 @@ class CruddyServiceProvider extends ServiceProvider {
         $this->registerCommands();
         $this->registerCompiler();
         $this->registerThumbnailFactory();
+        $this->registerAliases();
     }
 
     /**
@@ -279,9 +283,46 @@ class CruddyServiceProvider extends ServiceProvider {
      */
     protected function registerThumbnailFactory()
     {
-        $this->app->bindShared('Kalnoy\Cruddy\Service\ThumbnailFactory', function ($app)
+        $this->app->bindShared('cruddy.thumbs', function ($app)
         {
             return new ThumbnailFactory(new ImageManager, $app['cache']->driver());
+        });
+    }
+
+    /**
+     * Register cruddy aliases.
+     */
+    protected function registerAliases()
+    {
+        $baseNamespace = 'Kalnoy\Cruddy\\';
+
+        $aliases = [
+            'cruddy' => 'Environment',
+            'cruddy.compiler' => 'Compiler',
+            'cruddy.lang' => 'Lang',
+            'cruddy.thumbs' => 'Service\ThumbnailFactory',
+            'cruddy.repository' => 'Repository',
+            'cruddy.permissions' => 'Service\Permissions\PermissionsManager',
+            'cruddy.fields' => 'Schema\Fields\Factory',
+            'cruddy.columns' => 'Schema\Columns\Factory',
+            'cruddy.menu' => 'Service\MenuBuilder',
+            'cruddy.assets' => 'Assets',
+        ];
+
+        foreach ($aliases as $key => $alias)
+        {
+            $this->app->alias($key, $baseNamespace.$alias);
+        }
+    }
+
+    protected function registerRoutes(Router $router, Config $config)
+    {
+        $before = $config->get('cruddy::auth_filter');
+        $prefix = $config->get('cruddy::uri');
+
+        $router->group(compact('before', 'prefix'), function ($router)
+        {
+            require __DIR__ . "/../../routes.php";
         });
     }
 }

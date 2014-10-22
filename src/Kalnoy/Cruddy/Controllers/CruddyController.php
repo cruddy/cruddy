@@ -2,17 +2,18 @@
 
 namespace Kalnoy\Cruddy\Controllers;
 
+use Intervention\Image\Exception\NotReadableException;
+use Kalnoy\Cruddy\Environment;
+use Redirect;
+use Response;
+use Input;
 use Illuminate\Routing\Controller;
-use Illuminate\Support\Facades\View;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\Input;
-use Illuminate\Support\Facades\Redirect;
-use Intervention\Image\Exception\ImageNotFoundException;
 use Kalnoy\Cruddy\Service\ThumbnailFactory;
+use Whoops\Example\Exception;
 
 /**
  * This controller handles base web-requests.
- * 
+ *
  * @since 1.0.0
  */
 class CruddyController extends Controller {
@@ -30,32 +31,13 @@ class CruddyController extends Controller {
     /**
      * Initialize the controller.
      *
+     * @param Environment $cruddy
      * @param \Kalnoy\Cruddy\Service\ThumbnailFactory $thumb
      */
-    public function __construct(ThumbnailFactory $thumb)
+    public function __construct(Environment $cruddy, ThumbnailFactory $thumb)
     {
-        $this->cruddy = app('cruddy');
+        $this->cruddy = $cruddy;
         $this->thumb = $thumb;
-
-        $authFilter = $this->cruddy->config('auth_filter');
-
-        if ($authFilter) $this->beforeFilter($authFilter, ['except' => ['thumb']]);
-    }
-
-    /**
-     * @inheritdoc
-     */
-    protected function setupLayout()
-    {
-        if ($this->layout === null)
-        {
-            $this->layout = $this->cruddy->config('layout');
-        }
-
-        if ($this->layout !== null)
-        {
-            $this->layout = View::make($this->layout);
-        }
     }
 
     /**
@@ -63,22 +45,19 @@ class CruddyController extends Controller {
      */
     public function index()
     {
-        $dashboard = $this->cruddy->config('dashboard');
+        $dashboard = $this->cruddy->config('dashboard') or 'cruddy::dashboard';
 
-        if ( ! empty($dashboard))
-        {
-            if ($dashboard[0] === '@') return Redirect::route('cruddy.index', [ substr($dashboard, 1) ]);
+       if ($dashboard[0] === '@') return Redirect::route('cruddy.index', [ substr($dashboard, 1) ]);
 
-            $this->layout->content = View::make($dashboard, ['cruddy' => $this->cruddy]);
-        }
+       return Response::view($dashboard, [ 'cruddy' => $this->cruddy ]);
     }
 
     /**
-     * Show an entity.
+     * Get the schema.
      */
-    public function show()
+    public function schema()
     {
-        $this->layout->content = View::make('cruddy::loading');
+        return Response::make(app('cruddy.compiler')->schema());
     }
 
     /**
@@ -100,9 +79,9 @@ class CruddyController extends Controller {
             return $this->thumb->make(public_path($src), $width, $height)->response();
         }
 
-        catch (ImageNotFoundException $e)
+        catch (Exception $e)
         {
-            App::abort(404);
+            return Response::make('Failed to process image.', 404);
         }
     }
 }

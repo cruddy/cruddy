@@ -9,9 +9,22 @@ class App extends Backbone.Model
         @entities = {}
         @dfd = $.Deferred()
 
+        @$error = $(@errorTemplate()).appendTo @container
+
+        @$error.on "click", ".close", => @$error.stop(yes).fadeOut()
+
         @on "change:entity", @displayEntity, this
 
+        $(document).ajaxError (event, xhr, xhrOptions) => @handleAjaxError xhr, xhrOptions
+
         this
+
+    errorTemplate: -> """
+        <p class="alert alert-danger cruddy-global-error">
+            <button type="button" class="close">&times;</button>
+            <span class="data"></span>
+        </p>
+    """
 
     init: ->
         @loadSchema()
@@ -22,11 +35,11 @@ class App extends Backbone.Model
 
     loadSchema: ->
         req = $.ajax
-            url: entity_url "_schema"
+            url: Cruddy.schemaUrl
             displayLoading: yes
 
         req.done (resp) =>
-            @entities[entity.id] = new Cruddy.Entity.Entity entity for entity in resp.data
+            @entities[entity.id] = new Cruddy.Entity.Entity entity for entity in resp
 
             @dfd.resolve this
 
@@ -52,6 +65,12 @@ class App extends Backbone.Model
         @mainContent.html("<p class='alert alert-danger'>#{ error }</p>").show()
 
         this
+
+    handleAjaxError: (xhr) ->
+        if xhr.responseJSON?.error
+            @$error.children(".data").text(xhr.responseJSON.error).end().stop(yes).fadeIn()
+
+        return
 
     startLoading: ->
         @loading = setTimeout (=>

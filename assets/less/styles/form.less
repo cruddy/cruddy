@@ -90,7 +90,7 @@
             &-danger {
                 background-color: @alert-danger-bg;
                 color: @alert-danger-text;
-                
+
                 &:before { content: "\e090"; }
             }
 
@@ -126,7 +126,7 @@
         padding-top: @navbar-height;
         padding-bottom: @footer-height;
         height: 100%;
-        
+
         > .tab-pane {
             padding: @modal-inner-padding;
             padding-left: @modal-inner-padding * 1.5;
@@ -166,6 +166,12 @@
             &:hover {
                 color: @link-hover-color;
             }
+        }
+    }
+
+    &.loading {
+        .fs-btn-refresh > .glyphicon {
+            .animation(loading 1s ease-in-out infinite);
         }
     }
 }

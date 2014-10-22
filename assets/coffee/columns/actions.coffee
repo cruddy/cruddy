@@ -19,7 +19,7 @@ class Cruddy.Columns.Actions extends Attribute
         """<a href="#" data-action="deleteItem" data-id="#{ item.id }" class="btn btn-default">#{ b_icon "trash" }</a>"""
 
     renderEditAction: (item) -> """
-        <a href="#{ Cruddy.backendRoot + "/" + @entity.link() + "?id=" + item.id }" data-action="edit" class="btn btn-default">
+        <a href="#{ @entity.url() + "?id=" + item.id }" data-action="edit" class="btn btn-default">
             #{ b_icon("pencil") }
         </a>
     """

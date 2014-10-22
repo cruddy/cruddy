@@ -7,7 +7,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         "click .btn-close": "close"
         "click .btn-destroy": "destroy"
         "click .btn-copy": "copy"
-        "click .btn-refresh": "refresh"
+        "click .fs-btn-refresh": "refresh"
 
     constructor: (options) ->
         @className += " " + @className + "-" + options.model.entity.id
@@ -68,7 +68,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
     displaySuccess: -> @displayAlert Cruddy.lang.success, "success", 3000
 
-    displayError: (xhr) -> @displayAlert Cruddy.lang.failure, "danger", 5000 unless xhr.responseJSON?.error is "VALIDATION"
+    displayError: (xhr) -> @displayAlert Cruddy.lang.failure, "danger", 5000 unless xhr.status is 400
 
     handleModelInvalidEvent: -> @displayAlert Cruddy.lang.invalid, "warning", 5000
 
@@ -87,14 +87,16 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         this
 
     refresh: ->
-        @model.fetch() if @confirmClose()
+        return if @request?
+
+        @setupRequest @model.fetch() if @confirmClose()
 
         return this
 
     save: ->
         return if @request?
 
-        @request = @model.save null,
+        @setupRequest @model.save null,
             displayLoading: yes
 
             xhr: =>
@@ -103,22 +105,26 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
                 xhr
 
-        @request.done($.proxy this, "displaySuccess").fail($.proxy this, "displayError")
+        return this
 
-        @request.always =>
+    setupRequest: (request) ->
+        request.done($.proxy this, "displaySuccess").fail($.proxy this, "displayError")
+
+        request.always =>
             @request = null
-            @progressBar.parent().hide()
             @update()
 
-        @update()
+        @request = request
 
-        this
+        @update()
 
     progressCallback: (e) ->
         if e.lengthComputable
             width = (e.loaded * 100) / e.total
 
             @progressBar.width(width + '%').parent().show()
+
+            @progressBar.parent().hide() if width is 100
 
         this
 
@@ -168,7 +174,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         @$deletedMsg = @$component "deleted-message"
         @destroy = @$ ".btn-destroy"
         @copy = @$ ".btn-copy"
-        @$refresh = @$ ".btn-refresh"
+        @$refresh = @$ ".fs-btn-refresh"
         @progressBar = @$ ".form-save-progress"
 
         @update()
@@ -197,6 +203,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         @$deletedMsg.toggle isDeleted
 
         @copy.toggle not isNew and permit.create
+        @$refresh.attr "disabled", @request?
         @$refresh.toggle not isNew and not isDeleted
 
         @external?.remove()
@@ -225,7 +232,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
                     <span class="glyphicon glyphicon-book"></span>
                 </button>
 
-                <button type="button" class="btn btn-link btn-refresh" title="#{ Cruddy.lang.model_refresh }">
+                <button type="button" class="btn btn-link fs-btn-refresh" title="#{ Cruddy.lang.model_refresh }">
                     <span class="glyphicon glyphicon-refresh"></span>
                 </button>
             </div>

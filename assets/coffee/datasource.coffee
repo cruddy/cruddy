@@ -16,10 +16,10 @@ class DataSource extends Backbone.Model
 
             success: (resp) =>
                 @_hold = true
-                @set resp.data
+                @set resp
                 @_hold = false
 
-                @trigger "data", this, resp.data.data
+                @trigger "data", this, resp.data
 
             error: (xhr) => @trigger "error", this, xhr
 

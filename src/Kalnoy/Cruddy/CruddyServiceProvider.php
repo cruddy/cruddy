@@ -319,8 +319,9 @@ class CruddyServiceProvider extends ServiceProvider {
     {
         $before = $config->get('cruddy::auth_filter');
         $prefix = $config->get('cruddy::uri');
+        $namespace = 'Kalnoy\Cruddy\Controllers';
 
-        $router->group(compact('before', 'prefix'), function ($router)
+        $router->group(compact('before', 'prefix', 'namespace'), function ($router)
         {
             require __DIR__ . "/../../routes.php";
         });

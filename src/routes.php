@@ -4,44 +4,42 @@
  * @var \Illuminate\Routing\Router $router
  */
 
-$namespace = 'Kalnoy\Cruddy\Controllers\\';
-
 $router->get('/', [
     'as' => 'cruddy.home',
-    'uses' => $namespace.'CruddyController@index',
+    'uses' => 'CruddyController@index',
 ]);
 
 $router->get('_schema', [
     'as' => 'cruddy.schema',
-    'uses' => $namespace.'CruddyController@schema',
+    'uses' => 'CruddyController@schema',
 ]);
 
 $router->get('_thumb', [
     'as' => 'cruddy.thumb',
-    'uses' => $namespace.'CruddyController@thumb',
+    'uses' => 'CruddyController@thumb',
 ]);
 
 $router->get('{entity}', [
     'as' => 'cruddy.index',
-    'uses' => $namespace.'EntityController@index',
+    'uses' => 'EntityController@index',
 ]);
 
 $router->get('{entity}/{id}', [
     'as' => 'cruddy.show',
-    'uses' => $namespace.'EntityController@show',
+    'uses' => 'EntityController@show',
 ]);
 
 $router->post('{entity}', [
     'as' => 'cruddy.store',
-    'uses' => $namespace.'EntityController@store',
+    'uses' => 'EntityController@store',
 ]);
 
 $router->put('{entity}/{id}', [
     'as' => 'cruddy.update',
-    'uses' => $namespace.'EntityController@update',
+    'uses' => 'EntityController@update',
 ]);
 
 $router->delete('{entity}/{id}', [
     'as' => 'cruddy.destroy',
-    'uses' => $namespace.'EntityController@destroy',
+    'uses' => 'EntityController@destroy',
 ]);

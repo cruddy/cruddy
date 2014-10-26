@@ -124,6 +124,9 @@ class CruddyServiceProvider extends ServiceProvider {
         });
     }
 
+    /**
+     *
+     */
     public function registerRepository()
     {
         $this->app->bindShared('cruddy.repository', function ($app)
@@ -315,15 +318,33 @@ class CruddyServiceProvider extends ServiceProvider {
         }
     }
 
+    /**
+     * @param Router $router
+     * @param Config $config
+     */
     protected function registerRoutes(Router $router, Config $config)
     {
         $before = $config->get('cruddy::auth_filter');
         $prefix = $config->get('cruddy::uri');
         $namespace = 'Kalnoy\Cruddy\Controllers';
 
-        $router->group(compact('before', 'prefix', 'namespace'), function ($router)
+        $router->group(compact('before', 'prefix', 'namespace'), function (Router $router)
         {
+            $this->applyRoutingPattern($router);
+
             require __DIR__ . "/../../routes.php";
         });
+    }
+
+    /**
+     * Fix #59
+     *
+     * @param Router $router
+     */
+    protected function applyRoutingPattern(Router $router)
+    {
+        $entities = app('cruddy.repository')->available();
+
+        $router->pattern('cruddy_entity', '('.$entities.')');
     }
 }

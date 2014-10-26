@@ -19,27 +19,27 @@ $router->get('_thumb', [
     'uses' => 'CruddyController@thumb',
 ]);
 
-$router->get('{entity}', [
+$router->get('{cruddy_entity}', [
     'as' => 'cruddy.index',
     'uses' => 'EntityController@index',
 ]);
 
-$router->get('{entity}/{id}', [
+$router->get('{cruddy_entity}/{id}', [
     'as' => 'cruddy.show',
     'uses' => 'EntityController@show',
 ]);
 
-$router->post('{entity}', [
+$router->post('{cruddy_entity}', [
     'as' => 'cruddy.store',
     'uses' => 'EntityController@store',
 ]);
 
-$router->put('{entity}/{id}', [
+$router->put('{cruddy_entity}/{id}', [
     'as' => 'cruddy.update',
     'uses' => 'EntityController@update',
 ]);
 
-$router->delete('{entity}/{id}', [
+$router->delete('{cruddy_entity}/{id}', [
     'as' => 'cruddy.destroy',
     'uses' => 'EntityController@destroy',
 ]);

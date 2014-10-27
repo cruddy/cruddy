@@ -1,5 +1,5 @@
 (function() {
-  var AdvFormData, Alert, App, Attribute, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, NOT_AVAILABLE, Pagination, Router, SearchDataSource, TRANSITIONEND, after_break, b_btn, b_icon, entity_url, humanize, thumb, _ref,
+  var AdvFormData, Alert, App, Attribute, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, NOT_AVAILABLE, Pagination, Router, SearchDataSource, TITLE_SEPARATOR, TRANSITIONEND, after_break, b_btn, b_icon, entity_url, humanize, thumb, _ref,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -14,6 +14,8 @@
   TRANSITIONEND = "transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd";
 
   NOT_AVAILABLE = "&mdash;";
+
+  TITLE_SEPARATOR = " / ";
 
   moment.lang((_ref = Cruddy.locale) != null ? _ref : "en");
 
@@ -669,7 +671,7 @@
       }));
       this.listenTo(this.model, "data", this.updateData);
       this.listenTo(this.model, "change:order_by change:order_dir", this.onOrderChange);
-      return this.listenTo(this.entity, "change:instance", this.onInstanceChange);
+      return this.listenTo(this.entity, "change:instance", this.markSelectedItem);
     };
 
     DataGrid.prototype.onOrderChange = function() {
@@ -684,27 +686,13 @@
       return this;
     };
 
-    DataGrid.prototype.onInstanceChange = function(entity, curr) {
-      var prev;
-      prev = entity.previous("instance");
-      if (prev != null) {
-        this.$("#item-" + prev.id).removeClass("active");
-        prev.off(null, null, this);
+    DataGrid.prototype.markSelectedItem = function() {
+      var model;
+      if (model = this.entity.previous("instance")) {
+        this.$("#item-" + model.id).removeClass("active");
       }
-      if (curr != null) {
-        this.$("#item-" + curr.id).addClass("active");
-        curr.on("sync", ((function(_this) {
-          return function(model, data, options) {
-            if (options.data) {
-              return _this.model.fetch();
-            }
-          };
-        })(this)), this);
-        curr.on("destroy", ((function(_this) {
-          return function() {
-            return _this.model.fetch();
-          };
-        })(this)), this);
+      if (model = this.entity.get("instance")) {
+        this.$("#item-" + model.id).addClass("active");
       }
       return this;
     };
@@ -727,6 +715,7 @@
 
     DataGrid.prototype.updateData = function(datasource, data) {
       this.$(".items").replaceWith(this.renderBody(this.columns, data));
+      this.markSelectedItem();
       return this;
     };
 
@@ -1311,30 +1300,23 @@
       btn.prop("disabled", true);
       this.editing = this.reference.load(item.id).done((function(_this) {
         return function(instance) {
-          _this.newModelForm = new Cruddy.Entity.Form({
-            model: instance,
-            inner: true
+          var form;
+          _this.editingForm = form = Cruddy.Entity.Form.display(instance);
+          form.once("saved", function(model) {
+            btn.parent().siblings("input").val(model.title);
+            return form.remove();
           });
-          _this.newModelForm.render().$el.appendTo(document.body);
-          after_break(function() {
-            return _this.newModelForm.show();
+          form.once("destroyed", function(model) {
+            return _this.removeItem(e);
           });
-          _this.listenTo(instance, "sync", function(model, resp) {
-            if (resp.data) {
-              btn.parent().siblings("input").val(resp.data.title);
-              return _this.newModelForm.remove();
-            } else {
-              return _this.removeItem(e);
-            }
-          });
-          return _this.listenTo(_this.newModelForm, "remove", function() {
-            return _this.newModelForm = null;
+          return form.once("remove", function() {
+            return _this.editingForm = null;
           });
         };
       })(this));
       this.editing.always((function(_this) {
         return function() {
-          _this.editing = false;
+          _this.editing = null;
           return btn.prop("disabled", false);
         };
       })(this));
@@ -1558,7 +1540,7 @@
       if ((_ref1 = this.selector) != null) {
         _ref1.remove();
       }
-      if ((_ref2 = this.newModelForm) != null) {
+      if ((_ref2 = this.editingForm) != null) {
         _ref2.remove();
       }
       return this;
@@ -1613,12 +1595,9 @@
         });
         this.listenTo(this.dataSource, "request", this.displayLoading);
         this.listenTo(this.dataSource, "data", this.renderItems);
-        this.listenTo(this.dataSource, "error", this.displayError);
       }
       return this;
     };
-
-    EntitySelector.prototype.displayError = function(dataSource, xhr) {};
 
     EntitySelector.prototype.displayLoading = function(dataSource, xhr) {
       this.$el.addClass("loading");
@@ -1691,24 +1670,17 @@
       instance = this.reference.createInstance({
         attributes: this.attributesForNewModel
       });
-      this.newModelForm = form = new Cruddy.Entity.Form({
-        model: instance,
-        inner: true
-      });
-      form.render().$el.appendTo(document.body);
-      after_break(function() {
-        return form.show();
-      });
-      this.listenToOnce(form, "remove", (function(_this) {
+      this.newModelForm = form = Cruddy.Entity.Form.display(instance);
+      form.once("remove", (function(_this) {
         return function() {
           return _this.newModelForm = null;
         };
       })(this));
-      this.listenToOnce(instance, "sync", (function(_this) {
-        return function(instance, resp) {
+      form.once("created", (function(_this) {
+        return function(model, resp) {
           _this.selectItem({
-            id: instance.id,
-            title: resp.data.title
+            id: model.id,
+            title: model.title
           });
           form.remove();
         };
@@ -2977,7 +2949,7 @@
     }
 
     BaseView.prototype.initialize = function(options) {
-      this.listenTo(this.model, "sync", this.handleSyncEvent);
+      this.listenTo(this.model, "sync", this.handleSync);
       this.listenTo(this.model, "request", this.handleRequest);
       this.listenTo(this.model, "invalid", this.handleInvalid);
       return this.updateContainer();
@@ -3453,14 +3425,27 @@
       return this.getReference().getSingularTitle();
     };
 
+    BaseRelation.prototype.linkTo = function(item) {
+      var ref;
+      ref = this.getReference();
+      if (!ref.viewPermitted()) {
+        return item.title;
+      }
+      return "<a href=\"" + (ref.link(item.id)) + "\">" + (_.escape(item.title)) + "</a>";
+    };
+
     BaseRelation.prototype.format = function(value) {
       if (_.isEmpty(value)) {
         return NOT_AVAILABLE;
       }
       if (this.attributes.multiple) {
-        return _.pluck(value, "title").join(", ");
+        return _.map(value, (function(_this) {
+          return function(item) {
+            return _this.linkTo(item);
+          };
+        })(this)).join(", ");
       } else {
-        return value.title;
+        return this.linkTo(value);
       }
     };
 
@@ -4493,16 +4478,17 @@
     };
 
     Entity.prototype.createInstance = function(attributes, options) {
+      var instance;
       if (attributes == null) {
         attributes = {};
       }
       if (options == null) {
         options = {};
       }
-      options.extra = attributes.extra;
       options.entity = this;
       attributes = _.extend({}, this.get("defaults"), attributes.attributes);
-      return new Cruddy.Entity.Instance(attributes, options);
+      instance = new Cruddy.Entity.Instance(attributes, options);
+      return instance.fillExtra(attributes);
     };
 
     Entity.prototype.getRelation = function(id) {
@@ -4594,7 +4580,13 @@
     };
 
     Entity.prototype.link = function(id) {
-      return this.id + (id != null ? "/" + id : "");
+      var link;
+      link = this.url();
+      if (id) {
+        return link + "?id=" + id;
+      } else {
+        return link;
+      }
     };
 
     Entity.prototype.getPluralTitle = function() {
@@ -4643,16 +4635,15 @@
     }
 
     Instance.prototype.initialize = function(attributes, options) {
-      var event, _i, _len, _ref1, _ref2;
+      var event, _i, _len, _ref1;
       this.original = _.clone(attributes);
-      this.extra = (_ref1 = options.extra) != null ? _ref1 : {};
       this.on("error", this.handleErrorEvent, this);
       this.on("invalid", this.handleInvalidEvent, this);
       this.on("sync", this.handleSyncEvent, this);
       this.on("destroy", this.handleDestroyEvent, this);
-      _ref2 = ["sync", "request"];
-      for (_i = 0, _len = _ref2.length; _i < _len; _i++) {
-        event = _ref2[_i];
+      _ref1 = ["sync", "request"];
+      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+        event = _ref1[_i];
         this.on(event, this.triggerRelated(event), this);
       }
       return this;
@@ -4660,7 +4651,16 @@
 
     Instance.prototype.handleSyncEvent = function(model, resp) {
       this.original = _.clone(this.attributes);
-      this.extra = resp.extra;
+      if (resp.attributes) {
+        this.fillExtra(resp);
+      }
+      return this;
+    };
+
+    Instance.prototype.fillExtra = function(resp) {
+      var _ref1, _ref2;
+      this.extra = (_ref1 = resp.extra) != null ? _ref1 : {};
+      this.title = (_ref2 = resp.title) != null ? _ref2 : null;
       return this;
     };
 
@@ -4798,6 +4798,11 @@
       }
     };
 
+    Instance.prototype.getTitle = function() {
+      var _ref1;
+      return (_ref1 = this.title) != null ? _ref1 : Cruddy.lang.model_new_record;
+    };
+
     return Instance;
 
   })(Backbone.Model);
@@ -4819,16 +4824,38 @@
 
     Page.prototype.initialize = function(options) {
       this.dataSource = this.model.createDataSource(this.getDatasourceData());
-      this.listenTo(this.dataSource, "change", function(model) {
-        return Cruddy.router.refreshQuery(this.getDatasourceDefaults(), model.attributes);
-      });
-      this.listenTo(Cruddy.router, "route:index", (function(_this) {
+      after_break((function(_this) {
         return function() {
-          _this.dataSource.holdFetch().set(_this.getDatasourceData()).fetch();
-          return _this._displayForm();
+          _this.listenTo(_this.dataSource, "change", function(model) {
+            return Cruddy.router.refreshQuery(this.getDatasourceDefaults(), model.attributes, {
+              trigger: false
+            });
+          });
+          return _this.listenTo(Cruddy.router, "route:index", _this.handleRouteUpdated);
         };
       })(this));
       return Page.__super__.initialize.apply(this, arguments);
+    };
+
+    Page.prototype.pageUnloadConfirmationMessage = function() {
+      var _ref1;
+      return (_ref1 = this.form) != null ? _ref1.pageUnloadConfirmationMessage() : void 0;
+    };
+
+    Page.prototype.handleRouteUpdated = function() {
+      this.dataSource.set(this.getDatasourceData());
+      this._displayForm().fail((function(_this) {
+        return function() {
+          return _this._syncQueryParameters({
+            replace: true
+          });
+        };
+      })(this));
+      return this;
+    };
+
+    Page.prototype.getDatasourceData = function() {
+      return _.pick(Cruddy.router.query.keys, "search", "per_page", "order_dir", "order_by");
     };
 
     Page.prototype.getDatasourceDefaults = function() {
@@ -4848,35 +4875,37 @@
       return data;
     };
 
-    Page.prototype.getDatasourceData = function() {
-      return $.extend({}, this.getDatasourceDefaults(), Cruddy.router.query.keys);
-    };
-
-    Page.prototype.displayForm = function(id) {
-      return this._displayForm(id).done((function(_this) {
-        return function(instance) {
-          id = instance.id || "new";
-          if (id) {
-            Cruddy.router.setQuery("id", id, {
-              trigger: false
-            });
-          } else {
-            Cruddy.router.removeQuery("id", {
-              trigger: false
-            });
-          }
-        };
-      })(this));
+    Page.prototype._syncQueryParameters = function(options) {
+      var router;
+      router = Cruddy.router;
+      options = $.extend({
+        trigger: false,
+        replace: false
+      }, options);
+      if (this.form) {
+        router.setQuery("id", this.form.model.id || "new", options);
+      } else {
+        router.removeQuery("id", options);
+      }
+      return this;
     };
 
     Page.prototype._displayForm = function(instanceId) {
       var compareId, dfd, instance, resolve;
+      if (this.loadingForm) {
+        return;
+      }
       instanceId = (instanceId != null ? instanceId : Cruddy.router.getQuery("id")) || null;
       if (instanceId instanceof Cruddy.Entity.Instance) {
         instance = instanceId;
         instanceId = instance.id || "new";
       }
-      dfd = $.Deferred();
+      this.loadingForm = dfd = $.Deferred();
+      this.loadingForm.always((function(_this) {
+        return function() {
+          return _this.loadingForm = null;
+        };
+      })(this));
       if (this.form) {
         compareId = this.form.model.isNew() ? "new" : this.form.model.id;
         if (instanceId === compareId || !this.form.confirmClose()) {
@@ -4908,38 +4937,45 @@
     };
 
     Page.prototype._createAndRenderForm = function(instance) {
-      var _ref1;
+      var form, _ref1;
       if ((_ref1 = this.form) != null) {
         _ref1.remove();
       }
-      this.form = new Cruddy.Entity.Form({
-        model: instance
-      });
-      this.$el.append(this.form.render().$el);
-      this.form.once("close", (function(_this) {
+      this.form = form = Cruddy.Entity.Form.display(instance);
+      form.once("close", (function(_this) {
         return function() {
           return Cruddy.router.removeQuery("id", {
             trigger: false
           });
         };
       })(this));
-      this.listenTo(instance, "sync", function(model) {
+      form.once("created", function(model) {
         return Cruddy.router.setQuery("id", model.id);
       });
-      this.form.once("remove", (function(_this) {
+      form.once("remove", (function(_this) {
         return function() {
           _this.form = null;
           _this.model.set("instance", null);
           return _this.stopListening(instance);
         };
       })(this));
-      this.model.set("instance", instance);
-      after_break((function(_this) {
+      form.once("saved removed", (function(_this) {
         return function() {
-          return _this.form.show();
+          _this.dataSource.fetch();
+          return Cruddy.app.updateTitle();
         };
       })(this));
+      this.model.set("instance", instance);
+      Cruddy.app.updateTitle();
       return this;
+    };
+
+    Page.prototype.displayForm = function(id) {
+      return this._displayForm(id).done((function(_this) {
+        return function() {
+          return _this._syncQueryParameters();
+        };
+      })(this));
     };
 
     Page.prototype.create = function() {
@@ -4960,7 +4996,6 @@
     Page.prototype.render = function() {
       var filters;
       this.$el.html(this.template());
-      this.dataSource.fetch();
       this.search = this.createSearchInput(this.dataSource);
       this.$component("search").append(this.search.render().$el);
       if (!_.isEmpty(filters = this.dataSource.entity.get("filters"))) {
@@ -4970,7 +5005,8 @@
       this.dataGrid = this.createDataGrid(this.dataSource);
       this.pagination = this.createPagination(this.dataSource);
       this.$component("body").append(this.dataGrid.render().el).append(this.pagination.render().el);
-      this._displayForm();
+      this.handleRouteUpdated();
+      this.dataSource.fetch();
       return this;
     };
 
@@ -5039,6 +5075,15 @@
       return Page.__super__.remove.apply(this, arguments);
     };
 
+    Page.prototype.getPageTitle = function() {
+      var title;
+      title = this.model.getPluralTitle();
+      if (this.form != null) {
+        title = this.form.model.getTitle() + TITLE_SEPARATOR + title;
+      }
+      return title;
+    };
+
     return Page;
 
   })(Cruddy.View);
@@ -5062,17 +5107,10 @@
     }
 
     Form.prototype.initialize = function(options) {
-      var _ref1;
       Form.__super__.initialize.apply(this, arguments);
-      this.inner = (_ref1 = options.inner) != null ? _ref1 : false;
       this.listenTo(this.model, "destroy", this.handleModelDestroyEvent);
       this.listenTo(this.model, "invalid", this.handleModelInvalidEvent);
       this.hotkeys = $(document).on("keydown." + this.cid, "body", $.proxy(this, "hotkeys"));
-      $(window).on("beforeunload." + this.cid, (function(_this) {
-        return function() {
-          return _this.confirmationMessage(true);
-        };
-      })(this));
       return this;
     };
 
@@ -5137,6 +5175,7 @@
 
     Form.prototype.handleModelDestroyEvent = function() {
       this.update();
+      this.trigger("destroyed", this.model);
       return this;
     };
 
@@ -5158,9 +5197,11 @@
     };
 
     Form.prototype.save = function() {
+      var isNew;
       if (this.request != null) {
         return;
       }
+      isNew = this.model.isNew();
       this.setupRequest(this.model.save(null, {
         displayLoading: true,
         xhr: (function(_this) {
@@ -5174,6 +5215,12 @@
           };
         })(this)
       }));
+      this.request.done((function(_this) {
+        return function(resp) {
+          _this.trigger((isNew ? "created" : "updated"), _this.model, resp);
+          return _this.trigger("saved", _this.model, resp);
+        };
+      })(this));
       return this;
     };
 
@@ -5209,21 +5256,28 @@
       return this;
     };
 
-    Form.prototype.confirmClose = function() {
-      var message;
-      return !(message = this.confirmationMessage()) || confirm(message);
-    };
-
-    Form.prototype.confirmationMessage = function(closing) {
+    Form.prototype.pageUnloadConfirmationMessage = function() {
       if (this.model.isDeleted) {
         return;
       }
       if (this.request) {
-        return (closing ? Cruddy.lang.onclose_abort : Cruddy.lang.confirm_abort);
+        return Cruddy.lang.onclose_abort;
       }
       if (this.model.hasChangedSinceSync()) {
-        return (closing ? Cruddy.lang.onclose_discard : Cruddy.lang.confirm_discard);
+        return Cruddy.lang.onclose_discard;
       }
+    };
+
+    Form.prototype.confirmClose = function() {
+      if (!this.model.isDeleted) {
+        if (this.request) {
+          return confirm(Cruddy.lang.confirm_abort);
+        }
+        if (this.model.hasChangedSinceSync()) {
+          return confirm(Cruddy.lang.confirm_discard);
+        }
+      }
+      return true;
     };
 
     Form.prototype.destroy = function() {
@@ -5311,7 +5365,6 @@
       this.$el.one(TRANSITIONEND, (function(_this) {
         return function() {
           $(document).off("." + _this.cid);
-          $(window).off("." + _this.cid);
           _this.trigger("removed", _this);
           return Form.__super__.remove.apply(_this, arguments);
         };
@@ -5322,6 +5375,20 @@
     return Form;
 
   })(Cruddy.Layout.Layout);
+
+  Cruddy.Entity.Form.display = function(instance) {
+    var form;
+    form = new Cruddy.Entity.Form({
+      model: instance
+    });
+    $(document.body).append(form.render().$el);
+    after_break((function(_this) {
+      return function() {
+        return form.show();
+      };
+    })(this));
+    return form;
+  };
 
   App = (function(_super) {
     __extends(App, _super);
@@ -5336,6 +5403,7 @@
       this.loadingRequests = 0;
       this.entities = {};
       this.dfd = $.Deferred();
+      this.$title = $("title");
       this.$error = $(this.errorTemplate()).appendTo(this.container);
       this.$error.on("click", ".close", (function(_this) {
         return function() {
@@ -5346,6 +5414,11 @@
       $(document).ajaxError((function(_this) {
         return function(event, xhr, xhrOptions) {
           return _this.handleAjaxError(xhr, xhrOptions);
+        };
+      })(this));
+      $(window).on("beforeunload", (function(_this) {
+        return function() {
+          return _this.pageUnloadConfirmationMessage();
         };
       })(this));
       return this;
@@ -5393,10 +5466,11 @@
       this.dispose();
       this.mainContent.hide();
       if (entity) {
-        return this.container.append((this.page = new Cruddy.Entity.Page({
+        this.container.append((this.page = new Cruddy.Entity.Page({
           model: entity
         })).render().el);
       }
+      return this.updateTitle();
     };
 
     App.prototype.displayError = function(error) {
@@ -5410,6 +5484,11 @@
       if ((_ref1 = xhr.responseJSON) != null ? _ref1.error : void 0) {
         this.$error.children(".data").text(xhr.responseJSON.error).end().stop(true).fadeIn();
       }
+    };
+
+    App.prototype.pageUnloadConfirmationMessage = function() {
+      var _ref1;
+      return (_ref1 = this.page) != null ? _ref1.pageUnloadConfirmationMessage() : void 0;
     };
 
     App.prototype.startLoading = function() {
@@ -5452,6 +5531,17 @@
       if ((_ref1 = this.page) != null) {
         _ref1.remove();
       }
+      this.page = null;
+      return this;
+    };
+
+    App.prototype.updateTitle = function() {
+      var title;
+      title = Cruddy.brandName;
+      if (this.page != null) {
+        title = this.page.getPageTitle() + TITLE_SEPARATOR + title;
+      }
+      this.$title.text(title);
       return this;
     };
 
@@ -5516,7 +5606,7 @@
       return this.updateQuery(this.query.set(key, value), options);
     };
 
-    Router.prototype.refreshQuery = function(defaults, actual) {
+    Router.prototype.refreshQuery = function(defaults, actual, options) {
       var key, q, val, value;
       q = this.query.copy();
       for (key in defaults) {
@@ -5527,7 +5617,7 @@
           q.REMOVE(key);
         }
       }
-      return this.updateQuery(q);
+      return this.updateQuery(q, options);
     };
 
     Router.prototype.removeQuery = function(key, options) {

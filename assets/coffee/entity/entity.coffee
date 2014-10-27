@@ -31,12 +31,13 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
     # Create an instance for this entity
     createInstance: (attributes = {}, options = {}) ->
-        options.extra = attributes.extra
         options.entity = this
 
         attributes = _.extend {}, @get("defaults"), attributes.attributes
 
-        new Cruddy.Entity.Instance attributes, options
+        instance = new Cruddy.Entity.Instance attributes, options
+
+        instance.fillExtra attributes
 
     # Get relation field
     getRelation: (id) ->
@@ -99,7 +100,10 @@ class Cruddy.Entity.Entity extends Backbone.Model
     url: (id) -> entity_url @id, id
 
     # Get link to this entity or to the item of the entity
-    link: (id) -> @id + if id? then "/" + id else ""
+    link: (id) ->
+        link = @url()
+
+        return if id then link + "?id=" + id else link
 
     # Get title in plural form
     getPluralTitle: -> @attributes.title.plural

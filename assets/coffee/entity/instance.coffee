@@ -7,7 +7,6 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
     initialize: (attributes, options) ->
         @original = _.clone attributes
-        @extra = options.extra ? {}
 
         @on "error", @handleErrorEvent, this
         @on "invalid", @handleInvalidEvent, this
@@ -20,9 +19,16 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
     handleSyncEvent: (model, resp) ->
         @original = _.clone @attributes
-        @extra = resp.extra
+
+        @fillExtra resp if resp.attributes
 
         this
+
+    fillExtra: (resp) ->
+        @extra = resp.extra ? {}
+        @title = resp.title ? null
+
+        return this
 
     # Get a function handler that passes events to the related models
     triggerRelated: (event) ->
@@ -115,3 +121,5 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
     # Get current action on the model
     action: -> if @isNew() then "create" else "update"
+
+    getTitle: -> @title ? Cruddy.lang.model_new_record

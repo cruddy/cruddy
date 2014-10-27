@@ -49,7 +49,7 @@ class Router extends Backbone.Router
     # Set the query parameter value
     setQuery: (key, value, options) -> @updateQuery @query.set(key, value), options
 
-    refreshQuery: (defaults, actual) ->
+    refreshQuery: (defaults, actual, options) ->
         q = @query.copy()
 
         for key, val of defaults
@@ -58,7 +58,7 @@ class Router extends Backbone.Router
             else
                 q.REMOVE key
 
-        @updateQuery q
+        @updateQuery q, options
 
     # Remove the key from the query
     removeQuery: (key, options) -> @updateQuery @query.remove(key), options

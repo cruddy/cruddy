@@ -29,13 +29,8 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
             @listenTo @dataSource, "request", @displayLoading
             @listenTo @dataSource, "data",    @renderItems
-            @listenTo @dataSource, "error",   @displayError
 
         this
-
-    displayError: (dataSource, xhr) ->
-
-        return
 
     displayLoading: (dataSource, xhr) ->
         @$el.addClass "loading"
@@ -96,20 +91,14 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
         instance = @reference.createInstance attributes: @attributesForNewModel
 
-        @newModelForm = form = new Cruddy.Entity.Form
-            model: instance
-            inner: yes
+        @newModelForm = form = Cruddy.Entity.Form.display instance
 
-        form.render().$el.appendTo document.body
+        form.once "remove", => @newModelForm = null
 
-        after_break -> form.show()
-
-        @listenToOnce form, "remove", => @newModelForm = null
-
-        @listenToOnce instance, "sync", (instance, resp) =>
+        form.once "created", (model, resp) =>
             @selectItem
-                id: instance.id
-                title: resp.data.title
+                id: model.id
+                title: model.title
 
             form.remove()
 

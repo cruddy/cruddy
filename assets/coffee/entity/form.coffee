@@ -17,14 +17,10 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
     initialize: (options) ->
         super
 
-        @inner = options.inner ? no
-
         @listenTo @model, "destroy", @handleModelDestroyEvent
         @listenTo @model, "invalid", @handleModelInvalidEvent
 
         @hotkeys = $(document).on "keydown." + @cid, "body", $.proxy this, "hotkeys"
-
-        $(window).on "beforeunload.#{ @cid }", => @confirmationMessage(yes)
 
         return this
 
@@ -75,6 +71,8 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
     handleModelDestroyEvent: ->
         @update()
 
+        @trigger "destroyed", @model
+
         this
 
     show: ->
@@ -96,6 +94,8 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
     save: ->
         return if @request?
 
+        isNew = @model.isNew()
+
         @setupRequest @model.save null,
             displayLoading: yes
 
@@ -104,6 +104,10 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
                 xhr.upload.addEventListener('progress', $.proxy @, "progressCallback") if xhr.upload
 
                 xhr
+
+        @request.done (resp) =>
+            @trigger (if isNew then "created" else "updated"), @model, resp
+            @trigger "saved", @model, resp
 
         return this
 
@@ -135,14 +139,19 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         this
 
-    confirmClose: -> not (message = @confirmationMessage()) or confirm message
-
-    confirmationMessage: (closing) ->
+    pageUnloadConfirmationMessage: ->
         return if @model.isDeleted
 
-        return (if closing then Cruddy.lang.onclose_abort else Cruddy.lang.confirm_abort) if @request
+        return Cruddy.lang.onclose_abort if @request
 
-        return (if closing then Cruddy.lang.onclose_discard else Cruddy.lang.confirm_discard) if @model.hasChangedSinceSync()
+        return Cruddy.lang.onclose_discard if @model.hasChangedSinceSync()
+
+    confirmClose: ->
+        unless @model.isDeleted
+            return confirm Cruddy.lang.confirm_abort if @request
+            return confirm Cruddy.lang.confirm_discard if @model.hasChangedSinceSync()
+
+        return yes
 
     destroy: ->
         return if @request or @model.isNew()
@@ -258,7 +267,6 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         @$el.one(TRANSITIONEND, =>
             $(document).off "." + @cid
-            $(window).off "." + @cid
 
             @trigger "removed", @
 
@@ -267,3 +275,12 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         .removeClass "opened"
 
         super
+
+Cruddy.Entity.Form.display = (instance) ->
+    form = new Cruddy.Entity.Form model: instance
+
+    $(document.body).append form.render().$el
+
+    after_break => form.show()
+
+    return form

@@ -6,6 +6,7 @@ $.extend Cruddy,
 
 TRANSITIONEND = "transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd"
 NOT_AVAILABLE = "&mdash;"
+TITLE_SEPARATOR = " / ";
 moment.lang Cruddy.locale ? "en"
 
 Backbone.emulateHTTP = true

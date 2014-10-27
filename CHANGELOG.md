@@ -11,6 +11,8 @@ develop
 *   Added delete action in data grid
 *   Refactored routes and controllers
 *   Refactored forms
+*   The page title is now updated according to current entity and instance
+*   Refactored navigation to remove duplicate requests
 
 v0.3.2
 ======

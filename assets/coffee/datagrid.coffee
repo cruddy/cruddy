@@ -20,7 +20,7 @@ class DataGrid extends Backbone.View
         @listenTo @model, "data", @updateData
         @listenTo @model, "change:order_by change:order_dir", @onOrderChange
 
-        @listenTo @entity, "change:instance", @onInstanceChange
+        @listenTo @entity, "change:instance", @markSelectedItem
 
     onOrderChange: ->
         orderBy = @model.get "order_by"
@@ -34,17 +34,9 @@ class DataGrid extends Backbone.View
 
         this
 
-    onInstanceChange: (entity, curr) ->
-        prev = entity.previous "instance"
-
-        if prev?
-            @$("#item-#{ prev.id }").removeClass "active"
-            prev.off null, null, this
-
-        if curr?
-            @$("#item-#{ curr.id }").addClass "active"
-            curr.on "sync", ( (model, data, options) => @model.fetch() if options.data), this
-            curr.on "destroy", ( => @model.fetch()), this
+    markSelectedItem: ->
+        @$("#item-#{ model.id }").removeClass "active" if model = @entity.previous "instance"
+        @$("#item-#{ model.id }").addClass "active" if model = @entity.get "instance"
 
         this
 
@@ -63,6 +55,8 @@ class DataGrid extends Backbone.View
 
     updateData: (datasource, data) ->
         @$(".items").replaceWith @renderBody @columns, data
+
+        @markSelectedItem()
 
         this
 

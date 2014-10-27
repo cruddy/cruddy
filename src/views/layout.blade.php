@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>{{ $brand }}</title>
+    <title>@yield('title', $brand)</title>
     {{ $assets->styles() }}
 </head>
 <body>

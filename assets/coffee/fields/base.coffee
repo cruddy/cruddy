@@ -21,7 +21,7 @@ class Cruddy.Fields.BaseView extends Cruddy.Layout.Element
         super
 
     initialize: (options) ->
-        @listenTo @model, "sync",    @handleSyncEvent
+        @listenTo @model, "sync",    @handleSync
         @listenTo @model, "request", @handleRequest
         @listenTo @model, "invalid", @handleInvalid
 

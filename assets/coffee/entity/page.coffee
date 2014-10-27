@@ -14,14 +14,23 @@ class Cruddy.Entity.Page extends Cruddy.View
     initialize: (options) ->
         @dataSource = @model.createDataSource @getDatasourceData()
 
-        @listenTo @dataSource, "change", (model) -> Cruddy.router.refreshQuery @getDatasourceDefaults(), model.attributes
-
-        @listenTo Cruddy.router, "route:index", =>
-            @dataSource.holdFetch().set(@getDatasourceData()).fetch()
-
-            @_displayForm()
+        # Make sure that those events not fired twice
+        after_break =>
+            @listenTo @dataSource, "change", (model) -> Cruddy.router.refreshQuery @getDatasourceDefaults(), model.attributes, trigger: no
+            @listenTo Cruddy.router, "route:index", @handleRouteUpdated
 
         super
+
+    pageUnloadConfirmationMessage: -> return @form?.pageUnloadConfirmationMessage()
+
+    handleRouteUpdated: ->
+        @dataSource.set @getDatasourceData()
+
+        @_displayForm().fail => @_syncQueryParameters replace: yes
+
+        return this
+
+    getDatasourceData: ->_.pick Cruddy.router.query.keys, "search", "per_page", "order_dir", "order_by"
 
     getDatasourceDefaults: ->
         return @dsDefaults if @dsDefaults
@@ -37,24 +46,30 @@ class Cruddy.Entity.Page extends Cruddy.View
 
         return data
 
-    getDatasourceData: -> $.extend {}, @getDatasourceDefaults(), Cruddy.router.query.keys
+    _syncQueryParameters: (options) ->
+        router = Cruddy.router
 
-    displayForm: (id) -> @_displayForm(id).done (instance) =>
+        options = $.extend { trigger: no, replace: no }, options
 
-        id = instance.id or "new"
+        if @form
+            router.setQuery "id", @form.model.id or "new", options
+        else
+            router.removeQuery "id", options
 
-        if id then Cruddy.router.setQuery("id", id, trigger: no) else Cruddy.router.removeQuery("id", trigger: no)
-
-        return
+        return this
 
     _displayForm: (instanceId) ->
+        return if @loadingForm
+
         instanceId = instanceId ? Cruddy.router.getQuery("id") or null
 
         if instanceId instanceof Cruddy.Entity.Instance
             instance = instanceId
             instanceId = instance.id or "new"
 
-        dfd = $.Deferred()
+        @loadingForm = dfd = $.Deferred()
+
+        @loadingForm.always => @loadingForm = null
 
         if @form
             compareId = if @form.model.isNew() then "new" else @form.model.id
@@ -86,23 +101,27 @@ class Cruddy.Entity.Page extends Cruddy.View
     _createAndRenderForm: (instance) ->
         @form?.remove()
 
-        @form = new Cruddy.Entity.Form model: instance
-        @$el.append @form.render().$el
+        @form = form = Cruddy.Entity.Form.display instance
 
-        @form.once "close", => Cruddy.router.removeQuery "id", trigger: no
+        form.once "close", => Cruddy.router.removeQuery "id", trigger: no
+        form.once "created", (model) -> Cruddy.router.setQuery "id", model.id
 
-        @listenTo instance, "sync", (model) -> Cruddy.router.setQuery "id", model.id
-
-        @form.once "remove", =>
+        form.once "remove", =>
             @form = null
             @model.set "instance", null
             @stopListening instance
 
+        form.once "saved removed", =>
+            @dataSource.fetch()
+            Cruddy.app.updateTitle()
+
         @model.set "instance", instance
 
-        after_break => @form.show()
+        Cruddy.app.updateTitle()
 
         this
+
+    displayForm: (id) -> @_displayForm(id).done => @_syncQueryParameters()
 
     create: ->
         @displayForm "new"
@@ -119,8 +138,6 @@ class Cruddy.Entity.Page extends Cruddy.View
 
     render: ->
         @$el.html @template()
-
-        @dataSource.fetch()
 
         # Search input
         @search = @createSearchInput @dataSource
@@ -139,9 +156,10 @@ class Cruddy.Entity.Page extends Cruddy.View
 
         @$component("body").append(@dataGrid.render().el).append(@pagination.render().el)
 
-        @_displayForm()
+        @handleRouteUpdated()
+        @dataSource.fetch()
 
-        this
+        return this
 
     createDataGrid: (dataSource) -> new DataGrid
         model: dataSource
@@ -195,3 +213,10 @@ class Cruddy.Entity.Page extends Cruddy.View
         @dataSource?.stopListening()
 
         super
+
+    getPageTitle: ->
+        title = @model.getPluralTitle()
+
+        title = @form.model.getTitle() + TITLE_SEPARATOR + title if @form?
+
+        title

@@ -10,7 +10,14 @@ class Cruddy.Fields.BaseRelation extends Cruddy.Fields.Base
 
     getFilterLabel: -> @getReference().getSingularTitle()
 
+    linkTo: (item) ->
+        ref = @getReference()
+
+        return item.title unless ref.viewPermitted()
+
+        """<a href="#{ ref.link item.id }">#{ _.escape item.title }</a>"""
+
     format: (value) ->
         return NOT_AVAILABLE if _.isEmpty value
-        
-        if @attributes.multiple then _.pluck(value, "title").join ", " else value.title
+
+        if @attributes.multiple then _.map(value, (item) => @linkTo item).join ", " else @linkTo value

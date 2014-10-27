@@ -20,6 +20,7 @@
     'model_delete' => 'Delete from the server.',
     'model_copy' => 'Create a new model with same attributes.',
     'model_deleted' => 'Model is destroyed.',
+    'model_new_record' => 'New record',
 
     'no_results' => 'No results',
     'more' => 'More',

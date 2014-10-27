@@ -85,25 +85,17 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
         btn.prop "disabled", yes
 
         @editing = @reference.load(item.id).done (instance) =>
-            @newModelForm = new Cruddy.Entity.Form
-                model: instance
-                inner: yes
+            @editingForm = form = Cruddy.Entity.Form.display instance
 
-            @newModelForm.render().$el.appendTo document.body
-            after_break => @newModelForm.show()
+            form.once "saved", (model) =>
+                btn.parent().siblings("input").val model.title
+                form.remove()
 
-            @listenTo instance, "sync", (model, resp) =>
-                # Check whether the model was destroyed
-                if resp.data
-                    btn.parent().siblings("input").val resp.data.title
-                    @newModelForm.remove()
-                else
-                    @removeItem e
-
-            @listenTo @newModelForm, "remove", => @newModelForm = null
+            form.once "destroyed", (model) => @removeItem e
+            form.once "remove", => @editingForm = null
 
         @editing.always =>
-            @editing = no
+            @editing = null
             btn.prop "disabled", no
 
         this
@@ -309,7 +301,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
     dispose: ->
         @selector?.remove()
-        @newModelForm?.remove()
+        @editingForm?.remove()
 
         this
 

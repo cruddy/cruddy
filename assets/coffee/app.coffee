@@ -9,6 +9,8 @@ class App extends Backbone.Model
         @entities = {}
         @dfd = $.Deferred()
 
+        @$title = $ "title"
+
         @$error = $(@errorTemplate()).appendTo @container
 
         @$error.on "click", ".close", => @$error.stop(yes).fadeOut()
@@ -16,6 +18,7 @@ class App extends Backbone.Model
         @on "change:entity", @displayEntity, this
 
         $(document).ajaxError (event, xhr, xhrOptions) => @handleAjaxError xhr, xhrOptions
+        $(window).on "beforeunload", => @pageUnloadConfirmationMessage()
 
         this
 
@@ -60,6 +63,8 @@ class App extends Backbone.Model
         @mainContent.hide()
         @container.append (@page = new Cruddy.Entity.Page model: entity).render().el if entity
 
+        @updateTitle()
+
     displayError: (error) ->
         @dispose()
         @mainContent.html("<p class='alert alert-danger'>#{ error }</p>").show()
@@ -71,6 +76,8 @@ class App extends Backbone.Model
             @$error.children(".data").text(xhr.responseJSON.error).end().stop(yes).fadeIn()
 
         return
+
+    pageUnloadConfirmationMessage: -> return @page?.pageUnloadConfirmationMessage()
 
     startLoading: ->
         @loading = setTimeout (=>
@@ -104,4 +111,15 @@ class App extends Backbone.Model
     dispose: ->
         @page?.remove()
 
+        @page = null
+
         this
+
+    updateTitle: ->
+        title = Cruddy.brandName
+
+        title = @page.getPageTitle() + TITLE_SEPARATOR + title if @page?
+
+        @$title.text title
+
+        return this

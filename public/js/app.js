@@ -4891,11 +4891,11 @@
     };
 
     Page.prototype._displayForm = function(instanceId) {
-      var compareId, dfd, instance, resolve;
+      var compareId, dfd, instance, resolve, _ref1;
       if (this.loadingForm) {
         return;
       }
-      instanceId = (instanceId != null ? instanceId : Cruddy.router.getQuery("id")) || null;
+      instanceId = instanceId != null ? instanceId : Cruddy.router.getQuery("id");
       if (instanceId instanceof Cruddy.Entity.Instance) {
         instance = instanceId;
         instanceId = instance.id || "new";
@@ -4931,6 +4931,9 @@
           return dfd.reject();
         });
       } else {
+        if ((_ref1 = this.form) != null) {
+          _ref1.remove();
+        }
         dfd.resolve();
       }
       return dfd.promise();
@@ -4942,29 +4945,31 @@
         _ref1.remove();
       }
       this.form = form = Cruddy.Entity.Form.display(instance);
-      form.once("close", (function(_this) {
+      form.on("close", (function(_this) {
         return function() {
           return Cruddy.router.removeQuery("id", {
             trigger: false
           });
         };
       })(this));
-      form.once("created", function(model) {
+      form.on("created", function(model) {
         return Cruddy.router.setQuery("id", model.id);
       });
-      form.once("remove", (function(_this) {
+      form.on("remove", (function(_this) {
         return function() {
           _this.form = null;
           _this.model.set("instance", null);
           return _this.stopListening(instance);
         };
       })(this));
-      form.once("saved removed", (function(_this) {
+      form.on("saved", (function(_this) {
         return function() {
-          _this.dataSource.fetch();
-          return Cruddy.app.updateTitle();
+          return _this.dataSource.fetch();
         };
       })(this));
+      form.on("saved remove", function() {
+        return Cruddy.app.updateTitle();
+      });
       this.model.set("instance", instance);
       Cruddy.app.updateTitle();
       return this;

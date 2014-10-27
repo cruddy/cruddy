@@ -61,7 +61,7 @@ class Cruddy.Entity.Page extends Cruddy.View
     _displayForm: (instanceId) ->
         return if @loadingForm
 
-        instanceId = instanceId ? Cruddy.router.getQuery("id") or null
+        instanceId = instanceId ? Cruddy.router.getQuery("id")
 
         if instanceId instanceof Cruddy.Entity.Instance
             instance = instanceId
@@ -94,6 +94,7 @@ class Cruddy.Entity.Page extends Cruddy.View
         if instanceId
             @model.load(instanceId).done(resolve).fail -> dfd.reject()
         else
+            @form?.remove()
             dfd.resolve()
 
         return dfd.promise()
@@ -103,17 +104,17 @@ class Cruddy.Entity.Page extends Cruddy.View
 
         @form = form = Cruddy.Entity.Form.display instance
 
-        form.once "close", => Cruddy.router.removeQuery "id", trigger: no
-        form.once "created", (model) -> Cruddy.router.setQuery "id", model.id
+        form.on "close", => Cruddy.router.removeQuery "id", trigger: no
+        form.on "created", (model) -> Cruddy.router.setQuery "id", model.id
 
-        form.once "remove", =>
+        form.on "remove", =>
             @form = null
             @model.set "instance", null
+
             @stopListening instance
 
-        form.once "saved removed", =>
-            @dataSource.fetch()
-            Cruddy.app.updateTitle()
+        form.on "saved", => @dataSource.fetch()
+        form.on "saved remove", -> Cruddy.app.updateTitle()
 
         @model.set "instance", instance
 

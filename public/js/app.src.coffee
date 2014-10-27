@@ -2894,6 +2894,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
         @fields = @createCollection Cruddy.Fields, attributes.fields
         @columns = @createCollection Cruddy.Columns, attributes.columns
         @permissions = Cruddy.permissions[@id]
+        @cache = {}
 
         return this
 
@@ -2950,18 +2951,26 @@ class Cruddy.Entity.Entity extends Backbone.Model
     search: (options = {}) -> new SearchDataSource {}, $.extend { url: @url() }, options
 
     # Load a model
-    load: (id, success, fail) ->
+    load: (id, options) ->
+        defaults =
+            cached: yes # whether to get record from the cache
+
+        options = $.extend defaults, options
+
+        return $.Deferred().resolve(@cache[id]).promise() if options.cached and id of @cache
+
         xhr = $.ajax
             url: @url(id)
             type: "GET"
             dataType: "json"
-            cache: yes
             displayLoading: yes
 
-        xhr = xhr.then (resp) => @createInstance resp
+        xhr = xhr.then (resp) =>
+            instance = @createInstance resp
 
-        xhr.done success if success
-        xhr.fail fail if fail
+            @cache[instance.id] = instance
+
+            return instance
 
         return xhr
 

@@ -4433,6 +4433,7 @@
       this.fields = this.createCollection(Cruddy.Fields, attributes.fields);
       this.columns = this.createCollection(Cruddy.Columns, attributes.columns);
       this.permissions = Cruddy.permissions[this.id];
+      this.cache = {};
       return this;
     };
 
@@ -4519,26 +4520,29 @@
       }, options));
     };
 
-    Entity.prototype.load = function(id, success, fail) {
-      var xhr;
+    Entity.prototype.load = function(id, options) {
+      var defaults, xhr;
+      defaults = {
+        cached: true
+      };
+      options = $.extend(defaults, options);
+      if (options.cached && id in this.cache) {
+        return $.Deferred().resolve(this.cache[id]).promise();
+      }
       xhr = $.ajax({
         url: this.url(id),
         type: "GET",
         dataType: "json",
-        cache: true,
         displayLoading: true
       });
       xhr = xhr.then((function(_this) {
         return function(resp) {
-          return _this.createInstance(resp);
+          var instance;
+          instance = _this.createInstance(resp);
+          _this.cache[instance.id] = instance;
+          return instance;
         };
       })(this));
-      if (success) {
-        xhr.done(success);
-      }
-      if (fail) {
-        xhr.fail(fail);
-      }
       return xhr;
     };
 

@@ -13,6 +13,7 @@ develop
 *   Refactored forms
 *   The page title is now updated according to current entity and instance
 *   Refactored navigation to remove duplicate requests
+*   Records are now cached for quicker responses
 
 v0.3.2
 ======

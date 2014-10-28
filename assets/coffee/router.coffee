@@ -75,13 +75,6 @@ class Router extends Backbone.Router
 
         return this
 
-    createApp: ->
-        if not Cruddy.app
-            Cruddy.app = new App
-            Cruddy.app.init()
-
-        return Cruddy.app
-
     addRoute: (name, entities, appendage = null) ->
         route = "^(#{ entities })"
         route += "/" + appendage if appendage
@@ -91,7 +84,7 @@ class Router extends Backbone.Router
 
         this
 
-    resolveEntity: (id, callback) -> @createApp().ready (app) ->
+    resolveEntity: (id, callback) -> Cruddy.ready (app) ->
         entity = app.entity(id)
 
         if entity.viewPermitted()

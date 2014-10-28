@@ -1,15 +1,9 @@
 (function() {
-  var AdvFormData, Alert, App, Attribute, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, NOT_AVAILABLE, Pagination, Router, SearchDataSource, TITLE_SEPARATOR, TRANSITIONEND, after_break, b_btn, b_icon, entity_url, humanize, thumb, _ref,
+  var AdvFormData, Alert, App, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, NOT_AVAILABLE, Pagination, Router, SearchDataSource, TITLE_SEPARATOR, TRANSITIONEND, after_break, b_btn, b_icon, entity_url, humanize, thumb, _ref,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
   Cruddy = window.Cruddy || {};
-
-  $.extend(Cruddy, {
-    getHistoryRoot: function() {
-      return this.baseUrl.substr(this.root.length);
-    }
-  });
 
   TRANSITIONEND = "transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd";
 
@@ -148,6 +142,41 @@
 
   })(Backbone.View);
 
+  Factory = (function() {
+    function Factory() {}
+
+    Factory.prototype.create = function(name, options) {
+      var constructor;
+      constructor = this[name];
+      if (constructor != null) {
+        return new constructor(options);
+      }
+      console.error("Failed to resolve " + name + ".");
+      return null;
+    };
+
+    return Factory;
+
+  })();
+
+  $.extend(Cruddy, {
+    Fields: new Factory,
+    Columns: new Factory,
+    formatters: new Factory,
+    getHistoryRoot: function() {
+      return this.baseUrl.substr(this.root.length);
+    },
+    getApp: function() {
+      if (!this.app) {
+        this.app = (new App).init();
+      }
+      return this.app;
+    },
+    ready: function(callback) {
+      return this.getApp().ready(callback);
+    }
+  });
+
   Cruddy.View = (function(_super) {
     __extends(View, _super);
 
@@ -233,24 +262,7 @@
 
   })();
 
-  Factory = (function() {
-    function Factory() {}
-
-    Factory.prototype.create = function(name, options) {
-      var constructor;
-      constructor = this[name];
-      if (constructor != null) {
-        return new constructor(options);
-      }
-      console.error("Failed to resolve " + name + ".");
-      return null;
-    };
-
-    return Factory;
-
-  })();
-
-  Attribute = (function(_super) {
+  Cruddy.Attribute = (function(_super) {
     __extends(Attribute, _super);
 
     function Attribute() {
@@ -649,15 +661,15 @@
 
     DataGrid.prototype.tagName = "table";
 
-    DataGrid.prototype.className = "table table-hover data-grid";
+    DataGrid.prototype.className = "table table-hover dg";
 
     DataGrid.prototype.events = {
-      "click .sortable": "setOrder",
+      "click .col__sortable": "setOrder",
       "click [data-action]": "executeAction"
     };
 
     function DataGrid(options) {
-      this.className += " data-grid-" + options.entity.id;
+      this.className += " dg-" + options.entity.id;
       DataGrid.__super__.constructor.apply(this, arguments);
     }
 
@@ -666,33 +678,42 @@
       this.columns = this.entity.columns.models.filter(function(col) {
         return col.isVisible();
       });
-      this.columns.unshift(new Cruddy.Columns.Actions({
-        entity: this.entity
-      }));
+      this.addActionColumns(this.columns);
       this.listenTo(this.model, "data", this.updateData);
-      this.listenTo(this.model, "change:order_by change:order_dir", this.onOrderChange);
+      this.listenTo(this.model, "change:order_by change:order_dir", this.markOrderColumn);
       return this.listenTo(this.entity, "change:instance", this.markSelectedItem);
     };
 
-    DataGrid.prototype.onOrderChange = function() {
+    DataGrid.prototype.addActionColumns = function(columns) {
+      this.columns.unshift(new Cruddy.Columns.ViewButton({
+        entity: this.entity
+      }));
+      if (this.entity.deletePermitted()) {
+        this.columns.push(new Cruddy.Columns.DeleteButton({
+          entity: this.entity
+        }));
+      }
+      return this;
+    };
+
+    DataGrid.prototype.markOrderColumn = function() {
       var orderBy, orderDir;
       orderBy = this.model.get("order_by");
       orderDir = this.model.get("order_dir");
       if ((this.orderBy != null) && orderBy !== this.orderBy) {
-        this.$("#col-" + this.orderBy + " .sortable").removeClass("asc desc");
+        this.$colCell(this.orderBy).removeClass("asc desc");
       }
-      this.orderBy = orderBy;
-      this.$("#col-" + this.orderBy + " .sortable").removeClass("asc desc").addClass(orderDir);
+      this.$colCell(this.orderBy = orderBy).removeClass("asc desc").addClass(orderDir);
       return this;
     };
 
     DataGrid.prototype.markSelectedItem = function() {
       var model;
       if (model = this.entity.previous("instance")) {
-        this.$("#item-" + model.id).removeClass("active");
+        this.$itemRow(model).removeClass("active");
       }
       if (model = this.entity.get("instance")) {
-        this.$("#item-" + model.id).addClass("active");
+        this.$itemRow(model).addClass("active");
       }
       return this;
     };
@@ -723,7 +744,7 @@
       var data;
       data = this.model.get("data");
       this.$el.html(this.renderHead(this.columns) + this.renderBody(this.columns, data));
-      this.onOrderChange(this.model);
+      this.markOrderColumn(this.model);
       return this;
     };
 
@@ -738,21 +759,16 @@
     };
 
     DataGrid.prototype.renderHeadCell = function(col) {
-      return "<th class=\"" + (col.getClass()) + "\" id=\"col-" + col.id + "\">" + (this.renderHeadCellValue(col)) + "</th>";
+      return "<th class=\"" + (col.getClass()) + "\" id=\"" + (this.colCellId(col)) + "\" data-id=\"" + col.id + "\">" + (this.renderHeadCellValue(col)) + "</th>";
     };
 
     DataGrid.prototype.renderHeadCellValue = function(col) {
       var help, title;
       title = _.escape(col.getHeader());
-      help = _.escape(col.getHelp());
-      if (col.canOrder()) {
-        title = "<span class=\"sortable\" data-id=\"" + col.id + "\">" + title + "</span>";
+      if (help = _.escape(col.getHelp())) {
+        title = "<span class=\"glyphicon glyphicon-question-sign\" title=\"" + help + "\"></span> " + title;
       }
-      if (help) {
-        return "<span class=\"glyphicon glyphicon-question-sign\" title=\"" + help + "\"></span> " + title;
-      } else {
-        return title;
-      }
+      return title;
     };
 
     DataGrid.prototype.renderBody = function(columns, data) {
@@ -764,14 +780,14 @@
           html += this.renderRow(columns, item);
         }
       } else {
-        html += "<tr><td class=\"no-items\" colspan=\"" + columns.length + "\">" + Cruddy.lang.no_results + "</td></tr>";
+        html += "<tr class=\"empty\"><td colspan=\"" + columns.length + "\">" + Cruddy.lang.no_results + "</td></tr>";
       }
       return html += "</tbody>";
     };
 
     DataGrid.prototype.renderRow = function(columns, item) {
       var col, html, _i, _len;
-      html = "<tr class=\"item " + (this.states(item)) + "\" id=\"item-" + item.id + "\" data-id=\"" + item.id + "\">";
+      html = "<tr class=\"item " + (this.states(item)) + "\" id=\"" + (this.itemRowId(item)) + "\" data-id=\"" + item.id + "\">";
       for (_i = 0, _len = columns.length; _i < _len; _i++) {
         col = columns[_i];
         html += this.renderCell(col, item);
@@ -803,28 +819,45 @@
     };
 
     DataGrid.prototype.deleteItem = function($el) {
-      var id;
-      id = $el.data("id");
-      $.ajax({
-        url: Cruddy.baseUrl + "/" + this.entity.id + "/" + $el.data("id"),
-        type: "POST",
-        dataType: "json",
+      var $row;
+      if (!confirm(Cruddy.lang.confirm_delete)) {
+        return;
+      }
+      $row = $el.closest(".item");
+      $el.attr("disabled", true);
+      this.entity.destroy($row.data("id"), {
         displayLoading: true,
-        data: {
-          _method: "DELETE"
-        },
         success: (function(_this) {
           return function() {
-            $el.closest("tr").fadeOut();
+            $row.fadeOut();
             return _this.model.fetch();
           };
-        })(this)
+        })(this),
+        fail: function() {
+          return $el.attr("disabled", false);
+        }
       });
+    };
+
+    DataGrid.prototype.colCellId = function(col) {
+      return this.componentId("col-" + col.id);
+    };
+
+    DataGrid.prototype.$colCell = function(id) {
+      return this.$component("col-" + id);
+    };
+
+    DataGrid.prototype.itemRowId = function(item) {
+      return this.componentId("item-" + item.id);
+    };
+
+    DataGrid.prototype.$itemRow = function(item) {
+      return this.$component("item-" + item.id);
     };
 
     return DataGrid;
 
-  })(Backbone.View);
+  })(Cruddy.View);
 
   FilterList = (function(_super) {
     __extends(FilterList, _super);
@@ -2929,8 +2962,6 @@
 
   })(Cruddy.Layout.Container);
 
-  Cruddy.Fields = new Factory;
-
   Cruddy.Fields.BaseView = (function(_super) {
     __extends(BaseView, _super);
 
@@ -3174,7 +3205,7 @@
 
     return Base;
 
-  })(Attribute);
+  })(Cruddy.Attribute);
 
   Cruddy.Fields.Input = (function(_super) {
     __extends(Input, _super);
@@ -3312,11 +3343,15 @@
       });
     };
 
+    BaseDateTime.prototype.formatDate = function(value) {
+      return moment.unix(value).format(this.inputFormat);
+    };
+
     BaseDateTime.prototype.format = function(value) {
       if (value === null) {
         return NOT_AVAILABLE;
       } else {
-        return moment.unix(value).format(this.inputFormat);
+        return this.formatDate(value);
       }
     };
 
@@ -3364,6 +3399,10 @@
     DateTime.prototype.inputFormat = "YYYY-MM-DD HH:mm:ss";
 
     DateTime.prototype.mask = "9999-99-99 99:99:99";
+
+    DateTime.prototype.formatDate = function(value) {
+      return moment.unix(value).fromNow();
+    };
 
     return DateTime;
 
@@ -3425,13 +3464,8 @@
       return this.getReference().getSingularTitle();
     };
 
-    BaseRelation.prototype.linkTo = function(item) {
-      var ref;
-      ref = this.getReference();
-      if (!ref.viewPermitted()) {
-        return item.title;
-      }
-      return "<a href=\"" + (ref.link(item.id)) + "\">" + (_.escape(item.title)) + "</a>";
+    BaseRelation.prototype.formatItem = function(item) {
+      return item.title;
     };
 
     BaseRelation.prototype.format = function(value) {
@@ -3441,11 +3475,11 @@
       if (this.attributes.multiple) {
         return _.map(value, (function(_this) {
           return function(item) {
-            return _this.linkTo(item);
+            return _this.formatItem(item);
           };
         })(this)).join(", ");
       } else {
-        return this.linkTo(value);
+        return this.formatItem(value);
       }
     };
 
@@ -3493,6 +3527,15 @@
 
     Relation.prototype.canFilter = function() {
       return this.getReference().viewPermitted() && Relation.__super__.canFilter.apply(this, arguments);
+    };
+
+    Relation.prototype.formatItem = function(item) {
+      var ref;
+      ref = this.getReference();
+      if (!ref.viewPermitted()) {
+        return item.title;
+      }
+      return "<a href=\"" + (ref.link(item.id)) + "\">" + (_.escape(item.title)) + "</a>";
     };
 
     return Relation;
@@ -4217,8 +4260,6 @@
 
   })(Cruddy.Fields.Base);
 
-  Cruddy.Columns = new Factory;
-
   Cruddy.Columns.Base = (function(_super) {
     __extends(Base, _super);
 
@@ -4250,7 +4291,7 @@
     };
 
     Base.prototype.getClass = function() {
-      return "col-" + this.id;
+      return "col-" + this.id + (this.canOrder() ? " col__sortable" : "");
     };
 
     Base.prototype.canOrder = function() {
@@ -4259,7 +4300,7 @@
 
     return Base;
 
-  })(Attribute);
+  })(Cruddy.Attribute);
 
   Cruddy.Columns.Proxy = (function(_super) {
     __extends(Proxy, _super);
@@ -4272,9 +4313,6 @@
       var field, _ref1;
       field = (_ref1 = attributes.field) != null ? _ref1 : attributes.id;
       this.field = attributes.entity.fields.get(field);
-      if (attributes.header === null) {
-        this.set("header", this.field.get("label"));
-      }
       return Proxy.__super__.initialize.apply(this, arguments);
     };
 
@@ -4287,7 +4325,7 @@
     };
 
     Proxy.prototype.getClass = function() {
-      return Proxy.__super__.getClass.apply(this, arguments) + " col-" + this.field.get("type");
+      return Proxy.__super__.getClass.apply(this, arguments) + " col__" + this.field.get("type");
     };
 
     return Proxy;
@@ -4302,60 +4340,70 @@
     }
 
     Computed.prototype.getClass = function() {
-      return Computed.__super__.getClass.apply(this, arguments) + " col-computed";
+      return Computed.__super__.getClass.apply(this, arguments) + " col__computed";
     };
 
     return Computed;
 
   })(Cruddy.Columns.Base);
 
-  Cruddy.Columns.Actions = (function(_super) {
-    __extends(Actions, _super);
+  Cruddy.Columns.ViewButton = (function(_super) {
+    __extends(ViewButton, _super);
 
-    function Actions() {
-      return Actions.__super__.constructor.apply(this, arguments);
+    function ViewButton() {
+      return ViewButton.__super__.constructor.apply(this, arguments);
     }
 
-    Actions.prototype.getHeader = function() {
+    ViewButton.prototype.id = "__viewButton";
+
+    ViewButton.prototype.getHeader = function() {
       return "";
     };
 
-    Actions.prototype.getClass = function() {
-      return "col-actions";
+    ViewButton.prototype.getClass = function() {
+      return "col__view-button col__button";
     };
 
-    Actions.prototype.canOrder = function() {
+    ViewButton.prototype.canOrder = function() {
       return false;
     };
 
-    Actions.prototype.render = function(item) {
-      return "<div class=\"btn-group btn-group-xs\">" + (this.renderActions(item)) + "</div>";
+    ViewButton.prototype.render = function(item) {
+      return "<a href=\"" + (this.entity.link(item.id)) + "\" class=\"btn btn-default btn-xs\">\n    " + (b_icon("pencil")) + "\n</a>";
     };
 
-    Actions.prototype.renderActions = function(item) {
-      var html;
-      html = "";
-      if (this.entity.viewPermitted()) {
-        html += this.renderEditAction(item);
-      }
-      if (this.entity.deletePermitted()) {
-        return html += this.renderDeleteAction(item);
-      }
+    return ViewButton;
+
+  })(Cruddy.Columns.Base);
+
+  Cruddy.Columns.DeleteButton = (function(_super) {
+    __extends(DeleteButton, _super);
+
+    function DeleteButton() {
+      return DeleteButton.__super__.constructor.apply(this, arguments);
+    }
+
+    DeleteButton.prototype.id = "__deleteButton";
+
+    DeleteButton.prototype.getHeader = function() {
+      return "";
     };
 
-    Actions.prototype.renderDeleteAction = function(item) {
-      return "<a href=\"#\" data-action=\"deleteItem\" data-id=\"" + item.id + "\" class=\"btn btn-default\">" + (b_icon("trash")) + "</a>";
+    DeleteButton.prototype.getClass = function() {
+      return "col__delete-button col__button";
     };
 
-    Actions.prototype.renderEditAction = function(item) {
-      return "<a href=\"" + (this.entity.url() + "?id=" + item.id) + "\" data-action=\"edit\" class=\"btn btn-default\">\n    " + (b_icon("pencil")) + "\n</a>";
+    DeleteButton.prototype.canOrder = function() {
+      return false;
     };
 
-    return Actions;
+    DeleteButton.prototype.render = function(item) {
+      return "<a href=\"#\" data-action=\"deleteItem\" class=\"btn btn-default btn-xs\">\n    " + (b_icon("trash")) + "\n</a>";
+    };
 
-  })(Attribute);
+    return DeleteButton;
 
-  Cruddy.formatters = new Factory;
+  })(Cruddy.Columns.Base);
 
   BaseFormatter = (function() {
     BaseFormatter.prototype.defaultOptions = {};
@@ -4546,6 +4594,19 @@
       return xhr;
     };
 
+    Entity.prototype.destroy = function(id, options) {
+      if (options == null) {
+        options = {};
+      }
+      options.url = this.url(id);
+      options.type = "POST";
+      options.dataType = "json";
+      options.data = {
+        _method: "DELETE"
+      };
+      return $.ajax(options);
+    };
+
     Entity.prototype.actionUpdate = function(id) {
       return this.load(id).then((function(_this) {
         return function(instance) {
@@ -4586,6 +4647,9 @@
     Entity.prototype.link = function(id) {
       var link;
       link = this.url();
+      if (id instanceof Cruddy.Entity.Instance) {
+        id = id.id;
+      }
       if (id) {
         return link + "?id=" + id;
       } else {
@@ -5647,14 +5711,6 @@
       return this;
     };
 
-    Router.prototype.createApp = function() {
-      if (!Cruddy.app) {
-        Cruddy.app = new App;
-        Cruddy.app.init();
-      }
-      return Cruddy.app;
-    };
-
     Router.prototype.addRoute = function(name, entities, appendage) {
       var route;
       if (appendage == null) {
@@ -5670,7 +5726,7 @@
     };
 
     Router.prototype.resolveEntity = function(id, callback) {
-      return this.createApp().ready(function(app) {
+      return Cruddy.ready(function(app) {
         var entity;
         entity = app.entity(id);
         if (entity.viewPermitted()) {

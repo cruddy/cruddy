@@ -1,9 +1,5 @@
 Cruddy = window.Cruddy || {}
 
-$.extend Cruddy,
-
-    getHistoryRoot: -> @baseUrl.substr @root.length
-
 TRANSITIONEND = "transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd"
 NOT_AVAILABLE = "&mdash;"
 TITLE_SEPARATOR = " / ";
@@ -83,6 +79,28 @@ class Alert extends Backbone.View
         @$el.removeClass "show"
 
         this
+class Factory
+    create: (name, options) ->
+        constructor = @[name]
+        return new constructor options if constructor?
+
+        console.error "Failed to resolve #{ name }."
+
+        null
+$.extend Cruddy,
+
+    Fields: new Factory
+    Columns: new Factory
+    formatters: new Factory
+
+    getHistoryRoot: -> @baseUrl.substr @root.length
+
+    getApp: ->
+        @app = (new App).init() unless @app
+
+        return @app
+
+    ready: (callback) -> @getApp().ready callback
 class Cruddy.View extends Backbone.View
     componentId: (component) -> @cid + "-" + component
 
@@ -125,15 +143,7 @@ class AdvFormData
         value
 
     key: (outer, inner) -> if outer then "#{ outer }[#{ inner }]" else inner
-class Factory
-    create: (name, options) ->
-        constructor = @[name]
-        return new constructor options if constructor?
-
-        console.error "Failed to resolve #{ name }."
-
-        null
-class Attribute extends Backbone.Model
+class Cruddy.Attribute extends Backbone.Model
 
     initialize: (options) ->
         @entity = options.entity
@@ -394,45 +404,52 @@ class Pagination extends Backbone.View
 
     renderLink: (page, label, className = "") -> """<li class="#{ className }"><a href="#" data-page="#{ page }">#{ label }</a></li>"""
 
-class DataGrid extends Backbone.View
+class DataGrid extends Cruddy.View
     tagName: "table"
-    className: "table table-hover data-grid"
+    className: "table table-hover dg"
 
     events: {
-        "click .sortable": "setOrder"
+        "click .col__sortable": "setOrder"
         "click [data-action]": "executeAction"
     }
 
     constructor: (options) ->
-        @className += " data-grid-" + options.entity.id
+        @className += " dg-" + options.entity.id
 
         super
 
     initialize: (options) ->
         @entity = options.entity
+
         @columns = @entity.columns.models.filter (col) -> col.isVisible()
-        @columns.unshift new Cruddy.Columns.Actions entity: @entity
+
+        @addActionColumns @columns
 
         @listenTo @model, "data", @updateData
-        @listenTo @model, "change:order_by change:order_dir", @onOrderChange
+        @listenTo @model, "change:order_by change:order_dir", @markOrderColumn
 
         @listenTo @entity, "change:instance", @markSelectedItem
 
-    onOrderChange: ->
+    addActionColumns: (columns) ->
+        @columns.unshift new Cruddy.Columns.ViewButton entity: @entity
+        @columns.push new Cruddy.Columns.DeleteButton entity: @entity if @entity.deletePermitted()
+
+        return this
+
+    markOrderColumn: ->
         orderBy = @model.get "order_by"
         orderDir = @model.get "order_dir"
 
         if @orderBy? and orderBy isnt @orderBy
-            @$("#col-#{ @orderBy } .sortable").removeClass "asc desc"
+            @$colCell(@orderBy).removeClass "asc desc"
 
-        @orderBy = orderBy
-        @$("#col-#{ @orderBy } .sortable").removeClass("asc desc").addClass orderDir
+        @$colCell(@orderBy = orderBy).removeClass("asc desc").addClass orderDir
 
         this
 
     markSelectedItem: ->
-        @$("#item-#{ model.id }").removeClass "active" if model = @entity.previous "instance"
-        @$("#item-#{ model.id }").addClass "active" if model = @entity.get "instance"
+        @$itemRow(model).removeClass "active" if model = @entity.previous "instance"
+        @$itemRow(model).addClass "active" if model = @entity.get "instance"
 
         this
 
@@ -461,7 +478,7 @@ class DataGrid extends Backbone.View
 
         @$el.html @renderHead(@columns) + @renderBody(@columns, data)
 
-        @onOrderChange @model
+        @markOrderColumn @model
 
         this
 
@@ -471,27 +488,34 @@ class DataGrid extends Backbone.View
         html += "</tr></thead>"
 
     renderHeadCell: (col) ->
-        """<th class="#{ col.getClass() }" id="col-#{ col.id }">#{ @renderHeadCellValue col }</th>"""
+        """<th class="#{ col.getClass() }" id="#{ @colCellId col }" data-id="#{ col.id }">#{ @renderHeadCellValue col }</th>"""
 
     renderHeadCellValue: (col) ->
         title = _.escape col.getHeader()
-        help = _.escape col.getHelp()
-        title = "<span class=\"sortable\" data-id=\"#{ col.id }\">#{ title }</span>" if col.canOrder()
-        if help then "<span class=\"glyphicon glyphicon-question-sign\" title=\"#{ help }\"></span> #{ title }" else title
+
+        if help = _.escape col.getHelp()
+            title = """
+                <span class="glyphicon glyphicon-question-sign" title="#{ help }"></span> #{ title }
+            """
+
+        return title
 
     renderBody: (columns, data) ->
-        html = "<tbody class=\"items\">"
+        html = """<tbody class="items">"""
 
         if data? and data.length
             html += @renderRow columns, item for item in data
         else
-            html += """<tr><td class="no-items" colspan="#{ columns.length }">#{ Cruddy.lang.no_results }</td></tr>"""
+            html += """<tr class="empty"><td colspan="#{ columns.length }">#{ Cruddy.lang.no_results }</td></tr>"""
 
         html += "</tbody>"
 
     renderRow: (columns, item) ->
-        html = "<tr class=\"item #{ @states item }\" id=\"item-#{ item.id }\" data-id=\"#{ item.id }\">"
+        html = """
+            <tr class="item #{ @states item }" id="#{ @itemRowId item }" data-id="#{ item.id }">"""
+
         html += @renderCell col, item for col in columns
+
         html += "</tr>"
 
     states: (item) ->
@@ -516,22 +540,32 @@ class DataGrid extends Backbone.View
         return
 
     deleteItem: ($el) ->
-        id = $el.data "id"
+        return if not confirm Cruddy.lang.confirm_delete
 
-        $.ajax
-            url: Cruddy.baseUrl + "/" + @entity.id + "/" + $el.data("id")
-            type: "POST"
-            dataType: "json"
+        $row = $el.closest ".item"
+
+        $el.attr "disabled", yes
+
+        @entity.destroy $row.data("id"),
+
             displayLoading: yes
 
-            data:
-                _method: "DELETE"
-
             success: =>
-                $el.closest("tr").fadeOut()
+                $row.fadeOut()
                 @model.fetch()
 
+            fail: ->
+                $el.attr "disabled", no
+
         return
+
+    colCellId: (col) -> @componentId "col-" + col.id
+
+    $colCell: (id) -> @$component "col-" + id
+
+    itemRowId: (item) -> @componentId "item-" + item.id
+
+    $itemRow: (item) -> @$component "item-" + item.id
 class FilterList extends Backbone.View
     className: "filter-list"
 
@@ -2042,8 +2076,6 @@ class Cruddy.Layout.Layout extends Cruddy.Layout.Container
         return this
 
     setupDefaultLayout: -> return this
-Cruddy.Fields = new Factory
-
 class Cruddy.Fields.BaseView extends Cruddy.Layout.Element
 
     constructor: (options) ->
@@ -2132,7 +2164,6 @@ class Cruddy.Fields.BaseView extends Cruddy.Layout.Element
         @dispose()
 
         super
-
 # This is basic field view that will render in bootstrap's vertical form style.
 class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
 
@@ -2190,8 +2221,8 @@ class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
         @input?.remove()
 
         this
+class Cruddy.Fields.Base extends Cruddy.Attribute
 
-class Cruddy.Fields.Base extends Attribute
     viewConstructor: Cruddy.Fields.InputView
 
     # Create a view that will represent this field in field list
@@ -2262,6 +2293,7 @@ class Cruddy.Fields.Input extends Cruddy.Fields.Base
 
         return value
 
+
 class Cruddy.Fields.Input.PrependAppendWrapper extends Cruddy.View
     className: "input-group"
 
@@ -2299,8 +2331,10 @@ class Cruddy.Fields.BaseDateTime extends Cruddy.Fields.Base
         mask: @mask
         attributes:
             id: @inputId
-    
-    format: (value) -> if value is null then NOT_AVAILABLE else moment.unix(value).format(@inputFormat)
+
+    formatDate: (value) -> moment.unix(value).format @inputFormat
+
+    format: (value) -> if value is null then NOT_AVAILABLE else @formatDate value
 
 class Cruddy.Fields.Date extends Cruddy.Fields.BaseDateTime
     inputFormat: "YYYY-MM-DD"
@@ -2313,8 +2347,8 @@ class Cruddy.Fields.Time extends Cruddy.Fields.BaseDateTime
 class Cruddy.Fields.DateTime extends Cruddy.Fields.BaseDateTime
     inputFormat: "YYYY-MM-DD HH:mm:ss"
     mask: "9999-99-99 99:99:99"
-    
-    # format: (value) -> if value is null then NOT_AVAILABLE else moment.unix(value).calendar()
+
+    formatDate: (value) -> moment.unix(value).fromNow()
 class Cruddy.Fields.Boolean extends Cruddy.Fields.Base
     
     createEditableInput: (model) -> new Cruddy.Inputs.Boolean
@@ -2339,17 +2373,12 @@ class Cruddy.Fields.BaseRelation extends Cruddy.Fields.Base
 
     getFilterLabel: -> @getReference().getSingularTitle()
 
-    linkTo: (item) ->
-        ref = @getReference()
-
-        return item.title unless ref.viewPermitted()
-
-        """<a href="#{ ref.link item.id }">#{ _.escape item.title }</a>"""
+    formatItem: (item) -> item.title
 
     format: (value) ->
         return NOT_AVAILABLE if _.isEmpty value
 
-        if @attributes.multiple then _.map(value, (item) => @linkTo item).join ", " else @linkTo value
+        if @attributes.multiple then _.map(value, (item) => @formatItem item).join ", " else @formatItem value
 class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
 
     createInput: (model, inputId, forceDisable = no) -> new Cruddy.Inputs.EntityDropdown
@@ -2373,6 +2402,13 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
     isEditable: -> @getReference().viewPermitted() and super
 
     canFilter: -> @getReference().viewPermitted() and super
+
+    formatItem: (item) ->
+        ref = @getReference()
+
+        return item.title unless ref.viewPermitted()
+
+        """<a href="#{ ref.link item.id }">#{ _.escape item.title }</a>"""
 class Cruddy.Fields.File extends Cruddy.Fields.Base
 
     createEditableInput: (model) -> new Cruddy.Inputs.FileList
@@ -2398,7 +2434,6 @@ class Cruddy.Fields.Image extends Cruddy.Fields.File
         formatter: new Cruddy.Fields.Image.Formatter
             width: @attributes.width
             height: @attributes.height
-
 class Cruddy.Fields.Image.Formatter
 
     constructor: (options) ->
@@ -2597,7 +2632,6 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
         if @field.isMultiple() then @createButton[0]?.focus() else @focusable?.focus()
 
         this
-
 class Cruddy.Fields.EmbeddedItemView extends Cruddy.Layout.Layout
     className: "has-many-item-view"
 
@@ -2650,7 +2684,6 @@ class Cruddy.Fields.EmbeddedItemView extends Cruddy.Layout.Layout
             """
 
         return html
-
 class Cruddy.Fields.RelatedCollection extends Backbone.Collection
 
     initialize: (items, options) ->
@@ -2731,7 +2764,6 @@ class Cruddy.Fields.RelatedCollection extends Backbone.Collection
             data
         else
             @find((m) -> not m.isDeleted) or ""
-
 class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
 
     viewConstructor: Cruddy.Fields.EmbeddedView
@@ -2796,9 +2828,8 @@ class Cruddy.Fields.Computed extends Cruddy.Fields.Base
     createInput: (model) -> new Cruddy.Inputs.Static { model: model, key: @id, formatter: this }
 
     isEditable: -> false
-Cruddy.Columns = new Factory
+class Cruddy.Columns.Base extends Cruddy.Attribute
 
-class Cruddy.Columns.Base extends Attribute
     initialize: (attributes) ->
         @formatter = Cruddy.formatters.create attributes.formatter, attributes.formatter_options if attributes.formatter?
 
@@ -2813,51 +2844,53 @@ class Cruddy.Columns.Base extends Attribute
     getHeader: -> @attributes.header
 
     # Get column's class name
-    getClass: -> "col-" + @id
+    getClass: -> "col-" + @id + if @canOrder() then " col__sortable" else ""
 
     # Get whether a column can order items
     canOrder: -> @attributes.can_order
 class Cruddy.Columns.Proxy extends Cruddy.Columns.Base
+
     initialize: (attributes) ->
         field = attributes.field ? attributes.id
         @field = attributes.entity.fields.get field
-
-        @set "header", @field.get "label" if attributes.header is null
 
         super
 
     format: (value) -> if @formatter? then @formatter.format value else @field.format value
 
-    getClass: -> super + " col-" + @field.get "type"
+    getClass: -> super + " col__" + @field.get "type"
 class Cruddy.Columns.Computed extends Cruddy.Columns.Base
-    getClass: -> super + " col-computed"
-class Cruddy.Columns.Actions extends Attribute
+    getClass: -> super + " col__computed"
+class Cruddy.Columns.ViewButton extends Cruddy.Columns.Base
+
+    id: "__viewButton"
 
     getHeader: -> ""
 
-    getClass: -> "col-actions"
+    getClass: -> "col__view-button col__button"
 
     canOrder: -> false
 
-    render: (item) -> """<div class="btn-group btn-group-xs">#{ @renderActions item }</div>"""
-
-    renderActions: (item) ->
-        html = ""
-
-        html += @renderEditAction item if @entity.viewPermitted()
-        html += @renderDeleteAction item if @entity.deletePermitted()
-
-
-    renderDeleteAction: (item) ->
-        """<a href="#" data-action="deleteItem" data-id="#{ item.id }" class="btn btn-default">#{ b_icon "trash" }</a>"""
-
-    renderEditAction: (item) -> """
-        <a href="#{ @entity.url() + "?id=" + item.id }" data-action="edit" class="btn btn-default">
+    render: (item) -> """
+        <a href="#{ @entity.link item.id }" class="btn btn-default btn-xs">
             #{ b_icon("pencil") }
         </a>
     """
-Cruddy.formatters = new Factory
+class Cruddy.Columns.DeleteButton extends Cruddy.Columns.Base
 
+    id: "__deleteButton"
+
+    getHeader: -> ""
+
+    getClass: -> "col__delete-button col__button"
+
+    canOrder: -> false
+
+    render: (item) -> """
+        <a href="#" data-action="deleteItem" class="btn btn-default btn-xs">
+            #{ b_icon "trash" }
+        </a>
+    """
 class BaseFormatter
     defaultOptions: {}
 
@@ -2974,6 +3007,15 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
         return xhr
 
+    # Destroy a model
+    destroy: (id, options = {}) ->
+        options.url = @url id
+        options.type = "POST"
+        options.dataType = "json"
+        options.data = _method: "DELETE"
+
+        return $.ajax options
+
     # Load a model and set it as current
     actionUpdate: (id) -> @load(id).then (instance) =>
         @set "instance", instance
@@ -2999,6 +3041,8 @@ class Cruddy.Entity.Entity extends Backbone.Model
     # Get link to this entity or to the item of the entity
     link: (id) ->
         link = @url()
+
+        id = id.id if id instanceof Cruddy.Entity.Instance
 
         return if id then link + "?id=" + id else link
 
@@ -3856,13 +3900,6 @@ class Router extends Backbone.Router
 
         return this
 
-    createApp: ->
-        if not Cruddy.app
-            Cruddy.app = new App
-            Cruddy.app.init()
-
-        return Cruddy.app
-
     addRoute: (name, entities, appendage = null) ->
         route = "^(#{ entities })"
         route += "/" + appendage if appendage
@@ -3872,7 +3909,7 @@ class Router extends Backbone.Router
 
         this
 
-    resolveEntity: (id, callback) -> @createApp().ready (app) ->
+    resolveEntity: (id, callback) -> Cruddy.ready (app) ->
         entity = app.entity(id)
 
         if entity.viewPermitted()

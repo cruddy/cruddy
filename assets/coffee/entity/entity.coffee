@@ -86,6 +86,15 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
         return xhr
 
+    # Destroy a model
+    destroy: (id, options = {}) ->
+        options.url = @url id
+        options.type = "POST"
+        options.dataType = "json"
+        options.data = _method: "DELETE"
+
+        return $.ajax options
+
     # Load a model and set it as current
     actionUpdate: (id) -> @load(id).then (instance) =>
         @set "instance", instance
@@ -111,6 +120,8 @@ class Cruddy.Entity.Entity extends Backbone.Model
     # Get link to this entity or to the item of the entity
     link: (id) ->
         link = @url()
+
+        id = id.id if id instanceof Cruddy.Entity.Instance
 
         return if id then link + "?id=" + id else link
 

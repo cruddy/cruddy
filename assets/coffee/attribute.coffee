@@ -1,4 +1,4 @@
-class Attribute extends Backbone.Model
+class Cruddy.Attribute extends Backbone.Model
 
     initialize: (options) ->
         @entity = options.entity

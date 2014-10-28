@@ -2,76 +2,89 @@
    DATA GRID
    ========================================================================== */
 
-.data-grid {
+.dg {
 
     > thead {
         background: #fff;
 
-        > tr > th > .sortable {
-            color: @link-color;
-            cursor: pointer;
+        > tr {
 
-            &:hover {
-                text-decoration: underline;
+            > .col__button {
+                width: 1px;
             }
 
-            &:after {
-                &:extend(.glyphicon);
-
-                font-size: @font-size-small;
-                font-weight: normal;
-                color: @gray-light;
-                padding-left: 0.5em;
+            > .col__primary, > .col__bool {
+                width: 70px;
             }
 
-            &.asc:after {
-                content: "\e094";
-            }
+            > .col__sortable {
+                background: #eee;
+                cursor: pointer;
 
-            &.desc:after {
-                content: "\e093";
+                &:after {
+                    &:extend(.glyphicon);
+
+                    font-size: @font-size-small;
+                    font-weight: normal;
+                    color: @gray-light;
+                    padding-left: 0.5em;
+                }
+
+                &.asc:after {
+                    content: "\e094";
+                }
+
+                &.desc:after {
+                    content: "\e093";
+                }
             }
         }
     }
 
-    > .items > .item {
+    > .items {
 
-        &.active {
-            > .col-actions {
-                [data-action=edit] {
+        > .empty {
+            text-align: center;
+            font-style: italic;
+        }
+
+        > .item {
+
+            > .col__button > .btn {
+                visibility: hidden;
+            }
+
+            // Display buttons when hoverd
+            &.active, &:hover {
+
+                > .col__button > .btn {
+                    visibility: visible;
+                }
+            }
+
+            &.active {
+
+                > .col__view-button > .btn {
                     cursor: not-allowed;
                     pointer-events: none; // Future-proof disabling of clicks
                     .opacity(.65);
                     .box-shadow(none);
                 }
-            }
 
-            > :first-child {
-                position: relative;
+                > :first-child {
+                    position: relative;
 
-                &:after {
-                    content: '';
-                    background: rgba(0, 180, 0, 0.65);
-                    position: absolute;
-                    top: 0;
-                    left: 0;
-                    width: 4px;
-                    height: 100%;
+                    &:after {
+                        content: '';
+                        background: rgba(0, 180, 0, 0.65);
+                        position: absolute;
+                        top: 0;
+                        left: 0;
+                        width: 4px;
+                        height: 100%;
+                    }
                 }
             }
         }
-    }
-
-    .col-actions {
-        width: 70px;
-    }
-
-    .col-primary, .col-bool {
-        width: 70px;
-    }
-
-    .no-items {
-        text-align: center;
-        font-style: italic;
     }
 }

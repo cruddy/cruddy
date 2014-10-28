@@ -21,3 +21,10 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
     isEditable: -> @getReference().viewPermitted() and super
 
     canFilter: -> @getReference().viewPermitted() and super
+
+    formatItem: (item) ->
+        ref = @getReference()
+
+        return item.title unless ref.viewPermitted()
+
+        """<a href="#{ ref.link item.id }">#{ _.escape item.title }</a>"""

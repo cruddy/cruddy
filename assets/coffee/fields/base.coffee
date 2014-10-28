@@ -147,7 +147,7 @@ class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
 
         this
 
-class Cruddy.Fields.Base extends Attribute
+class Cruddy.Fields.Base extends Cruddy.Attribute
     viewConstructor: Cruddy.Fields.InputView
 
     # Create a view that will represent this field in field list

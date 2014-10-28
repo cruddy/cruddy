@@ -1,42 +1,49 @@
-class DataGrid extends Backbone.View
+class DataGrid extends Cruddy.View
     tagName: "table"
-    className: "table table-hover data-grid"
+    className: "table table-hover dg"
 
     events: {
-        "click .sortable": "setOrder"
+        "click .col__sortable": "setOrder"
         "click [data-action]": "executeAction"
     }
 
     constructor: (options) ->
-        @className += " data-grid-" + options.entity.id
+        @className += " dg-" + options.entity.id
 
         super
 
     initialize: (options) ->
         @entity = options.entity
+
         @columns = @entity.columns.models.filter (col) -> col.isVisible()
-        @columns.unshift new Cruddy.Columns.Actions entity: @entity
+
+        @addActionColumns @columns
 
         @listenTo @model, "data", @updateData
-        @listenTo @model, "change:order_by change:order_dir", @onOrderChange
+        @listenTo @model, "change:order_by change:order_dir", @markOrderColumn
 
         @listenTo @entity, "change:instance", @markSelectedItem
 
-    onOrderChange: ->
+    addActionColumns: (columns) ->
+        @columns.unshift new Cruddy.Columns.ViewButton entity: @entity
+        @columns.push new Cruddy.Columns.DeleteButton entity: @entity if @entity.deletePermitted()
+
+        return this
+
+    markOrderColumn: ->
         orderBy = @model.get "order_by"
         orderDir = @model.get "order_dir"
 
         if @orderBy? and orderBy isnt @orderBy
-            @$("#col-#{ @orderBy } .sortable").removeClass "asc desc"
+            @$colCell(@orderBy).removeClass "asc desc"
 
-        @orderBy = orderBy
-        @$("#col-#{ @orderBy } .sortable").removeClass("asc desc").addClass orderDir
+        @$colCell(@orderBy = orderBy).removeClass("asc desc").addClass orderDir
 
         this
 
     markSelectedItem: ->
-        @$("#item-#{ model.id }").removeClass "active" if model = @entity.previous "instance"
-        @$("#item-#{ model.id }").addClass "active" if model = @entity.get "instance"
+        @$itemRow(model).removeClass "active" if model = @entity.previous "instance"
+        @$itemRow(model).addClass "active" if model = @entity.get "instance"
 
         this
 
@@ -65,7 +72,7 @@ class DataGrid extends Backbone.View
 
         @$el.html @renderHead(@columns) + @renderBody(@columns, data)
 
-        @onOrderChange @model
+        @markOrderColumn @model
 
         this
 
@@ -75,27 +82,34 @@ class DataGrid extends Backbone.View
         html += "</tr></thead>"
 
     renderHeadCell: (col) ->
-        """<th class="#{ col.getClass() }" id="col-#{ col.id }">#{ @renderHeadCellValue col }</th>"""
+        """<th class="#{ col.getClass() }" id="#{ @colCellId col }" data-id="#{ col.id }">#{ @renderHeadCellValue col }</th>"""
 
     renderHeadCellValue: (col) ->
         title = _.escape col.getHeader()
-        help = _.escape col.getHelp()
-        title = "<span class=\"sortable\" data-id=\"#{ col.id }\">#{ title }</span>" if col.canOrder()
-        if help then "<span class=\"glyphicon glyphicon-question-sign\" title=\"#{ help }\"></span> #{ title }" else title
+
+        if help = _.escape col.getHelp()
+            title = """
+                <span class="glyphicon glyphicon-question-sign" title="#{ help }"></span> #{ title }
+            """
+
+        return title
 
     renderBody: (columns, data) ->
-        html = "<tbody class=\"items\">"
+        html = """<tbody class="items">"""
 
         if data? and data.length
             html += @renderRow columns, item for item in data
         else
-            html += """<tr><td class="no-items" colspan="#{ columns.length }">#{ Cruddy.lang.no_results }</td></tr>"""
+            html += """<tr class="empty"><td colspan="#{ columns.length }">#{ Cruddy.lang.no_results }</td></tr>"""
 
         html += "</tbody>"
 
     renderRow: (columns, item) ->
-        html = "<tr class=\"item #{ @states item }\" id=\"item-#{ item.id }\" data-id=\"#{ item.id }\">"
+        html = """
+            <tr class="item #{ @states item }" id="#{ @itemRowId item }" data-id="#{ item.id }">"""
+
         html += @renderCell col, item for col in columns
+
         html += "</tr>"
 
     states: (item) ->
@@ -120,19 +134,29 @@ class DataGrid extends Backbone.View
         return
 
     deleteItem: ($el) ->
-        id = $el.data "id"
+        return if not confirm Cruddy.lang.confirm_delete
 
-        $.ajax
-            url: Cruddy.baseUrl + "/" + @entity.id + "/" + $el.data("id")
-            type: "POST"
-            dataType: "json"
+        $row = $el.closest ".item"
+
+        $el.attr "disabled", yes
+
+        @entity.destroy $row.data("id"),
+
             displayLoading: yes
 
-            data:
-                _method: "DELETE"
-
             success: =>
-                $el.closest("tr").fadeOut()
+                $row.fadeOut()
                 @model.fetch()
 
+            fail: ->
+                $el.attr "disabled", no
+
         return
+
+    colCellId: (col) -> @componentId "col-" + col.id
+
+    $colCell: (id) -> @$component "col-" + id
+
+    itemRowId: (item) -> @componentId "item-" + item.id
+
+    $itemRow: (item) -> @$component "item-" + item.id

@@ -1,5 +1,3 @@
-Cruddy.formatters = new Factory
-
 class BaseFormatter
     defaultOptions: {}
 

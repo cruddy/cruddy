@@ -1,5 +1,3 @@
-Cruddy.Columns = new Factory
-
 class Cruddy.Columns.Base extends Cruddy.Attribute
 
     initialize: (attributes) ->

@@ -17,12 +17,13 @@ module.exports = function(grunt) {
 
             app: {
                 src: [
-                    '<%= app %>/init.coffee',
 
+                    '<%= app %>/init.coffee',
                     '<%= app %>/helpers.coffee',
+                    '<%= app %>/factory.coffee',
+                    '<%= app %>/cruddy.coffee',
                     '<%= app %>/view.coffee',
                     '<%= app %>/formData.coffee',
-                    '<%= app %>/factory.coffee',
                     '<%= app %>/attribute.coffee',
                     '<%= app %>/datasource.coffee',
                     '<%= app %>/searchDataSource.coffee',
@@ -62,8 +63,11 @@ module.exports = function(grunt) {
                     '<%= app %>/layout/layout.coffee',
 
                     // Fields
+                    '<%= app %>/fields/baseView.coffee',
+                    '<%= app %>/fields/inputView.coffee',
                     '<%= app %>/fields/base.coffee',
                     '<%= app %>/fields/input.coffee',
+                    '<%= app %>/fields/prependAppendWrapper.coffee',
                     '<%= app %>/fields/text.coffee',
                     '<%= app %>/fields/datetime.coffee',
                     '<%= app %>/fields/boolean.coffee',
@@ -71,10 +75,14 @@ module.exports = function(grunt) {
                     '<%= app %>/fields/relation.coffee',
                     '<%= app %>/fields/file.coffee',
                     '<%= app %>/fields/image.coffee',
+                    '<%= app %>/fields/imageFormatter.coffee',
                     '<%= app %>/fields/slug.coffee',
                     '<%= app %>/fields/enum.coffee',
                     '<%= app %>/fields/markdown.coffee',
                     '<%= app %>/fields/code.coffee',
+                    '<%= app %>/fields/embeddedView.coffee',
+                    '<%= app %>/fields/embeddedItemView.coffee',
+                    '<%= app %>/fields/relatedCollection.coffee',
                     '<%= app %>/fields/embedded.coffee',
                     '<%= app %>/fields/number.coffee',
                     '<%= app %>/fields/computed.coffee',

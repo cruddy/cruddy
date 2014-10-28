@@ -1,9 +1,5 @@
 Cruddy = window.Cruddy || {}
 
-$.extend Cruddy,
-
-    getHistoryRoot: -> @baseUrl.substr @root.length
-
 TRANSITIONEND = "transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd"
 NOT_AVAILABLE = "&mdash;"
 TITLE_SEPARATOR = " / ";

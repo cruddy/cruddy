@@ -1,7 +1,7 @@
 $.extend Cruddy,
 
-    Fields: new Factory
-    Columns: new Factory
+    Fields: {}
+    Columns: {}
     formatters: new Factory
 
     getHistoryRoot: -> @baseUrl.substr @root.length

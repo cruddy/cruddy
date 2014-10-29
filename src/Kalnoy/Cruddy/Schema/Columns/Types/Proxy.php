@@ -26,7 +26,7 @@ class Proxy extends BaseColumn {
     /**
      * {@inheritdoc}
      */
-    protected $class = 'Proxy';
+    protected $class = 'Cruddy.Columns.Proxy';
 
     /**
      * {@inheritdoc}

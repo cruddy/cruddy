@@ -4,7 +4,7 @@ namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
 /**
  * Date field.
- * 
+ *
  * @since 1.0.0
  */
 class Date extends DateTime {
@@ -17,5 +17,5 @@ class Date extends DateTime {
     /**
      * {@inheritdoc}
      */
-    protected $class = 'Date';
+    protected $class = 'Cruddy.Fields.Date';
 }

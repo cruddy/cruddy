@@ -8,7 +8,7 @@ use Carbon\Carbon;
 
 /**
  * Date and time field.
- * 
+ *
  * @since 1.0.0
  */
 class DateTime extends BaseTextField {
@@ -16,7 +16,7 @@ class DateTime extends BaseTextField {
     /**
      * {@inheritdoc}
      */
-    protected $class = 'DateTime';
+    protected $class = 'Cruddy.Fields.DateTime';
 
     /**
      * {@inheritdoc}
@@ -25,7 +25,7 @@ class DateTime extends BaseTextField {
 
     /**
      * {@inheritdoc}
-     */ 
+     */
     protected $filterType = self::FILTER_NONE;
 
     /**
@@ -58,5 +58,5 @@ class DateTime extends BaseTextField {
 
         return $value->getTimestamp();
     }
-    
+
 }

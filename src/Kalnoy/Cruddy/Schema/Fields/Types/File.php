@@ -16,7 +16,7 @@ class File extends BaseField {
     /**
      * {@inheritdoc}
      */
-    protected $class = 'File';
+    protected $class = 'Cruddy.Fields.File';
 
     /**
      * {@inheritdoc}

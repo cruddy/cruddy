@@ -16,7 +16,7 @@ class Image extends File {
     /**
      * {@inheritdoc}
      */
-    protected $class = 'Image';
+    protected $class = 'Cruddy.Fields.Image';
 
     /**
      * {@inheritdoc}

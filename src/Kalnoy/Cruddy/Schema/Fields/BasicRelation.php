@@ -18,7 +18,7 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessorInte
     /**
      * {@inheritdoc}
      */
-    protected $class = 'Relation';
+    protected $class = 'Cruddy.Fields.Relation';
 
     /**
      * {@inheritdoc}

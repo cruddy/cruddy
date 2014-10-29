@@ -6,9 +6,9 @@ use Kalnoy\Cruddy\Schema\Fields\BaseField;
 
 /**
  * Slug field type.
- * 
+ *
  * The slug uses other field's value to generate own value.
- * 
+ *
  * @since 1.0.0
  */
 class Slug extends BaseField {
@@ -16,7 +16,7 @@ class Slug extends BaseField {
     /**
      * {@inheritdoc}
      */
-    protected $class = 'Slug';
+    protected $class = 'Cruddy.Fields.Slug';
 
     /**
      * {@inheritdoc}

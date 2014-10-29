@@ -19,7 +19,7 @@ class Computed extends BaseColumn {
      *
      * @var string
      */
-    protected $class = 'Computed';
+    protected $class = 'Cruddy.Columns.Computed';
 
     /**
      * The Closure that will receive a model to resolve a value.

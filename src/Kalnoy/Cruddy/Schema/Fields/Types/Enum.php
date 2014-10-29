@@ -16,7 +16,7 @@ class Enum extends BaseInput {
     /**
      * {@inheritdoc}
      */
-    protected $class = 'Enum';
+    protected $class = 'Cruddy.Fields.Enum';
 
     /**
      * {@inheritdoc}

@@ -1,4 +1,4 @@
-<?php 
+<?php
 
 namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
@@ -8,7 +8,7 @@ use Kalnoy\Cruddy\Schema\Fields\BaseField;
 
 /**
  * Boolean field.
- * 
+ *
  * @since 1.0.0
  */
 class Boolean extends BaseField {
@@ -16,7 +16,7 @@ class Boolean extends BaseField {
     /**
      * {@inheritdoc}
      */
-    protected $class = 'Boolean';
+    protected $class = 'Cruddy.Fields.Boolean';
 
     /**
      * {@inheritdoc}
@@ -43,7 +43,7 @@ class Boolean extends BaseField {
 
     /**
      * {@inheritdoc}
-     * 
+     *
      * @return bool
      */
     public function process($value)

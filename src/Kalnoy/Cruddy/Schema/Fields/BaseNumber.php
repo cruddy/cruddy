@@ -8,10 +8,10 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /**
  * Base number field class.
- * 
+ *
  * Number fields use special filter, they also cast value to appropriate format
  * when both extracting and processing value.
- * 
+ *
  * @since 1.0.0
  */
 abstract class BaseNumber extends BaseInput {
@@ -19,7 +19,7 @@ abstract class BaseNumber extends BaseInput {
     /**
      * {@inheritdoc}
      */
-    protected $class = 'Number';
+    protected $class = 'Cruddy.Fields.Number';
 
     /**
      * {@inheritdoc}
@@ -35,7 +35,7 @@ abstract class BaseNumber extends BaseInput {
 
     /**
      * {@inheritdoc}
-     * 
+     *
      * If value is empty, null is returned.
      */
     public function process($value)

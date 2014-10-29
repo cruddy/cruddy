@@ -15,7 +15,7 @@ class States extends Attribute implements ColumnInterface {
     /**
      * {@inheritdoc}
      */
-    protected $class = 'Proxy';
+    protected $class = 'Cruddy.Columns.Computed';
 
     /**
      * The list of states of the row.

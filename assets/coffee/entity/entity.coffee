@@ -3,25 +3,30 @@ Cruddy.Entity = {}
 class Cruddy.Entity.Entity extends Backbone.Model
 
     initialize: (attributes, options) ->
-        @fields = @createCollection Cruddy.Fields, attributes.fields
-        @columns = @createCollection Cruddy.Columns, attributes.columns
+        @fields = @createObjects attributes.fields
+        @columns = @createObjects attributes.columns
         @permissions = Cruddy.permissions[@id]
         @cache = {}
 
         return this
 
-    createCollection: (factory, items) ->
+    createObjects: (items) ->
         data = []
+
         for options in items
             options.entity = this
-            instance = factory.create options.class, options
-            data.push instance if instance?
+
+            constructor = get options.class
+
+            throw "The class #{ options.class } is not found" unless constructor
+
+            data.push new constructor options
 
         new Backbone.Collection data
 
     # Create a datasource that will require specified columns and can be filtered
     # by specified filters
-    createDataSource: (data) -> new DataSource data, { entity: this }
+    createDataSource: (data) -> new DataSource data, entity: this
 
     # Create filters for specified columns
     createFilters: (columns = @columns) ->

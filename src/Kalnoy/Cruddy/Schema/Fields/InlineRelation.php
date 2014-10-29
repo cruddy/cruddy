@@ -19,7 +19,7 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     /**
      * {@inheritdoc}
      */
-    protected $class = 'Embedded';
+    protected $class = 'Cruddy.Fields.Embedded';
 
     /**
      * {@inheritdoc}

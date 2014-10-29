@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 
 /**
  * Computed field.
- * 
+ *
  * @since 1.0.0
  */
 class Computed extends BaseField {
@@ -15,7 +15,7 @@ class Computed extends BaseField {
     /**
      * {@inheritdoc}
      */
-    protected $class = 'Computed';
+    protected $class = 'Cruddy.Fields.Computed';
 
     /**
      * The accessor.

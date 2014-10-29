@@ -21,7 +21,7 @@ class Code extends BaseField {
     /**
      * {@inheritdoc}
      */
-    protected $class = 'Code';
+    protected $class = 'Cruddy.Fields.Code';
 
     /**
      * {@inheritdoc}

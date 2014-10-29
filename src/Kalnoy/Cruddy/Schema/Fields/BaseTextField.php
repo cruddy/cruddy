@@ -20,7 +20,7 @@ abstract class BaseTextField extends BaseInput {
     /**
      * {@inheritdoc}
      */
-    protected $class = 'Input';
+    protected $class = 'Cruddy.Fields.Input';
 
     /**
      * {@inheritdoc}

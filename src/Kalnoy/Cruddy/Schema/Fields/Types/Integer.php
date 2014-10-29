@@ -6,10 +6,15 @@ use Kalnoy\Cruddy\Schema\Fields\BaseNumber;
 
 /**
  * Integer field.
- * 
+ *
  * @since 1.0.0
  */
 class Integer extends BaseNumber {
+
+    /**
+     * @var string
+     */
+    protected $type = 'integer';
 
     /**
      * {@inheritdoc}

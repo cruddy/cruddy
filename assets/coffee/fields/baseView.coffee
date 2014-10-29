@@ -2,15 +2,11 @@ class Cruddy.Fields.BaseView extends Cruddy.Layout.Element
 
     constructor: (options) ->
         @field = field = options.field
+        model = options.model
 
-        inputId = options.model.entity.id + "__" + field.id
-        @inputId = inputId + "__" + options.model.cid
+        @inputId = [ model.entity.id, field.id, model.cid ].join "__"
 
-        base = " field-"
-        classes = [ field.getType(), field.id, inputId ]
-        className = "field" + base + classes.join base
-
-        className += " form-group"
+        className = "form-group field field__#{ field.getType() } field--#{ field.id } field--#{ model.entity.id }--#{ field.id }"
 
         @className = if @className then className + " " + @className else className
 

@@ -184,10 +184,7 @@ abstract class BaseSchema implements SchemaInterface {
      *
      * @return void
      */
-    public function layout($l)
-    {
-
-    }
+    public function layout($l) {}
 
     /**
      * Compile a layout.
@@ -208,8 +205,7 @@ abstract class BaseSchema implements SchemaInterface {
      */
     public function toArray()
     {
-        return
-        [
+        return [
             'order_by' => $this->defaultOrder,
             'template' => $this->template,
             'filters' => $this->filters,

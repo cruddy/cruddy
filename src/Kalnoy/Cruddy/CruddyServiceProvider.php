@@ -156,9 +156,6 @@ class CruddyServiceProvider extends ServiceProvider {
 
             Entity::setEnvironment($env);
 
-            BaseRepository::setFiles($app['files']);
-            BaseRepository::setPaginationFactory($app['paginator']);
-
             return $env;
         });
     }

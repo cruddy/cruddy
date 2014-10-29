@@ -2,15 +2,15 @@
 
 namespace Kalnoy\Cruddy\Repo;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Filesystem\Filesystem;
-use Illuminate\Pagination\Factory as PaginationFactory;
 use Illuminate\Database\Eloquent\Relations\Relation;
+use Illuminate\Pagination\Paginator;
 use Kalnoy\Cruddy\ModelNotFoundException;
 use Kalnoy\Cruddy\ModelNotSavedException;
 use Kalnoy\Cruddy\Service\FileUploader;
 use Exception;
-use RuntimeException;
 
 /**
  * Base repository class.
@@ -18,20 +18,6 @@ use RuntimeException;
  * @since 1.0.0
  */
 abstract class BaseRepository implements RepositoryInterface {
-
-    /**
-     * Filesystem object.
-     *
-     * @var Filesystem
-     */
-    protected static $file;
-
-    /**
-     * Paginator factory.
-     *
-     * @var PaginationFactory
-     */
-    protected static $paginator;
 
     /**
      * @var FileUploader[]
@@ -111,13 +97,11 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * Get new query.
      *
-     * @param bool $excludeDeleted
-     *
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function newQuery($excludeDeleted = true)
+    public function newQuery()
     {
-        return $this->model->newQuery($excludeDeleted);
+        return $this->model->newQueryWithoutScopes();
     }
 
     /**
@@ -137,24 +121,11 @@ abstract class BaseRepository implements RepositoryInterface {
      */
     public function search(array $options, SearchProcessorInterface $processor = null)
     {
-        if ( ! self::$paginator)
-        {
-            throw new RuntimeException("Cannot search items because paginator is not set.");
-        }
-
         $builder = $this->newQuery();
-        $query = $builder->getQuery();
 
         if ($processor) $processor->constraintBuilder($builder, $options);
 
-        $total = $query->getPaginationCount();
-
-        $page = array_get($options, 'page', 1);
-        $perPage = array_get($options, 'per_page', $this->getPerPage());
-
-        $query->forPage($page, $perPage);
-
-        return self::$paginator->make($builder->get()->all(), $total, $perPage);
+        return $this->paginate($builder, $options);
     }
 
     /**
@@ -399,7 +370,7 @@ abstract class BaseRepository implements RepositoryInterface {
      */
     public function uploads($attribute)
     {
-        return $this->files[$attribute] = new FileUploader(self::$file);
+        return $this->files[$attribute] = app('Kalnoy\Cruddy\Service\FileUploader');
     }
 
     /**
@@ -462,23 +433,26 @@ abstract class BaseRepository implements RepositoryInterface {
     }
 
     /**
-     * Set pagination factory.
+     * @param $builder
+     * @param array $options
      *
-     * @param PaginationFactory $factory
+     * @return \Illuminate\Pagination\Paginator
      */
-    public static function setPaginationFactory(PaginationFactory $factory)
+    protected function paginate(Builder $builder, array $options)
     {
-        self::$paginator = $factory;
-    }
+        $factory = app('Illuminate\Pagination\Factory');
 
-    /**
-     * Set filesystem object.
-     *
-     * @param Filesystem $files
-     */
-    public static function setFiles(Filesystem $files)
-    {
-        self::$file = $files;
+        $query = $builder->getQuery();
+        $total = $query->getPaginationCount();
+
+        $page = array_get($options, 'page', 1);
+        $perPage = array_get($options, 'per_page', $this->getPerPage());
+
+        $query->forPage($page, $perPage);
+
+        $paginator = new Paginator($factory, $builder->get()->all(), $total, $perPage);
+
+        return $paginator->setupPaginationContext();
     }
 
 }

@@ -1,5 +1,5 @@
 (function() {
-  var AdvFormData, Alert, App, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, NOT_AVAILABLE, Pagination, Router, SearchDataSource, TITLE_SEPARATOR, TRANSITIONEND, after_break, b_btn, b_icon, entity_url, humanize, thumb, _ref,
+  var AdvFormData, Alert, App, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, NOT_AVAILABLE, Pagination, Router, SearchDataSource, TITLE_SEPARATOR, TRANSITIONEND, after_break, b_btn, b_icon, entity_url, get, humanize, thumb, _ref,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -94,6 +94,25 @@
     return "<button type='" + type + "' class='btn " + className + "'>" + (label.trim()) + "</button>";
   };
 
+  get = function(path, obj) {
+    var key, _i, _len, _ref1;
+    if (obj == null) {
+      obj = window;
+    }
+    if (_.isEmpty(path)) {
+      return obj;
+    }
+    _ref1 = path.split(".");
+    for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+      key = _ref1[_i];
+      if (!(key in obj)) {
+        return;
+      }
+      obj = obj[key];
+    }
+    return obj;
+  };
+
   Alert = (function(_super) {
     __extends(Alert, _super);
 
@@ -160,8 +179,8 @@
   })();
 
   $.extend(Cruddy, {
-    Fields: new Factory,
-    Columns: new Factory,
+    Fields: {},
+    Columns: {},
     formatters: new Factory,
     getHistoryRoot: function() {
       return this.baseUrl.substr(this.root.length);
@@ -307,15 +326,11 @@
     };
 
     DataSource.prototype.initialize = function(attributes, options) {
-      this.entity = options.entity;
-      if (options.columns != null) {
-        this.columns = options.columns;
-      }
-      if (options.filter != null) {
-        this.filter = options.filter;
-      }
+      var entity, filter;
+      this.entity = entity = options.entity;
+      this.filter = filter = new Backbone.Model;
       this.options = {
-        url: this.entity.url(),
+        url: entity.url(),
         dataType: "json",
         type: "get",
         displayLoading: true,
@@ -333,17 +348,15 @@
           };
         })(this)
       };
-      if (this.filter != null) {
-        this.listenTo(this.filter, "change", ((function(_this) {
-          return function() {
-            _this.set({
-              current_page: 1,
-              silent: true
-            });
-            return _this.fetch();
-          };
-        })(this)));
-      }
+      this.listenTo(filter, "change", (function(_this) {
+        return function() {
+          _this.set({
+            current_page: 1,
+            silent: true
+          });
+          return _this.fetch();
+        };
+      })(this));
       this.on("change", (function(_this) {
         return function() {
           if (!_this._hold) {
@@ -432,14 +445,11 @@
 
     DataSource.prototype.filterData = function() {
       var data, key, value, _ref1;
-      if (this.filter == null) {
-        return null;
-      }
       data = {};
       _ref1 = this.filter.attributes;
       for (key in _ref1) {
         value = _ref1[key];
-        if (!(value === null || value === "")) {
+        if (!_.isEmpty(value)) {
           data[key] = value;
         }
       }
@@ -2966,14 +2976,11 @@
     __extends(BaseView, _super);
 
     function BaseView(options) {
-      var base, className, classes, field, inputId, _ref1;
+      var className, field, model, _ref1;
       this.field = field = options.field;
-      inputId = options.model.entity.id + "__" + field.id;
-      this.inputId = inputId + "__" + options.model.cid;
-      base = " field-";
-      classes = [field.getType(), field.id, inputId];
-      className = "field" + base + classes.join(base);
-      className += " form-group";
+      model = options.model;
+      this.inputId = [model.entity.id, field.id, model.cid].join("__");
+      className = "form-group field field__" + (field.getType()) + " field--" + field.id + " field--" + model.entity.id + "--" + field.id;
       this.className = this.className ? className + " " + this.className : className;
       this.forceDisable = (_ref1 = options.forceDisable) != null ? _ref1 : false;
       BaseView.__super__.constructor.apply(this, arguments);
@@ -4478,31 +4485,31 @@
     }
 
     Entity.prototype.initialize = function(attributes, options) {
-      this.fields = this.createCollection(Cruddy.Fields, attributes.fields);
-      this.columns = this.createCollection(Cruddy.Columns, attributes.columns);
+      this.fields = this.createObjects(attributes.fields);
+      this.columns = this.createObjects(attributes.columns);
       this.permissions = Cruddy.permissions[this.id];
       this.cache = {};
       return this;
     };
 
-    Entity.prototype.createCollection = function(factory, items) {
-      var data, instance, options, _i, _len;
+    Entity.prototype.createObjects = function(items) {
+      var constructor, data, options, _i, _len;
       data = [];
       for (_i = 0, _len = items.length; _i < _len; _i++) {
         options = items[_i];
         options.entity = this;
-        instance = factory.create(options["class"], options);
-        if (instance != null) {
-          data.push(instance);
+        constructor = get(options["class"]);
+        if (!constructor) {
+          throw "The class " + options["class"] + " is not found";
         }
+        data.push(new constructor(options));
       }
       return new Backbone.Collection(data);
     };
 
     Entity.prototype.createDataSource = function(data) {
       return new DataSource(data, {
-        entity: this,
-        filter: new Backbone.Model
+        entity: this
       });
     };
 
@@ -4655,6 +4662,17 @@
       } else {
         return link;
       }
+    };
+
+    Entity.prototype.createView = function() {
+      var pageClass;
+      pageClass = get(this.attributes.view);
+      if (!pageClass) {
+        throw "Failed to resolve page class " + this.attributes.view;
+      }
+      return new pageClass({
+        model: this
+      });
     };
 
     Entity.prototype.getPluralTitle = function() {
@@ -5067,60 +5085,70 @@
     };
 
     Page.prototype.render = function() {
-      var filters;
       this.$el.html(this.template());
-      this.search = this.createSearchInput(this.dataSource);
-      this.$component("search").append(this.search.render().$el);
-      if (!_.isEmpty(filters = this.dataSource.entity.get("filters"))) {
-        this.filterList = this.createFilterList(this.dataSource.filter, filters);
-        this.$component("filters").append(this.filterList.render().el);
+      this.searchInputView = this.createSearchInputView();
+      this.dataView = this.createDataView();
+      this.paginationView = this.createPaginationView();
+      this.filterListView = this.createFilterListView();
+      if (this.searchInputView) {
+        this.$component("search_input_view").append(this.searchInputView.render().$el);
       }
-      this.dataGrid = this.createDataGrid(this.dataSource);
-      this.pagination = this.createPagination(this.dataSource);
-      this.$component("body").append(this.dataGrid.render().el).append(this.pagination.render().el);
+      if (this.filterListView) {
+        this.$component("filter_list_view").append(this.filterListView.render().el);
+      }
+      if (this.dataView) {
+        this.$component("data_view").append(this.dataView.render().el);
+      }
+      if (this.paginationView) {
+        this.$component("pagination_view").append(this.paginationView.render().el);
+      }
       this.handleRouteUpdated();
       this.dataSource.fetch();
       return this;
     };
 
-    Page.prototype.createDataGrid = function(dataSource) {
+    Page.prototype.createDataView = function() {
       return new DataGrid({
-        model: dataSource,
+        model: this.dataSource,
         entity: this.model
       });
     };
 
-    Page.prototype.createPagination = function(dataSource) {
+    Page.prototype.createPaginationView = function() {
       return new Pagination({
-        model: dataSource
+        model: this.dataSource
       });
     };
 
-    Page.prototype.createFilterList = function(model, filters) {
+    Page.prototype.createFilterListView = function() {
+      var filters;
+      if (_.isEmpty(filters = this.dataSource.entity.get("filters"))) {
+        return;
+      }
       return new FilterList({
-        model: model,
+        model: this.dataSource.filter,
         entity: this.model,
         filters: filters
       });
     };
 
-    Page.prototype.createSearchInput = function(dataSource) {
+    Page.prototype.createSearchInputView = function() {
       return new Cruddy.Inputs.Search({
-        model: dataSource,
+        model: this.dataSource,
         key: "search"
       });
     };
 
     Page.prototype.template = function() {
-      var html;
-      return html = "<div class=\"content-header\">\n    <div class=\"column column-main\">\n        <h1 class=\"entity-title\">" + (this.model.getPluralTitle()) + "</h1>\n\n        <div class=\"entity-title-buttons\">\n            " + (this.buttonsTemplate()) + "\n        </div>\n    </div>\n\n    <div class=\"column column-extra\">\n        <div class=\"entity-search-box\" id=\"" + (this.componentId("search")) + "\"></div>\n    </div>\n</div>\n\n<div class=\"content-body\">\n    <div class=\"column column-main\" id=\"" + (this.componentId("body")) + "\"></div>\n    <div class=\"column column-extra\" id=\"" + (this.componentId("filters")) + "\"></div>\n</div>";
+      return "<div class=\"content-header\">\n    <div class=\"column column-main\">\n        <h1 class=\"entity-title\">" + (this.model.getPluralTitle()) + "</h1>\n\n        <div class=\"entity-title-buttons\">\n            " + (this.buttonsTemplate()) + "\n        </div>\n    </div>\n\n    <div class=\"column column-extra\">\n        <div class=\"entity-search-box\" id=\"" + (this.componentId("search_input_view")) + "\"></div>\n    </div>\n</div>\n\n<div class=\"content-body\">\n    <div class=\"column column-main\">\n        <div id=\"" + (this.componentId("data_view")) + "\"></div>\n        <div id=\"" + (this.componentId("pagination_view")) + "\"></div>\n    </div>\n\n    <div class=\"column column-extra\" id=\"" + (this.componentId("filter_list_view")) + "\"></div>\n</div>";
     };
 
     Page.prototype.buttonsTemplate = function() {
       var html;
-      html = "<button type=\"button\" class=\"btn btn-default ep-btn-refresh\" title=\"" + Cruddy.lang.refresh + "\">" + (b_icon("refresh")) + "</button>";
+      html = "<button type=\"button\" class=\"btn btn-default ep-btn-refresh\" title=\"" + Cruddy.lang.refresh + "\">\n    " + (b_icon("refresh")) + "\n</button>";
+      html += " ";
       if (this.model.createPermitted()) {
-        html += " <button type=\"button\" class=\"btn btn-primary ep-btn-create\" title=\"" + Cruddy.lang.add + "\">" + (b_icon("plus")) + "</button>";
+        html += "<button type=\"button\" class=\"btn btn-primary ep-btn-create\" title=\"" + Cruddy.lang.add + "\">\n    " + (b_icon("plus")) + "\n</button>";
       }
       return html;
     };
@@ -5130,16 +5158,16 @@
       if ((_ref1 = this.form) != null) {
         _ref1.remove();
       }
-      if ((_ref2 = this.filterList) != null) {
+      if ((_ref2 = this.filterListView) != null) {
         _ref2.remove();
       }
-      if ((_ref3 = this.dataGrid) != null) {
+      if ((_ref3 = this.dataView) != null) {
         _ref3.remove();
       }
-      if ((_ref4 = this.pagination) != null) {
+      if ((_ref4 = this.paginationView) != null) {
         _ref4.remove();
       }
-      if ((_ref5 = this.search) != null) {
+      if ((_ref5 = this.searchInputView) != null) {
         _ref5.remove();
       }
       if ((_ref6 = this.dataSource) != null) {
@@ -5502,7 +5530,7 @@
     };
 
     App.prototype.init = function() {
-      this.loadSchema();
+      this._loadSchema();
       return this;
     };
 
@@ -5510,7 +5538,7 @@
       return this.dfd.done(callback);
     };
 
-    App.prototype.loadSchema = function() {
+    App.prototype._loadSchema = function() {
       var req;
       req = $.ajax({
         url: Cruddy.schemaUrl,
@@ -5539,9 +5567,7 @@
       this.dispose();
       this.mainContent.hide();
       if (entity) {
-        this.container.append((this.page = new Cruddy.Entity.Page({
-          model: entity
-        })).render().el);
+        this.container.append((this.entityView = entity.createView()).render().el);
       }
       return this.updateTitle();
     };
@@ -5561,7 +5587,7 @@
 
     App.prototype.pageUnloadConfirmationMessage = function() {
       var _ref1;
-      return (_ref1 = this.page) != null ? _ref1.pageUnloadConfirmationMessage() : void 0;
+      return (_ref1 = this.entityView) != null ? _ref1.pageUnloadConfirmationMessage() : void 0;
     };
 
     App.prototype.startLoading = function() {
@@ -5593,26 +5619,26 @@
     };
 
     App.prototype.entity = function(id) {
-      if (!id in this.entities) {
-        console.error("Unknown entity " + id);
+      if (!(id in this.entities)) {
+        throw "Unknown entity " + id;
       }
       return this.entities[id];
     };
 
     App.prototype.dispose = function() {
       var _ref1;
-      if ((_ref1 = this.page) != null) {
+      if ((_ref1 = this.entityView) != null) {
         _ref1.remove();
       }
-      this.page = null;
+      this.entityView = null;
       return this;
     };
 
     App.prototype.updateTitle = function() {
       var title;
       title = Cruddy.brandName;
-      if (this.page != null) {
-        title = this.page.getPageTitle() + TITLE_SEPARATOR + title;
+      if (this.entityView != null) {
+        title = this.entityView.getPageTitle() + TITLE_SEPARATOR + title;
       }
       this.$title.text(title);
       return this;

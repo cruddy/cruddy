@@ -56,6 +56,17 @@ b_btn = (label, icon = null, className = "btn-default", type = 'button') ->
 
     "<button type='#{ type }' class='btn #{ className }'>#{ label.trim() }</button>"
 
+get = (path, obj = window) ->
+    return obj if _.isEmpty path
+
+    for key in path.split "."
+
+        return unless key of obj
+
+        obj = obj[key]
+
+    return obj
+
 class Alert extends Backbone.View
     tagName: "span"
     className: "alert"
@@ -89,8 +100,8 @@ class Factory
         null
 $.extend Cruddy,
 
-    Fields: new Factory
-    Columns: new Factory
+    Fields: {}
+    Columns: {}
     formatters: new Factory
 
     getHistoryRoot: -> @baseUrl.substr @root.length
@@ -101,6 +112,7 @@ $.extend Cruddy,
         return @app
 
     ready: (callback) -> @getApp().ready callback
+        
 class Cruddy.View extends Backbone.View
     componentId: (component) -> @cid + "-" + component
 
@@ -167,12 +179,11 @@ class DataSource extends Backbone.Model
         search: ""
 
     initialize: (attributes, options) ->
-        @entity = options.entity
-        @columns = options.columns if options.columns?
-        @filter = options.filter if options.filter?
+        @entity = entity = options.entity
+        @filter = filter = new Backbone.Model
 
         @options =
-            url: @entity.url()
+            url: entity.url()
             dataType: "json"
             type: "get"
             displayLoading: yes
@@ -186,10 +197,9 @@ class DataSource extends Backbone.Model
 
             error: (xhr) => @trigger "error", this, xhr
 
-        @listenTo @filter, "change", (=>
+        @listenTo filter, "change", =>
             @set current_page: 1, silent: yes
             @fetch()
-        ) if @filter?
 
         @on "change", => @fetch() unless @_hold
         @on "change:search", => @set current_page: 1, silent: yes unless @_hold
@@ -198,7 +208,7 @@ class DataSource extends Backbone.Model
 
     hasMore: -> @get("current_page") < @get("last_page")
 
-    isFull: -> !@hasMore()
+    isFull: -> not @hasMore()
 
     inProgress: -> @request?
 
@@ -230,13 +240,12 @@ class DataSource extends Backbone.Model
         @fetch()
 
     data: ->
-        data = {
+        data =
             order_by: @get "order_by"
             order_dir: @get "order_dir"
             page: @get "current_page"
             per_page: @get "per_page"
             keywords: @get "search"
-        }
 
         filters = @filterData()
 
@@ -246,14 +255,13 @@ class DataSource extends Backbone.Model
         data
 
     filterData: ->
-        return null unless @filter?
-
         data = {}
 
-        for key, value of @filter.attributes
-            data[key] = value unless value is null or value is ""
+        for key, value of @filter.attributes when not _.isEmpty value
+            data[key] = value
 
-        data
+        return data
+
 class SearchDataSource extends Backbone.Model
     defaults:
         search: ""
@@ -2080,15 +2088,11 @@ class Cruddy.Fields.BaseView extends Cruddy.Layout.Element
 
     constructor: (options) ->
         @field = field = options.field
+        model = options.model
 
-        inputId = options.model.entity.id + "__" + field.id
-        @inputId = inputId + "__" + options.model.cid
+        @inputId = [ model.entity.id, field.id, model.cid ].join "__"
 
-        base = " field-"
-        classes = [ field.getType(), field.id, inputId ]
-        className = "field" + base + classes.join base
-
-        className += " form-group"
+        className = "form-group field field__#{ field.getType() } field--#{ field.id } field--#{ model.entity.id }--#{ field.id }"
 
         @className = if @className then className + " " + @className else className
 
@@ -2924,26 +2928,30 @@ Cruddy.Entity = {}
 class Cruddy.Entity.Entity extends Backbone.Model
 
     initialize: (attributes, options) ->
-        @fields = @createCollection Cruddy.Fields, attributes.fields
-        @columns = @createCollection Cruddy.Columns, attributes.columns
+        @fields = @createObjects attributes.fields
+        @columns = @createObjects attributes.columns
         @permissions = Cruddy.permissions[@id]
         @cache = {}
 
         return this
 
-    createCollection: (factory, items) ->
+    createObjects: (items) ->
         data = []
+
         for options in items
             options.entity = this
-            instance = factory.create options.class, options
-            data.push instance if instance?
+
+            constructor = get options.class
+
+            throw "The class #{ options.class } is not found" unless constructor
+
+            data.push new constructor options
 
         new Backbone.Collection data
 
     # Create a datasource that will require specified columns and can be filtered
     # by specified filters
-    createDataSource: (data) ->
-        new DataSource data, { entity: this, filter: new Backbone.Model }
+    createDataSource: (data) -> new DataSource data, entity: this
 
     # Create filters for specified columns
     createFilters: (columns = @columns) ->
@@ -3045,6 +3053,13 @@ class Cruddy.Entity.Entity extends Backbone.Model
         id = id.id if id instanceof Cruddy.Entity.Instance
 
         return if id then link + "?id=" + id else link
+
+    createView: ->
+        pageClass = get @attributes.view
+
+        throw "Failed to resolve page class #{ @attributes.view }" unless pageClass
+
+        return new pageClass model: this
 
     # Get title in plural form
     getPluralTitle: -> @attributes.title.plural
@@ -3330,77 +3345,89 @@ class Cruddy.Entity.Page extends Cruddy.View
     render: ->
         @$el.html @template()
 
-        # Search input
-        @search = @createSearchInput @dataSource
+        @searchInputView = @createSearchInputView()
+        @dataView = @createDataView()
+        @paginationView = @createPaginationView()
+        @filterListView = @createFilterListView()
 
-        @$component("search").append @search.render().$el
-
-        # Filters
-        if not _.isEmpty filters = @dataSource.entity.get "filters"
-            @filterList = @createFilterList @dataSource.filter, filters
-
-            @$component("filters").append @filterList.render().el
-
-        # Data grid
-        @dataGrid = @createDataGrid @dataSource
-        @pagination = @createPagination @dataSource
-
-        @$component("body").append(@dataGrid.render().el).append(@pagination.render().el)
+        @$component("search_input_view").append @searchInputView.render().$el   if @searchInputView
+        @$component("filter_list_view").append @filterListView.render().el      if @filterListView
+        @$component("data_view").append @dataView.render().el                   if @dataView
+        @$component("pagination_view").append @paginationView.render().el       if @paginationView
 
         @handleRouteUpdated()
         @dataSource.fetch()
 
         return this
 
-    createDataGrid: (dataSource) -> new DataGrid
-        model: dataSource
+    createDataView: -> new DataGrid
+        model: @dataSource
         entity: @model
 
-    createPagination: (dataSource) -> new Pagination model: dataSource
+    createPaginationView: -> new Pagination model: @dataSource
 
-    createFilterList: (model, filters) -> new FilterList
-        model: model
-        entity: @model
-        filters: filters
+    createFilterListView: ->
+        return if _.isEmpty filters = @dataSource.entity.get "filters"
 
-    createSearchInput: (dataSource) -> new Cruddy.Inputs.Search
-        model: dataSource
+        return new FilterList
+            model: @dataSource.filter
+            entity: @model
+            filters: filters
+
+    createSearchInputView: -> new Cruddy.Inputs.Search
+        model: @dataSource
         key: "search"
 
-    template: ->
-        html = """
-            <div class="content-header">
-                <div class="column column-main">
-                    <h1 class="entity-title">#{ @model.getPluralTitle() }</h1>
+    template: -> """
+        <div class="content-header">
+            <div class="column column-main">
+                <h1 class="entity-title">#{ @model.getPluralTitle() }</h1>
 
-                    <div class="entity-title-buttons">
-                        #{ @buttonsTemplate() }
-                    </div>
-                </div>
-
-                <div class="column column-extra">
-                    <div class="entity-search-box" id="#{ @componentId "search" }"></div>
+                <div class="entity-title-buttons">
+                    #{ @buttonsTemplate() }
                 </div>
             </div>
 
-            <div class="content-body">
-                <div class="column column-main" id="#{ @componentId "body" }"></div>
-                <div class="column column-extra" id="#{ @componentId "filters" }"></div>
+            <div class="column column-extra">
+                <div class="entity-search-box" id="#{ @componentId "search_input_view" }"></div>
             </div>
-        """
+        </div>
+
+        <div class="content-body">
+            <div class="column column-main">
+                <div id="#{ @componentId "data_view" }"></div>
+                <div id="#{ @componentId "pagination_view" }"></div>
+            </div>
+
+            <div class="column column-extra" id="#{ @componentId "filter_list_view" }"></div>
+        </div>
+    """
 
     buttonsTemplate: ->
-        html = """<button type="button" class="btn btn-default ep-btn-refresh" title="#{ Cruddy.lang.refresh }">#{ b_icon "refresh" }</button>"""
-        html += """ <button type="button" class="btn btn-primary ep-btn-create" title="#{ Cruddy.lang.add }">#{ b_icon "plus" }</button>""" if @model.createPermitted()
+        html = """
+            <button type="button" class="btn btn-default ep-btn-refresh" title="#{ Cruddy.lang.refresh }">
+                #{ b_icon "refresh" }
+            </button>
+        """
+
+        html += " "
+
+        html += """
+            <button type="button" class="btn btn-primary ep-btn-create" title="#{ Cruddy.lang.add }">
+                #{ b_icon "plus" }
+            </button>
+        """ if @model.createPermitted()
 
         html
 
     remove: ->
         @form?.remove()
-        @filterList?.remove()
-        @dataGrid?.remove()
-        @pagination?.remove()
-        @search?.remove()
+
+        @filterListView?.remove()
+        @dataView?.remove()
+        @paginationView?.remove()
+        @searchInputView?.remove()
+
         @dataSource?.stopListening()
 
         super
@@ -3729,13 +3756,13 @@ class App extends Backbone.Model
     """
 
     init: ->
-        @loadSchema()
+        @_loadSchema()
 
         return this
 
     ready: (callback) -> @dfd.done callback
 
-    loadSchema: ->
+    _loadSchema: ->
         req = $.ajax
             url: Cruddy.schemaUrl
             displayLoading: yes
@@ -3760,7 +3787,8 @@ class App extends Backbone.Model
         @dispose()
 
         @mainContent.hide()
-        @container.append (@page = new Cruddy.Entity.Page model: entity).render().el if entity
+
+        @container.append (@entityView = entity.createView()).render().el if entity
 
         @updateTitle()
 
@@ -3776,7 +3804,7 @@ class App extends Backbone.Model
 
         return
 
-    pageUnloadConfirmationMessage: -> return @page?.pageUnloadConfirmationMessage()
+    pageUnloadConfirmationMessage: -> return @entityView?.pageUnloadConfirmationMessage()
 
     startLoading: ->
         @loading = setTimeout (=>
@@ -3803,21 +3831,21 @@ class App extends Backbone.Model
         this
 
     entity: (id) ->
-        console.error "Unknown entity #{ id }" if not id of @entities
+        throw "Unknown entity #{ id }" unless id of @entities
 
         @entities[id]
 
     dispose: ->
-        @page?.remove()
+        @entityView?.remove()
 
-        @page = null
+        @entityView = null
 
         this
 
     updateTitle: ->
         title = Cruddy.brandName
 
-        title = @page.getPageTitle() + TITLE_SEPARATOR + title if @page?
+        title = @entityView.getPageTitle() + TITLE_SEPARATOR + title if @entityView?
 
         @$title.text title
 

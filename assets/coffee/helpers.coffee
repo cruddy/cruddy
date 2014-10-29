@@ -26,6 +26,17 @@ b_btn = (label, icon = null, className = "btn-default", type = 'button') ->
 
     "<button type='#{ type }' class='btn #{ className }'>#{ label.trim() }</button>"
 
+get = (path, obj = window) ->
+    return obj if _.isEmpty path
+
+    for key in path.split "."
+
+        return unless key of obj
+
+        obj = obj[key]
+
+    return obj
+
 class Alert extends Backbone.View
     tagName: "span"
     className: "alert"

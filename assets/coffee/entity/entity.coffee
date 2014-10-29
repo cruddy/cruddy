@@ -21,8 +21,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
     # Create a datasource that will require specified columns and can be filtered
     # by specified filters
-    createDataSource: (data) ->
-        new DataSource data, { entity: this, filter: new Backbone.Model }
+    createDataSource: (data) -> new DataSource data, { entity: this }
 
     # Create filters for specified columns
     createFilters: (columns = @columns) ->
@@ -124,6 +123,13 @@ class Cruddy.Entity.Entity extends Backbone.Model
         id = id.id if id instanceof Cruddy.Entity.Instance
 
         return if id then link + "?id=" + id else link
+
+    createView: ->
+        pageClass = get @attributes.view
+
+        throw "Failed to resolve page class #{ @attributes.view }" unless pageClass
+
+        return new pageClass model: this
 
     # Get title in plural form
     getPluralTitle: -> @attributes.title.plural

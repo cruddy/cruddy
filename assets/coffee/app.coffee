@@ -30,13 +30,13 @@ class App extends Backbone.Model
     """
 
     init: ->
-        @loadSchema()
+        @_loadSchema()
 
         return this
 
     ready: (callback) -> @dfd.done callback
 
-    loadSchema: ->
+    _loadSchema: ->
         req = $.ajax
             url: Cruddy.schemaUrl
             displayLoading: yes
@@ -61,7 +61,8 @@ class App extends Backbone.Model
         @dispose()
 
         @mainContent.hide()
-        @container.append (@page = new Cruddy.Entity.Page model: entity).render().el if entity
+
+        @container.append (@entityView = entity.createView()).render().el if entity
 
         @updateTitle()
 
@@ -77,7 +78,7 @@ class App extends Backbone.Model
 
         return
 
-    pageUnloadConfirmationMessage: -> return @page?.pageUnloadConfirmationMessage()
+    pageUnloadConfirmationMessage: -> return @entityView?.pageUnloadConfirmationMessage()
 
     startLoading: ->
         @loading = setTimeout (=>
@@ -104,21 +105,21 @@ class App extends Backbone.Model
         this
 
     entity: (id) ->
-        console.error "Unknown entity #{ id }" if not id of @entities
+        throw "Unknown entity #{ id }" unless id of @entities
 
         @entities[id]
 
     dispose: ->
-        @page?.remove()
+        @entityView?.remove()
 
-        @page = null
+        @entityView = null
 
         this
 
     updateTitle: ->
         title = Cruddy.brandName
 
-        title = @page.getPageTitle() + TITLE_SEPARATOR + title if @page?
+        title = @entityView.getPageTitle() + TITLE_SEPARATOR + title if @entityView?
 
         @$title.text title
 

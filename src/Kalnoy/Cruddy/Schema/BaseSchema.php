@@ -72,11 +72,11 @@ abstract class BaseSchema implements SchemaInterface {
     protected $perPage;
 
     /**
-     * The template JavaScript class name under `Cruddy.Entity.Templates` namespace.
+     * The path to the Backbone view class that will display the entity.
      *
      * @var string
      */
-    protected $template = 'Basic';
+    protected $view = 'Cruddy.Entity.Page';
 
     /**
      * {@inheritdoc}
@@ -207,7 +207,7 @@ abstract class BaseSchema implements SchemaInterface {
     {
         return [
             'order_by' => $this->defaultOrder,
-            'template' => $this->template,
+            'view' => $this->view,
             'filters' => $this->filters,
             'layout' => $this->compileLayout(),
         ];

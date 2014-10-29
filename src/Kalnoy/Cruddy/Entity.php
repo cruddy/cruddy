@@ -841,7 +841,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
             'columns' => array_values($this->getColumns()->toArray()),
             'related' => array_keys($this->related),
 
-        ] + $this->schema->toArray();
+        ] + $this->schema->toArray() + [ 'view' => 'Cruddy.Entity.Page' ];
     }
 
     /**

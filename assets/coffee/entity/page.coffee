@@ -140,77 +140,89 @@ class Cruddy.Entity.Page extends Cruddy.View
     render: ->
         @$el.html @template()
 
-        # Search input
-        @search = @createSearchInput @dataSource
+        @searchInputView = @createSearchInputView()
+        @dataView = @createDataView()
+        @paginationView = @createPaginationView()
+        @filterListView = @createFilterListView()
 
-        @$component("search").append @search.render().$el
-
-        # Filters
-        if not _.isEmpty filters = @dataSource.entity.get "filters"
-            @filterList = @createFilterList @dataSource.filter, filters
-
-            @$component("filters").append @filterList.render().el
-
-        # Data grid
-        @dataGrid = @createDataGrid @dataSource
-        @pagination = @createPagination @dataSource
-
-        @$component("body").append(@dataGrid.render().el).append(@pagination.render().el)
+        @$component("search_input_view").append @searchInputView.render().$el   if @searchInputView
+        @$component("filter_list_view").append @filterListView.render().el      if @filterListView
+        @$component("data_view").append @dataView.render().el                   if @dataView
+        @$component("pagination_view").append @paginationView.render().el       if @paginationView
 
         @handleRouteUpdated()
         @dataSource.fetch()
 
         return this
 
-    createDataGrid: (dataSource) -> new DataGrid
-        model: dataSource
+    createDataView: -> new DataGrid
+        model: @dataSource
         entity: @model
 
-    createPagination: (dataSource) -> new Pagination model: dataSource
+    createPaginationView: -> new Pagination model: @dataSource
 
-    createFilterList: (model, filters) -> new FilterList
-        model: model
-        entity: @model
-        filters: filters
+    createFilterListView: ->
+        return if _.isEmpty filters = @dataSource.entity.get "filters"
 
-    createSearchInput: (dataSource) -> new Cruddy.Inputs.Search
-        model: dataSource
+        return new FilterList
+            model: @dataSource.filter
+            entity: @model
+            filters: filters
+
+    createSearchInputView: -> new Cruddy.Inputs.Search
+        model: @dataSource
         key: "search"
 
-    template: ->
-        html = """
-            <div class="content-header">
-                <div class="column column-main">
-                    <h1 class="entity-title">#{ @model.getPluralTitle() }</h1>
+    template: -> """
+        <div class="content-header">
+            <div class="column column-main">
+                <h1 class="entity-title">#{ @model.getPluralTitle() }</h1>
 
-                    <div class="entity-title-buttons">
-                        #{ @buttonsTemplate() }
-                    </div>
-                </div>
-
-                <div class="column column-extra">
-                    <div class="entity-search-box" id="#{ @componentId "search" }"></div>
+                <div class="entity-title-buttons">
+                    #{ @buttonsTemplate() }
                 </div>
             </div>
 
-            <div class="content-body">
-                <div class="column column-main" id="#{ @componentId "body" }"></div>
-                <div class="column column-extra" id="#{ @componentId "filters" }"></div>
+            <div class="column column-extra">
+                <div class="entity-search-box" id="#{ @componentId "search_input_view" }"></div>
             </div>
-        """
+        </div>
+
+        <div class="content-body">
+            <div class="column column-main">
+                <div id="#{ @componentId "data_view" }"></div>
+                <div id="#{ @componentId "pagination_view" }"></div>
+            </div>
+
+            <div class="column column-extra" id="#{ @componentId "filter_list_view" }"></div>
+        </div>
+    """
 
     buttonsTemplate: ->
-        html = """<button type="button" class="btn btn-default ep-btn-refresh" title="#{ Cruddy.lang.refresh }">#{ b_icon "refresh" }</button>"""
-        html += """ <button type="button" class="btn btn-primary ep-btn-create" title="#{ Cruddy.lang.add }">#{ b_icon "plus" }</button>""" if @model.createPermitted()
+        html = """
+            <button type="button" class="btn btn-default ep-btn-refresh" title="#{ Cruddy.lang.refresh }">
+                #{ b_icon "refresh" }
+            </button>
+        """
+
+        html += " "
+
+        html += """
+            <button type="button" class="btn btn-primary ep-btn-create" title="#{ Cruddy.lang.add }">
+                #{ b_icon "plus" }
+            </button>
+        """ if @model.createPermitted()
 
         html
 
     remove: ->
         @form?.remove()
-        @filterList?.remove()
-        @dataGrid?.remove()
-        @pagination?.remove()
-        @search?.remove()
+
+        @filterListView?.remove()
+        @dataView?.remove()
+        @paginationView?.remove()
+        @searchInputView?.remove()
+
         @dataSource?.stopListening()
 
         super

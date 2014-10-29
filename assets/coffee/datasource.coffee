@@ -4,12 +4,11 @@ class DataSource extends Backbone.Model
         search: ""
 
     initialize: (attributes, options) ->
-        @entity = options.entity
-        @columns = options.columns if options.columns?
-        @filter = options.filter if options.filter?
+        @entity = entity = options.entity
+        @filter = filter = new Backbone.Model
 
         @options =
-            url: @entity.url()
+            url: entity.url()
             dataType: "json"
             type: "get"
             displayLoading: yes
@@ -23,10 +22,9 @@ class DataSource extends Backbone.Model
 
             error: (xhr) => @trigger "error", this, xhr
 
-        @listenTo @filter, "change", (=>
+        @listenTo filter, "change", =>
             @set current_page: 1, silent: yes
             @fetch()
-        ) if @filter?
 
         @on "change", => @fetch() unless @_hold
         @on "change:search", => @set current_page: 1, silent: yes unless @_hold
@@ -35,7 +33,7 @@ class DataSource extends Backbone.Model
 
     hasMore: -> @get("current_page") < @get("last_page")
 
-    isFull: -> !@hasMore()
+    isFull: -> not @hasMore()
 
     inProgress: -> @request?
 
@@ -67,13 +65,12 @@ class DataSource extends Backbone.Model
         @fetch()
 
     data: ->
-        data = {
+        data =
             order_by: @get "order_by"
             order_dir: @get "order_dir"
             page: @get "current_page"
             per_page: @get "per_page"
             keywords: @get "search"
-        }
 
         filters = @filterData()
 
@@ -83,11 +80,9 @@ class DataSource extends Backbone.Model
         data
 
     filterData: ->
-        return null unless @filter?
-
         data = {}
 
-        for key, value of @filter.attributes
-            data[key] = value unless value is null or value is ""
+        for key, value of @filter.attributes when not _.isEmpty value
+            data[key] = value
 
-        data
+        return data

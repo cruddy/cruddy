@@ -22,7 +22,7 @@ class DataGrid extends Cruddy.View
         @listenTo @model, "data", => @renderBody()
         @listenTo @model, "change:order_by change:order_dir", @markOrderColumn
 
-        @listenTo @entity, "change:instance", @markSelectedItem
+        @listenTo @entity, "change:instance", @markActiveItem
 
     addActionColumns: (columns) ->
         @columns.unshift new Cruddy.Columns.ViewButton entity: @entity

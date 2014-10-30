@@ -19,7 +19,7 @@ class DataGrid extends Cruddy.View
 
         @addActionColumns @columns
 
-        @listenTo @model, "data", @updateData
+        @listenTo @model, "data", => @renderBody()
         @listenTo @model, "change:order_by change:order_dir", @markOrderColumn
 
         @listenTo @entity, "change:instance", @markSelectedItem
@@ -41,7 +41,7 @@ class DataGrid extends Cruddy.View
 
         this
 
-    markSelectedItem: ->
+    markActiveItem: ->
         @$itemRow(model).removeClass "active" if model = @entity.previous "instance"
         @$itemRow(model).addClass "active" if model = @entity.get "instance"
 
@@ -60,29 +60,30 @@ class DataGrid extends Cruddy.View
 
         this
 
-    updateData: (datasource, data) ->
-        @$(".items").replaceWith @renderBody @columns, data
-
-        @markSelectedItem()
-
-        this
-
     render: ->
-        data = @model.get "data"
+        @$el.html @template()
 
-        @$el.html @renderHead(@columns) + @renderBody(@columns, data)
+        @$header = @$component "header"
+        @$items = @$component "items"
 
-        @markOrderColumn @model
+        @renderHead()
+        @renderBody()
 
         this
 
-    renderHead: (columns) ->
-        html = "<thead><tr>"
-        html += @renderHeadCell col for col in columns
-        html += "</tr></thead>"
+    renderHead: ->
+        html = ""
+        html += @renderHeadCell column for column in @columns
 
-    renderHeadCell: (col) ->
-        """<th class="#{ col.getClass() }" id="#{ @colCellId col }" data-id="#{ col.id }">#{ @renderHeadCellValue col }</th>"""
+        @$header.html html
+
+        @markOrderColumn()
+
+    renderHeadCell: (column) -> """
+        <th class="#{ column.getClass() }" id="#{ @colCellId column }" data-id="#{ column.id }">
+            #{ @renderHeadCellValue column }
+        </th>
+    """
 
     renderHeadCellValue: (col) ->
         title = _.escape col.getHeader()
@@ -94,33 +95,39 @@ class DataGrid extends Cruddy.View
 
         return title
 
-    renderBody: (columns, data) ->
-        html = """<tbody class="items">"""
+    renderBody: ->
+        unless @model.hasData()
+            @$items.html @emptyTemplate()
 
-        if data? and data.length
-            html += @renderRow columns, item for item in data
-        else
-            html += """<tr class="empty"><td colspan="#{ columns.length }">#{ Cruddy.lang.no_results }</td></tr>"""
+            return this
 
-        html += "</tbody>"
+        html = ""
+        html += @renderRow item for item in @model.get "data"
 
-    renderRow: (columns, item) ->
+        @$items.html html
+
+        @markActiveItem()
+
+    renderRow: (item) ->
         html = """
-            <tr class="item #{ @states item }" id="#{ @itemRowId item }" data-id="#{ item.id }">"""
+            <tr class="item #{ @itemStates item }" id="#{ @itemRowId item }" data-id="#{ item.id }">"""
 
-        html += @renderCell col, item for col in columns
+        html += @renderCell columns, item for columns in @columns
 
         html += "</tr>"
 
-    states: (item) ->
+    itemStates: (item) ->
         states = if item._states then item._states else ""
 
         states += " active" if (instance = @entity.get "instance")? and item.id == instance.id
 
         return states
 
-    renderCell: (col, item) ->
-        """<td class="#{ col.getClass() }">#{ col.render item }</td>"""
+    renderCell: (column, item) -> """
+        <td class="#{ column.getClass() }">
+            #{ column.render item }
+        </td>
+    """
 
     executeAction: (e) ->
         $el = $ e.currentTarget
@@ -152,6 +159,19 @@ class DataGrid extends Cruddy.View
                 $el.attr "disabled", no
 
         return
+
+    template: -> """
+        <thead><tr id="#{ @componentId "header" }"></tr></thead>
+        <tbody class="items" id="#{ @componentId "items" }"></tbody>
+    """
+
+    emptyTemplate: -> """
+        <tr class="empty">
+            <td colspan="#{ @columns.length }">
+                #{ Cruddy.lang.no_results }
+            </td>
+        </tr>
+    """
 
     colCellId: (col) -> @componentId "col-" + col.id
 

@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Filesystem\Filesystem;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Pagination\Paginator;
+use Kalnoy\Cruddy\Contracts\Repository;
+use Kalnoy\Cruddy\Contracts\SearchProcessor;
 use Kalnoy\Cruddy\ModelNotFoundException;
 use Kalnoy\Cruddy\ModelNotSavedException;
 use Kalnoy\Cruddy\Service\FileUploader;
@@ -17,7 +19,7 @@ use Exception;
  *
  * @since 1.0.0
  */
-abstract class BaseRepository implements RepositoryInterface {
+abstract class BaseRepository implements Repository {
 
     /**
      * @var FileUploader[]
@@ -119,7 +121,7 @@ abstract class BaseRepository implements RepositoryInterface {
     /**
      * {@inheritdoc}
      */
-    public function search(array $options, SearchProcessorInterface $processor = null)
+    public function search(array $options, SearchProcessor $processor = null)
     {
         $builder = $this->newQuery();
 

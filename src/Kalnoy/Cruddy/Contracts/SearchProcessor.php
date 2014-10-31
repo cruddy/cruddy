@@ -1,13 +1,13 @@
 <?php
 
-namespace Kalnoy\Cruddy\Repo;
+namespace Kalnoy\Cruddy\Contracts;
 
 use Illuminate\Database\Eloquent\Builder;
 
 /**
  * Search processor interface for applying conditions the the query.
  */
-interface SearchProcessorInterface {
+interface SearchProcessor {
 
     /**
      * Apply search conditions to the builder.

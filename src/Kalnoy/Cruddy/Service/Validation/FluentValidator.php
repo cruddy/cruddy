@@ -4,6 +4,7 @@ namespace Kalnoy\Cruddy\Service\Validation;
 
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Fluent;
+use Kalnoy\Cruddy\Contracts\Validator as ValidatorContract;
 
 /**
  * Fluent validator for validating input.
@@ -18,7 +19,7 @@ use Illuminate\Support\Fluent;
  *
  * @since 1.0.0
  */
-class FluentValidator extends Fluent implements ValidableInterface {
+class FluentValidator extends Fluent implements ValidatorContract {
 
     /**
      * @var \Illuminate\Validation\Factory

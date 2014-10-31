@@ -5,7 +5,6 @@ namespace Kalnoy\Cruddy\Service;
 use Illuminate\Html\HtmlBuilder;
 use Illuminate\Routing\UrlGenerator;
 use Kalnoy\Cruddy\Environment;
-use Kalnoy\Cruddy\Service\Permissions\PermissionsInterface;
 use Kalnoy\Cruddy\Lang;
 
 /**

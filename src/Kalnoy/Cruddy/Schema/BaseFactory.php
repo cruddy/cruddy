@@ -2,6 +2,8 @@
 
 namespace Kalnoy\Cruddy\Schema;
 
+use Kalnoy\Cruddy\Contracts\Attribute;
+
 /**
  * Base factory for all kinds of attributes.
  *
@@ -34,7 +36,7 @@ class BaseFactory {
      * @param BaseCollection        $collection
      * @param array                 $params
      *
-     * @return AttributeInterface
+     * @return Attribute
      */
     public function resolve($macro, $entity, $collection, array $params)
     {
@@ -70,12 +72,30 @@ class BaseFactory {
      * @param BaseCollection        $collection
      * @param array                 $params
      *
-     * @return AttributeInterface
+     * @return Attribute
      */
     protected function evaluate($callback, $entity, $collection, array $params)
     {
         array_unshift($params, $entity, $collection);
 
         return call_user_func_array($callback, $params);
+    }
+
+    /**
+     * @param \Kalnoy\Cruddy\Entity $entity
+     * @param $id
+     *
+     * @return \Kalnoy\Cruddy\Contracts\Field
+     */
+    protected function resolveField($entity, $id)
+    {
+        $field = $entity->getFields()->get($id);
+
+        if ($field === null)
+        {
+            throw new \RuntimeException("The field with an id of {$entity->getId()}.{$id} is not found.");
+        }
+
+        return $field;
     }
 }

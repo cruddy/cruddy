@@ -28,7 +28,7 @@ class CruddyServiceProvider extends ServiceProvider {
      *
      * @var int
      */
-    protected $build = 16;
+    protected $build = 17;
 
 	/**
 	 * Bootstrap the application events.
@@ -55,8 +55,7 @@ class CruddyServiceProvider extends ServiceProvider {
         $this->registerLang();
         $this->registerMenu();
         $this->registerPermissions();
-        $this->registerFields();
-        $this->registerColumns();
+        $this->registerFactories();
         $this->registerRepository();
         $this->registerCruddy();
         $this->registerCommands();
@@ -105,22 +104,21 @@ class CruddyServiceProvider extends ServiceProvider {
     /**
      * Register fields factory.
      */
-    protected function registerFields()
+    protected function registerFactories()
     {
         $this->app->bindShared('cruddy.fields', function ($app)
         {
             return new Schema\Fields\Factory;
         });
-    }
 
-    /**
-     * Register columns factory.
-     */
-    protected function registerColumns()
-    {
         $this->app->bindShared('cruddy.columns', function ($app)
         {
             return new Schema\Columns\Factory;
+        });
+
+        $this->app->bindShared('cruddy.filters', function ($app)
+        {
+            return new Schema\Filters\Factory;
         });
     }
 
@@ -146,13 +144,11 @@ class CruddyServiceProvider extends ServiceProvider {
         {
             $config = $app['config'];
 
-            $fields = $app['cruddy.fields'];
-            $columns = $app['cruddy.columns'];
             $permissions = $app['cruddy.permissions'];
             $lang = $app['cruddy.lang'];
             $repository = $app['cruddy.repository'];
 
-            $env = new Environment($config, $repository, $fields, $columns, $permissions, $lang, $app['events']);
+            $env = new Environment($config, $repository, $permissions, $lang, $app['events']);
 
             Entity::setEnvironment($env);
 
@@ -305,6 +301,7 @@ class CruddyServiceProvider extends ServiceProvider {
             'cruddy.permissions' => 'Service\Permissions\PermissionsManager',
             'cruddy.fields' => 'Schema\Fields\Factory',
             'cruddy.columns' => 'Schema\Columns\Factory',
+            'cruddy.filters' => 'Schema\Filters\Factory',
             'cruddy.menu' => 'Service\MenuBuilder',
             'cruddy.assets' => 'Assets',
         ];

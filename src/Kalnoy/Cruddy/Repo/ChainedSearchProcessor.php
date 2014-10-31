@@ -3,18 +3,19 @@
 namespace Kalnoy\Cruddy\Repo;
 
 use Illuminate\Database\Eloquent\Builder;
+use Kalnoy\Cruddy\Contracts\SearchProcessor;
 
 /**
  * Chained search processor for using multiple search processor.
  *
  * @since 1.0.0
  */
-class ChainedSearchProcessor implements SearchProcessorInterface {
+class ChainedSearchProcessor implements SearchProcessor {
 
     /**
      * The list of processors.
      *
-     * @var SearchProcessorInterface[]
+     * @var SearchProcessor[]
      */
     protected $processors;
 
@@ -31,9 +32,9 @@ class ChainedSearchProcessor implements SearchProcessorInterface {
     /**
      * Add a processor to the queue.
      *
-     * @param SearchProcessorInterface $processor
+     * @param SearchProcessor $processor
      */
-    public function add(SearchProcessorInterface $processor)
+    public function add(SearchProcessor $processor)
     {
         $this->processors[] = $processor;
     }

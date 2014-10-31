@@ -1,10 +1,8 @@
 <?php
 
-namespace Kalnoy\Cruddy\Schema;
+namespace Kalnoy\Cruddy\Contracts;
 
 use Illuminate\Support\Contracts\ArrayableInterface;
-use Illuminate\Database\Eloquent\Model as Eloquent;
-use Kalnoy\Cruddy\Repo\RepositoryInterface;
 
 /**
  * The schema interface.
@@ -14,7 +12,7 @@ use Kalnoy\Cruddy\Repo\RepositoryInterface;
  *
  * @since 1.0.0
  */
-interface SchemaInterface extends ArrayableInterface {
+interface Schema extends ArrayableInterface {
 
     /**
      * Create an entity object.
@@ -26,7 +24,7 @@ interface SchemaInterface extends ArrayableInterface {
     /**
      * Initialize fields.
      *
-     * @param Fields\InstanceFactory $schema
+     * @param \Kalnoy\Cruddy\Schema\Fields\InstanceFactory $schema
      *
      * @return void
      */
@@ -35,23 +33,30 @@ interface SchemaInterface extends ArrayableInterface {
     /**
      * Initialize columns.
      *
-     * @param Columns\InstanceFactory $schema
+     * @param \Kalnoy\Cruddy\Schema\Columns\InstanceFactory $schema
      *
      * @return void
      */
     public function columns($schema);
 
     /**
+     * @param \Kalnoy\Cruddy\Schema\Filters\InstanceFactory $schema
+     *
+     * @return void
+     */
+    public function filters($schema);
+
+    /**
      * Create repository.
      *
-     * @return \Kalnoy\Cruddy\Repo\RepositoryInterface
+     * @return \Kalnoy\Cruddy\Contracts\Repository
      */
     public function repository();
 
     /**
      * Create validator.
      *
-     * @return \Kalnoy\Cruddy\Service\Validation\ValidableInterface
+     * @return \Kalnoy\Cruddy\Contracts\Validator
      */
     public function validator();
 

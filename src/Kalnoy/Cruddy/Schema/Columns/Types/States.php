@@ -4,13 +4,13 @@ namespace Kalnoy\Cruddy\Schema\Columns\Types;
 
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Kalnoy\Cruddy\Schema\Attribute;
-use Kalnoy\Cruddy\Schema\ColumnInterface;
+use Kalnoy\Cruddy\Contracts\Column;
 use Kalnoy\Cruddy\Entity;
 
 /**
  * A column for defining additional states for the row.
  */
-class States extends Attribute implements ColumnInterface {
+class States extends Attribute implements Column {
 
     /**
      * {@inheritdoc}

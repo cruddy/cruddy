@@ -7,12 +7,11 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Contracts\JsonableInterface;
 use Illuminate\Support\Contracts\ArrayableInterface;
 use Illuminate\Database\Eloquent\Model as Eloquent;
-use Kalnoy\Cruddy\ModelNotFoundException;
-use Kalnoy\Cruddy\Schema\SchemaInterface;
+use Kalnoy\Cruddy\Contracts\Schema as SchemaContract;
 use Kalnoy\Cruddy\Schema\InstanceFactory;
-use Kalnoy\Cruddy\Schema\InlineRelationInterface;
+use Kalnoy\Cruddy\Contracts\InlineRelation;
 use Kalnoy\Cruddy\Service\Validation\ValidationException;
-use Kalnoy\Cruddy\Repo\SearchProcessorInterface;
+use Kalnoy\Cruddy\Contracts\SearchProcessor;
 use Kalnoy\Cruddy\Repo\ChainedSearchProcessor;
 
 /**
@@ -32,7 +31,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * The schema.
      *
-     * @var Schema\SchemaInterface
+     * @var SchemaContract
      */
     protected $schema;
 
@@ -58,23 +57,28 @@ class Entity implements JsonableInterface, ArrayableInterface {
     private $columns;
 
     /**
+     * @var Schema\Filters\Collection
+     */
+    private $filters;
+
+    /**
      * The repository.
      *
-     * @var Repo\RepositoryInterface
+     * @var \Kalnoy\Cruddy\Contracts\Repository
      */
     private $repo;
 
     /**
      * The validator.
      *
-     * @var Service\Validation\ValidableInterface
+     * @var Contracts\Validator
      */
     private $validator;
 
     /**
      * The list of related entities.
      *
-     * @var Schema\InlineRelationInterface[]
+     * @var Contracts\InlineRelation[]
      */
     protected $related = [];
 
@@ -88,9 +92,9 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Init entity.
      *
-     * @param Schema\SchemaInterface $schema
+     * @param SchemaContract $schema
      */
-    public function __construct(SchemaInterface $schema)
+    public function __construct(SchemaContract $schema)
     {
         $this->schema = $schema;
     }
@@ -137,7 +141,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Extract fields of all models.
      *
-     * @param array|\Illuminate\Support\Collection $items
+     * @param array|Collection $items
      *
      * @return array
      */
@@ -197,17 +201,21 @@ class Entity implements JsonableInterface, ArrayableInterface {
      *
      * @param array $options
      *
-     * @return Repo\SearchProcessorInterface
+     * @return Contracts\SearchProcessor
      */
     protected function getSearchProcessor(array $options)
     {
-        $processor = new ChainedSearchProcessor([ $this->getFields(), $this->getColumns() ]);
+        $processor = new ChainedSearchProcessor([
+            $this->getFields(),
+            $this->getColumns(),
+            $this->getFilters(),
+        ]);
 
         if (isset($options['owner']) && static::$env !== null)
         {
             $field = static::$env->field($options['owner']);
 
-            if ( ! $field instanceof SearchProcessorInterface)
+            if ( ! $field instanceof SearchProcessor)
             {
                 throw new RuntimeException("The field [{$options['owner']}] is not a search processor.");
             }
@@ -297,6 +305,11 @@ class Entity implements JsonableInterface, ArrayableInterface {
     {
         $repo = $this->getRepository();
 
+        /**
+         * @var array $attributes
+         * @var mixed $id
+         * @var array $related
+         */
         extract($data);
 
         $action = $this->actionFromData($data);
@@ -562,11 +575,11 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Add inline relation.
      *
-     * @param Schema\InlineRelationInterface $relation
+     * @param Contracts\InlineRelation $relation
      *
      * @return $this
      */
-    public function relates(InlineRelationInterface $relation)
+    public function relates(InlineRelation $relation)
     {
         $this->related[$relation->getId()] = $relation;
 
@@ -592,7 +605,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     protected function createFields()
     {
-        $factory = static::$env->getFieldFactory();
+        $factory = $this->getFieldsFactory();
 
         $collection = new Schema\Fields\Collection;
 
@@ -622,7 +635,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function createColumns()
     {
-        $factory = static::$env->getColumnFactory();
+        $factory = $this->getColumnsFactory();
 
         $collection = new Schema\Columns\Collection;
 
@@ -631,6 +644,32 @@ class Entity implements JsonableInterface, ArrayableInterface {
         $this->schema->columns($schema);
 
         return $this->ensurePrimaryColumn($collection);
+    }
+
+    /**
+     * @return Schema\Filters\Collection
+     */
+    public function getFilters()
+    {
+        if ($this->filters === null) return $this->filters = $this->createFilters();
+
+        return $this->filters;
+    }
+
+    /**
+     * @return Schema\Filters\Collection
+     */
+    public function createFilters()
+    {
+        $factory = $this->getFiltersFactory();
+
+        $collection = new Schema\Filters\Collection;
+
+        $schema = new InstanceFactory($factory, $this, $collection);
+
+        $this->schema->filters($schema);
+
+        return $collection;
     }
 
     /**
@@ -659,7 +698,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Get the repository.
      *
-     * @return Repo\RepositoryInterface
+     * @return \Kalnoy\Cruddy\Contracts\Repository
      */
     public function getRepository()
     {
@@ -674,7 +713,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Get the validator.
      *
-     * @return Service\Validation\ValidableInterface
+     * @return Contracts\Validator
      */
     public function getValidator()
     {
@@ -709,7 +748,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Get entity's schema.
      *
-     * @return Schema\SchemaInterface
+     * @return SchemaContract
      */
     public function getSchema()
     {
@@ -809,7 +848,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function getPermissions()
     {
-        $permissions = static::$env->getPermissions()->driver();
+        $permissions = $this->getPermissionsDriver();
 
         $data = [];
 
@@ -826,19 +865,18 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function toArray()
     {
-        $fields = $this->getFields();
-
         $model = $this->getRepository()->newModel();
 
         return
         [
             'id' => $this->id,
             'soft_deleting' => false,
-            'defaults' => $fields->extract($model),
+            'defaults' => $this->getFields()->extract($model),
             'title' => $this->getTitle(),
 
-            'fields' => array_values($fields->toArray()),
-            'columns' => array_values($this->getColumns()->toArray()),
+            'fields' => $this->getFields()->export(),
+            'columns' => $this->getColumns()->export(),
+            'filters' => $this->getFilters()->export(),
             'related' => array_keys($this->related),
 
         ] + $this->schema->toArray() + [ 'view' => 'Cruddy.Entity.Page' ];
@@ -850,5 +888,37 @@ class Entity implements JsonableInterface, ArrayableInterface {
     public function toJson($options = 0)
     {
         return json_encode($this->toArray(), $options);
+    }
+
+    /**
+     * @return Schema\Filters\Factory
+     */
+    protected function getFiltersFactory()
+    {
+        return app('cruddy.filters');
+    }
+
+    /**
+     * @return Schema\Columns\Factory
+     */
+    protected function getColumnsFactory()
+    {
+        return app('cruddy.columns');
+    }
+
+    /**
+     * @return Schema\Fields\Factory
+     */
+    protected function getFieldsFactory()
+    {
+        return app('cruddy.fields');
+    }
+
+    /**
+     * @return Contracts\Permissions
+     */
+    private function getPermissionsDriver()
+    {
+        return app('cruddy.permissions')->driver();
     }
 }

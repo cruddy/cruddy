@@ -1,15 +1,16 @@
 <?php
 
-namespace Kalnoy\Cruddy\Schema;
+namespace Kalnoy\Cruddy\Contracts;
 
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
+use Kalnoy\Cruddy\Contracts\Attribute;
 
 /**
- * ColumnInterface
+ * Column
  */
-interface ColumnInterface extends AttributeInterface {
+interface Column extends Attribute {
 
-    
+
 
 }

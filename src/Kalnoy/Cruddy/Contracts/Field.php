@@ -1,16 +1,17 @@
 <?php
 
-namespace Kalnoy\Cruddy\Schema;
+namespace Kalnoy\Cruddy\Contracts;
 
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Query\Builder as QueryBuilder;
+use Kalnoy\Cruddy\Contracts\Attribute;
 
 /**
  * Base interface for all fields.
  *
  * @since 1.0.0
  */
-interface FieldInterface extends AttributeInterface {
+interface Field extends Attribute {
 
     /**
      * No filtering is supported.
@@ -54,29 +55,17 @@ interface FieldInterface extends AttributeInterface {
     public function keep($value);
 
     /**
-     * Get whether the field is allowed to be sent to the repository.
+     * @return string
+     */
+    public function getLabel();
+
+    /**
+     * Get whether the field is disabled for specified action.
      *
-     * @param string $action
+     * @param $action
      *
      * @return bool
      */
-    public function sendToRepository($action);
-
-    /**
-     * Apply constraints to the query builder.
-     *
-     * @param QueryBuilder $query
-     * @param mixed        $data
-     *
-     * @return $this
-     */
-    public function filter(QueryBuilder $query, $data);
-
-    /**
-     * Get filter type.
-     *
-     * @return string
-     */
-    public function getFilterType();
+    public function isDisabled($action);
 
 }

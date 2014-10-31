@@ -1,6 +1,7 @@
 <?php namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
 use Illuminate\Database\Query\Builder;
+use Kalnoy\Cruddy\Contracts\Filter;
 use Kalnoy\Cruddy\Schema\Fields\BaseInput;
 
 /**
@@ -11,7 +12,7 @@ use Kalnoy\Cruddy\Schema\Fields\BaseInput;
  *
  * @since 1.0.0
  */
-class Enum extends BaseInput {
+class Enum extends BaseInput implements Filter {
 
     /**
      * {@inheritdoc}
@@ -48,11 +49,9 @@ class Enum extends BaseInput {
     /**
      * {@inheritdoc}
      */
-    public function filter(Builder $query, $data)
+    public function applyFilterConstraint(Builder $query, $data)
     {
         $query->where($this->id, $data);
-
-        return $this;
     }
 
     /**

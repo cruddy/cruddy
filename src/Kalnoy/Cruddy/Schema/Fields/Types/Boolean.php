@@ -4,6 +4,7 @@ namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
 use Illuminate\Database\Query\Builder;
 use Illuminate\Database\Eloquent\Model as Eloquent;
+use Kalnoy\Cruddy\Contracts\Filter;
 use Kalnoy\Cruddy\Schema\Fields\BaseField;
 
 /**
@@ -11,7 +12,7 @@ use Kalnoy\Cruddy\Schema\Fields\BaseField;
  *
  * @since 1.0.0
  */
-class Boolean extends BaseField {
+class Boolean extends BaseField implements Filter {
 
     /**
      * {@inheritdoc}
@@ -72,13 +73,11 @@ class Boolean extends BaseField {
     /**
      * {@inheritdoc}
      */
-    public function filter(Builder $builder, $data)
+    public function applyFilterConstraint(Builder $builder, $data)
     {
         if ($this->keep($data))
         {
             $builder->where($this->id, '=', $this->process($data));
         }
-
-        return $this;
     }
 }

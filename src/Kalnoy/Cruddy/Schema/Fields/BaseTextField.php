@@ -2,8 +2,8 @@
 
 namespace Kalnoy\Cruddy\Schema\Fields;
 
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
-use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Database\Query\Builder;
+use Kalnoy\Cruddy\Contracts\KeywordsFilter;
 
 /**
  * Base text field class.
@@ -15,17 +15,12 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
  *
  * @since 1.0.0
  */
-abstract class BaseTextField extends BaseInput {
+abstract class BaseTextField extends BaseInput implements KeywordsFilter {
 
     /**
      * {@inheritdoc}
      */
     protected $class = 'Cruddy.Fields.Input';
-
-    /**
-     * {@inheritdoc}
-     */
-    protected $filterType = self::FILTER_STRING;
 
     /**
      * The HTML <input> type attribute value.
@@ -47,7 +42,7 @@ abstract class BaseTextField extends BaseInput {
     /**
      * {@inheritdoc}
      */
-    public function order(QueryBuilder $builder, $direction)
+    public function order(Builder $builder, $direction)
     {
         $builder->orderBy($this->id, $direction);
 
@@ -55,15 +50,17 @@ abstract class BaseTextField extends BaseInput {
     }
 
     /**
-     * {@inheritdoc}
+     * @param Builder $builder
+     * @param array $keywords
      *
-     * Simple keywords search.
+     * @return void
      */
-    public function filter(QueryBuilder $builder, $data)
+    public function applyKeywordsFilter(Builder $builder, array $keywords)
     {
-        $builder->orWhere($this->id, 'like', '%'.$data.'%');
-
-        return $this;
+        foreach ($keywords as $keyword)
+        {
+            $builder->orWhere($this->id, 'like', '%'.$keyword.'%');
+        }
     }
 
     /**

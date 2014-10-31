@@ -162,7 +162,7 @@ class Cruddy.Entity.Page extends Cruddy.View
     createPaginationView: -> new Pagination model: @dataSource
 
     createFilterListView: ->
-        return if _.isEmpty filters = @dataSource.entity.get "filters"
+        return if (filters = @dataSource.entity.filters).isEmpty()
 
         return new FilterList
             model: @dataSource.filter

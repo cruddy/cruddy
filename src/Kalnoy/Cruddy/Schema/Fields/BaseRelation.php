@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Kalnoy\Cruddy\Entity;
-use Kalnoy\Cruddy\Service\Permissions\PermissionsInterface;
+use Kalnoy\Cruddy\Contracts\Permissions;
 
 /**
  * Base relation field class.
@@ -55,7 +55,7 @@ abstract class BaseRelation extends BaseField {
     {
         $permissions = Entity::getEnvironment()->getPermissions();
 
-        if ( ! $permissions->isPermitted(PermissionsInterface::VIEW, $this->reference))
+        if ( ! $permissions->isPermitted(Permissions::VIEW, $this->reference))
         {
             return null;
         }

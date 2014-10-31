@@ -94,6 +94,10 @@ module.exports = function(grunt) {
                     '<%= app %>/columns/viewButton.coffee',
                     '<%= app %>/columns/deleteButton.coffee',
 
+                    // Filters
+                    '<%= app %>/filters/base.coffee',
+                    '<%= app %>/filters/proxy.coffee',
+
                     // Formatters
                     '<%= app %>/formatters/base.coffee',
                     '<%= app %>/formatters/image.coffee',

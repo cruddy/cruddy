@@ -42,19 +42,15 @@ class Factory extends BaseFactory {
      * Create new proxy column.
      *
      * @param \Kalnoy\Cruddy\Entity $entity
-     * @param Collection            $collection
-     * @param string                $id
+     * @param Collection $collection
+     * @param string $id
+     * @param string $fieldId
      *
      * @return Types\Proxy
      */
-    public function col($entity, $collection, $id)
+    public function col($entity, $collection, $id, $fieldId = null)
     {
-        $field = $entity->getFields()->get($id);
-
-        if ($field === null)
-        {
-            throw new \RuntimeException("The field with an id of {$id} is not found.");
-        }
+        $field = $this->resolveField($entity, $fieldId ?: $id);
 
         $instance = new Types\Proxy($entity, $id, $field);
 
@@ -62,5 +58,4 @@ class Factory extends BaseFactory {
 
         return $instance;
     }
-
 }

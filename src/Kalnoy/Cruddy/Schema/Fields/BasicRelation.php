@@ -2,18 +2,19 @@
 
 namespace Kalnoy\Cruddy\Schema\Fields;
 
+use Kalnoy\Cruddy\Contracts\Filter;
 use RuntimeException;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model as Eloquent;
-use Kalnoy\Cruddy\Repo\SearchProcessorInterface;
-use Kalnoy\Cruddy\Schema\FieldInterface;
+use Kalnoy\Cruddy\Contracts\SearchProcessor;
+use Kalnoy\Cruddy\Contracts\Field;
 
 /**
  * The base class for relation that will be selectable in drop down list.
  *
  * @since 1.0.0
  */
-abstract class BasicRelation extends BaseRelation implements SearchProcessorInterface {
+abstract class BasicRelation extends BaseRelation implements SearchProcessor {
 
     /**
      * {@inheritdoc}
@@ -98,7 +99,7 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessorInte
             throw new RuntimeException('Fields on current and related entity must be of same type in order to enable constraint.');
         }
 
-        if ($fieldInstance->getFilterType() === FieldInterface::FILTER_NONE)
+        if ( ! $fieldInstance instanceof Filter)
         {
             throw new RuntimeException('Cannot set up constraint with a field that is not able to apply filter.');
         }
@@ -110,7 +111,7 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessorInte
      * @param \Kalnoy\Cruddy\Entity $entity
      * @param string                $fieldId
      *
-     * @return \Kalnoy\Cruddy\Schema\FieldInterface
+     * @return \Kalnoy\Cruddy\Contracts\Field
      */
     protected function findField($entity, $fieldId)
     {

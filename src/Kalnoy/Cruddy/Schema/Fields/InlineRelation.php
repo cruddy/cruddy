@@ -3,18 +3,15 @@
 namespace Kalnoy\Cruddy\Schema\Fields;
 
 use Illuminate\Database\Eloquent\Model as Eloquent;
-use Illuminate\Database\Eloquent\Relations\Relation;
-use Kalnoy\Cruddy\Schema\InlineRelationInterface;
-use Kalnoy\Cruddy\OperationNotPermittedException;
+use Kalnoy\Cruddy\Contracts\InlineRelation as InlineRelationContract;
 use Kalnoy\Cruddy\Service\Validation\ValidationException;
-use Kalnoy\Cruddy\Entity;
 
 /**
  * Inline relation allows to edit related models inlinely.
  *
  * @since 1.0.0
  */
-abstract class InlineRelation extends BaseRelation implements InlineRelationInterface {
+abstract class InlineRelation extends BaseRelation implements InlineRelationContract {
 
     /**
      * {@inheritdoc}
@@ -74,16 +71,6 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationInte
     public function keep($value)
     {
         return ! empty($value);
-    }
-
-    /**
-     * {@inheritdoc}
-     *
-     * Inline relations are not sent to the repository.
-     */
-    public function sendToRepository($action)
-    {
-        return false;
     }
 
     /**

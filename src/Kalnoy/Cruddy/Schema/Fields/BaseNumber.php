@@ -5,6 +5,7 @@ namespace Kalnoy\Cruddy\Schema\Fields;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
+use Kalnoy\Cruddy\Contracts\Filter;
 
 /**
  * Base number field class.
@@ -14,17 +15,12 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
  *
  * @since 1.0.0
  */
-abstract class BaseNumber extends BaseInput {
+abstract class BaseNumber extends BaseInput implements Filter {
 
     /**
      * {@inheritdoc}
      */
     protected $class = 'Cruddy.Fields.Number';
-
-    /**
-     * {@inheritdoc}
-     */
-    protected $filterType = self::FILTER_COMPLEX;
 
     /**
      * Whether the number is decimal.
@@ -77,13 +73,12 @@ abstract class BaseNumber extends BaseInput {
     /**
      * {@inheritdoc}
      */
-    public function filter(QueryBuilder $builder, $data)
+    public function applyFilterConstraint(QueryBuilder $builder, $data)
     {
-        extract($data);
+        $operator = array_get($data, 'op');
+        $value = array_get($data, 'val');
 
-        if ($val !== '') $builder->where($this->id, $op, $val);
-
-        return $this;
+        if ($value and $operator) $builder->where($this->id, $operator, $value);
     }
 
     /**

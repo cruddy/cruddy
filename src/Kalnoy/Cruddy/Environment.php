@@ -29,20 +29,6 @@ class Environment {
     protected $entities;
 
     /**
-     * The field factory.
-     *
-     * @var Schema\Fields\Factory
-     */
-    protected $fields;
-
-    /**
-     * The column factory.
-     *
-     * @var Schema\Columns\Factory
-     */
-    protected $columns;
-
-    /**
      * @var Service\Permissions\PermissionsManager
      */
     protected $permissions;
@@ -69,13 +55,10 @@ class Environment {
      * @param Dispatcher         $dispatcher
      */
     public function __construct(
-        Config $config, Repository $entities, FieldFactory $fields, ColumnFactory $columns,
-        PermissionsManager $permissions, Lang $lang, Dispatcher $dispatcher)
+        Config $config, Repository $entities, PermissionsManager $permissions, Lang $lang, Dispatcher $dispatcher)
     {
         $this->config = $config;
         $this->entities = $entities;
-        $this->fields = $fields;
-        $this->columns = $columns;
         $this->permissions = $permissions;
         $this->lang = $lang;
         $this->dispatcher = $dispatcher;
@@ -157,26 +140,6 @@ class Environment {
     public function isPermitted($action, Entity $entity)
     {
         return $this->permissions->isPermitted($action, $entity);
-    }
-
-    /**
-     * Get field factory.
-     *
-     * @return Schema\Fields\Factory
-     */
-    public function getFieldFactory()
-    {
-        return $this->fields;
-    }
-
-    /**
-     * Get column factory.
-     *
-     * @return Schema\Columns\Factory
-     */
-    public function getColumnFactory()
-    {
-        return $this->columns;
     }
 
     /**

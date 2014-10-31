@@ -5,7 +5,7 @@ namespace Kalnoy\Cruddy\Schema\Fields;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Kalnoy\Cruddy\Schema\Attribute;
-use Kalnoy\Cruddy\Schema\FieldInterface;
+use Kalnoy\Cruddy\Contracts\Field;
 
 /**
  * A base class for all fields.
@@ -21,14 +21,7 @@ use Kalnoy\Cruddy\Schema\FieldInterface;
  *
  * @since 1.0.0
  */
-abstract class BaseField extends Attribute implements FieldInterface {
-
-    /**
-     * The filter type.
-     *
-     * @var string
-     */
-    protected $filterType = self::FILTER_NONE;
+abstract class BaseField extends Attribute implements Field {
 
     /**
      * {@inheritdoc}
@@ -80,22 +73,6 @@ abstract class BaseField extends Attribute implements FieldInterface {
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function filter(QueryBuilder $builder, $data)
-    {
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getFilterType()
-    {
-        return $this->filterType;
-    }
-
-    /**
      * @return bool|string
      */
     protected function isRequired()
@@ -118,7 +95,7 @@ abstract class BaseField extends Attribute implements FieldInterface {
             'unique' => $this->get('unique'),
             'disabled' => $this->get('disable'),
             'label' => $this->getLabel(),
-            'filter_type' => $this->getFilterType(),
+            'filter_type' => self::FILTER_NONE,
 
         ] + parent::toArray();
     }
@@ -140,15 +117,9 @@ abstract class BaseField extends Attribute implements FieldInterface {
      */
     public function isDisabled($action)
     {
-        return $this->disabled === true or $this->disabled === $action;
-    }
+        $disabled = $this->get('disable');
 
-    /**
-     * {@inheritdoc}
-     */
-    public function sendToRepository($action)
-    {
-        return ! $this->isDisabled($action);
+        return $disabled === true or $disabled === $action;
     }
 
 }

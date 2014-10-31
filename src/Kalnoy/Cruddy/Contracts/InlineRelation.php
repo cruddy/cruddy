@@ -1,8 +1,9 @@
 <?php
 
-namespace Kalnoy\Cruddy\Schema;
+namespace Kalnoy\Cruddy\Contracts;
 
 use Illuminate\Database\Eloquent\Model as Eloquent;
+use Kalnoy\Cruddy\Contracts\Field;
 
 /**
  * Inline relation interface.
@@ -11,7 +12,7 @@ use Illuminate\Database\Eloquent\Model as Eloquent;
  *
  * @since 1.0.0
  */
-interface InlineRelationInterface extends FieldInterface {
+interface InlineRelation extends Field {
 
     /**
      * Process input and return data to save.

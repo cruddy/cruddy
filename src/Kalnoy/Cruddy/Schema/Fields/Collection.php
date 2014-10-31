@@ -4,16 +4,18 @@ namespace Kalnoy\Cruddy\Schema\Fields;
 
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
-use Kalnoy\Cruddy\Schema\BaseCollection;
-use Kalnoy\Cruddy\Schema\FieldInterface;
-use Kalnoy\Cruddy\Repo\SearchProcessorInterface;
+use Kalnoy\Cruddy\Contracts\Filter;
+use Kalnoy\Cruddy\Contracts\KeywordsFilter;
+use Kalnoy\Cruddy\Schema\AttributesCollection;
+use Kalnoy\Cruddy\Contracts\Field;
+use Kalnoy\Cruddy\Contracts\SearchProcessor;
 
 /**
  * Fields collection.
- * 
+ *
  * @since 1.0.0
  */
-class Collection extends BaseCollection implements SearchProcessorInterface {
+class Collection extends AttributesCollection implements SearchProcessor {
 
     /**
      * Process input before validation.
@@ -26,6 +28,9 @@ class Collection extends BaseCollection implements SearchProcessorInterface {
     {
         $result = [];
 
+        /**
+         * @var Field $field
+         */
         foreach ($this->items as $key => $field)
         {
             if (array_key_exists($key, $input) && $field->keep($value = $input[$key]))
@@ -51,7 +56,7 @@ class Collection extends BaseCollection implements SearchProcessorInterface {
 
         foreach ($input as $key => $value)
         {
-            if ( ! $this->items[$key]->isDisabled($action))
+            if ( ! $this->get($key)->isDisabled($action))
             {
                 $result[$key] = $value;
             }
@@ -67,7 +72,7 @@ class Collection extends BaseCollection implements SearchProcessorInterface {
      */
     public function validationLabels()
     {
-        return array_map(function ($item)
+        return array_map(function (Field $item)
         {
             return mb_strtolower($item->getLabel());
 
@@ -78,46 +83,25 @@ class Collection extends BaseCollection implements SearchProcessorInterface {
      * Filter by keywords.
      *
      * @param \Illuminate\Database\Query\Builder $builder
-     * @param string                            $keywords
+     * @param array $keywords
      *
      * @return void
      */
-    protected function filterByKeywords(QueryBuilder $builder, $keywords)
+    protected function applyKeywordsFilter(QueryBuilder $builder, array $keywords)
     {
         $builder->whereNested(function ($q) use ($keywords)
         {
+            /**
+             * @var KeywordsFilter $item
+             */
             foreach ($this->items as $item)
             {
-                if ($item->getFilterType() === FieldInterface::FILTER_STRING)
+                if ($item instanceof KeywordsFilter)
                 {
-                    $item->filter($q, $keywords);
-                }
-            } 
-        });
-    }
-
-    /**
-     * Apply complex filters.
-     *
-     * @param \Illuminate\Database\Query\Builder $builder
-     * @param array                              $data
-     *
-     * @return void
-     */
-    protected function filterByData(QueryBuilder $builder, array $data)
-    {
-        foreach ($data as $key => $value)
-        {
-            if ( ! empty($value) && $this->has($key))
-            {
-                $item = $this->get($key);
-
-                if ($item->getFilterType() !== FieldInterface::FILTER_NONE)
-                {
-                    $item->filter($builder, $value);
+                    $item->applyKeywordsFilter($q, $keywords);
                 }
             }
-        }
+        });
     }
 
     /**
@@ -125,16 +109,19 @@ class Collection extends BaseCollection implements SearchProcessorInterface {
      */
     public function constraintBuilder(EloquentBuilder $builder, array $options)
     {
-        $query = $builder->getQuery();
-
-        if ($value = \array_get($options, 'keywords'))
+        if ($value = array_get($options, 'keywords'))
         {
-            $this->filterByKeywords($query, $value);
+            $this->applyKeywordsFilter($builder->getQuery(), $this->processKeywords($value));
         }
+    }
 
-        if ($value = \array_get($options, 'filters'))
-        {
-            $this->filterByData($query, $value);
-        }
+    /**
+     * @param $keywords
+     *
+     * @return array
+     */
+    protected function processKeywords($keywords)
+    {
+        return preg_split('/\s/', $keywords, -1, PREG_SPLIT_NO_EMPTY);
     }
 }

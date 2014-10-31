@@ -1,13 +1,13 @@
 <?php
 
-namespace Kalnoy\Cruddy\Service\Permissions;
+namespace Kalnoy\Cruddy\Contracts;
 
 use Kalnoy\Cruddy\Entity;
 
 /**
  * Permissions interface.
  */
-interface PermissionsInterface {
+interface Permissions {
 
     /**
      * Action for viewing an item.

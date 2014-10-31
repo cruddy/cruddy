@@ -102,6 +102,7 @@ $.extend Cruddy,
 
     Fields: {}
     Columns: {}
+    Filters: {}
     formatters: new Factory
 
     getHistoryRoot: -> @baseUrl.substr @root.length
@@ -112,7 +113,6 @@ $.extend Cruddy,
         return @app
 
     ready: (callback) -> @getApp().ready callback
-        
 class Cruddy.View extends Backbone.View
     componentId: (component) -> @cid + "-" + component
 
@@ -167,9 +167,6 @@ class Cruddy.Attribute extends Backbone.Model
 
     # Get field's help
     getHelp: -> @attributes.help
-
-    # Get whether a column has complex filter
-    canFilter: -> @attributes.filter_type is "complex"
 
     # Get whether a column is visible
     isVisible: -> @attributes.hide is no
@@ -433,10 +430,10 @@ class DataGrid extends Cruddy.View
 
         @addActionColumns @columns
 
-        @listenTo @model, "data", @updateData
+        @listenTo @model, "data", => @renderBody()
         @listenTo @model, "change:order_by change:order_dir", @markOrderColumn
 
-        @listenTo @entity, "change:instance", @markSelectedItem
+        @listenTo @entity, "change:instance", @markActiveItem
 
     addActionColumns: (columns) ->
         @columns.unshift new Cruddy.Columns.ViewButton entity: @entity
@@ -455,7 +452,7 @@ class DataGrid extends Cruddy.View
 
         this
 
-    markSelectedItem: ->
+    markActiveItem: ->
         @$itemRow(model).removeClass "active" if model = @entity.previous "instance"
         @$itemRow(model).addClass "active" if model = @entity.get "instance"
 
@@ -474,29 +471,30 @@ class DataGrid extends Cruddy.View
 
         this
 
-    updateData: (datasource, data) ->
-        @$(".items").replaceWith @renderBody @columns, data
-
-        @markSelectedItem()
-
-        this
-
     render: ->
-        data = @model.get "data"
+        @$el.html @template()
 
-        @$el.html @renderHead(@columns) + @renderBody(@columns, data)
+        @$header = @$component "header"
+        @$items = @$component "items"
 
-        @markOrderColumn @model
+        @renderHead()
+        @renderBody()
 
         this
 
-    renderHead: (columns) ->
-        html = "<thead><tr>"
-        html += @renderHeadCell col for col in columns
-        html += "</tr></thead>"
+    renderHead: ->
+        html = ""
+        html += @renderHeadCell column for column in @columns
 
-    renderHeadCell: (col) ->
-        """<th class="#{ col.getClass() }" id="#{ @colCellId col }" data-id="#{ col.id }">#{ @renderHeadCellValue col }</th>"""
+        @$header.html html
+
+        @markOrderColumn()
+
+    renderHeadCell: (column) -> """
+        <th class="#{ column.getClass() }" id="#{ @colCellId column }" data-id="#{ column.id }">
+            #{ @renderHeadCellValue column }
+        </th>
+    """
 
     renderHeadCellValue: (col) ->
         title = _.escape col.getHeader()
@@ -508,33 +506,39 @@ class DataGrid extends Cruddy.View
 
         return title
 
-    renderBody: (columns, data) ->
-        html = """<tbody class="items">"""
+    renderBody: ->
+        unless @model.hasData()
+            @$items.html @emptyTemplate()
 
-        if data? and data.length
-            html += @renderRow columns, item for item in data
-        else
-            html += """<tr class="empty"><td colspan="#{ columns.length }">#{ Cruddy.lang.no_results }</td></tr>"""
+            return this
 
-        html += "</tbody>"
+        html = ""
+        html += @renderRow item for item in @model.get "data"
 
-    renderRow: (columns, item) ->
+        @$items.html html
+
+        @markActiveItem()
+
+    renderRow: (item) ->
         html = """
-            <tr class="item #{ @states item }" id="#{ @itemRowId item }" data-id="#{ item.id }">"""
+            <tr class="item #{ @itemStates item }" id="#{ @itemRowId item }" data-id="#{ item.id }">"""
 
-        html += @renderCell col, item for col in columns
+        html += @renderCell columns, item for columns in @columns
 
         html += "</tr>"
 
-    states: (item) ->
+    itemStates: (item) ->
         states = if item._states then item._states else ""
 
         states += " active" if (instance = @entity.get "instance")? and item.id == instance.id
 
         return states
 
-    renderCell: (col, item) ->
-        """<td class="#{ col.getClass() }">#{ col.render item }</td>"""
+    renderCell: (column, item) -> """
+        <td class="#{ column.getClass() }">
+            #{ column.render item }
+        </td>
+    """
 
     executeAction: (e) ->
         $el = $ e.currentTarget
@@ -566,6 +570,19 @@ class DataGrid extends Cruddy.View
                 $el.attr "disabled", no
 
         return
+
+    template: -> """
+        <thead><tr id="#{ @componentId "header" }"></tr></thead>
+        <tbody class="items" id="#{ @componentId "items" }"></tbody>
+    """
+
+    emptyTemplate: -> """
+        <tr class="empty">
+            <td colspan="#{ @columns.length }">
+                #{ Cruddy.lang.no_results }
+            </td>
+        </tr>
+    """
 
     colCellId: (col) -> @componentId "col-" + col.id
 
@@ -608,10 +625,10 @@ class FilterList extends Backbone.View
         @$el.html @template()
         @items = @$ ".filter-list-container"
 
-        for filter in @availableFilters when (field = @entity.fields.get filter) and field.canFilter() and (input = field.createFilterInput @filterModel)
-            @filters.push input
+        for filter in @availableFilters.models
+            @filters.push input = filter.createFilterInput @filterModel
             @items.append input.render().el
-            input.$el.wrap("""<div class="form-group filter filter-#{ field.id }"></div>""").parent().before "<label>#{ field.getFilterLabel() }</label>"
+            input.$el.wrap("""<div class="form-group #{ filter.getClass() }"></div>""").parent().before "<label>#{ filter.getLabel() }</label>"
 
         this
 
@@ -2895,6 +2912,22 @@ class Cruddy.Columns.DeleteButton extends Cruddy.Columns.Base
             #{ b_icon "trash" }
         </a>
     """
+class Cruddy.Filters.Base extends Cruddy.Attribute
+
+    getLabel: -> @attributes.label
+
+    getClass: -> "filter filter__" + @attributes.type + " filter--" + @id
+
+    createFilterInput: -> throw "Implement required"
+class Cruddy.Filters.Proxy extends Cruddy.Filters.Base
+
+    initialize: (attributes) ->
+        field = attributes.field ? attributes.id
+        @field = attributes.entity.fields.get field
+
+        super
+
+    createFilterInput: (model) -> @field.createFilterInput model
 class BaseFormatter
     defaultOptions: {}
 
@@ -2930,6 +2963,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
     initialize: (attributes, options) ->
         @fields = @createObjects attributes.fields
         @columns = @createObjects attributes.columns
+        @filters = @createObjects attributes.filters
         @permissions = Cruddy.permissions[@id]
         @cache = {}
 
@@ -3367,7 +3401,7 @@ class Cruddy.Entity.Page extends Cruddy.View
     createPaginationView: -> new Pagination model: @dataSource
 
     createFilterListView: ->
-        return if _.isEmpty filters = @dataSource.entity.get "filters"
+        return if (filters = @dataSource.entity.filters).isEmpty()
 
         return new FilterList
             model: @dataSource.filter

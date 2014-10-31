@@ -1,6 +1,6 @@
 <?php
 
-namespace Kalnoy\Cruddy\Service\Validation;
+namespace Kalnoy\Cruddy\Contracts;
 
 /**
  * Validable interface.
@@ -9,7 +9,7 @@ namespace Kalnoy\Cruddy\Service\Validation;
  *
  * @since 1.0.0
  */
-interface ValidableInterface {
+interface Validator {
 
     /**
      * Create action.

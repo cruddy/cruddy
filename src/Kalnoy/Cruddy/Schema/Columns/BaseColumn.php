@@ -3,7 +3,7 @@
 namespace Kalnoy\Cruddy\Schema\Columns;
 
 use Kalnoy\Cruddy\Schema\Attribute;
-use Kalnoy\Cruddy\Schema\ColumnInterface;
+use Kalnoy\Cruddy\Contracts\Column;
 
 /**
  * Base column class.
@@ -16,7 +16,7 @@ use Kalnoy\Cruddy\Schema\ColumnInterface;
  *
  * @since 1.0.0
  */
-abstract class BaseColumn extends Attribute implements ColumnInterface {
+abstract class BaseColumn extends Attribute implements Column {
 
     /**
      * Set formatter class for the column.

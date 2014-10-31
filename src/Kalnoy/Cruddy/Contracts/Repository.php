@@ -1,16 +1,17 @@
 <?php
 
-namespace Kalnoy\Cruddy\Repo;
+namespace Kalnoy\Cruddy\Contracts;
+use Kalnoy\Cruddy\Contracts\SearchProcessor;
 
 /**
  * Repository interface.
- * 
- * The repository is responsible for fetching, searching and performing 
+ *
+ * The repository is responsible for fetching, searching and performing
  * CRUD operations.
- * 
+ *
  * @since 1.0.0
  */
-interface RepositoryInterface {
+interface Repository {
 
     /**
      * Get new eloquent model.
@@ -39,11 +40,11 @@ interface RepositoryInterface {
      * - `per_page` -- override the number of items per page
      *
      * @param array                                        $options
-     * @param \Kalnoy\Cruddy\Repo\SearchProcessorInterface $processor
+     * @param SearchProcessor $processor
      *
      * @return \Illuminate\Pagination\Paginator
      */
-    public function search(array $options, SearchProcessorInterface $processor = null);
+    public function search(array $options, SearchProcessor $processor = null);
 
     /**
      * Create new eloquent model with input.
@@ -61,7 +62,7 @@ interface RepositoryInterface {
      * @param array $input
      *
      * @return \Illuminate\Database\Eloquent\Model
-     * 
+     *
      * @throws \Kalnoy\Cruddy\ModelNotFoundException
      */
     public function update($id, array $input);

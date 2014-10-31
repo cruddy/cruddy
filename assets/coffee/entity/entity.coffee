@@ -5,6 +5,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
     initialize: (attributes, options) ->
         @fields = @createObjects attributes.fields
         @columns = @createObjects attributes.columns
+        @filters = @createObjects attributes.filters
         @permissions = Cruddy.permissions[@id]
         @cache = {}
 

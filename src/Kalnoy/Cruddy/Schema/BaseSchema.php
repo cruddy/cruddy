@@ -2,11 +2,8 @@
 
 namespace Kalnoy\Cruddy\Schema;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-use Kalnoy\Cruddy\Repo\RepositoryInterface;
+use Kalnoy\Cruddy\Contracts\Schema;
 use Kalnoy\Cruddy\Repo\Stub as StubRepository;
-use Kalnoy\Cruddy\Repo\BaseRepository;
-use Kalnoy\Cruddy\Form\BasicForm;
 use Kalnoy\Cruddy\Service\Validation\FluentValidator;
 use Kalnoy\Cruddy\Entity;
 
@@ -15,7 +12,7 @@ use Kalnoy\Cruddy\Entity;
  *
  * @since 1.0.0
  */
-abstract class BaseSchema implements SchemaInterface {
+abstract class BaseSchema implements Schema {
 
     /**
      * The state of model when it is new.
@@ -90,6 +87,17 @@ abstract class BaseSchema implements SchemaInterface {
      * {@inheritdoc}
      */
     public function columns($schema) {}
+
+    /**
+     * @param Filters\InstanceFactory $schema
+     */
+    public function filters($schema)
+    {
+        foreach ($this->filters as $field)
+        {
+            $schema->usingField($field);
+        }
+    }
 
     /**
      * {@inheritdoc}

@@ -27,7 +27,7 @@ class Repository {
     /**
      * The list of resolved entities.
      *
-     * @var Schema\SchemaInterface[]
+     * @var \Kalnoy\Cruddy\Contracts\Schema[]
      */
     protected $resolved = [];
 
@@ -87,6 +87,9 @@ class Repository {
             throw new RuntimeException("Failed to resolve: the target class [{$class}] is not bound.");
         }
 
+        /**
+         * @var Contracts\Schema $schema
+         */
         $schema = $this->container->make($class);
 
         $this->resolved[$id] = $entity = $schema->entity();

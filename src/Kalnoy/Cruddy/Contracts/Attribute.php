@@ -1,6 +1,6 @@
 <?php
 
-namespace Kalnoy\Cruddy\Schema;
+namespace Kalnoy\Cruddy\Contracts;
 
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
@@ -14,7 +14,7 @@ use Illuminate\Support\Contracts\ArrayableInterface;
  *
  * @since 1.0.0
  */
-interface AttributeInterface extends ArrayableInterface {
+interface Attribute extends Entry {
 
     /**
      * Get model's corresponding value.
@@ -50,11 +50,4 @@ interface AttributeInterface extends ArrayableInterface {
      * @return bool
      */
     public function canOrder();
-
-    /**
-     * Get the attribute identifier.
-     *
-     * @return string
-     */
-    public function getId();
 }

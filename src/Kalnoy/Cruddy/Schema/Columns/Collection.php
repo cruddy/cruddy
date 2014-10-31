@@ -4,18 +4,17 @@ namespace Kalnoy\Cruddy\Schema\Columns;
 
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
-use Kalnoy\Cruddy\Schema\BaseCollection;
-use Kalnoy\Cruddy\Schema\AttributeInterface;
-use Kalnoy\Cruddy\Repo\SearchProcessorInterface;
+use Kalnoy\Cruddy\Schema\AttributesCollection;
+use Kalnoy\Cruddy\Contracts\SearchProcessor;
 
 /**
  * Columns collection class.
  *
- * This collections implements SearchProcessorInterface for applying order.
+ * This collections implements SearchProcessor for applying order.
  *
  * @since 1.0.0
  */
-class Collection extends BaseCollection implements SearchProcessorInterface {
+class Collection extends AttributesCollection implements SearchProcessor {
 
     /**
      * Apply modifications to the query
@@ -26,6 +25,9 @@ class Collection extends BaseCollection implements SearchProcessorInterface {
      */
     public function modifyQuery(EloquentBuilder $builder)
     {
+        /**
+         * @var \Kalnoy\Cruddy\Contracts\Column $item
+         */
         foreach ($this->items as $item)
         {
             $item->modifyQuery($builder);

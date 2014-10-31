@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Kalnoy\Cruddy\Schema\Columns\BaseColumn;
-use Kalnoy\Cruddy\Schema\FieldInterface;
+use Kalnoy\Cruddy\Contracts\Field;
 use Kalnoy\Cruddy\Entity;
 
 /**
@@ -19,7 +19,7 @@ class Proxy extends BaseColumn {
     /**
      * The field instance.
      *
-     * @var FieldInterface
+     * @var \Kalnoy\Cruddy\Contracts\Field
      */
     protected $field;
 
@@ -38,9 +38,9 @@ class Proxy extends BaseColumn {
      *
      * @param Entity         $entity
      * @param string         $id
-     * @param FieldInterface $field
+     * @param \Kalnoy\Cruddy\Contracts\Field $field
      */
-    public function __construct(Entity $entity, $id, FieldInterface $field)
+    public function __construct(Entity $entity, $id, Field $field)
     {
         parent::__construct($entity, $id);
 
@@ -86,9 +86,9 @@ class Proxy extends BaseColumn {
     /**
      * {@inheritdoc}
      */
-    public function getHeader()
+    public function generateLabel()
     {
-        return $this->translate('columns') ?: $this->field->getLabel();
+        return $this->field->getLabel();
     }
 
     /**

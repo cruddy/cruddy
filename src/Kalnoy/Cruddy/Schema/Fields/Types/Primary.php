@@ -31,11 +31,15 @@ class Primary extends String {
      *
      * We will check for actual match rather than partial.
      */
-    public function filter(Builder $builder, $data)
+    public function applyKeywordsFilter(Builder $builder, array $keywords)
     {
-        $builder->orWhere($this->id, '=', $data);
-
-        return $this;
+        foreach ($keywords as $keyword)
+        {
+            if (is_numeric($keyword))
+            {
+                $builder->orWhere($this->id, '=', $keyword);
+            }
+        }
     }
 
     /**

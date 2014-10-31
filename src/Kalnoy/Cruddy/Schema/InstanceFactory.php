@@ -2,6 +2,7 @@
 
 namespace Kalnoy\Cruddy\Schema;
 
+use Kalnoy\Cruddy\Contracts\Attribute;
 use Kalnoy\Cruddy\Entity;
 
 /**
@@ -52,7 +53,7 @@ class InstanceFactory {
      * @param string $method
      * @param array  $parameters
      *
-     * @return AttributeInterface
+     * @return Attribute
      */
     public function __call($method, $parameters)
     {

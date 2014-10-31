@@ -3,6 +3,7 @@
 namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
 use Illuminate\Database\Query\Builder as QueryBuilder;
+use Kalnoy\Cruddy\Contracts\Filter;
 use Kalnoy\Cruddy\Schema\Fields\BasicRelation;
 
 /**
@@ -10,7 +11,7 @@ use Kalnoy\Cruddy\Schema\Fields\BasicRelation;
  *
  * @since 1.0.0
  */
-class BelongsToMany extends BasicRelation {
+class BelongsToMany extends BasicRelation implements Filter {
 
     /**
      * {@inheritdoc}
@@ -25,27 +26,26 @@ class BelongsToMany extends BasicRelation {
     /**
      * {@inheritdoc}
      */
-    public function filter(QueryBuilder $builder, $data)
+    public function applyFilterConstraint(QueryBuilder $builder, $data)
     {
-        $data = $data['id'];
-
-        $builder->whereExists(function ($q) use ($data)
+        if ($id = array_get($data, 'id'))
         {
-            $this->initNestedQuery($q, $data);
-        });
-
-        return $this;
+            $builder->whereExists(function ($q) use ($id)
+            {
+                $this->initNestedQuery($q, $id);
+            });
+        }
     }
 
     /**
      * Init nested query for filter.
      *
      * @param QueryBuilder $query
-     * @param mixed        $data
+     * @param mixed        $id
      *
      * @return void
      */
-    protected function initNestedQuery(QueryBuilder $query, $data)
+    protected function initNestedQuery(QueryBuilder $query, $id)
     {
         $connection = $query->getConnection();
         $keyName = $connection->raw($this->relation->getParent()->getQualifiedKeyName());
@@ -54,6 +54,6 @@ class BelongsToMany extends BasicRelation {
             ->from($this->relation->getTable())
             ->select($connection->raw('1'))
             ->where($this->relation->getForeignKey(), $keyName)
-            ->where($this->relation->getOtherKey(), $data);
+            ->where($this->relation->getOtherKey(), $id);
     }
 }

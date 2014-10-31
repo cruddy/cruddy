@@ -181,6 +181,7 @@
   $.extend(Cruddy, {
     Fields: {},
     Columns: {},
+    Filters: {},
     formatters: new Factory,
     getHistoryRoot: function() {
       return this.baseUrl.substr(this.root.length);
@@ -299,10 +300,6 @@
 
     Attribute.prototype.getHelp = function() {
       return this.attributes.help;
-    };
-
-    Attribute.prototype.canFilter = function() {
-      return this.attributes.filter_type === "complex";
     };
 
     Attribute.prototype.isVisible = function() {
@@ -689,9 +686,13 @@
         return col.isVisible();
       });
       this.addActionColumns(this.columns);
-      this.listenTo(this.model, "data", this.updateData);
+      this.listenTo(this.model, "data", (function(_this) {
+        return function() {
+          return _this.renderBody();
+        };
+      })(this));
       this.listenTo(this.model, "change:order_by change:order_dir", this.markOrderColumn);
-      return this.listenTo(this.entity, "change:instance", this.markSelectedItem);
+      return this.listenTo(this.entity, "change:instance", this.markActiveItem);
     };
 
     DataGrid.prototype.addActionColumns = function(columns) {
@@ -717,7 +718,7 @@
       return this;
     };
 
-    DataGrid.prototype.markSelectedItem = function() {
+    DataGrid.prototype.markActiveItem = function() {
       var model;
       if (model = this.entity.previous("instance")) {
         this.$itemRow(model).removeClass("active");
@@ -744,32 +745,29 @@
       return this;
     };
 
-    DataGrid.prototype.updateData = function(datasource, data) {
-      this.$(".items").replaceWith(this.renderBody(this.columns, data));
-      this.markSelectedItem();
-      return this;
-    };
-
     DataGrid.prototype.render = function() {
-      var data;
-      data = this.model.get("data");
-      this.$el.html(this.renderHead(this.columns) + this.renderBody(this.columns, data));
-      this.markOrderColumn(this.model);
+      this.$el.html(this.template());
+      this.$header = this.$component("header");
+      this.$items = this.$component("items");
+      this.renderHead();
+      this.renderBody();
       return this;
     };
 
-    DataGrid.prototype.renderHead = function(columns) {
-      var col, html, _i, _len;
-      html = "<thead><tr>";
-      for (_i = 0, _len = columns.length; _i < _len; _i++) {
-        col = columns[_i];
-        html += this.renderHeadCell(col);
+    DataGrid.prototype.renderHead = function() {
+      var column, html, _i, _len, _ref1;
+      html = "";
+      _ref1 = this.columns;
+      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+        column = _ref1[_i];
+        html += this.renderHeadCell(column);
       }
-      return html += "</tr></thead>";
+      this.$header.html(html);
+      return this.markOrderColumn();
     };
 
-    DataGrid.prototype.renderHeadCell = function(col) {
-      return "<th class=\"" + (col.getClass()) + "\" id=\"" + (this.colCellId(col)) + "\" data-id=\"" + col.id + "\">" + (this.renderHeadCellValue(col)) + "</th>";
+    DataGrid.prototype.renderHeadCell = function(column) {
+      return "<th class=\"" + (column.getClass()) + "\" id=\"" + (this.colCellId(column)) + "\" data-id=\"" + column.id + "\">\n    " + (this.renderHeadCellValue(column)) + "\n</th>";
     };
 
     DataGrid.prototype.renderHeadCellValue = function(col) {
@@ -781,31 +779,34 @@
       return title;
     };
 
-    DataGrid.prototype.renderBody = function(columns, data) {
-      var html, item, _i, _len;
-      html = "<tbody class=\"items\">";
-      if ((data != null) && data.length) {
-        for (_i = 0, _len = data.length; _i < _len; _i++) {
-          item = data[_i];
-          html += this.renderRow(columns, item);
-        }
-      } else {
-        html += "<tr class=\"empty\"><td colspan=\"" + columns.length + "\">" + Cruddy.lang.no_results + "</td></tr>";
+    DataGrid.prototype.renderBody = function() {
+      var html, item, _i, _len, _ref1;
+      if (!this.model.hasData()) {
+        this.$items.html(this.emptyTemplate());
+        return this;
       }
-      return html += "</tbody>";
+      html = "";
+      _ref1 = this.model.get("data");
+      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+        item = _ref1[_i];
+        html += this.renderRow(item);
+      }
+      this.$items.html(html);
+      return this.markActiveItem();
     };
 
-    DataGrid.prototype.renderRow = function(columns, item) {
-      var col, html, _i, _len;
-      html = "<tr class=\"item " + (this.states(item)) + "\" id=\"" + (this.itemRowId(item)) + "\" data-id=\"" + item.id + "\">";
-      for (_i = 0, _len = columns.length; _i < _len; _i++) {
-        col = columns[_i];
-        html += this.renderCell(col, item);
+    DataGrid.prototype.renderRow = function(item) {
+      var columns, html, _i, _len, _ref1;
+      html = "<tr class=\"item " + (this.itemStates(item)) + "\" id=\"" + (this.itemRowId(item)) + "\" data-id=\"" + item.id + "\">";
+      _ref1 = this.columns;
+      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+        columns = _ref1[_i];
+        html += this.renderCell(columns, item);
       }
       return html += "</tr>";
     };
 
-    DataGrid.prototype.states = function(item) {
+    DataGrid.prototype.itemStates = function(item) {
       var instance, states;
       states = item._states ? item._states : "";
       if (((instance = this.entity.get("instance")) != null) && item.id === instance.id) {
@@ -814,8 +815,8 @@
       return states;
     };
 
-    DataGrid.prototype.renderCell = function(col, item) {
-      return "<td class=\"" + (col.getClass()) + "\">" + (col.render(item)) + "</td>";
+    DataGrid.prototype.renderCell = function(column, item) {
+      return "<td class=\"" + (column.getClass()) + "\">\n    " + (column.render(item)) + "\n</td>";
     };
 
     DataGrid.prototype.executeAction = function(e) {
@@ -847,6 +848,14 @@
           return $el.attr("disabled", false);
         }
       });
+    };
+
+    DataGrid.prototype.template = function() {
+      return "<thead><tr id=\"" + (this.componentId("header")) + "\"></tr></thead>\n<tbody class=\"items\" id=\"" + (this.componentId("items")) + "\"></tbody>";
+    };
+
+    DataGrid.prototype.emptyTemplate = function() {
+      return "<tr class=\"empty\">\n    <td colspan=\"" + this.columns.length + "\">\n        " + Cruddy.lang.no_results + "\n    </td>\n</tr>";
     };
 
     DataGrid.prototype.colCellId = function(col) {
@@ -911,19 +920,16 @@
     };
 
     FilterList.prototype.render = function() {
-      var field, filter, input, _i, _len, _ref1;
+      var filter, input, _i, _len, _ref1;
       this.dispose();
       this.$el.html(this.template());
       this.items = this.$(".filter-list-container");
-      _ref1 = this.availableFilters;
+      _ref1 = this.availableFilters.models;
       for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
         filter = _ref1[_i];
-        if (!((field = this.entity.fields.get(filter)) && field.canFilter() && (input = field.createFilterInput(this.filterModel)))) {
-          continue;
-        }
-        this.filters.push(input);
+        this.filters.push(input = filter.createFilterInput(this.filterModel));
         this.items.append(input.render().el);
-        input.$el.wrap("<div class=\"form-group filter filter-" + field.id + "\"></div>").parent().before("<label>" + (field.getFilterLabel()) + "</label>");
+        input.$el.wrap("<div class=\"form-group " + (filter.getClass()) + "\"></div>").parent().before("<label>" + (filter.getLabel()) + "</label>");
       }
       return this;
     };
@@ -4412,6 +4418,51 @@
 
   })(Cruddy.Columns.Base);
 
+  Cruddy.Filters.Base = (function(_super) {
+    __extends(Base, _super);
+
+    function Base() {
+      return Base.__super__.constructor.apply(this, arguments);
+    }
+
+    Base.prototype.getLabel = function() {
+      return this.attributes.label;
+    };
+
+    Base.prototype.getClass = function() {
+      return "filter filter__" + this.attributes.type + " filter--" + this.id;
+    };
+
+    Base.prototype.createFilterInput = function() {
+      throw "Implement required";
+    };
+
+    return Base;
+
+  })(Cruddy.Attribute);
+
+  Cruddy.Filters.Proxy = (function(_super) {
+    __extends(Proxy, _super);
+
+    function Proxy() {
+      return Proxy.__super__.constructor.apply(this, arguments);
+    }
+
+    Proxy.prototype.initialize = function(attributes) {
+      var field, _ref1;
+      field = (_ref1 = attributes.field) != null ? _ref1 : attributes.id;
+      this.field = attributes.entity.fields.get(field);
+      return Proxy.__super__.initialize.apply(this, arguments);
+    };
+
+    Proxy.prototype.createFilterInput = function(model) {
+      return this.field.createFilterInput(model);
+    };
+
+    return Proxy;
+
+  })(Cruddy.Filters.Base);
+
   BaseFormatter = (function() {
     BaseFormatter.prototype.defaultOptions = {};
 
@@ -4487,6 +4538,7 @@
     Entity.prototype.initialize = function(attributes, options) {
       this.fields = this.createObjects(attributes.fields);
       this.columns = this.createObjects(attributes.columns);
+      this.filters = this.createObjects(attributes.filters);
       this.permissions = Cruddy.permissions[this.id];
       this.cache = {};
       return this;
@@ -5122,7 +5174,7 @@
 
     Page.prototype.createFilterListView = function() {
       var filters;
-      if (_.isEmpty(filters = this.dataSource.entity.get("filters"))) {
+      if ((filters = this.dataSource.entity.filters).isEmpty()) {
         return;
       }
       return new FilterList({

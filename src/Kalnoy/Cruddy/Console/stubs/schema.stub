@@ -24,7 +24,7 @@ class {name} extends BaseSchema {
     /**
      * Define some fields.
      *
-     * @param $schema
+     * @param \Kalnoy\Cruddy\Schema\Fields\InstanceFactory $schema
      */
     public function fields($schema)
     {
@@ -36,7 +36,7 @@ class {name} extends BaseSchema {
     /**
      * Define some columns.
      *
-     * @param $schema
+     * @param \Kalnoy\Cruddy\Schema\Columns\InstanceFactory $schema
      */
     public function columns($schema)
     {
@@ -48,7 +48,7 @@ class {name} extends BaseSchema {
     /**
      * Define some files to upload.
      *
-     * @param $repo
+     * @param \Kalnoy\Cruddy\Repo\Stub $repo
      */
     public function files($repo)
     {
@@ -58,7 +58,7 @@ class {name} extends BaseSchema {
     /**
      * Define validation rules.
      *
-     * @param $v
+     * @param \Kalnoy\Cruddy\Service\Validation\FluentValidator $v
      */
     public function rules($v)
     {

@@ -3,14 +3,15 @@
 namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
 use Illuminate\Database\Query\Builder as QueryBuilder;
+use Kalnoy\Cruddy\Contracts\Filter;
 use Kalnoy\Cruddy\Schema\Fields\BasicRelation;
 
 /**
  * Handles belongs to relation.
- * 
+ *
  * @since 1.0.0
  */
-class BelongsTo extends BasicRelation {
+class BelongsTo extends BasicRelation implements Filter {
 
     /**
      * {@inheritdoc}
@@ -23,12 +24,16 @@ class BelongsTo extends BasicRelation {
     protected $filterType = self::FILTER_COMPLEX;
 
     /**
-     * {@inheritdoc}
+     * @param QueryBuilder $builder
+     * @param $data
+     *
+     * @return void
      */
-    public function filter(QueryBuilder $builder, $data)
+    public function applyFilterConstraint(QueryBuilder $builder, $data)
     {
-        $builder->where($this->relation->getForeignKey(), '=', $data['id']);
-
-        return $this;
+        if ($id = array_get($data, 'id'))
+        {
+            $builder->where($this->relation->getForeignKey(), '=', $id);
+        }
     }
 }

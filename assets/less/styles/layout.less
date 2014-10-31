@@ -46,12 +46,12 @@
     margin-top: -@content-header-height;
     padding-top: @content-header-height;
     // padding-left: @content-base-padding;
-    
+
     .column {
         overflow: auto;
         height: 100%;
     }
-    
+
     .column-extra {
         background-color: #fff;
         position: relative;
@@ -61,4 +61,15 @@
 .limit-height {
     overflow-y: auto;
     max-height: 250px;
+}
+
+.cp {
+    &-container {
+        background: #fff;
+        padding: (@grid-gutter-width / 2);
+
+        > .page-header {
+            margin-top: 0;
+        }
+    }
 }

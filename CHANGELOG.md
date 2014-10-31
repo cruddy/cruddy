@@ -14,6 +14,7 @@ develop
 *   The page title is now updated according to current entity and instance
 *   Refactored navigation to remove duplicate requests
 *   Records are now cached for quicker responses
+*   Added `cruddy::custom` layout for custom pages
 
 v0.3.2
 ======

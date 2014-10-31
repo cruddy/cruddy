@@ -33,7 +33,7 @@ class CompileCommand extends Command {
     /**
      * Create a new command instance.
      *
-     * @return void
+     * @param Compiler $compiler
      */
     public function __construct(Compiler $compiler)
     {
@@ -50,6 +50,8 @@ class CompileCommand extends Command {
     public function fire()
     {
         $this->compiler->compile($this->argument('locale'));
+
+        $this->info('All done!');
     }
 
     /**

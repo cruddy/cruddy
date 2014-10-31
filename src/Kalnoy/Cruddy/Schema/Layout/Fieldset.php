@@ -2,6 +2,8 @@
 
 namespace Kalnoy\Cruddy\Schema\Layout;
 
+use Kalnoy\Cruddy\Helpers;
+
 class Fieldset extends BaseFieldset {
 
     /**
@@ -33,7 +35,7 @@ class Fieldset extends BaseFieldset {
      */
     public function compile()
     {
-        return [ 'title' => \Kalnoy\Cruddy\try_trans($this->title) ] + parent::compile();
+        return [ 'title' => Helpers::tryTranslate($this->title) ] + parent::compile();
     }
 
 }

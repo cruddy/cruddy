@@ -4,6 +4,7 @@ namespace Kalnoy\Cruddy\Schema\Fields;
 
 use Illuminate\Database\Query\Builder;
 use Kalnoy\Cruddy\Contracts\KeywordsFilter;
+use Kalnoy\Cruddy\Helpers;
 
 /**
  * Base text field class.
@@ -71,7 +72,7 @@ abstract class BaseTextField extends BaseInput implements KeywordsFilter {
         return
         [
             'input_type' => $this->inputType,
-            'placeholder' => \Kalnoy\Cruddy\try_trans($this->get('placeholder')),
+            'placeholder' => Helpers::tryTranslate($this->get('placeholder')),
 
         ] + parent::toArray();
     }

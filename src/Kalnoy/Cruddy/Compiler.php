@@ -12,7 +12,7 @@ class Compiler {
     protected $entities;
 
     /**
-     * @var \Illuminate\Filesystem\Filesystem
+     * @var Filesystem
      */
     protected $file;
 
@@ -21,11 +21,25 @@ class Compiler {
      */
     protected $lang;
 
-    public function __construct(Repository $entities, Filesystem $file, Lang $lang)
+    /**
+     * @var string
+     */
+    protected $basePath;
+
+    /**
+     * @param Repository $entities
+     * @param Filesystem $file
+     * @param Lang $lang
+     * @param $basePath
+     */
+    public function __construct(Repository $entities, Filesystem $file, Lang $lang, $basePath)
     {
         $this->entities = $entities;
         $this->file = $file;
         $this->lang = $lang;
+        $this->basePath = $basePath;
+
+        $this->ensureDirectory();
     }
 
     /**
@@ -47,6 +61,8 @@ class Compiler {
 
     /**
      * Get fresh schema.
+     *
+     * @param string $locale
      *
      * @return array
      */
@@ -78,13 +94,6 @@ class Compiler {
 
         if (empty($locales)) $locales = [ $this->lang->getLocale() ];
 
-        $directory = pathinfo($this->filename(), PATHINFO_DIRNAME);
-
-        if ( ! $this->file->isDirectory($directory))
-        {
-            $this->file->makeDirectory($directory);
-        }
-
         foreach ($locales as $locale)
         {
             $filename = $this->filename($locale);
@@ -100,13 +109,16 @@ class Compiler {
      */
     public function clearCompiled()
     {
-        $filename = $this->filename();
-
-        $this->file->cleanDirectory(pathinfo($filename, PATHINFO_DIRNAME));
+        if ($this->file->isDirectory($this->basePath))
+        {
+            $this->file->cleanDirectory($this->basePath);
+        }
     }
 
     /**
      * Get a filename for compiled file.
+     *
+     * @param string $locale
      *
      * @return string
      */
@@ -114,7 +126,17 @@ class Compiler {
     {
         if ($locale === null) $locale = $this->lang->getLocale();
 
-        return base_path().'/bootstrap/cruddy/'.$locale.'.php';
+        return $this->basePath.'/'.$locale.'.php';
     }
 
+    /**
+     * Make sure that base path exists.
+     */
+    protected function ensureDirectory()
+    {
+        if ( ! $this->file->isDirectory($this->basePath))
+        {
+            $this->file->makeDirectory($this->basePath);
+        }
+    }
 }

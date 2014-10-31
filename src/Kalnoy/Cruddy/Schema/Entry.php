@@ -4,6 +4,7 @@ namespace Kalnoy\Cruddy\Schema;
 
 use Illuminate\Support\Contracts\ArrayableInterface;
 use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\Helpers;
 
 class Entry implements \Kalnoy\Cruddy\Contracts\Entry {
 
@@ -100,7 +101,7 @@ class Entry implements \Kalnoy\Cruddy\Contracts\Entry {
     {
         $help = $this->get('help');
 
-        return $help ? \Kalnoy\Cruddy\try_trans($help) : $this->translate('help');
+        return $help ? Helpers::tryTranslate($help) : $this->translate('help');
     }
 
     /**
@@ -127,7 +128,7 @@ class Entry implements \Kalnoy\Cruddy\Contracts\Entry {
      */
     protected function generateLabel()
     {
-        return \Kalnoy\Cruddy\ucfirst(\Kalnoy\Cruddy\prettify_string($this->id));
+        return Helpers::labelFromId($this->id);
     }
 
     /**

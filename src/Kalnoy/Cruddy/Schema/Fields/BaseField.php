@@ -4,6 +4,7 @@ namespace Kalnoy\Cruddy\Schema\Fields;
 
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Query\Builder as QueryBuilder;
+use Kalnoy\Cruddy\Helpers;
 use Kalnoy\Cruddy\Schema\Attribute;
 use Kalnoy\Cruddy\Contracts\Field;
 
@@ -56,7 +57,7 @@ abstract class BaseField extends Attribute implements Field {
     {
         if ($label = $this->get('label'))
         {
-            return \Kalnoy\Cruddy\try_trans($label);
+            return Helpers::tryTranslate($label);
         }
 
         return $this->generateLabel();

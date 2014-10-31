@@ -838,7 +838,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
 
         $func = "str_{$plurality}";
 
-        return ucfirst(prettify_string($func($this->id)));
+        return Helpers::labelFromId($func($this->id));
     }
 
     /**

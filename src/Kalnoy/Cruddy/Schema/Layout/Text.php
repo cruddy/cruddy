@@ -2,6 +2,8 @@
 
 namespace Kalnoy\Cruddy\Schema\Layout;
 
+use Kalnoy\Cruddy\Helpers;
+
 class Text extends Element {
 
     /**
@@ -29,7 +31,7 @@ class Text extends Element {
      */
     public function compile()
     {
-        return [ 'contents' => \Kalnoy\Cruddy\try_trans($this->contents) ] + parent::compile();
+        return [ 'contents' => Helpers::tryTranslate($this->contents) ] + parent::compile();
     }
 
 }

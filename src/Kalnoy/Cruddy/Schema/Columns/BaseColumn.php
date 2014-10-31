@@ -2,6 +2,7 @@
 
 namespace Kalnoy\Cruddy\Schema\Columns;
 
+use Kalnoy\Cruddy\Helpers;
 use Kalnoy\Cruddy\Schema\Attribute;
 use Kalnoy\Cruddy\Contracts\Column;
 
@@ -69,7 +70,7 @@ abstract class BaseColumn extends Attribute implements Column {
     {
         if ($header = $this->get('header'))
         {
-            return \Kalnoy\Cruddy\try_trans($header);
+            return Helpers::tryTranslate($header);
         }
 
         return $this->translate('columns') ?: $this->generateLabel();

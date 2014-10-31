@@ -1,6 +1,7 @@
 <?php
 
 namespace Kalnoy\Cruddy\Schema\Fields;
+use Kalnoy\Cruddy\Helpers;
 
 /**
  * Class BaseInput
@@ -26,8 +27,8 @@ abstract class BaseInput extends BaseField {
     {
         return
         [
-            'append' => \Kalnoy\Cruddy\try_trans($this->get('append')),
-            'prepend' => \Kalnoy\Cruddy\try_trans($this->get('prepend')),
+            'append' => Helpers::tryTranslate($this->get('append')),
+            'prepend' => Helpers::tryTranslate($this->get('prepend')),
 
         ] + parent::toArray();
     }

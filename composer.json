@@ -26,10 +26,6 @@
 
         "psr-0": {
             "Kalnoy\\Cruddy\\": "src/"
-        },
-
-        "files": [
-            "src/helpers.php"
-        ]
+        }
     }
 }

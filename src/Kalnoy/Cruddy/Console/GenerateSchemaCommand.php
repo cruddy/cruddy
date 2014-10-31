@@ -33,7 +33,7 @@ class GenerateSchemaCommand extends Command {
 	/**
 	 * Create a new command instance.
 	 *
-	 * @return void
+	 * @param Filesystem $file
 	 */
 	public function __construct(Filesystem $file)
 	{

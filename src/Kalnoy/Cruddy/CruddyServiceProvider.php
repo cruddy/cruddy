@@ -2,9 +2,11 @@
 
 namespace Kalnoy\Cruddy;
 
+use Illuminate\Container\Container;
 use Illuminate\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Config\Repository as Config;
+use Illuminate\View\Factory;
 use Kalnoy\Cruddy\Service\MenuBuilder;
 use Kalnoy\Cruddy\Repo\BaseRepository;
 use Kalnoy\Cruddy\Service\Permissions\PermissionsManager;
@@ -40,8 +42,6 @@ class CruddyServiceProvider extends ServiceProvider {
 		$this->package('kalnoy/cruddy');
 
         $this->registerRoutes($this->app['router'], $this->app['config']);
-
-        include __DIR__."/../../composers.php";
 	}
 
 	/**
@@ -62,6 +62,7 @@ class CruddyServiceProvider extends ServiceProvider {
         $this->registerCompiler();
         $this->registerThumbnailFactory();
         $this->registerAliases();
+        $this->registerViewComposer();
     }
 
     /**
@@ -106,30 +107,32 @@ class CruddyServiceProvider extends ServiceProvider {
      */
     protected function registerFactories()
     {
-        $this->app->bindShared('cruddy.fields', function ($app)
+        $this->app->bindShared('cruddy.fields', function ()
         {
             return new Schema\Fields\Factory;
         });
 
-        $this->app->bindShared('cruddy.columns', function ($app)
+        $this->app->bindShared('cruddy.columns', function ()
         {
             return new Schema\Columns\Factory;
         });
 
-        $this->app->bindShared('cruddy.filters', function ($app)
+        $this->app->bindShared('cruddy.filters', function ()
         {
             return new Schema\Filters\Factory;
         });
     }
 
     /**
-     *
+     * Register entity repository.
      */
     public function registerRepository()
     {
-        $this->app->bindShared('cruddy.repository', function ($app)
+        $this->app->bindShared('cruddy.repository', function (Container $app)
         {
-            return new Repository($app, $app['config']->get('cruddy::entities', []));
+            $config = $app->make('config');
+
+            return new Repository($app, $config->get('cruddy::entities', []));
         });
     }
 
@@ -158,10 +161,6 @@ class CruddyServiceProvider extends ServiceProvider {
 
     /**
      * Register assets.
-     *
-     * @param \Kalnoy\Cruddy\Environment $env
-     *
-     * @return \Kalnoy\Cruddy\Environment
      */
     protected function registerAssets()
     {
@@ -270,7 +269,9 @@ class CruddyServiceProvider extends ServiceProvider {
     {
         $this->app->bindShared('cruddy.compiler', function ($app)
         {
-            return new Compiler($app['cruddy.repository'], $app['files'], $app['cruddy.lang']);
+            $basePath = storage_path('cruddy');
+
+            return new Compiler($app['cruddy.repository'], $app['files'], $app['cruddy.lang'], $basePath);
         });
     }
 
@@ -340,5 +341,16 @@ class CruddyServiceProvider extends ServiceProvider {
         $entities = app('cruddy.repository')->available();
 
         $router->pattern('cruddy_entity', '('.$entities.')');
+    }
+
+    /**
+     * Register a composer for the layout.
+     */
+    protected function registerViewComposer()
+    {
+        $this->app->resolving('view', function (Factory $viewFactory)
+        {
+            $viewFactory->composer('cruddy::layout', 'Kalnoy\Cruddy\LayoutComposer');
+        });
     }
 }

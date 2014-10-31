@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <title>@yield('title', $brand)</title>
-    {{ $assets->styles() }}
+    {{ $styles }}
 </head>
 <body>
     <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
@@ -13,11 +13,8 @@
             </div>
 
             <div class="navbar-collapse">
-                {{ $menu->render($mainMenu) }}
-
-                @if ($serviceMenu)
-                    {{ $menu->render($serviceMenu, 'nav navbar-nav navbar-right') }}
-                @endif
+                {{ $mainMenu }}
+                {{ $serviceMenu }}
             </div>
         </div>
     </nav>
@@ -30,6 +27,6 @@
     Cruddy = {{ json_encode($cruddyData) }};
     </script>
 
-    {{ $assets->scripts() }}
+    {{ $scripts }}
 </body>
 </html>

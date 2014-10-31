@@ -3,6 +3,7 @@
 namespace Kalnoy\Cruddy\Schema\Filters;
 
 use Kalnoy\Cruddy\Contracts\Filter;
+use Kalnoy\Cruddy\Helpers;
 use Kalnoy\Cruddy\Schema\Entry;
 
 /**
@@ -23,7 +24,7 @@ abstract class BaseFilter extends Entry implements Filter {
     {
         if ($label = $this->get('label'))
         {
-            return \Kalnoy\Cruddy\try_trans($label);
+            return Helpers::tryTranslate($label);
         }
 
         return $this->generateLabel();

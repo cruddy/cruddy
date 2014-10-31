@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Query\Builder;
 use Kalnoy\Cruddy\Contracts\Filter;
+use Kalnoy\Cruddy\Helpers;
 use Kalnoy\Cruddy\Schema\Fields\BaseInput;
 
 /**
@@ -65,7 +66,7 @@ class Enum extends BaseInput implements Filter {
     {
         foreach ($items as $key => $value)
         {
-            $items[$key] = \Kalnoy\Cruddy\try_trans($value);
+            $items[$key] = Helpers::tryTranslate($value);
         }
 
         return $items;
@@ -78,7 +79,7 @@ class Enum extends BaseInput implements Filter {
     {
         return
         [
-            'prompt' => \Kalnoy\Cruddy\try_trans($this->get('prompt')),
+            'prompt' => Helpers::tryTranslate($this->get('prompt')),
             'items' => $this->translateItems(value($this->items)),
 
         ] + parent::toArray();

@@ -2,21 +2,18 @@
 
 namespace Kalnoy\Cruddy;
 
-if ( ! function_exists('Kalnoy\Cruddy\prettify_string'))
-{
-    /**
-     * @param $value
-     *
-     * @return mixed
-     */
-    function prettify_string($value) {
+class Helpers {
 
+    /**
+     * @param string $value
+     *
+     * @return string
+     */
+    static public function prettifyString($value)
+    {
         return str_replace("_", " ", $value);
     }
-}
 
-if ( ! function_exists('Kalnoy\Cruddy\try_trans'))
-{
     /**
      * Try translate a key.
      *
@@ -24,14 +21,11 @@ if ( ! function_exists('Kalnoy\Cruddy\try_trans'))
      *
      * @return string
      */
-    function try_trans($key)
+    static public function tryTranslate($key)
     {
         return app('cruddy.lang')->tryTranslate($key);
     }
-}
 
-if ( ! function_exists('Kalnoy\Cruddy\ucfirst'))
-{
     /**
      * `uncfirst` for unicode strings.
      *
@@ -39,10 +33,20 @@ if ( ! function_exists('Kalnoy\Cruddy\ucfirst'))
      *
      * @return string
      */
-    function ucfirst($str)
+    static public function ucfirst($str)
     {
         $char = mb_strtoupper(mb_substr($str, 0, 1));
 
         return $char . mb_substr($str, 1);
+    }
+
+    /**
+     * @param string $id
+     *
+     * @return string
+     */
+    public static function labelFromId($id)
+    {
+        return static::ucfirst(static::prettifyString($id));
     }
 }

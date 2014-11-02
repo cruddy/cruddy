@@ -40,18 +40,18 @@ class FileUploader {
     protected $path = 'files';
 
     /**
-     * Whether to keep original file names.
-     *
-     * @var bool
-     */
-    protected $keepNames = false;
-
-    /**
      * Whether files with same can be overwritten.
      *
      * @var bool
      */
     protected $allowOverwrite = false;
+
+    /**
+     * Whether to keep original file names.
+     *
+     * @var bool
+     */
+    protected $keepNames = false;
 
     /**
      * The list of uploaded files.

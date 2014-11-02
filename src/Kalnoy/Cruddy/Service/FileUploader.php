@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\File\UploadedFile;
 class FileUploader {
 
     /**
-     * @var \Illuminate\Filesystem\Filesystem
+     * @var Filesystem
      */
     protected $file;
 
@@ -47,6 +47,13 @@ class FileUploader {
     protected $keepNames = false;
 
     /**
+     * Whether files with same can be overwritten.
+     *
+     * @var bool
+     */
+    protected $allowOverwrite = false;
+
+    /**
      * The list of uploaded files.
      *
      * @var array
@@ -54,7 +61,14 @@ class FileUploader {
     protected $uploaded = [];
 
     /**
-     * @param \Illuminate\Filesystem\Filesystem $file
+     * The list of thumbnails to be made.
+     *
+     * @var array
+     */
+    protected $thumbnails = [];
+
+    /**
+     * @param Filesystem $file
      */
     function __construct(Filesystem $file)
     {
@@ -68,15 +82,15 @@ class FileUploader {
      * `$value` can be either a string or UploadedFile.
      * The string is considered as old filename and returned as is.
      *
-     * @param array|string|\Symfony\Component\HttpFoundation\File\UploadedFile $value
+     * @param array|string|UploadedFile $value
      *
      * @return array|string
      */
     public function upload($value)
     {
-        if (empty($value)) return null;
-        
         if (is_array($value)) return $this->uploadMany($value);
+
+        if (empty($value)) return null;
 
         return is_string($value) ? $value : $this->uploadFile($value);
     }
@@ -84,7 +98,7 @@ class FileUploader {
     /**
      * Upload multiple files.
      *
-     * @param Symfony\Component\HttpFoundation\File\UploadedFile[] $files
+     * @param UploadedFile[] $files
      *
      * @return array
      */
@@ -110,7 +124,7 @@ class FileUploader {
     /**
      * Move UploadedFile to a required directory and return path.
      *
-     * @param Symfony\Component\HttpFoundation\File\UploadedFile $file
+     * @param UploadedFile $file
      *
      * @return string|null
      */
@@ -130,6 +144,11 @@ class FileUploader {
 
         $this->uploaded[] = $target = $file->move($path, $name . $ext);
 
+        // create additional files
+        foreach ($this->thumbnails as $thumbnail) {
+            $this->resize($thumbnail, $file, $name);
+        }
+
         $target = strtr($target,
         [
             $this->root => '',
@@ -137,6 +156,49 @@ class FileUploader {
         ]);
 
         return substr($target, 1);
+    }
+
+    /**
+     * resizes a file to a defined size.
+     * 
+     * @param array $thumbnail
+     * @param UploadedFile $file
+     * @param string $filename
+     */
+    protected function resize($thumbnail, $file, $filename)
+    {
+        // this would result in overwriting the main image
+        if (!$thumbnail['thumbnailAppendix'] && !$thumbnail['uploadPath'])
+            return;
+
+        // at least one dimension needs to be defined
+        if (!$thumbnail['width'] && !$thumbnail['height'])
+            return;
+
+        // check if $file is an image
+        // TODO
+        $name = $filename;
+        $path = $this->root . '/' . $this->path;
+        $origFilePath = $path . '/' . $name . '.' . $file->getClientOriginalExtension();
+
+        if ($thumbnail['uploadPath'])
+            $path = $this->root . '/' . $thumbnail['uploadPath'];
+
+        // add thumbnail appendix name
+        if ($thumbnail['thumbnailAppendix'])
+            $name = $name . $thumbnail['thumbnailAppendix'] . '.' . $file->getClientOriginalExtension();
+        
+        $img = \Image::make($origFilePath);
+
+        // only aspect ratio resizes are currently supported
+        $img->resize($thumbnail['width'], $thumbnail['height'], function ($constraint) use ($thumbnail) {
+            if (!$thumbnail['width'] || !$thumbnail['height']) {
+                $constraint->aspectRatio();
+            }
+        });
+
+        // save file to thumbnail location
+        $img->save($path . '/' . $name);
     }
 
     /**
@@ -154,7 +216,7 @@ class FileUploader {
     /**
      * Get a name for a file.
      *
-     * @param \Symfony\Component\HttpFoundation\File\UploadedFile $file
+     * @param UploadedFile $file
      *
      * @return string
      */
@@ -228,5 +290,36 @@ class FileUploader {
     public function getKeepNames()
     {
         return $this->keepNames;
+    }
+
+    /**
+     * additionally saves another version of a picture with different height or width.
+     * when set the width or height to null, it is interpreted as auto and will retain its ratio.
+     * 
+     * @param int|null $width
+     * @param int|null $height
+     * @param string $thumbnailAppendix
+     * @param string $uploadPath
+     */
+    public function addThumbnail($width = null, $height = null, $thumbnailAppendix = '_tn', $uploadPath = null)
+    {
+        array_push($this->thumbnails, [
+            'width' => $width,
+            'height' => $height,
+            'uploadPath' => $uploadPath,
+            'thumbnailAppendix' => $thumbnailAppendix,
+        ]);
+    }
+
+    /**
+     * allows to overwrite a file with the same name instead of creating a new random file name.
+     * @param bool $value
+     * @return $this
+     */
+    public function allowOverwrite($value = true)
+    {
+        $this->allowOverwrite = $value;
+
+        return $this;
     }
 }

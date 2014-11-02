@@ -5,6 +5,7 @@ namespace Kalnoy\Cruddy\Schema;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Contracts\ArrayableInterface;
 use Kalnoy\Cruddy\Contracts\Entry;
+use Kalnoy\Cruddy\Entity;
 
 /**
  * Base collection for any kind of attributes.
@@ -12,6 +13,19 @@ use Kalnoy\Cruddy\Contracts\Entry;
  * @since 1.0.0
  */
 class BaseCollection extends Collection {
+
+    /**
+     * @var Entity
+     */
+    protected $entity;
+
+    /**
+     * @param Entity $entity
+     */
+    public function __construct(Entity $entity)
+    {
+        $this->entity = $entity;
+    }
 
     /**
      * Add attribute to the collection.
@@ -49,6 +63,14 @@ class BaseCollection extends Collection {
     public function export()
     {
         return array_values($this->toArray());
+    }
+
+    /**
+     * @return Entity
+     */
+    public function getEntity()
+    {
+        return $this->entity;
     }
 
 }

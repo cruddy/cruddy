@@ -217,7 +217,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         @external?.remove()
 
-        @$refresh.after @external = $ @externalLinkTemplate @model.extra.external if @model.extra.external
+        @$refresh.after @external = $ @externalLinkTemplate externalUrl if externalUrl = @model.meta.externalUrl
 
         this
 

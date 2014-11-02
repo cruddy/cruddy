@@ -44,14 +44,14 @@ class Cruddy.Entity.Entity extends Backbone.Model
         new Backbone.Collection filters
 
     # Create an instance for this entity
-    createInstance: (attributes = {}, options = {}) ->
+    createInstance: (data = {}, options = {}) ->
         options.entity = this
 
-        attributes = _.extend {}, @get("defaults"), attributes.attributes
+        attributes = _.extend {}, @get("defaults"), data.attributes
 
         instance = new Cruddy.Entity.Instance attributes, options
 
-        instance.fillExtra attributes
+        instance.setMetaFromResponse data
 
     # Get relation field
     getRelation: (id) ->
@@ -162,3 +162,5 @@ class Cruddy.Entity.Entity extends Backbone.Model
     viewPermitted: -> @permissions.view
 
     isSoftDeleting: -> @attributes.soft_deleting
+
+    getPrimaryKey: -> @attributes.primary_key or "id"

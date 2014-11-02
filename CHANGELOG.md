@@ -16,6 +16,7 @@ develop
 *   Records are now cached for quicker responses
 *   Added `cruddy::custom` layout for custom pages
 *   `saving` event is now fired after the model is filled, and the handler receives model, rather than input
+*   Data grid is now able to display extra actions for rows
 
 v0.3.2
 ======

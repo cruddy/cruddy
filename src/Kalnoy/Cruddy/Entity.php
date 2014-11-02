@@ -2,15 +2,16 @@
 
 namespace Kalnoy\Cruddy;
 
+use Kalnoy\Cruddy\Schema\AttributesCollection;
+use Kalnoy\Cruddy\Schema\BaseCollection;
 use RuntimeException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Contracts\JsonableInterface;
 use Illuminate\Support\Contracts\ArrayableInterface;
-use Illuminate\Database\Eloquent\Model as Eloquent;
+use Illuminate\Database\Eloquent\Model;
 use Kalnoy\Cruddy\Contracts\Schema as SchemaContract;
 use Kalnoy\Cruddy\Schema\InstanceFactory;
 use Kalnoy\Cruddy\Contracts\InlineRelation;
-use Kalnoy\Cruddy\Service\Validation\ValidationException;
 use Kalnoy\Cruddy\Contracts\SearchProcessor;
 use Kalnoy\Cruddy\Repo\ChainedSearchProcessor;
 
@@ -111,41 +112,47 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Extract model fields.
      *
-     * @param array|\Illuminate\Database\Eloquent\Model $model
+     * @param array|Model $model
      *
      * @return array
      */
-    public function extract($model)
+    public function extract($model, AttributesCollection $collection = null)
     {
         if ( ! $model) return null;
 
         if (is_array($model) or $model instanceof Collection)
         {
-            return $this->extractAll($model);
+            return $this->extractAll($model, $collection);
         }
 
-        $attributes = $this->getFields()->extract($model);
-        $title = $this->schema->toString($model);
-        $extra = $this->schema->extra($model, false);
+        if ($collection === null) $collection = $this->getFields();
 
-        return compact('attributes', 'title', 'extra');
+        $attributes = $collection->extract($model);
+        $meta = $this->getMetaDataForModel($model);
+
+        return compact('attributes', 'meta');
     }
 
     /**
      * Extract fields of all models.
      *
      * @param array|Collection $items
+     * @param AttributesCollection $collection
      *
      * @return array
      */
-    public function extractAll($items)
+    public function extractAll($items, AttributesCollection $collection = null)
     {
         if ($items instanceof Collection)
         {
             $items = $items->all();
         }
 
-        return array_map([ $this, 'extract' ], $items);
+        return array_map(function ($model) use ($collection)
+        {
+            return $this->extract($model, $collection);
+
+        }, $items);
     }
 
     /**
@@ -183,7 +190,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
         }
         else
         {
-            $results->setItems($this->getColumns()->extractAll($results->getItems()));
+            $results->setItems($this->extractAll($results->getItems(), $this->getColumns()));
         }
 
         return $results;
@@ -239,7 +246,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Convert item to a simple representation which is used by an entity dropdown.
      *
-     * @param array|\Illuminate\Database\Eloquent\Model $model
+     * @param array|Model $model
      *
      * @return array
      */
@@ -252,11 +259,20 @@ class Entity implements JsonableInterface, ArrayableInterface {
             return $this->simplifyAll($model);
         }
 
-        $id = $model->getKey();
-        $title = $this->schema->toString($model);
-        $extra = $this->schema->extra($model, true);
+        return $this->getMetaDataForModel($model, true);
+    }
 
-        return compact('id', 'title', 'extra');
+    /**
+     * @param Model $model
+     * @param bool $simplified
+     *
+     * @return array
+     */
+    public function getMetaDataForModel(Model $model, $simplified = false)
+    {
+        $id = $model->getKey();
+
+        return compact('id') + $this->schema->meta($model, $simplified);
     }
 
     /**
@@ -379,11 +395,9 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     protected function createFields()
     {
-        $factory = $this->getFieldsFactory();
+        $collection = new Schema\Fields\Collection($this);
 
-        $collection = new Schema\Fields\Collection;
-
-        $schema = new InstanceFactory($factory, $this, $collection);
+        $schema = new InstanceFactory($this->getFieldsFactory(), $collection);
 
         $this->schema->fields($schema);
 
@@ -409,15 +423,13 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function createColumns()
     {
-        $factory = $this->getColumnsFactory();
+        $collection = new Schema\Columns\Collection($this);
 
-        $collection = new Schema\Columns\Collection;
-
-        $schema = new InstanceFactory($factory, $this, $collection);
+        $schema = new InstanceFactory($this->getColumnsFactory(), $collection);
 
         $this->schema->columns($schema);
 
-        return $this->ensurePrimaryColumn($collection);
+        return $collection;
     }
 
     /**
@@ -435,36 +447,11 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function createFilters()
     {
-        $factory = $this->getFiltersFactory();
+        $collection = new Schema\Filters\Collection($this);
 
-        $collection = new Schema\Filters\Collection;
-
-        $schema = new InstanceFactory($factory, $this, $collection);
+        $schema = new InstanceFactory($this->getFiltersFactory(), $collection);
 
         $this->schema->filters($schema);
-
-        return $collection;
-    }
-
-    /**
-     * Ensure that primary column is exists.
-     *
-     * @param Schema\Columns\Collection $collection
-     *
-     * @return Schema\Columns\Collection
-     */
-    protected function ensurePrimaryColumn($collection)
-    {
-        $keyName = $this->getRepository()->newModel()->getKeyName();
-
-        if ( ! $collection->has($keyName))
-        {
-            $field = $this->getFields()->get($keyName);
-
-            $column = new Schema\Columns\Types\Proxy($this, $keyName, $field);
-
-            $collection->add($column->hide());
-        }
 
         return $collection;
     }
@@ -640,6 +627,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
         return
         [
             'id' => $this->id,
+            'primary_key' => $model->getKeyName(),
             'soft_deleting' => false,
             'defaults' => $this->getFields()->extract($model),
             'title' => $this->getTitle(),

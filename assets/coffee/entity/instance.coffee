@@ -1,7 +1,10 @@
 class Cruddy.Entity.Instance extends Backbone.Model
+
     constructor: (attributes, options) ->
         @entity = options.entity
         @related = {}
+        @idAttribute = @entity.getPrimaryKey()
+        @meta = {}
 
         super
 
@@ -20,13 +23,12 @@ class Cruddy.Entity.Instance extends Backbone.Model
     handleSyncEvent: (model, resp) ->
         @original = _.clone @attributes
 
-        @fillExtra resp if resp.attributes
+        @setMetaFromResponse resp
 
         this
 
-    fillExtra: (resp) ->
-        @extra = resp.extra ? {}
-        @title = resp.title ? null
+    setMetaFromResponse: (resp) ->
+        @meta = _.clone resp.meta if resp.meta?
 
         return this
 
@@ -122,4 +124,4 @@ class Cruddy.Entity.Instance extends Backbone.Model
     # Get current action on the model
     action: -> if @isNew() then "create" else "update"
 
-    getTitle: -> @title ? Cruddy.lang.model_new_record
+    getTitle: -> if @isNew() then Cruddy.lang.model_new_record else @meta.title

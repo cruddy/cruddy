@@ -2,6 +2,7 @@
 
 namespace Kalnoy\Cruddy\Schema;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Contracts\ArrayableInterface;
 
@@ -10,22 +11,18 @@ class AttributesCollection extends BaseCollection {
     /**
      * Extract data from an item or a set of items.
      *
-     * @param \Illuminate\Database\Eloquent\Model|array $item
+     * @param Model $model
      *
      * @return array
      */
-    public function extract($item)
+    public function extract(Model $model)
     {
-        if (is_array($item) || $item instanceof Collection)
-        {
-            return $this->extractAll($item);
-        }
-
         $data = [];
 
+        /** @var Attribute $attribute */
         foreach ($this->items as $key => $attribute)
         {
-            $value = $attribute->extract($item);
+            $value = $attribute->extract($model);
 
             if ($value instanceof ArrayableInterface)
             {

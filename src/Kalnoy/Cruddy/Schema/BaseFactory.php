@@ -3,6 +3,7 @@
 namespace Kalnoy\Cruddy\Schema;
 
 use Kalnoy\Cruddy\Contracts\Attribute;
+use Kalnoy\Cruddy\Entity;
 
 /**
  * Base factory for all kinds of attributes.
@@ -11,6 +12,9 @@ use Kalnoy\Cruddy\Contracts\Attribute;
  */
 class BaseFactory {
 
+    /**
+     * @var array
+     */
     protected $macros = [];
 
     /**
@@ -31,71 +35,72 @@ class BaseFactory {
     /**
      * Resolve attribute instance.
      *
-     * @param string                $macro
-     * @param \Kalnoy\Cruddy\Entity $entity
-     * @param BaseCollection        $collection
-     * @param array                 $params
+     * @param string $macro
+     * @param BaseCollection $collection
+     * @param array $params
      *
      * @return Attribute
      */
-    public function resolve($macro, $entity, $collection, array $params)
+    public function resolve($macro, BaseCollection $collection, array $params)
     {
         if (method_exists($this, $macro))
         {
-            return $this->evaluate([ $this, $macro ], $entity, $collection, $params);
+            return $this->evaluate([ $this, $macro ], $collection, $params);
         }
 
         if ( ! isset($this->macros[$macro]))
         {
-            throw new \RuntimeException("Attribute of type {$macro} is not registered.");
+            throw new \RuntimeException("Macro [{$macro}] is not registered.");
         }
 
         $callback = $this->macros[$macro];
 
         if (is_string($callback))
         {
-            $instance = new $callback($entity, reset($params));
+            $instance = new $callback($collection->getEntity(), reset($params));
 
             $collection->add($instance);
 
             return $instance;
         }
 
-        return $this->evaluate($callback, $entity, $collection, $params);
+        return $this->evaluate($callback, $collection, $params);
     }
 
     /**
      * Evaluate callback.
      *
-     * @param mixed                 $callback
-     * @param \Kalnoy\Cruddy\Entity $entity
-     * @param BaseCollection        $collection
-     * @param array                 $params
+     * @param mixed $callback
+     * @param BaseCollection $collection
+     * @param array $params
      *
-     * @return Attribute
+     * @return Entry
      */
-    protected function evaluate($callback, $entity, $collection, array $params)
+    protected function evaluate($callback, BaseCollection $collection, array $params)
     {
+        $entity = $collection->getEntity();
+
         array_unshift($params, $entity, $collection);
 
         return call_user_func_array($callback, $params);
     }
 
     /**
-     * @param \Kalnoy\Cruddy\Entity $entity
+     * @param Entity $entity
      * @param $id
      *
      * @return \Kalnoy\Cruddy\Contracts\Field
      */
-    protected function resolveField($entity, $id)
+    protected function resolveField(Entity $entity, $id)
     {
         $field = $entity->getFields()->get($id);
 
         if ($field === null)
         {
-            throw new \RuntimeException("The field with an id of {$entity->getId()}.{$id} is not found.");
+            throw new \RuntimeException("The field [{$entity->getId()}.{$id}] is not found.");
         }
 
         return $field;
     }
+
 }

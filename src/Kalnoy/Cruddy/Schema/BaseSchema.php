@@ -2,6 +2,7 @@
 
 namespace Kalnoy\Cruddy\Schema;
 
+use Illuminate\Database\Eloquent\Model;
 use Kalnoy\Cruddy\Contracts\Schema;
 use Kalnoy\Cruddy\Repo\Stub as StubRepository;
 use Kalnoy\Cruddy\Service\Validation\FluentValidator;
@@ -154,13 +155,21 @@ abstract class BaseSchema implements Schema {
     protected function rules($validate) {}
 
     /**
-     * {@inheritdoc}
+     * @param Model $model
+     * @param bool $simplified
+     *
+     * @return array
      */
-    public function extra($model, $simplified)
+    public function meta(Model $model, $simplified)
     {
-        if ($simplified) return [];
+        $meta['title'] = $this->toString($model);
 
-        return [ 'external' => $this->externalUrl($model) ];
+        if ( ! $simplified)
+        {
+            $meta['externalUrl'] = $this->externalUrl($model);
+        }
+
+        return $meta;
     }
 
     /**
@@ -173,10 +182,11 @@ abstract class BaseSchema implements Schema {
     protected function externalUrl($model) {}
 
     /**
-     * {@inheritdoc}
+     * Convert the model to string.
      *
-     * Default implementation will try to get {@see $titleAttribute} attribute and if one
-     * is not set will return model's key.
+     * @param Model $model
+     *
+     * @return string
      */
     public function toString($model)
     {

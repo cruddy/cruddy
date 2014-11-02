@@ -96,7 +96,6 @@ abstract class BaseField extends Attribute implements Field {
             'unique' => $this->get('unique'),
             'disabled' => $this->get('disable'),
             'label' => $this->getLabel(),
-            'filter_type' => self::FILTER_NONE,
 
         ] + parent::toArray();
     }

@@ -18,4 +18,11 @@ interface Entry extends ArrayableInterface {
      */
     public function getFullyQualifiedId();
 
+    /**
+     * Get an owning entity.
+     *
+     * @return \Kalnoy\Cruddy\Entity
+     */
+    public function getEntity();
+
 }

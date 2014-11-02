@@ -2,7 +2,7 @@
 
 namespace Kalnoy\Cruddy\Schema\Fields;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
+use Illuminate\Database\Eloquent\Model;
 use Kalnoy\Cruddy\Contracts\InlineRelation as InlineRelationContract;
 use Kalnoy\Cruddy\Service\Validation\ValidationException;
 
@@ -60,9 +60,11 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationCont
      */
     public function process($data)
     {
-        if ($this->multiple) return count($data);
+        return array_reduce($data, function ($carry, $item)
+        {
+            return $carry + (array_get($item, 'isDeleted') ? 0 : 1);
 
-        return 1;
+        }, 0);
     }
 
     /**
@@ -74,116 +76,29 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationCont
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function processInput($input)
-    {
-        if ( ! is_array($input)) return [];
-
-        if ($this->multiple) return $this->processMany($input);
-
-        return [ $this->reference->process($input) ];
-    }
-
-    /**
-     * Process many items. This is needed to capture validation errors.
+     * @param Model $model
+     * @param Model $parent
      *
-     * @param array $input
-     *
-     * @return array
+     * @return void
      */
-    public function processMany(array $input)
-    {
-        $errors = [];
-        $result = [];
-
-        foreach ($input as $cid => $item)
-        {
-            try
-            {
-                $result[] = $this->reference->process($item);
-            }
-
-            catch (ValidationException $e)
-            {
-                // Remember errors by cid since we might be creating new items
-                // that don't have an id
-                $errors[$cid] = $e->getErrors();
-            }
-        }
-
-        if ( ! empty($errors)) throw new ValidationException($errors);
-
-        return $result;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function save(Eloquent $model, array $data)
-    {
-        $ref    = $this->reference;
-        $permit = $ref->getPermissions();
-
-        // Get current items and check if some needs to be deleted
-        $delete = $this->newRelationalQuery($model)->lists('id');
-        $ids = [];
-
-        foreach ($data as $item)
-        {
-            $action = $ref->actionFromData($item);
-
-            if ( ! $permit[$action]) continue;
-
-            $item['extra'] = $this->mergeExtra($action, $this->getExtra($model));
-
-            $ref->save($item);
-
-            if ($action === 'update') $ids[] = $item['id'];
-        }
-
-        if ( ! empty($ids)) $delete = array_diff($delete, $ids);
-
-        if ( ! empty($delete) && $permit['delete']) $ref->delete($delete);
-    }
-
-    /**
-     * Merge data with some extra attributes that user may have provided.
-     *
-     * @param string $action
-     * @param array $data
-     *
-     * @return array
-     */
-    protected function mergeExtra($action, array $data)
+    public function joinModels(Model $model, Model $parent)
     {
         $extra = $this->extra;
 
         if ($extra instanceof \Closure)
         {
-            $extra = $extra($action);
+            $extra($model);
         }
         else
         {
-            $extra = $action === 'create' ? $extra : [];
+            $model->fill($extra);
         }
-
-        return $data + (array)$extra;
     }
-
-    /**
-     * Get extra attributes.
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     *
-     * @return array
-     */
-    abstract public function getExtra($model);
 
     /**
      * {@inheritdoc}
      */
-    public function extract(Eloquent $model)
+    public function extract(Model $model)
     {
         $items = parent::extract($model);
 
@@ -195,7 +110,7 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationCont
     /**
      * {@inheritdoc}
      */
-    public function extractForColumn(Eloquent $model)
+    public function extractForColumn(Model $model)
     {
         return $this->reference->simplify(parent::extract($model));
     }

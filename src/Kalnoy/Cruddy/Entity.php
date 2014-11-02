@@ -76,13 +76,6 @@ class Entity implements JsonableInterface, ArrayableInterface {
     private $validator;
 
     /**
-     * The list of related entities.
-     *
-     * @var Contracts\InlineRelation[]
-     */
-    protected $related = [];
-
-    /**
      * The list of all actions.
      *
      * @var array
@@ -267,80 +260,6 @@ class Entity implements JsonableInterface, ArrayableInterface {
     }
 
     /**
-     * Create new model and return extracted attributes.
-     *
-     * @param array $attributes
-     *
-     * @return array
-     */
-    public function create(array $attributes)
-    {
-        return $this->processAndSave(compact('attributes'));
-    }
-
-    /**
-     * Update a model and return its extracted attributes.
-     *
-     * @param mixed $id
-     * @param array $attributes
-     *
-     * @return array
-     */
-    public function update($id, array $attributes)
-    {
-        return $this->processAndSave(compact('id', 'attributes'));
-    }
-
-    /**
-     * Save an item and all of its related items.
-     *
-     * @param array $data
-     *
-     * @return \Illuminate\Database\Eloquent\Model
-     *
-     * @throws ModelNotFoundException
-     * @throws ModelNotSavedException
-     */
-    public function save(array $data)
-    {
-        $repo = $this->getRepository();
-
-        /**
-         * @var array $attributes
-         * @var mixed $id
-         * @var array $related
-         */
-        extract($data);
-
-        $action = $this->actionFromData($data);
-
-        $eventResult = $this->fireEvent('saving', [ $action, $attributes ]);
-
-        // If saving event returned non-null result, we'll throw a ModelNotSavedException
-        // with that result.
-        if ( ! is_null($eventResult))
-        {
-            throw new ModelNotSavedException($eventResult);
-        }
-
-        $data = $this->getFields()->cleanInput($action, $attributes);
-
-        if (isset($extra)) $data += $extra;
-
-        switch ($action)
-        {
-            case 'create': $model = $repo->create($data); break;
-            case 'update': $model = $repo->update($id, $data); break;
-        }
-
-        $this->saveRelated($model, $related);
-
-        $this->fireEvent('saved', [ $action, $model ], false);
-
-        return $model;
-    }
-
-    /**
      * Register saving event.
      *
      * @param string $id
@@ -391,144 +310,13 @@ class Entity implements JsonableInterface, ArrayableInterface {
      *
      * @return mixed
      */
-    protected function fireEvent($event, array $payload, $halt = true)
+    public function fireEvent($event, array $payload, $halt = true)
     {
         if ( ! isset(static::$env)) return null;
 
         $event = "entity.{$event}: {$this->id}";
 
         return static::$env->getDispatcher()->fire($event, $payload, $halt);
-    }
-
-    /**
-     * Perform validation and return processed data that can be then saved.
-     *
-     * @param array  $input
-     *
-     * @return array
-     *
-     * @throws Service\Validation\ValidationException
-     */
-    public function process(array $input)
-    {
-        $action = $this->actionFromData($input);
-
-        // We will process an input by a collection of fields to remove any
-        // garbage
-        $attributes = $this->getFields()->process($input['attributes']);
-
-        // Now we will validate those attributes
-        $errors = $this->validate($action, $attributes);
-
-        // And now time to process related items if any from raw input
-        $related = $this->processRelated($action, $input['attributes'], $errors);
-
-        if ( ! empty($errors)) throw new ValidationException($errors);
-
-        $id = array_get($input, 'id');
-
-        return compact('id', 'attributes', 'related');
-    }
-
-    /**
-     * Validate input.
-     *
-     * @param string $action
-     * @param array  $attributes
-     *
-     * @return array
-     */
-    public function validate($action, array $attributes)
-    {
-        $labels    = $this->getFields()->validationLabels();
-        $validator = $this->getValidator();
-
-        if ( ! $validator->validFor($action, $attributes, $labels))
-        {
-            return $validator->errors();
-        }
-
-        return [];
-    }
-
-    /**
-     * Get an action from the data.
-     *
-     * @param mixed $data
-     *
-     * @return string
-     */
-    public function actionFromData($data)
-    {
-        return empty($data['id']) ? 'create' : 'update';
-    }
-
-    /**
-     * Process and validate related items.
-     *
-     * If corresponding input key doesn't exists, nothing will happen with the
-     * related items (i.e. they will not be removed).
-     *
-     * @param string $action
-     * @param array  $input
-     * @param array  $errors
-     *
-     * @return array
-     */
-    protected function processRelated($action, array $input, array &$errors)
-    {
-        $data = [];
-
-        foreach ($this->related as $id => $item)
-        {
-            if ( ! isset($input[$id])) continue;
-
-            try
-            {
-                if ( ! $item->isDisabled($action))
-                {
-                    $data[$id] = $item->processInput($input[$id]);
-                }
-            }
-
-            catch (ValidationException $e)
-            {
-                $errors[$id] = $e->getErrors();
-            }
-        }
-
-        return $data;
-    }
-
-    /**
-     * Save related items.
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     * @param array                               $data
-     *
-     * @return void
-     */
-    protected function saveRelated(Eloquent $model, array $data)
-    {
-        foreach ($data as $id => $item)
-        {
-            $this->related[$id]->save($model, $item);
-        }
-    }
-
-    /**
-     * Process, save and return extracted attributes of the model.
-     *
-     * If $input contains `id` attribute it is condisdered that model is exists
-     * and Cruddy will try to update it; it will create a new model otherwise.
-     *
-     * @param array $input
-     *
-     * @return array
-     */
-    public function processAndSave($input)
-    {
-        return $this->extract($this->save($this->process($input)));
     }
 
     /**
@@ -570,20 +358,6 @@ class Entity implements JsonableInterface, ArrayableInterface {
         if ($line !== null) return $line;
 
         return static::$env->translate("entities.{$key}", $default);
-    }
-
-    /**
-     * Add inline relation.
-     *
-     * @param Contracts\InlineRelation $relation
-     *
-     * @return $this
-     */
-    public function relates(InlineRelation $relation)
-    {
-        $this->related[$relation->getId()] = $relation;
-
-        return $this;
     }
 
     /**
@@ -776,20 +550,6 @@ class Entity implements JsonableInterface, ArrayableInterface {
     }
 
     /**
-     * Get list of related entities.
-     *
-     * @return array
-     */
-    public function getRelatedEntities()
-    {
-        return array_map(function ($item)
-        {
-            return $item->getReference();
-
-        }, $this->related);
-    }
-
-    /**
      * Get list of plural and singular forms of title.
      *
      * @return array
@@ -861,6 +621,16 @@ class Entity implements JsonableInterface, ArrayableInterface {
     }
 
     /**
+     * @param $action
+     *
+     * @return bool
+     */
+    public function isPermitted($action)
+    {
+        return $this->getPermissionsDriver()->isPermitted($action, $this);
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function toArray()
@@ -877,7 +647,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
             'fields' => $this->getFields()->export(),
             'columns' => $this->getColumns()->export(),
             'filters' => $this->getFilters()->export(),
-            'related' => array_keys($this->related),
+            'related' => $this->getInlineFieldsIds(),
 
         ] + $this->schema->toArray() + [ 'view' => 'Cruddy.Entity.Page' ];
     }
@@ -921,4 +691,20 @@ class Entity implements JsonableInterface, ArrayableInterface {
     {
         return app('cruddy.permissions')->driver();
     }
+
+    /**
+     * @return array
+     */
+    protected function getInlineFieldsIds()
+    {
+        $result = [];
+
+        foreach ($this->getFields() as $id => $field)
+        {
+            if ($field instanceof InlineRelation) $result[] = $id;
+        }
+
+        return $result;
+    }
+
 }

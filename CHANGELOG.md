@@ -15,6 +15,7 @@ develop
 *   Refactored navigation to remove duplicate requests
 *   Records are now cached for quicker responses
 *   Added `cruddy::custom` layout for custom pages
+*   `saving` event is now fired after the model is filled, and the handler receives model, rather than input
 
 v0.3.2
 ======

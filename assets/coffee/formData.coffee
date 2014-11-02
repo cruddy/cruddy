@@ -8,6 +8,8 @@ class AdvFormData
             value = name
             name = null
 
+        return if value is undefined
+
         return @original.append name, value if value instanceof File or value instanceof Blob
 
         if _.isArray value
@@ -20,7 +22,7 @@ class AdvFormData
         if _.isObject value
             if _.isFunction value.serialize
                 @append name, value.serialize()
-                
+
             else
                 @append @key(name, key), _value for key, _value of value
 

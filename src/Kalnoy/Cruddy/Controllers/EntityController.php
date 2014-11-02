@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Config\Repository as Config;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Kalnoy\Cruddy\Data;
 use Kalnoy\Cruddy\Entity;
 use Kalnoy\Cruddy\EntityNotFoundException;
 use Kalnoy\Cruddy\Environment;
@@ -116,8 +117,25 @@ class EntityController extends Controller {
     {
         return $this->resolveSafe($entity, 'create', function (Request $request, Entity $entity)
         {
-            return Response::make($entity->create($request->all()));
+            $data = new Data($entity, $request->all());
+
+            return $this->validateAndSave($entity, $data);
         });
+    }
+
+    /**
+     * @param Entity $entity
+     * @param Data $data
+     *
+     * @return \Illuminate\Http\Response
+     */
+    protected function validateAndSave(Entity $entity, Data $data)
+    {
+        $data->validate();
+
+        $model = $data->save();
+
+        return Response::make($entity->extract($model));
     }
 
     /**
@@ -131,7 +149,9 @@ class EntityController extends Controller {
     {
         return $this->resolveSafe($entity, 'update', function (Request $request, Entity $entity) use ($id)
         {
-            return Response::make($entity->update($id, $request->all()));
+            $data = new Data($entity, $request->all(), $id);
+
+            return $this->validateAndSave($entity, $data);
         });
     }
 

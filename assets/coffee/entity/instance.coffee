@@ -117,7 +117,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
     # Get whether is allowed to save instance
     isSaveable: -> (@isNew() and @entity.createPermitted()) or (not @isNew() and @entity.updatePermitted())
 
-    serialize: -> { attributes: @attributes, id: @id }
+    serialize: -> if @isDeleted then { id: @id, isDeleted: yes } else { attributes: @attributes, id: @id }
 
     # Get current action on the model
     action: -> if @isNew() then "create" else "update"

@@ -93,9 +93,7 @@ class Factory extends BaseFactory {
         }
 
         $relationClassName = class_basename($relation);
-        $className = 'Kalnoy\Cruddy\Schema\Fields\Types\\' . $relationClassName;
-
-        if ($inline) $className .= 'Inline';
+        $className = __NAMESPACE__.'\\'.($inline ? 'InlineTypes' : 'Types').'\\'.$relationClassName;
 
         if ( ! class_exists($className))
         {
@@ -105,8 +103,6 @@ class Factory extends BaseFactory {
         $instance = new $className($entity, $id, $ref, $relation);
 
         $collection->add($instance);
-
-        if ($inline) $entity->relates($instance);
 
         return $instance;
     }

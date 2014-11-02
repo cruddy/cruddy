@@ -66,15 +66,12 @@ class Cruddy.Fields.RelatedCollection extends Backbone.Collection
             field: @field
 
     serialize: ->
-        if @field.isMultiple()
-            models = @filter (m) -> not m.isDeleted
+        models = @filter (model) -> not model.isDeleted or not model.isNew()
 
-            return "" if _.isEmpty models
+        return if _.isEmpty models
 
-            data = {}
+        data = {}
 
-            data[item.cid] = item for item in models
+        data[item.cid] = item for item in models
 
-            data
-        else
-            @find((m) -> not m.isDeleted) or ""
+        return data

@@ -442,8 +442,8 @@ class DataGrid extends Cruddy.View
         return this
 
     markOrderColumn: ->
-        orderBy = @model.get "order_by"
-        orderDir = @model.get "order_dir"
+        orderBy = @model.get("order_by")
+        orderDir = @model.get("order_dir") or "asc"
 
         if @orderBy? and orderBy isnt @orderBy
             @$colCell(@orderBy).removeClass "asc desc"
@@ -2985,7 +2985,15 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
     # Create a datasource that will require specified columns and can be filtered
     # by specified filters
-    createDataSource: (data) -> new DataSource data, entity: this
+    createDataSource: (data) ->
+        defaults =
+            order_by: @get "order_by"
+
+        defaults.order_dir = col.get "order_dir" if col = @columns.get defaults.order_by
+
+        data = $.extend {}, defaults, data
+
+        return new DataSource data, entity: this
 
     # Create filters for specified columns
     createFilters: (columns = @columns) ->

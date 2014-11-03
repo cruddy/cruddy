@@ -710,7 +710,7 @@
     DataGrid.prototype.markOrderColumn = function() {
       var orderBy, orderDir;
       orderBy = this.model.get("order_by");
-      orderDir = this.model.get("order_dir");
+      orderDir = this.model.get("order_dir") || "asc";
       if ((this.orderBy != null) && orderBy !== this.orderBy) {
         this.$colCell(this.orderBy).removeClass("asc desc");
       }
@@ -4560,6 +4560,14 @@
     };
 
     Entity.prototype.createDataSource = function(data) {
+      var col, defaults;
+      defaults = {
+        order_by: this.get("order_by")
+      };
+      if (col = this.columns.get(defaults.order_by)) {
+        defaults.order_dir = col.get("order_dir");
+      }
+      data = $.extend({}, defaults, data);
       return new DataSource(data, {
         entity: this
       });

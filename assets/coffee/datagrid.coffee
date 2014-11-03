@@ -31,8 +31,8 @@ class DataGrid extends Cruddy.View
         return this
 
     markOrderColumn: ->
-        orderBy = @model.get "order_by"
-        orderDir = @model.get "order_dir"
+        orderBy = @model.get("order_by")
+        orderDir = @model.get("order_dir") or "asc"
 
         if @orderBy? and orderBy isnt @orderBy
             @$colCell(@orderBy).removeClass "asc desc"

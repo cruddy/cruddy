@@ -61,6 +61,8 @@ interface Schema extends ArrayableInterface {
      */
     public function validator();
 
+    public function executeAction(Model $model, $action);
+
     /**
      * Get additional model attributes that will be available for the UI.
      *

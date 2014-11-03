@@ -136,18 +136,18 @@ class DataGrid extends Cruddy.View
         if action and action = this[action]
             e.preventDefault()
 
-            action.call this, $el
+            action.call this, $el.closest(".item").data("id"), $el
 
         return
 
-    deleteItem: ($el) ->
+    deleteItem: (id, $el) ->
         return if not confirm Cruddy.lang.confirm_delete
 
         $row = $el.closest ".item"
 
         $el.attr "disabled", yes
 
-        @entity.destroy $row.data("id"),
+        @entity.destroy id,
 
             displayLoading: yes
 
@@ -157,6 +157,11 @@ class DataGrid extends Cruddy.View
 
             fail: ->
                 $el.attr "disabled", no
+
+        return
+
+    executeCustomAction: (id, $el) ->
+        @entity.executeAction id, $el.data("actionId"), success: => @model.fetch()
 
         return
 

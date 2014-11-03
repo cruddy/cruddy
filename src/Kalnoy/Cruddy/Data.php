@@ -30,6 +30,11 @@ class Data {
     protected $inner = [];
 
     /**
+     * @var string
+     */
+    protected $customAction;
+
+    /**
      * @param Entity $entity
      * @param array $data
      * @param string $id
@@ -97,6 +102,8 @@ class Data {
         $repo->save($model, $this->getCleanedInput(), function ($model)
         {
             $this->fillModel($model);
+
+            $this->executeCustomAction($model);
 
             // The event is fired when every field is filled
             $this->fireSavingEvent($model);
@@ -201,5 +208,37 @@ class Data {
     public function fireSavedEvent(Model $model)
     {
         $this->entity->fireEvent('saved', [ $model ]);
+    }
+
+    /**
+     * @param string $action
+     */
+    public function setCustomAction($action)
+    {
+        $this->customAction = $action;
+    }
+
+    /**
+     * @return string
+     */
+    public function getCustomAction()
+    {
+        return $this->customAction;
+    }
+
+    /**
+     * @param Model $model
+     */
+    protected function executeCustomAction(Model $model)
+    {
+        if ($this->customAction)
+        {
+            $result = $this->entity->getSchema()->executeAction($model, $this->customAction);
+
+            if (is_string($result))
+            {
+                throw new ActionException($result);
+            }
+        }
     }
 }

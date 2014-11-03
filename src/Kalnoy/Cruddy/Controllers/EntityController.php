@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Config\Repository as Config;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Kalnoy\Cruddy\ActionException;
 use Kalnoy\Cruddy\Data;
 use Kalnoy\Cruddy\Entity;
 use Kalnoy\Cruddy\EntityNotFoundException;
@@ -145,13 +146,36 @@ class EntityController extends Controller {
      *
      * @return Response
      */
-    public function update($entity, $id)
+    public function update($entity, $id, $action = null)
     {
-        return $this->resolveSafe($entity, 'update', function (Request $request, Entity $entity) use ($id)
+        return $this->resolveSafe($entity, 'update', function (Request $request, Entity $entity) use ($id, $action)
         {
             $data = new Data($entity, $request->all(), $id);
 
+            $data->setCustomAction($action);
+
             return $this->validateAndSave($entity, $data);
+        });
+    }
+
+    /**
+     * Execute custom action on model.
+     *
+     * @param  string $entity
+     *
+     * @return Response
+     */
+    public function executeCustomAction($entity, $id, $action = null)
+    {
+        return $this->resolveSafe($entity, 'update', function (Request $request, Entity $entity) use ($id, $action)
+        {
+            $data = new Data($entity, [], $id);
+
+            $data->setCustomAction($action);
+
+            $data->save();
+
+            return Response::json('ok');
         });
     }
 
@@ -228,18 +252,9 @@ class EntityController extends Controller {
             return $this->responseError($e->getMessage(), 403);
         }
 
-        catch (Exception $e)
+        catch (ActionException $e)
         {
-            $message = 'Internal server error.';
-
-            if ($this->config->get('app.debug'))
-            {
-                Log::error($e);
-
-                $message = get_class($e).': '.$e->getMessage();
-            }
-
-            return $this->responseError($message);
+            return $this->responseError($e->getMessage());
         }
     }
 

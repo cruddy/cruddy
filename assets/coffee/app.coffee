@@ -73,8 +73,14 @@ class App extends Backbone.Model
         this
 
     handleAjaxError: (xhr) ->
+
         if xhr.responseJSON?.error
-            @$error.children(".data").text(xhr.responseJSON.error).end().stop(yes).fadeIn()
+            if _.isObject error = xhr.responseJSON.error
+                error = error.type + ": " + error.message
+        else
+            error = "Unknown error occurred"
+
+        @$error.children(".data").text(error).end().stop(yes).fadeIn()
 
         return
 

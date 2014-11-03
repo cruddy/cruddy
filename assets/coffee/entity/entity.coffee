@@ -105,6 +105,15 @@ class Cruddy.Entity.Entity extends Backbone.Model
         options.type = "POST"
         options.dataType = "json"
         options.data = _method: "DELETE"
+        options.displayLoading = yes
+
+        return $.ajax options
+
+    executeAction: (id, action, options = {}) ->
+        options.url = @url id + "/" + action
+        options.type = "POST"
+        options.dataType = "json"
+        options.displayLoading = yes
 
         return $.ajax options
 

@@ -31,9 +31,9 @@ class Collection extends AttributesCollection implements SearchProcessor {
         /**
          * @var Field $field
          */
-        foreach ($this->items as $key => $field)
+        foreach ($input as $key => $value)
         {
-            if (array_key_exists($key, $input) && $field->keep($value = $input[$key]))
+            if (($field = $this->get($key)) and $field->keep($value))
             {
                 $result[$key] = $field->process($value);
             }

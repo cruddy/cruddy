@@ -3,10 +3,12 @@
 namespace Kalnoy\Cruddy\Schema;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Fluent;
 use Kalnoy\Cruddy\Contracts\Schema;
 use Kalnoy\Cruddy\Repo\Stub as StubRepository;
 use Kalnoy\Cruddy\Service\Validation\FluentValidator;
 use Kalnoy\Cruddy\Entity;
+use Symfony\Component\Process\Exception\RuntimeException;
 
 /**
  * Base schema.
@@ -155,6 +157,38 @@ abstract class BaseSchema implements Schema {
     protected function rules($validate) {}
 
     /**
+     * @param Actions\Collection $actions
+     */
+    protected function actions($actions) {}
+
+    /**
+     * @param Model $model
+     *
+     * @return array
+     */
+    protected function exportActions(Model $model)
+    {
+        return $this->getActions()->export($model);
+    }
+
+    /**
+     * @return Actions\Collection
+     */
+    protected function getActions()
+    {
+        $collection = new Actions\Collection;
+
+        $this->actions($collection);
+
+        return $collection;
+    }
+
+    public function executeAction(Model $model, $action)
+    {
+        return $this->getActions()->execute($model, $action);
+    }
+
+    /**
      * @param Model $model
      * @param bool $simplified
      *
@@ -167,6 +201,7 @@ abstract class BaseSchema implements Schema {
         if ( ! $simplified)
         {
             $meta['externalUrl'] = $this->externalUrl($model);
+            $meta['actions'] = $this->exportActions($model);
         }
 
         return $meta;

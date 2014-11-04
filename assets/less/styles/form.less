@@ -48,9 +48,15 @@
             font-size: 14px;
         }
 
-        .btn-save {
-            padding-left: 10px;
-            padding-right: 10px;
+        > .btn, > .btn-group {
+            + .btn, + .btn-group {
+                margin-left: 5px;
+            }
+        }
+
+        > .btn-save {
+            padding-left: 15px;
+            padding-right: 15px;
         }
 
         .flash {

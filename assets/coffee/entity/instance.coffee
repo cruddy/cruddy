@@ -2,7 +2,6 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
     constructor: (attributes, options) ->
         @entity = options.entity
-        @related = {}
         @idAttribute = @entity.getPrimaryKey()
         @meta = {}
 

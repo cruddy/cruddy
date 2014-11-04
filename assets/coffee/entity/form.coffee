@@ -13,6 +13,15 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
     initialize: (options) ->
         super
 
+        @saveOptions =
+            displayLoading: yes
+
+            xhr: =>
+                xhr = $.ajaxSettings.xhr()
+                xhr.upload.addEventListener('progress', $.proxy @, "progressCallback") if xhr.upload
+
+                xhr
+
         @listenTo @model, "destroy", @handleModelDestroyEvent
         @listenTo @model, "invalid", @handleModelInvalidEvent
 
@@ -65,7 +74,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
     handleModelInvalidEvent: -> @displayAlert Cruddy.lang.invalid, "warning", 5000
 
     handleModelDestroyEvent: ->
-        @update()
+        @updateModelState()
 
         @trigger "destroyed", @model
 
@@ -80,25 +89,23 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         this
 
-    saveModel: ->
+    save: (options) ->
         return if @request?
 
         isNew = @model.isNew()
 
-        @setupRequest @model.save null,
-            displayLoading: yes
-
-            xhr: =>
-                xhr = $.ajaxSettings.xhr()
-                xhr.upload.addEventListener('progress', $.proxy @, "progressCallback") if xhr.upload
-
-                xhr
+        @setupRequest @model.save null, $.extend {}, @saveOptions, options
 
         @request.done (resp) =>
             @trigger (if isNew then "created" else "updated"), @model, resp
             @trigger "saved", @model, resp
+            @updateModelState()
 
         return this
+
+    saveModel: -> @save()
+
+    saveWithAction: ($el) -> @save url: @model.entity.url @model.id + "/" + $el.data "actionId"
 
     destroyModel: ->
         return if @request or @model.isNew()
@@ -131,11 +138,11 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         request.always =>
             @request = null
-            @update()
+            @updateRequestState()
 
         @request = request
 
-        @update()
+        @updateRequestState()
 
     progressCallback: (e) ->
         if e.lengthComputable
@@ -182,7 +189,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         @$serviceMenu = @$component "service-menu"
         @$serviceMenuItems = @$component "service-menu-items"
 
-        @update()
+        @updateModelState()
 
         super
 
@@ -191,29 +198,44 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         super
 
-    update: ->
+    updateRequestState: ->
+        isLoading = @request?
+
+        @$el.toggleClass "loading", isLoading
+        @$btnSave.attr "disabled", isLoading
+
+        if @$btnExtraActions
+            @$btnExtraActions.attr "disabled", isLoading
+            @$btnExtraActions.children(".btn").attr "disabled", isLoading
+
+        this
+
+    updateModelState: ->
         permit = @model.entity.getPermissions()
         isNew = @model.isNew()
         isDeleted = @model.isDeleted or false
 
-        @$el.toggleClass "loading", @request?
         @$el.toggleClass "destroyed", isDeleted
 
         @$btnSave.text if isNew then Cruddy.lang.create else Cruddy.lang.save
-        @$btnSave.attr "disabled", @request?
         @$btnSave.toggle not isDeleted and if isNew then permit.create else permit.update
 
         @$serviceMenu.toggle not isNew
         @$serviceMenuItems.html @renderServiceMenuItems() unless isNew
 
-        this
+        @$btnExtraActions?.remove()
+        @$btnExtraActions = null
+
+        @$btnSave.before @$btnExtraActions = $ html if not isNew and not isDeleted and html = @renderExtraActionsButton()
+
+        return this
 
     template: -> """
         <div class="navbar navbar-default navbar-static-top" role="navigation">
             <div class="container-fluid">
                 <ul id="#{ @componentId "nav" }" class="nav navbar-nav"></ul>
 
-                <ul id="#{ @componentId "service_menu" }" class="nav navbar-nav navbar-right">
+                <ul id="#{ @componentId "service-menu" }" class="nav navbar-nav navbar-right">
                     <li class="dropdown">
                         <a class="dropdown-toggle" data-toggle="dropdown" href="#">
                             <span class="glyphicon glyphicon-th"></span> <span class="caret"></span>
@@ -230,8 +252,8 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         <footer id="#{ @componentId "footer" }">
             <span class="fs-deleted-message">#{ Cruddy.lang.model_deleted }</span>
 
-            <button data-action="closeForm" id="#{ @componentId "close" }" type="button" class="btn btn-default">#{ Cruddy.lang.close }</button>
-            <button data-action="saveModel" id="#{ @componentId "save" }" type="button" class="btn btn-primary"></button>
+            <button data-action="closeForm" id="#{ @componentId "close" }" type="button" class="btn btn-default">#{ Cruddy.lang.close }</button><!--
+            --><button data-action="saveModel" id="#{ @componentId "save" }" type="button" class="btn btn-primary btn-save"></button>
 
             <div class="progress">
                 <div id="#{ @componentId "progress" }" class="progress-bar form-save-progress"></div>
@@ -275,6 +297,45 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         """
 
         return html
+
+    renderExtraActionsButton: ->
+        return if _.isEmpty @model.meta.actions
+
+        mainAction = _.find(@model.meta.actions, (item) -> not item.disabled) or _.first(@model.meta.actions)
+
+        button = """
+            <button data-action="saveWithAction" data-action-id="#{ mainAction.id }" type="button" class="btn btn-info" #{ class_if mainAction.isDisabled, "disabled" }>
+                #{ mainAction.title }
+            </button>
+        """
+
+        return @wrapWithExtraActions(button, mainAction)
+
+    wrapWithExtraActions: (button, mainAction) ->
+        actions = _.filter @model.meta.actions, (action) -> action isnt mainAction
+
+        return button if _.isEmpty actions
+
+        html = ""
+        html += """
+            <li class="#{ class_if action.disabled, "disabled" }">
+                <a data-action="saveWithAction" data-action-id="#{ action.id }" href="#">#{ action.title }</a>
+            </li>
+        """ for action in actions
+
+        return """
+            <div class="btn-group dropup">
+                #{ button }
+
+                <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown">
+                    <span class="caret"></span>
+                </button>
+
+                <ul class="dropdown-menu dropdown-menu-right" role="menu">
+                    #{ html }
+                </ul>
+            </div>
+        """
 
     remove: ->
         @trigger "remove", @

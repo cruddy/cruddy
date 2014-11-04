@@ -3,6 +3,7 @@
 namespace Kalnoy\Cruddy\Schema\Actions;
 
 use Illuminate\Database\Eloquent\Model;
+use Kalnoy\Cruddy\Helpers;
 
 class Collection extends \Illuminate\Support\Collection {
 
@@ -68,7 +69,7 @@ class Collection extends \Illuminate\Support\Collection {
     protected function exportAction(Action $action, Model $model)
     {
         $id = $action->getId();
-        $title = $action->getTitle($model);
+        $title = Helpers::tryTranslate($action->getTitle($model));
         $disabled = $action->isDisabled($model);
 
         return compact('id', 'title', 'disabled');

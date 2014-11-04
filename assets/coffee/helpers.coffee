@@ -38,7 +38,7 @@ render_presentation_actions = (items) ->
 
     return html
 
-class_if = (className, bool) -> if bool then className else ""
+class_if = (bool, className) -> if bool then className else ""
 
 get = (path, obj = window) ->
     return obj if _.isEmpty path

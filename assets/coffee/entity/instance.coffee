@@ -9,19 +9,21 @@ class Cruddy.Entity.Instance extends Backbone.Model
         super
 
     initialize: (attributes, options) ->
-        @original = _.clone attributes
+        @syncOriginalAttributes()
 
         @on "error", @handleErrorEvent, this
-        @on "invalid", @handleInvalidEvent, this
         @on "sync", @handleSyncEvent, this
         @on "destroy", @handleDestroyEvent, this
 
-        @on event, @triggerRelated(event), this for event in ["sync", "request"]
-
         this
 
-    handleSyncEvent: (model, resp) ->
+    syncOriginalAttributes: ->
         @original = _.clone @attributes
+
+        return this
+
+    handleSyncEvent: (model, resp) ->
+        @syncOriginalAttributes()
 
         @setMetaFromResponse resp
 
@@ -31,23 +33,6 @@ class Cruddy.Entity.Instance extends Backbone.Model
         @meta = _.clone resp.meta if resp.meta?
 
         return this
-
-    # Get a function handler that passes events to the related models
-    triggerRelated: (event) ->
-        slice = Array.prototype.slice
-
-        (model) ->
-            for id, related of @related
-                relation = @entity.getRelation id
-                relation.triggerRelated.call relation, event, related, slice.call arguments, 1
-
-            this
-
-    handleInvalidEvent: (model, errors) ->
-        # Trigger errors for related models
-        @entity.getRelation(id).processErrors model, errors[id] for id, model of @related when id of errors
-
-        this
 
     handleErrorEvent: (model, xhr) ->
         @trigger "invalid", this, xhr.responseJSON if xhr.status is 400
@@ -61,29 +46,17 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
     validate: ->
         @set "errors", {}
-        null
+
+        return null
 
     link: -> @entity.link if @isNew() then "create" else @id
 
     url: -> @entity.url @id
 
     set: (key, val, options) ->
-        if typeof key is "object"
-            attrs = key
-            options = val
-            is_copy = options?.is_copy
-
-            for id in @entity.get "related" when id of attrs
-                relation = @entity.getRelation id
-                relationAttrs = attrs[id]
-
-                if is_copy
-                    related = @related[id] = relationAttrs
-                else
-                    related = @related[id] = relation.createInstance this, relationAttrs
-
-                # Attribute will now hold instance
-                attrs[id] = related
+        if _.isObject key
+            for attributeId, value of key when field = @entity.getField attributeId
+                key[attributeId] = field.parse this, value
 
         super
 
@@ -103,18 +76,11 @@ class Cruddy.Entity.Instance extends Backbone.Model
     copy: ->
         copy = @entity.createInstance()
 
-        copy.set @getCopyableAttributes(copy),
-            silent: yes
-            is_copy: yes
+        copy.set @entity.getCopyableAttributes(this, copy), silent: yes
 
         copy
 
-    getCopyableAttributes: (copy) -> @entity.getCopyableAttributes copy, @attributes
-
-    hasChangedSinceSync: ->
-        return yes for key, value of @attributes when if key of @related then @entity.getRelation(key).hasChangedSinceSync value else not _.isEqual value, @original[key]
-
-        no
+    hasChangedSinceSync: -> return @entity.hasChangedSinceSync this
 
     # Get whether is allowed to save instance
     isSaveable: -> (@isNew() and @entity.createPermitted()) or (not @isNew() and @entity.updatePermitted())
@@ -125,3 +91,5 @@ class Cruddy.Entity.Instance extends Backbone.Model
     action: -> if @isNew() then "create" else "update"
 
     getTitle: -> if @isNew() then Cruddy.lang.model_new_record else @meta.title
+
+    getOriginal: (key) -> @original[key]

@@ -161,7 +161,8 @@ class DataGrid extends Cruddy.View
         return
 
     executeCustomAction: (id, $el) ->
-        @entity.executeAction id, $el.data("actionId"), success: => @model.fetch()
+        unless $el.parent().is "disabled"
+            @entity.executeAction id, $el.data("actionId"), success: => @model.fetch()
 
         return
 

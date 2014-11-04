@@ -73,6 +73,7 @@ class App extends Backbone.Model
         this
 
     handleAjaxError: (xhr) ->
+        return if xhr.status is 400
 
         if xhr.responseJSON?.error
             if _.isObject error = xhr.responseJSON.error

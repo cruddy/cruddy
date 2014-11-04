@@ -15,7 +15,7 @@ class Cruddy.Columns.ViewButton extends Cruddy.Columns.Base
     """
 
     wrapWithActions: (item, html) ->
-        return html unless item.meta.externalUrl or not _.isEmpty item.meta.actions
+        return html unless not _.isEmpty item.meta.presentationActions or not _.isEmpty item.meta.actions
 
         html = """<div class="btn-group btn-group-xs auto-hide-target">""" + html
         html += @dropdownToggleTemplate()
@@ -33,19 +33,16 @@ class Cruddy.Columns.ViewButton extends Cruddy.Columns.Base
     renderActions: (item) ->
         html = """<ul class="dropdown-menu" role="menu">"""
 
-        html += @renderExternalLink item.meta.externalUrl if item.meta.externalUrl
+        unless noPresentationActions = _.isEmpty item.meta.presentationActions
+            html += render_presentation_actions item.meta.presentationActions
 
         unless _.isEmpty item.meta.actions
-            html += @renderDivider()
+            html += render_divider() unless noPresentationActions
             html += @renderAction action for action in item.meta.actions
 
         html += "</ul>"
 
         return html
-
-    renderExternalLink: (url) -> """
-        <li><a href="#{ url }" target="_blank">#{ Cruddy.lang.view_external }</a></li>
-    """
 
     renderAction: (action) -> """
         <li class="#{ if action.disabled then "disabled" else "" }">
@@ -53,8 +50,4 @@ class Cruddy.Columns.ViewButton extends Cruddy.Columns.Base
                 #{ _.escape action.title }
             </a>
         </li>
-    """
-
-    renderDivider: -> """
-        <li class="divider"></li>
     """

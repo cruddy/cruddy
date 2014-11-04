@@ -53,17 +53,6 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
         instance.setMetaFromResponse data
 
-    # Get relation field
-    getRelation: (id) ->
-        field = @field id
-
-        if not field instanceof Cruddy.Fields.BaseRelation
-            console.error "The field #{id} is not a relation."
-
-            return
-
-        field
-
     # Get a field with specified id
     field: (id) ->
         if not field = @fields.get id
@@ -72,6 +61,8 @@ class Cruddy.Entity.Entity extends Backbone.Model
             return
 
         return field
+
+    getField: (id) -> @fields.get id
 
     search: (options = {}) -> new SearchDataSource {}, $.extend { url: @url() }, options
 
@@ -109,6 +100,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
         return $.ajax options
 
+    # Destroy a model
     executeAction: (id, action, options = {}) ->
         options.url = @url id + "/" + action
         options.type = "POST"
@@ -117,24 +109,15 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
         return $.ajax options
 
-    # Load a model and set it as current
-    actionUpdate: (id) -> @load(id).then (instance) =>
-        @set "instance", instance
-
-        instance
-
-    # Create new model and set it as current
-    actionCreate: -> @set "instance", @createInstance()
-
     # Get only those attributes are not unique for the model
-    getCopyableAttributes: (model, attributes) ->
+    getCopyableAttributes: (model, copy) ->
         data = {}
-        data[field.id] = attributes[field.id] for field in @fields.models when not field.isUnique() and field.id of attributes and not _.contains(@attributes.related, field.id)
 
-        for ref in @attributes.related when ref of attributes
-            data[ref] = @getRelation(ref).copy model, attributes[ref]
+        data[field.id] = field.copyAttribute(model, copy) for field in @fields.models when field.isCopyable()
 
         data
+
+    hasChangedSinceSync: (model) -> return yes for field in @fields.models when field.hasChangedSinceSync model
 
     # Get url that handles syncing
     url: (id) -> entity_url @id, id

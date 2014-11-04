@@ -16,9 +16,9 @@
     'refresh' => 'Refresh',
     'view_external' => 'View item on main site',
 
-    'model_refresh' => 'Sync model with the server.',
-    'model_delete' => 'Delete from the server.',
-    'model_copy' => 'Create a new model with same attributes.',
+    'model_refresh' => 'Sync model with the server',
+    'model_delete' => 'Delete from the server',
+    'model_copy' => 'Copy model',
     'model_deleted' => 'Model is destroyed.',
     'model_new_record' => 'New record',
 

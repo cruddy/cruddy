@@ -3,11 +3,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
     className: "entity-form"
 
     events:
-        "click .btn-save": "save"
-        "click .btn-close": "close"
-        "click .btn-destroy": "destroy"
-        "click .btn-copy": "copy"
-        "click .fs-btn-refresh": "refresh"
+        "click [data-action]": "executeAction"
 
     constructor: (options) ->
         @className += " " + @className + "-" + options.model.entity.id
@@ -58,7 +54,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
             type: type
             timeout: timeout
 
-        @footer.prepend @alert.render().el
+        @$footer.prepend @alert.render().el
 
         this
 
@@ -84,14 +80,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         this
 
-    refresh: ->
-        return if @request?
-
-        @setupRequest @model.fetch() if @confirmClose()
-
-        return this
-
-    save: ->
+    saveModel: ->
         return if @request?
 
         isNew = @model.isNew()
@@ -111,6 +100,32 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         return this
 
+    destroyModel: ->
+        return if @request or @model.isNew()
+
+        softDeleting = @model.entity.get "soft_deleting"
+
+        confirmed = if not softDeleting then confirm(Cruddy.lang.confirm_delete) else yes
+
+        if confirmed
+            @request = if @softDeleting and @model.get "deleted_at" then @model.restore else @model.destroy wait: true
+
+            @request.always => @request = null
+
+        this
+
+    copyModel: ->
+        Cruddy.app.entityView.displayForm @model.copy()
+
+        this
+
+    refreshModel: ->
+        return if @request?
+
+        @setupRequest @model.fetch() if @confirmClose()
+
+        return this
+
     setupRequest: (request) ->
         request.done($.proxy this, "displaySuccess").fail($.proxy this, "displayError")
 
@@ -126,13 +141,13 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         if e.lengthComputable
             width = (e.loaded * 100) / e.total
 
-            @progressBar.width(width + '%').parent().show()
+            @$progressBar.width(width + '%').parent().show()
 
-            @progressBar.parent().hide() if width is 100
+            @$progressBar.parent().hide() if width is 100
 
         this
 
-    close: ->
+    closeForm: ->
         if @confirmClose()
             @remove()
             @trigger "close"
@@ -153,45 +168,26 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         return yes
 
-    destroy: ->
-        return if @request or @model.isNew()
-
-        softDeleting = @model.entity.get "soft_deleting"
-
-        confirmed = if not softDeleting then confirm(Cruddy.lang.confirm_delete) else yes
-
-        if confirmed
-            @request = if @softDeleting and @model.get "deleted_at" then @model.restore else @model.destroy wait: true
-
-            @request.always => @request = null
-
-        this
-
-    copy: ->
-        Cruddy.app.page.displayForm @model.copy()
-
-        this
-
     render: ->
         @$el.html @template()
 
         @$container = @$component "body"
 
-        @nav = @$component "nav"
-        @footer = @$ "footer"
-        @submit = @$ ".btn-save"
+        @$nav = @$component "nav"
+        @$footer = @$component "footer"
+        @$btnSave = @$component "save"
         @$deletedMsg = @$component "deleted-message"
-        @destroy = @$ ".btn-destroy"
-        @copy = @$ ".btn-copy"
-        @$refresh = @$ ".fs-btn-refresh"
-        @progressBar = @$ ".form-save-progress"
+        @$progressBar = @$component "progress"
+
+        @$serviceMenu = @$component "service-menu"
+        @$serviceMenuItems = @$component "service-menu-items"
 
         @update()
 
         super
 
     renderElement: (el) ->
-        @nav.append el.getHeader().render().$el
+        @$nav.append el.getHeader().render().$el
 
         super
 
@@ -201,64 +197,84 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         isDeleted = @model.isDeleted or false
 
         @$el.toggleClass "loading", @request?
+        @$el.toggleClass "destroyed", isDeleted
 
-        @submit.text if isNew then Cruddy.lang.create else Cruddy.lang.save
-        @submit.attr "disabled", @request?
-        @submit.toggle not isDeleted and if isNew then permit.create else permit.update
+        @$btnSave.text if isNew then Cruddy.lang.create else Cruddy.lang.save
+        @$btnSave.attr "disabled", @request?
+        @$btnSave.toggle not isDeleted and if isNew then permit.create else permit.update
 
-        @destroy.attr "disabled", @request?
-        @destroy.toggle not isDeleted and not isNew and permit.delete
-
-        @$deletedMsg.toggle isDeleted
-
-        @copy.toggle not isNew and permit.create
-        @$refresh.attr "disabled", @request?
-        @$refresh.toggle not isNew and not isDeleted
-
-        @external?.remove()
-
-        @$refresh.after @external = $ @externalLinkTemplate externalUrl if externalUrl = @model.meta.externalUrl
+        @$serviceMenu.toggle not isNew
+        @$serviceMenuItems.html @renderServiceMenuItems() unless isNew
 
         this
 
-    template: ->
-        """
+    template: -> """
         <div class="navbar navbar-default navbar-static-top" role="navigation">
             <div class="container-fluid">
                 <ul id="#{ @componentId "nav" }" class="nav navbar-nav"></ul>
+
+                <ul id="#{ @componentId "service_menu" }" class="nav navbar-nav navbar-right">
+                    <li class="dropdown">
+                        <a class="dropdown-toggle" data-toggle="dropdown" href="#">
+                            <span class="glyphicon glyphicon-th"></span> <span class="caret"></span>
+                        </a>
+
+                        <ul class="dropdown-menu" role="menu" id="#{ @componentId "service-menu-items" }"></ul>
+                    </li>
+                </ul>
             </div>
         </div>
 
         <div class="tab-content" id="#{ @componentId "body" }"></div>
 
-        <footer>
-            <div class="pull-left">
-                <button type="button" class="btn btn-link btn-destroy" title="#{ Cruddy.lang.model_delete }">
-                    <span class="glyphicon glyphicon-trash"></span>
-                </button>
+        <footer id="#{ @componentId "footer" }">
+            <span class="fs-deleted-message">#{ Cruddy.lang.model_deleted }</span>
 
-                <button type="button" tabindex="-1" class="btn btn-link btn-copy" title="#{ Cruddy.lang.model_copy }">
-                    <span class="glyphicon glyphicon-book"></span>
-                </button>
+            <button data-action="closeForm" id="#{ @componentId "close" }" type="button" class="btn btn-default">#{ Cruddy.lang.close }</button>
+            <button data-action="saveModel" id="#{ @componentId "save" }" type="button" class="btn btn-primary"></button>
 
-                <button type="button" class="btn btn-link fs-btn-refresh" title="#{ Cruddy.lang.model_refresh }">
-                    <span class="glyphicon glyphicon-refresh"></span>
-                </button>
+            <div class="progress">
+                <div id="#{ @componentId "progress" }" class="progress-bar form-save-progress"></div>
             </div>
-
-            <span class="fs-deleted-message" id="#{ @componentId "deleted-message" }">#{ Cruddy.lang.model_deleted }</span>
-            <button type="button" class="btn btn-default btn-close">#{ Cruddy.lang.close }</button>
-            <button type="button" class="btn btn-primary btn-save"></button>
-
-            <div class="progress"><div class="progress-bar form-save-progress"></div></div>
         </footer>
+    """
+
+    renderServiceMenuItems: ->
+        entity = (model = @model).entity
+
+        html = ""
+
+        unless (isDeleted = model.isDeleted) or _.isEmpty items = model.meta.presentationActions
+            html += render_presentation_actions items
+            html += render_divider()
+
+        html += """
+            <li class="#{ class_if isDeleted, "disabled" }">
+                <a data-action="refreshModel" href="#">
+                    #{ Cruddy.lang.model_refresh }
+                </a>
+            </li>
         """
 
-    externalLinkTemplate: (href) -> """
-        <a href="#{ href }" class="btn btn-link" title="#{ Cruddy.lang.view_external }" target="_blank">
-            #{ b_icon "eye-open" }
-        </a>
+        html += """
+            <li class="#{ class_if not entity.createPermitted(), "disabled" }">
+                <a data-action="copyModel" href="#">
+                    #{ Cruddy.lang.model_copy }
+                </a>
+            </li>
         """
+
+        html += """
+            <li class="divider"></li>
+
+            <li class="#{ class_if isDeleted or not entity.deletePermitted(), "disabled" }">
+                <a data-action="destroyModel" href="#">
+                    <span class="glyphicon glyphicon-trash"></span> #{ Cruddy.lang.model_delete }
+                </a>
+            </li>
+        """
+
+        return html
 
     remove: ->
         @trigger "remove", @
@@ -275,6 +291,16 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         .removeClass "opened"
 
         super
+
+    executeAction: (e) ->
+        return if e.isDefaultPrevented()
+
+        if (action = ($el = $ e.currentTarget).data "action") and action of this
+            e.preventDefault()
+
+            this[action].call this, $el
+
+        return
 
 Cruddy.Entity.Form.display = (instance) ->
     form = new Cruddy.Entity.Form model: instance

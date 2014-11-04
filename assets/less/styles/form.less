@@ -169,9 +169,20 @@
         }
     }
 
+    .fs-deleted-message {
+        display: none;
+    }
+
     &.loading {
-        .fs-btn-refresh > .glyphicon {
-            .animation(loading 1s ease-in-out infinite);
+//        > footer > .loading {
+//            .animation(loading 1s ease-in-out infinite);
+//        }
+    }
+
+    &.destroyed {
+
+        .fs-deleted-message {
+            display: block;
         }
     }
 }

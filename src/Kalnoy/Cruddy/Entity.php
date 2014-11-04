@@ -635,7 +635,6 @@ class Entity implements JsonableInterface, ArrayableInterface {
             'fields' => $this->getFields()->export(),
             'columns' => $this->getColumns()->export(),
             'filters' => $this->getFilters()->export(),
-            'related' => $this->getInlineFieldsIds(),
 
         ] + $this->schema->toArray() + [ 'view' => 'Cruddy.Entity.Page' ];
     }
@@ -678,21 +677,6 @@ class Entity implements JsonableInterface, ArrayableInterface {
     private function getPermissionsDriver()
     {
         return app('cruddy.permissions')->driver();
-    }
-
-    /**
-     * @return array
-     */
-    protected function getInlineFieldsIds()
-    {
-        $result = [];
-
-        foreach ($this->getFields() as $id => $field)
-        {
-            if ($field instanceof InlineRelation) $result[] = $id;
-        }
-
-        return $result;
     }
 
 }

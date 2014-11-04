@@ -26,6 +26,20 @@ b_btn = (label, icon = null, className = "btn-default", type = 'button') ->
 
     "<button type='#{ type }' class='btn #{ className }'>#{ label.trim() }</button>"
 
+render_divider = -> """<li class="divider"></li>"""
+
+render_presentation_action = (url, title) -> """
+        <li><a href="#{ url }" target="_blank">#{ title }</a></li>
+    """
+
+render_presentation_actions = (items) ->
+    html = ""
+    html += render_presentation_action(href, title) for title, href of items
+
+    return html
+
+class_if = (className, bool) -> if bool then className else ""
+
 get = (path, obj = window) ->
     return obj if _.isEmpty path
 

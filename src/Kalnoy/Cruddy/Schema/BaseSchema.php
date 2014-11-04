@@ -183,6 +183,12 @@ abstract class BaseSchema implements Schema {
         return $collection;
     }
 
+    /**
+     * @param Model $model
+     * @param $action
+     *
+     * @return mixed
+     */
     public function executeAction(Model $model, $action)
     {
         return $this->getActions()->execute($model, $action);
@@ -200,11 +206,28 @@ abstract class BaseSchema implements Schema {
 
         if ( ! $simplified)
         {
-            $meta['externalUrl'] = $this->externalUrl($model);
+            $meta['presentationActions'] = $this->exportPresentationActions($model);
             $meta['actions'] = $this->exportActions($model);
         }
 
         return $meta;
+    }
+
+    /**
+     * @param Model $model
+     *
+     * @return array
+     */
+    protected function exportPresentationActions(Model $model)
+    {
+        $result = [];
+
+        if ($value = $this->externalUrl($model))
+        {
+            $result[app('cruddy.lang')->translate('cruddy::js.view_external')] = $value;
+        }
+
+        return $result;
     }
 
     /**

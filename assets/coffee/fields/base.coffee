@@ -40,3 +40,13 @@ class Cruddy.Fields.Base extends Cruddy.Attribute
 
     # Get whether the field is unique
     isUnique: -> @attributes.unique
+
+    hasChangedSinceSync: (model) -> not @valuesEqual model.get(@id), model.getOriginal(@id)
+
+    valuesEqual: (a, b) -> a is b
+
+    isCopyable: -> not @isUnique()
+
+    copyAttribute: (model, copy) -> model.get @id
+
+    parse: (model, value) -> value

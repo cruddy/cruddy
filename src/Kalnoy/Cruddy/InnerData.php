@@ -54,7 +54,14 @@ class InnerData extends Data {
 
     /**
      * @param Model $model
+     *
+     * @return array|null
      */
+    public function getValidationErrors()
+    {
+        return $this->isDeleted ? null : parent::getValidationErrors();
+    }
+
     protected function fillModel(Model $model)
     {
         parent::fillModel($model);

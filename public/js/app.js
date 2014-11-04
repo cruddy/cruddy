@@ -1,5 +1,5 @@
 (function() {
-  var AdvFormData, Alert, App, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, NOT_AVAILABLE, Pagination, Router, SearchDataSource, TITLE_SEPARATOR, TRANSITIONEND, after_break, b_btn, b_icon, entity_url, get, humanize, thumb, _ref,
+  var AdvFormData, Alert, App, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, NOT_AVAILABLE, Pagination, Router, SearchDataSource, TITLE_SEPARATOR, TRANSITIONEND, after_break, b_btn, b_icon, class_if, entity_url, get, humanize, render_divider, render_presentation_action, render_presentation_actions, thumb, _ref,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -92,6 +92,32 @@
       className = "btn-" + className.join(" btn-");
     }
     return "<button type='" + type + "' class='btn " + className + "'>" + (label.trim()) + "</button>";
+  };
+
+  render_divider = function() {
+    return "<li class=\"divider\"></li>";
+  };
+
+  render_presentation_action = function(url, title) {
+    return "<li><a href=\"" + url + "\" target=\"_blank\">" + title + "</a></li>";
+  };
+
+  render_presentation_actions = function(items) {
+    var href, html, title;
+    html = "";
+    for (title in items) {
+      href = items[title];
+      html += render_presentation_action(href, title);
+    }
+    return html;
+  };
+
+  class_if = function(bool, className) {
+    if (bool) {
+      return className;
+    } else {
+      return "";
+    }
   };
 
   get = function(path, obj) {
@@ -229,6 +255,9 @@
       if (value === void 0) {
         value = name;
         name = null;
+      }
+      if (value === void 0) {
+        return;
       }
       if (value instanceof File || value instanceof Blob) {
         return this.original.append(name, value);
@@ -797,7 +826,7 @@
 
     DataGrid.prototype.renderRow = function(item) {
       var columns, html, _i, _len, _ref1;
-      html = "<tr class=\"item " + (this.itemStates(item)) + "\" id=\"" + (this.itemRowId(item)) + "\" data-id=\"" + item.id + "\">";
+      html = "<tr class=\"item " + (this.itemStates(item)) + "\" id=\"" + (this.itemRowId(item)) + "\" data-id=\"" + item.meta.id + "\">";
       _ref1 = this.columns;
       for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
         columns = _ref1[_i];
@@ -808,8 +837,8 @@
 
     DataGrid.prototype.itemStates = function(item) {
       var instance, states;
-      states = item._states ? item._states : "";
-      if (((instance = this.entity.get("instance")) != null) && item.id === instance.id) {
+      states = item.attributes._states ? item.attributes._states : "";
+      if (((instance = this.entity.get("instance")) != null) && item.meta.id === instance.id) {
         states += " active";
       }
       return states;
@@ -825,18 +854,18 @@
       action = $el.data("action");
       if (action && (action = this[action])) {
         e.preventDefault();
-        action.call(this, $el);
+        action.call(this, $el.closest(".item").data("id"), $el);
       }
     };
 
-    DataGrid.prototype.deleteItem = function($el) {
+    DataGrid.prototype.deleteItem = function(id, $el) {
       var $row;
       if (!confirm(Cruddy.lang.confirm_delete)) {
         return;
       }
       $row = $el.closest(".item");
       $el.attr("disabled", true);
-      this.entity.destroy($row.data("id"), {
+      this.entity.destroy(id, {
         displayLoading: true,
         success: (function(_this) {
           return function() {
@@ -848,6 +877,18 @@
           return $el.attr("disabled", false);
         }
       });
+    };
+
+    DataGrid.prototype.executeCustomAction = function(id, $el) {
+      if (!$el.parent().is("disabled")) {
+        this.entity.executeAction(id, $el.data("actionId"), {
+          success: (function(_this) {
+            return function() {
+              return _this.model.fetch();
+            };
+          })(this)
+        });
+      }
     };
 
     DataGrid.prototype.template = function() {
@@ -867,11 +908,11 @@
     };
 
     DataGrid.prototype.itemRowId = function(item) {
-      return this.componentId("item-" + item.id);
+      return this.componentId("item-" + item.meta.id);
     };
 
     DataGrid.prototype.$itemRow = function(item) {
-      return this.$component("item-" + item.id);
+      return this.$component("item-" + item.meta.id);
     };
 
     return DataGrid;
@@ -3216,6 +3257,26 @@
       return this.attributes.unique;
     };
 
+    Base.prototype.hasChangedSinceSync = function(model) {
+      return !this.valuesEqual(model.get(this.id), model.getOriginal(this.id));
+    };
+
+    Base.prototype.valuesEqual = function(a, b) {
+      return a === b;
+    };
+
+    Base.prototype.isCopyable = function() {
+      return !this.isUnique();
+    };
+
+    Base.prototype.copyAttribute = function(model, copy) {
+      return model.get(this.id);
+    };
+
+    Base.prototype.parse = function(model, value) {
+      return value;
+    };
+
     return Base;
 
   })(Cruddy.Attribute);
@@ -3785,27 +3846,14 @@
     };
 
     EmbeddedView.prototype.initialize = function(options) {
-      this.views = {};
-      this.updateCollection();
-      return EmbeddedView.__super__.initialize.apply(this, arguments);
-    };
-
-    EmbeddedView.prototype.updateCollection = function() {
       var collection;
-      if (this.collection) {
-        this.stopListening(this.collection);
-      }
+      this.views = {};
       this.collection = collection = this.model.get(this.field.id);
       this.listenTo(collection, "add", this.add);
       this.listenTo(collection, "remove", this.removeItem);
       this.listenTo(collection, "removeSoftly restore", this.update);
-      return this;
-    };
-
-    EmbeddedView.prototype.handleSync = function() {
-      EmbeddedView.__super__.handleSync.apply(this, arguments);
-      this.updateCollection();
-      return this.render();
+      this.listenTo(collection, "reset", this.render);
+      return EmbeddedView.__super__.initialize.apply(this, arguments);
     };
 
     EmbeddedView.prototype.handleInvalid = function(model, errors) {
@@ -4002,12 +4050,38 @@
       this.maxItems = options.maxItems;
       this.deleted = false;
       this.removedSoftly = 0;
-      this.listenTo(this.owner, "sync", (function(_this) {
-        return function() {
-          return _this.deleted = false;
-        };
-      })(this));
+      this.listenTo(this.owner, "sync", function(model, resp, options) {
+        this.deleted = false;
+        return this._triggerItems("sync", {}, options);
+      });
+      this.listenTo(this.owner, "request", function(model, xhr, options) {
+        return this._triggerItems("request", xhr, options);
+      });
+      this.listenTo(this.owner, "invalid", this._handleInvalidEvent);
       return RelatedCollection.__super__.initialize.apply(this, arguments);
+    };
+
+    RelatedCollection.prototype._handleInvalidEvent = function(model, errors) {
+      var cid, item, itemErrors, _ref1;
+      if (!(this.field.id in errors)) {
+        return;
+      }
+      _ref1 = errors[this.field.id];
+      for (cid in _ref1) {
+        itemErrors = _ref1[cid];
+        if (item = this.get(cid)) {
+          item.trigger("invalid", item, itemErrors);
+        }
+      }
+    };
+
+    RelatedCollection.prototype._triggerItems = function(event, param1, param2) {
+      var model, _i, _len, _ref1;
+      _ref1 = this.models;
+      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+        model = _ref1[_i];
+        model.trigger(event, model, param1, param2);
+      }
     };
 
     RelatedCollection.prototype.add = function() {
@@ -4023,18 +4097,18 @@
       }));
     };
 
-    RelatedCollection.prototype.remove = function(m) {
+    RelatedCollection.prototype.remove = function(models) {
       var item, _i, _len;
       this.deleted = true;
-      if (_.isArray(m)) {
-        for (_i = 0, _len = m.length; _i < _len; _i++) {
-          item = m[_i];
+      if (_.isArray(models)) {
+        for (_i = 0, _len = models.length; _i < _len; _i++) {
+          item = models[_i];
           if (item.isDeleted) {
             this.removedSoftly--;
           }
         }
       } else {
-        if (m.isDeleted) {
+        if (modes.isDeleted) {
           this.removedSoftly--;
         }
       }
@@ -4103,24 +4177,18 @@
 
     RelatedCollection.prototype.serialize = function() {
       var data, item, models, _i, _len;
-      if (this.field.isMultiple()) {
-        models = this.filter(function(m) {
-          return !m.isDeleted;
-        });
-        if (_.isEmpty(models)) {
-          return "";
-        }
-        data = {};
-        for (_i = 0, _len = models.length; _i < _len; _i++) {
-          item = models[_i];
-          data[item.cid] = item;
-        }
-        return data;
-      } else {
-        return this.find(function(m) {
-          return !m.isDeleted;
-        }) || "";
+      models = this.filter(function(model) {
+        return !model.isDeleted || !model.isNew();
+      });
+      if (_.isEmpty(models)) {
+        return;
       }
+      data = {};
+      for (_i = 0, _len = models.length; _i < _len; _i++) {
+        item = models[_i];
+        data[item.cid] = item;
+      }
+      return data;
     };
 
     return RelatedCollection;
@@ -4136,13 +4204,13 @@
 
     Embedded.prototype.viewConstructor = Cruddy.Fields.EmbeddedView;
 
-    Embedded.prototype.createInstance = function(model, items) {
-      var item, ref;
-      if (items instanceof Backbone.Collection) {
+    Embedded.prototype.parse = function(model, items) {
+      var collection, item, ref;
+      if (items instanceof Cruddy.Fields.RelatedCollection) {
         return items;
       }
       if (!this.attributes.multiple) {
-        items = (items || this.isRequired(model) ? [items] : []);
+        items = items || this.isRequired(model) ? [items] : [];
       }
       ref = this.getReference();
       items = (function() {
@@ -4154,6 +4222,10 @@
         }
         return _results;
       })();
+      if (collection = model.get(this.id)) {
+        collection.reset(items);
+        return collection;
+      }
       return new Cruddy.Fields.RelatedCollection(items, {
         owner: model,
         field: this,
@@ -4161,71 +4233,24 @@
       });
     };
 
-    Embedded.prototype.applyValues = function(collection, items) {
-      var item, ref;
-      if (!this.attributes.multiple) {
-        items = [items];
-      }
-      collection.set(_.pluck(items, "attributes"), {
-        add: false
-      });
-      ref = this.getReference();
-      collection.add((function() {
-        var _i, _len, _results;
-        _results = [];
-        for (_i = 0, _len = items.length; _i < _len; _i++) {
-          item = items[_i];
-          if (!collection.get(item.id)) {
-            _results.push(ref.createInstance(item));
-          }
-        }
-        return _results;
-      })());
-      return this;
-    };
-
-    Embedded.prototype.hasChangedSinceSync = function(items) {
-      return items.hasChangedSinceSync();
+    Embedded.prototype.hasChangedSinceSync = function(model) {
+      return model.get(this.id).hasChangedSinceSync();
     };
 
     Embedded.prototype.copy = function(copy, items) {
       return items.copy(copy);
     };
 
-    Embedded.prototype.processErrors = function(collection, errorsCollection) {
-      var cid, errors, model;
-      if (!_.isObject(errorsCollection)) {
-        return;
-      }
-      if (!this.attributes.multiple) {
-        model = collection.first();
-        if (model) {
-          model.trigger("invalid", model, errorsCollection);
-        }
-        return this;
-      }
-      for (cid in errorsCollection) {
-        errors = errorsCollection[cid];
-        model = collection.get(cid);
-        if (model) {
-          model.trigger("invalid", model, errors);
-        }
-      }
-      return this;
-    };
-
-    Embedded.prototype.triggerRelated = function(event, collection, args) {
-      var model, _i, _len, _ref1;
-      _ref1 = collection.models;
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        model = _ref1[_i];
-        model.trigger.apply(model, [event, model].concat(args));
-      }
-      return this;
-    };
-
     Embedded.prototype.isMultiple = function() {
       return this.attributes.multiple;
+    };
+
+    Embedded.prototype.copyAttribute = function(model, copy) {
+      return model.get(this.id).copy(copy);
+    };
+
+    Embedded.prototype.isCopyable = function() {
+      return true;
     };
 
     return Embedded;
@@ -4288,7 +4313,7 @@
     };
 
     Base.prototype.render = function(item) {
-      return this.format(item[this.id]);
+      return this.format(item.attributes[this.id]);
     };
 
     Base.prototype.format = function(value) {
@@ -4374,7 +4399,7 @@
     };
 
     ViewButton.prototype.getClass = function() {
-      return "col__view-button col__button";
+      return "col__view-button col__auto-hide";
     };
 
     ViewButton.prototype.canOrder = function() {
@@ -4382,7 +4407,46 @@
     };
 
     ViewButton.prototype.render = function(item) {
-      return "<a href=\"" + (this.entity.link(item.id)) + "\" class=\"btn btn-default btn-xs\">\n    " + (b_icon("pencil")) + "\n</a>";
+      return this.wrapWithActions(item, "<a href=\"" + (this.entity.link(item.meta.id)) + "\" class=\"btn btn-default btn-view btn-xs auto-hide-target\">\n    " + (b_icon("pencil")) + "\n</a>");
+    };
+
+    ViewButton.prototype.wrapWithActions = function(item, html) {
+      if (!!_.isEmpty(item.meta.presentationActions || !_.isEmpty(item.meta.actions))) {
+        return html;
+      }
+      html = "<div class=\"btn-group btn-group-xs auto-hide-target\">" + html;
+      html += this.dropdownToggleTemplate();
+      html += this.renderActions(item);
+      html += "</div>";
+      return html;
+    };
+
+    ViewButton.prototype.dropdownToggleTemplate = function() {
+      return "<button type=\"button\" class=\"btn btn-default dropdown-toggle\" data-toggle=\"dropdown\">\n    <span class=\"caret\"></span>\n</button>";
+    };
+
+    ViewButton.prototype.renderActions = function(item) {
+      var action, html, noPresentationActions, _i, _len, _ref1;
+      html = "<ul class=\"dropdown-menu\" role=\"menu\">";
+      if (!(noPresentationActions = _.isEmpty(item.meta.presentationActions))) {
+        html += render_presentation_actions(item.meta.presentationActions);
+      }
+      if (!_.isEmpty(item.meta.actions)) {
+        if (!noPresentationActions) {
+          html += render_divider();
+        }
+        _ref1 = item.meta.actions;
+        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+          action = _ref1[_i];
+          html += this.renderAction(action);
+        }
+      }
+      html += "</ul>";
+      return html;
+    };
+
+    ViewButton.prototype.renderAction = function(action) {
+      return "<li class=\"" + (action.disabled ? "disabled" : "") + "\">\n    <a href=\"#\" data-action=\"executeCustomAction\" data-action-id=\"" + action.id + "\">\n        " + (_.escape(action.title)) + "\n    </a>\n</li>";
     };
 
     return ViewButton;
@@ -4403,7 +4467,7 @@
     };
 
     DeleteButton.prototype.getClass = function() {
-      return "col__delete-button col__button";
+      return "col__delete-button col__button col__auto-hide";
     };
 
     DeleteButton.prototype.canOrder = function() {
@@ -4411,7 +4475,7 @@
     };
 
     DeleteButton.prototype.render = function(item) {
-      return "<a href=\"#\" data-action=\"deleteItem\" class=\"btn btn-default btn-xs\">\n    " + (b_icon("trash")) + "\n</a>";
+      return "<a href=\"#\" data-action=\"deleteItem\" class=\"btn btn-default btn-xs auto-hide-target\">\n    " + (b_icon("trash")) + "\n</a>";
     };
 
     return DeleteButton;
@@ -4593,28 +4657,18 @@
       return new Backbone.Collection(filters);
     };
 
-    Entity.prototype.createInstance = function(attributes, options) {
-      var instance;
-      if (attributes == null) {
-        attributes = {};
+    Entity.prototype.createInstance = function(data, options) {
+      var attributes, instance;
+      if (data == null) {
+        data = {};
       }
       if (options == null) {
         options = {};
       }
       options.entity = this;
-      attributes = _.extend({}, this.get("defaults"), attributes.attributes);
+      attributes = _.extend({}, this.get("defaults"), data.attributes);
       instance = new Cruddy.Entity.Instance(attributes, options);
-      return instance.fillExtra(attributes);
-    };
-
-    Entity.prototype.getRelation = function(id) {
-      var field;
-      field = this.field(id);
-      if (!field instanceof Cruddy.Fields.BaseRelation) {
-        console.error("The field " + id + " is not a relation.");
-        return;
-      }
-      return field;
+      return instance.setMetaFromResponse(data);
     };
 
     Entity.prototype.field = function(id) {
@@ -4624,6 +4678,10 @@
         return;
       }
       return field;
+    };
+
+    Entity.prototype.getField = function(id) {
+      return this.fields.get(id);
     };
 
     Entity.prototype.search = function(options) {
@@ -4671,40 +4729,43 @@
       options.data = {
         _method: "DELETE"
       };
+      options.displayLoading = true;
       return $.ajax(options);
     };
 
-    Entity.prototype.actionUpdate = function(id) {
-      return this.load(id).then((function(_this) {
-        return function(instance) {
-          _this.set("instance", instance);
-          return instance;
-        };
-      })(this));
+    Entity.prototype.executeAction = function(id, action, options) {
+      if (options == null) {
+        options = {};
+      }
+      options.url = this.url(id + "/" + action);
+      options.type = "POST";
+      options.dataType = "json";
+      options.displayLoading = true;
+      return $.ajax(options);
     };
 
-    Entity.prototype.actionCreate = function() {
-      return this.set("instance", this.createInstance());
-    };
-
-    Entity.prototype.getCopyableAttributes = function(model, attributes) {
-      var data, field, ref, _i, _j, _len, _len1, _ref1, _ref2;
+    Entity.prototype.getCopyableAttributes = function(model, copy) {
+      var data, field, _i, _len, _ref1;
       data = {};
       _ref1 = this.fields.models;
       for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
         field = _ref1[_i];
-        if (!field.isUnique() && field.id in attributes && !_.contains(this.attributes.related, field.id)) {
-          data[field.id] = attributes[field.id];
-        }
-      }
-      _ref2 = this.attributes.related;
-      for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
-        ref = _ref2[_j];
-        if (ref in attributes) {
-          data[ref] = this.getRelation(ref).copy(model, attributes[ref]);
+        if (field.isCopyable()) {
+          data[field.id] = field.copyAttribute(model, copy);
         }
       }
       return data;
+    };
+
+    Entity.prototype.hasChangedSinceSync = function(model) {
+      var field, _i, _len, _ref1;
+      _ref1 = this.fields.models;
+      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+        field = _ref1[_i];
+        if (field.hasChangedSinceSync(model)) {
+          return true;
+        }
+      }
     };
 
     Entity.prototype.url = function(id) {
@@ -4767,6 +4828,10 @@
       return this.attributes.soft_deleting;
     };
 
+    Entity.prototype.getPrimaryKey = function() {
+      return this.attributes.primary_key || "id";
+    };
+
     return Entity;
 
   })(Backbone.Model);
@@ -4776,63 +4841,33 @@
 
     function Instance(attributes, options) {
       this.entity = options.entity;
-      this.related = {};
+      this.idAttribute = this.entity.getPrimaryKey();
+      this.meta = {};
       Instance.__super__.constructor.apply(this, arguments);
     }
 
     Instance.prototype.initialize = function(attributes, options) {
-      var event, _i, _len, _ref1;
-      this.original = _.clone(attributes);
+      this.syncOriginalAttributes();
       this.on("error", this.handleErrorEvent, this);
-      this.on("invalid", this.handleInvalidEvent, this);
       this.on("sync", this.handleSyncEvent, this);
       this.on("destroy", this.handleDestroyEvent, this);
-      _ref1 = ["sync", "request"];
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        event = _ref1[_i];
-        this.on(event, this.triggerRelated(event), this);
-      }
+      return this;
+    };
+
+    Instance.prototype.syncOriginalAttributes = function() {
+      this.original = _.clone(this.attributes);
       return this;
     };
 
     Instance.prototype.handleSyncEvent = function(model, resp) {
-      this.original = _.clone(this.attributes);
-      if (resp.attributes) {
-        this.fillExtra(resp);
-      }
+      this.syncOriginalAttributes();
+      this.setMetaFromResponse(resp);
       return this;
     };
 
-    Instance.prototype.fillExtra = function(resp) {
-      var _ref1, _ref2;
-      this.extra = (_ref1 = resp.extra) != null ? _ref1 : {};
-      this.title = (_ref2 = resp.title) != null ? _ref2 : null;
-      return this;
-    };
-
-    Instance.prototype.triggerRelated = function(event) {
-      var slice;
-      slice = Array.prototype.slice;
-      return function(model) {
-        var id, related, relation, _ref1;
-        _ref1 = this.related;
-        for (id in _ref1) {
-          related = _ref1[id];
-          relation = this.entity.getRelation(id);
-          relation.triggerRelated.call(relation, event, related, slice.call(arguments, 1));
-        }
-        return this;
-      };
-    };
-
-    Instance.prototype.handleInvalidEvent = function(model, errors) {
-      var id, _ref1;
-      _ref1 = this.related;
-      for (id in _ref1) {
-        model = _ref1[id];
-        if (id in errors) {
-          this.entity.getRelation(id).processErrors(model, errors[id]);
-        }
+    Instance.prototype.setMetaFromResponse = function(resp) {
+      if (resp.meta != null) {
+        this.meta = _.clone(resp.meta);
       }
       return this;
     };
@@ -4861,25 +4896,13 @@
     };
 
     Instance.prototype.set = function(key, val, options) {
-      var attrs, id, is_copy, related, relation, relationAttrs, _i, _len, _ref1;
-      if (typeof key === "object") {
-        attrs = key;
-        options = val;
-        is_copy = options != null ? options.is_copy : void 0;
-        _ref1 = this.entity.get("related");
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          id = _ref1[_i];
-          if (!(id in attrs)) {
-            continue;
+      var attributeId, field, value;
+      if (_.isObject(key)) {
+        for (attributeId in key) {
+          value = key[attributeId];
+          if (field = this.entity.getField(attributeId)) {
+            key[attributeId] = field.parse(this, value);
           }
-          relation = this.entity.getRelation(id);
-          relationAttrs = attrs[id];
-          if (is_copy) {
-            related = this.related[id] = relationAttrs;
-          } else {
-            related = this.related[id] = relation.createInstance(this, relationAttrs);
-          }
-          attrs[id] = related;
         }
       }
       return Instance.__super__.set.apply(this, arguments);
@@ -4902,27 +4925,14 @@
     Instance.prototype.copy = function() {
       var copy;
       copy = this.entity.createInstance();
-      copy.set(this.getCopyableAttributes(copy), {
-        silent: true,
-        is_copy: true
+      copy.set(this.entity.getCopyableAttributes(this, copy), {
+        silent: true
       });
       return copy;
     };
 
-    Instance.prototype.getCopyableAttributes = function(copy) {
-      return this.entity.getCopyableAttributes(copy, this.attributes);
-    };
-
     Instance.prototype.hasChangedSinceSync = function() {
-      var key, value, _ref1;
-      _ref1 = this.attributes;
-      for (key in _ref1) {
-        value = _ref1[key];
-        if (key in this.related ? this.entity.getRelation(key).hasChangedSinceSync(value) : !_.isEqual(value, this.original[key])) {
-          return true;
-        }
-      }
-      return false;
+      return this.entity.hasChangedSinceSync(this);
     };
 
     Instance.prototype.isSaveable = function() {
@@ -4930,10 +4940,17 @@
     };
 
     Instance.prototype.serialize = function() {
-      return {
-        attributes: this.attributes,
-        id: this.id
-      };
+      if (this.isDeleted) {
+        return {
+          id: this.id,
+          isDeleted: true
+        };
+      } else {
+        return {
+          attributes: this.attributes,
+          id: this.id
+        };
+      }
     };
 
     Instance.prototype.action = function() {
@@ -4945,8 +4962,15 @@
     };
 
     Instance.prototype.getTitle = function() {
-      var _ref1;
-      return (_ref1 = this.title) != null ? _ref1 : Cruddy.lang.model_new_record;
+      if (this.isNew()) {
+        return Cruddy.lang.model_new_record;
+      } else {
+        return this.meta.title;
+      }
+    };
+
+    Instance.prototype.getOriginal = function(key) {
+      return this.original[key];
     };
 
     return Instance;
@@ -5255,11 +5279,7 @@
     Form.prototype.className = "entity-form";
 
     Form.prototype.events = {
-      "click .btn-save": "save",
-      "click .btn-close": "close",
-      "click .btn-destroy": "destroy",
-      "click .btn-copy": "copy",
-      "click .fs-btn-refresh": "refresh"
+      "click [data-action]": "executeAction"
     };
 
     function Form(options) {
@@ -5269,6 +5289,19 @@
 
     Form.prototype.initialize = function(options) {
       Form.__super__.initialize.apply(this, arguments);
+      this.saveOptions = {
+        displayLoading: true,
+        xhr: (function(_this) {
+          return function() {
+            var xhr;
+            xhr = $.ajaxSettings.xhr();
+            if (xhr.upload) {
+              xhr.upload.addEventListener('progress', $.proxy(_this, "progressCallback"));
+            }
+            return xhr;
+          };
+        })(this)
+      };
       this.listenTo(this.model, "destroy", this.handleModelDestroyEvent);
       this.listenTo(this.model, "invalid", this.handleModelInvalidEvent);
       this.hotkeys = $(document).on("keydown." + this.cid, "body", $.proxy(this, "hotkeys"));
@@ -5316,7 +5349,7 @@
         type: type,
         timeout: timeout
       });
-      this.footer.prepend(this.alert.render().el);
+      this.$footer.prepend(this.alert.render().el);
       return this;
     };
 
@@ -5335,7 +5368,7 @@
     };
 
     Form.prototype.handleModelDestroyEvent = function() {
-      this.update();
+      this.updateModelState();
       this.trigger("destroyed", this.model);
       return this;
     };
@@ -5347,7 +5380,59 @@
       return this;
     };
 
-    Form.prototype.refresh = function() {
+    Form.prototype.save = function(options) {
+      var isNew;
+      if (this.request != null) {
+        return;
+      }
+      isNew = this.model.isNew();
+      this.setupRequest(this.model.save(null, $.extend({}, this.saveOptions, options)));
+      this.request.done((function(_this) {
+        return function(resp) {
+          _this.trigger((isNew ? "created" : "updated"), _this.model, resp);
+          _this.trigger("saved", _this.model, resp);
+          return _this.updateModelState();
+        };
+      })(this));
+      return this;
+    };
+
+    Form.prototype.saveModel = function() {
+      return this.save();
+    };
+
+    Form.prototype.saveWithAction = function($el) {
+      return this.save({
+        url: this.model.entity.url(this.model.id + "/" + $el.data("actionId"))
+      });
+    };
+
+    Form.prototype.destroyModel = function() {
+      var confirmed, softDeleting;
+      if (this.request || this.model.isNew()) {
+        return;
+      }
+      softDeleting = this.model.entity.get("soft_deleting");
+      confirmed = !softDeleting ? confirm(Cruddy.lang.confirm_delete) : true;
+      if (confirmed) {
+        this.request = this.softDeleting && this.model.get("deleted_at") ? this.model.restore : this.model.destroy({
+          wait: true
+        });
+        this.request.always((function(_this) {
+          return function() {
+            return _this.request = null;
+          };
+        })(this));
+      }
+      return this;
+    };
+
+    Form.prototype.copyModel = function() {
+      Cruddy.app.entityView.displayForm(this.model.copy());
+      return this;
+    };
+
+    Form.prototype.refreshModel = function() {
       if (this.request != null) {
         return;
       }
@@ -5357,59 +5442,31 @@
       return this;
     };
 
-    Form.prototype.save = function() {
-      var isNew;
-      if (this.request != null) {
-        return;
-      }
-      isNew = this.model.isNew();
-      this.setupRequest(this.model.save(null, {
-        displayLoading: true,
-        xhr: (function(_this) {
-          return function() {
-            var xhr;
-            xhr = $.ajaxSettings.xhr();
-            if (xhr.upload) {
-              xhr.upload.addEventListener('progress', $.proxy(_this, "progressCallback"));
-            }
-            return xhr;
-          };
-        })(this)
-      }));
-      this.request.done((function(_this) {
-        return function(resp) {
-          _this.trigger((isNew ? "created" : "updated"), _this.model, resp);
-          return _this.trigger("saved", _this.model, resp);
-        };
-      })(this));
-      return this;
-    };
-
     Form.prototype.setupRequest = function(request) {
       request.done($.proxy(this, "displaySuccess")).fail($.proxy(this, "displayError"));
       request.always((function(_this) {
         return function() {
           _this.request = null;
-          return _this.update();
+          return _this.updateRequestState();
         };
       })(this));
       this.request = request;
-      return this.update();
+      return this.updateRequestState();
     };
 
     Form.prototype.progressCallback = function(e) {
       var width;
       if (e.lengthComputable) {
         width = (e.loaded * 100) / e.total;
-        this.progressBar.width(width + '%').parent().show();
+        this.$progressBar.width(width + '%').parent().show();
         if (width === 100) {
-          this.progressBar.parent().hide();
+          this.$progressBar.parent().hide();
         }
       }
       return this;
     };
 
-    Form.prototype.close = function() {
+    Form.prototype.closeForm = function() {
       if (this.confirmClose()) {
         this.remove();
         this.trigger("close");
@@ -5441,81 +5498,103 @@
       return true;
     };
 
-    Form.prototype.destroy = function() {
-      var confirmed, softDeleting;
-      if (this.request || this.model.isNew()) {
-        return;
-      }
-      softDeleting = this.model.entity.get("soft_deleting");
-      confirmed = !softDeleting ? confirm(Cruddy.lang.confirm_delete) : true;
-      if (confirmed) {
-        this.request = this.softDeleting && this.model.get("deleted_at") ? this.model.restore : this.model.destroy({
-          wait: true
-        });
-        this.request.always((function(_this) {
-          return function() {
-            return _this.request = null;
-          };
-        })(this));
-      }
-      return this;
-    };
-
-    Form.prototype.copy = function() {
-      Cruddy.app.page.displayForm(this.model.copy());
-      return this;
-    };
-
     Form.prototype.render = function() {
       this.$el.html(this.template());
       this.$container = this.$component("body");
-      this.nav = this.$component("nav");
-      this.footer = this.$("footer");
-      this.submit = this.$(".btn-save");
+      this.$nav = this.$component("nav");
+      this.$footer = this.$component("footer");
+      this.$btnSave = this.$component("save");
       this.$deletedMsg = this.$component("deleted-message");
-      this.destroy = this.$(".btn-destroy");
-      this.copy = this.$(".btn-copy");
-      this.$refresh = this.$(".fs-btn-refresh");
-      this.progressBar = this.$(".form-save-progress");
-      this.update();
+      this.$progressBar = this.$component("progress");
+      this.$serviceMenu = this.$component("service-menu");
+      this.$serviceMenuItems = this.$component("service-menu-items");
+      this.updateModelState();
       return Form.__super__.render.apply(this, arguments);
     };
 
     Form.prototype.renderElement = function(el) {
-      this.nav.append(el.getHeader().render().$el);
+      this.$nav.append(el.getHeader().render().$el);
       return Form.__super__.renderElement.apply(this, arguments);
     };
 
-    Form.prototype.update = function() {
-      var isDeleted, isNew, permit, _ref1;
+    Form.prototype.updateRequestState = function() {
+      var isLoading;
+      isLoading = this.request != null;
+      this.$el.toggleClass("loading", isLoading);
+      this.$btnSave.attr("disabled", isLoading);
+      if (this.$btnExtraActions) {
+        this.$btnExtraActions.attr("disabled", isLoading);
+        this.$btnExtraActions.children(".btn").attr("disabled", isLoading);
+      }
+      return this;
+    };
+
+    Form.prototype.updateModelState = function() {
+      var html, isDeleted, isNew, permit, _ref1;
       permit = this.model.entity.getPermissions();
       isNew = this.model.isNew();
       isDeleted = this.model.isDeleted || false;
-      this.$el.toggleClass("loading", this.request != null);
-      this.submit.text(isNew ? Cruddy.lang.create : Cruddy.lang.save);
-      this.submit.attr("disabled", this.request != null);
-      this.submit.toggle(!isDeleted && (isNew ? permit.create : permit.update));
-      this.destroy.attr("disabled", this.request != null);
-      this.destroy.toggle(!isDeleted && !isNew && permit["delete"]);
-      this.$deletedMsg.toggle(isDeleted);
-      this.copy.toggle(!isNew && permit.create);
-      this.$refresh.attr("disabled", this.request != null);
-      this.$refresh.toggle(!isNew && !isDeleted);
-      if ((_ref1 = this.external) != null) {
+      this.$el.toggleClass("destroyed", isDeleted);
+      this.$btnSave.text(isNew ? Cruddy.lang.create : Cruddy.lang.save);
+      this.$btnSave.toggle(!isDeleted && (isNew ? permit.create : permit.update));
+      this.$serviceMenu.toggle(!isNew);
+      if (!isNew) {
+        this.$serviceMenuItems.html(this.renderServiceMenuItems());
+      }
+      if ((_ref1 = this.$btnExtraActions) != null) {
         _ref1.remove();
       }
-      if (this.model.extra.external) {
-        this.$refresh.after(this.external = $(this.externalLinkTemplate(this.model.extra.external)));
+      this.$btnExtraActions = null;
+      if (!isNew && !isDeleted && (html = this.renderExtraActionsButton())) {
+        this.$btnSave.before(this.$btnExtraActions = $(html));
       }
       return this;
     };
 
     Form.prototype.template = function() {
-      return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n        <ul id=\"" + (this.componentId("nav")) + "\" class=\"nav navbar-nav\"></ul>\n    </div>\n</div>\n\n<div class=\"tab-content\" id=\"" + (this.componentId("body")) + "\"></div>\n\n<footer>\n    <div class=\"pull-left\">\n        <button type=\"button\" class=\"btn btn-link btn-destroy\" title=\"" + Cruddy.lang.model_delete + "\">\n            <span class=\"glyphicon glyphicon-trash\"></span>\n        </button>\n\n        <button type=\"button\" tabindex=\"-1\" class=\"btn btn-link btn-copy\" title=\"" + Cruddy.lang.model_copy + "\">\n            <span class=\"glyphicon glyphicon-book\"></span>\n        </button>\n\n        <button type=\"button\" class=\"btn btn-link fs-btn-refresh\" title=\"" + Cruddy.lang.model_refresh + "\">\n            <span class=\"glyphicon glyphicon-refresh\"></span>\n        </button>\n    </div>\n\n    <span class=\"fs-deleted-message\" id=\"" + (this.componentId("deleted-message")) + "\">" + Cruddy.lang.model_deleted + "</span>\n    <button type=\"button\" class=\"btn btn-default btn-close\">" + Cruddy.lang.close + "</button>\n    <button type=\"button\" class=\"btn btn-primary btn-save\"></button>\n\n    <div class=\"progress\"><div class=\"progress-bar form-save-progress\"></div></div>\n</footer>";
+      return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n        <ul id=\"" + (this.componentId("nav")) + "\" class=\"nav navbar-nav\"></ul>\n\n        <ul id=\"" + (this.componentId("service-menu")) + "\" class=\"nav navbar-nav navbar-right\">\n            <li class=\"dropdown\">\n                <a class=\"dropdown-toggle\" data-toggle=\"dropdown\" href=\"#\">\n                    <span class=\"glyphicon glyphicon-th\"></span> <span class=\"caret\"></span>\n                </a>\n\n                <ul class=\"dropdown-menu\" role=\"menu\" id=\"" + (this.componentId("service-menu-items")) + "\"></ul>\n            </li>\n        </ul>\n    </div>\n</div>\n\n<div class=\"tab-content\" id=\"" + (this.componentId("body")) + "\"></div>\n\n<footer id=\"" + (this.componentId("footer")) + "\">\n    <span class=\"fs-deleted-message\">" + Cruddy.lang.model_deleted + "</span>\n\n    <button data-action=\"closeForm\" id=\"" + (this.componentId("close")) + "\" type=\"button\" class=\"btn btn-default\">" + Cruddy.lang.close + "</button><!--\n    --><button data-action=\"saveModel\" id=\"" + (this.componentId("save")) + "\" type=\"button\" class=\"btn btn-primary btn-save\"></button>\n\n    <div class=\"progress\">\n        <div id=\"" + (this.componentId("progress")) + "\" class=\"progress-bar form-save-progress\"></div>\n    </div>\n</footer>";
     };
 
-    Form.prototype.externalLinkTemplate = function(href) {
-      return "<a href=\"" + href + "\" class=\"btn btn-link\" title=\"" + Cruddy.lang.view_external + "\" target=\"_blank\">\n    " + (b_icon("eye-open")) + "\n</a>";
+    Form.prototype.renderServiceMenuItems = function() {
+      var entity, html, isDeleted, items, model;
+      entity = (model = this.model).entity;
+      html = "";
+      if (!((isDeleted = model.isDeleted) || _.isEmpty(items = model.meta.presentationActions))) {
+        html += render_presentation_actions(items);
+        html += render_divider();
+      }
+      html += "<li class=\"" + (class_if(isDeleted, "disabled")) + "\">\n    <a data-action=\"refreshModel\" href=\"#\">\n        " + Cruddy.lang.model_refresh + "\n    </a>\n</li>";
+      html += "<li class=\"" + (class_if(!entity.createPermitted(), "disabled")) + "\">\n    <a data-action=\"copyModel\" href=\"#\">\n        " + Cruddy.lang.model_copy + "\n    </a>\n</li>";
+      html += "<li class=\"divider\"></li>\n\n<li class=\"" + (class_if(isDeleted || !entity.deletePermitted(), "disabled")) + "\">\n    <a data-action=\"destroyModel\" href=\"#\">\n        <span class=\"glyphicon glyphicon-trash\"></span> " + Cruddy.lang.model_delete + "\n    </a>\n</li>";
+      return html;
+    };
+
+    Form.prototype.renderExtraActionsButton = function() {
+      var button, mainAction;
+      if (_.isEmpty(this.model.meta.actions)) {
+        return;
+      }
+      mainAction = _.find(this.model.meta.actions, function(item) {
+        return !item.disabled;
+      }) || _.first(this.model.meta.actions);
+      button = "<button data-action=\"saveWithAction\" data-action-id=\"" + mainAction.id + "\" type=\"button\" class=\"btn btn-info\" " + (class_if(mainAction.isDisabled, "disabled")) + ">\n    " + mainAction.title + "\n</button>";
+      return this.wrapWithExtraActions(button, mainAction);
+    };
+
+    Form.prototype.wrapWithExtraActions = function(button, mainAction) {
+      var action, actions, html, _i, _len;
+      actions = _.filter(this.model.meta.actions, function(action) {
+        return action !== mainAction;
+      });
+      if (_.isEmpty(actions)) {
+        return button;
+      }
+      html = "";
+      for (_i = 0, _len = actions.length; _i < _len; _i++) {
+        action = actions[_i];
+        html += "<li class=\"" + (class_if(action.disabled, "disabled")) + "\">\n    <a data-action=\"saveWithAction\" data-action-id=\"" + action.id + "\" href=\"#\">" + action.title + "</a>\n</li>";
+      }
+      return "<div class=\"btn-group dropup\">\n    " + button + "\n\n    <button type=\"button\" class=\"btn btn-info dropdown-toggle\" data-toggle=\"dropdown\">\n        <span class=\"caret\"></span>\n    </button>\n\n    <ul class=\"dropdown-menu dropdown-menu-right\" role=\"menu\">\n        " + html + "\n    </ul>\n</div>";
     };
 
     Form.prototype.remove = function() {
@@ -5531,6 +5610,17 @@
         };
       })(this)).removeClass("opened");
       return Form.__super__.remove.apply(this, arguments);
+    };
+
+    Form.prototype.executeAction = function(e) {
+      var $el, action;
+      if (e.isDefaultPrevented()) {
+        return;
+      }
+      if ((action = ($el = $(e.currentTarget)).data("action")) && action in this) {
+        e.preventDefault();
+        this[action].call(this, $el);
+      }
     };
 
     return Form;
@@ -5639,10 +5729,18 @@
     };
 
     App.prototype.handleAjaxError = function(xhr) {
-      var _ref1;
-      if ((_ref1 = xhr.responseJSON) != null ? _ref1.error : void 0) {
-        this.$error.children(".data").text(xhr.responseJSON.error).end().stop(true).fadeIn();
+      var error, _ref1;
+      if (xhr.status === 400) {
+        return;
       }
+      if ((_ref1 = xhr.responseJSON) != null ? _ref1.error : void 0) {
+        if (_.isObject(error = xhr.responseJSON.error)) {
+          error = error.type + ": " + error.message;
+        }
+      } else {
+        error = "Unknown error occurred";
+      }
+      this.$error.children(".data").text(error).end().stop(true).fadeIn();
     };
 
     App.prototype.pageUnloadConfirmationMessage = function() {

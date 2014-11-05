@@ -4415,7 +4415,7 @@
     };
 
     ViewButton.prototype.wrapWithActions = function(item, html) {
-      if (!!_.isEmpty(item.meta.presentationActions || !_.isEmpty(item.meta.actions))) {
+      if (_.isEmpty(item.meta.presentationActions) && _.isEmpty(item.meta.actions)) {
         return html;
       }
       html = "<div class=\"btn-group btn-group-xs auto-hide-target\">" + html;

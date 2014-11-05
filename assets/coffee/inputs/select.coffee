@@ -1,6 +1,6 @@
 class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
     tagName: "select"
-
+    
     initialize: (options) ->
         @items = options.items ? {}
         @prompt = options.prompt ? null
@@ -14,10 +14,11 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
         this
 
     optionIndex: (value) ->
+        value = value.toString()
         index = if @hasPrompt() then 2 else 1
 
         for data, label of @items
-            break if value == data
+            break if value == data.toString()
 
             index++
 

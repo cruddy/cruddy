@@ -10,6 +10,7 @@ use Kalnoy\Cruddy\Helpers;
  * Class Action
  *
  * @method $this title($value)
+ * @method $this state($value)
  * @method $this hide($value)
  * @method $this disable($value)
  *
@@ -25,6 +26,16 @@ class FluentAction extends Fluent implements Action {
     public function getTitle(Model $model)
     {
         return $this->evaluate('title', $model) ?: Helpers::labelFromId($this->get('id'));
+    }
+
+    /**
+     * @param Model $model
+     *
+     * @return mixed
+     */
+    public function getState(Model $model)
+    {
+        return $this->evaluate('state', $model, 'default');
     }
 
     /**

@@ -24,7 +24,7 @@ namespace Kalnoy\Cruddy\Schema\Fields;
  * @method InlineRelation   embed(string $id, string $entityId = null)
  * @method Types\Slug       slug(string $id, string $refFieldId = null)
  * @method Types\Enum       enum(string $id, mixed $items)
- * @method Types\Computed   computed(string $id, mixed $accessor)
+ * @method Types\Computed   computed(string $id, mixed $accessor = null)
  *
  * @method \Kalnoy\Cruddy\CKEditor\CKEditor ckedit(string $id)
  */

@@ -71,8 +71,9 @@ class Collection extends \Illuminate\Support\Collection {
         $id = $action->getId();
         $title = Helpers::tryTranslate($action->getTitle($model));
         $disabled = $action->isDisabled($model);
+        $state = $action->getState($model);
 
-        return compact('id', 'title', 'disabled');
+        return compact('id', 'title', 'disabled', 'state');
     }
 
     /**

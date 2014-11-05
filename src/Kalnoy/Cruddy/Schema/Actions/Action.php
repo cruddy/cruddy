@@ -25,6 +25,13 @@ interface Action {
     /**
      * @param Model $model
      *
+     * @return string
+     */
+    public function getState(Model $model);
+
+    /**
+     * @param Model $model
+     *
      * @return bool
      */
     public function isDisabled(Model $model);

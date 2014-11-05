@@ -2280,11 +2280,12 @@
 
     Select.prototype.optionIndex = function(value) {
       var data, index, label, _ref1;
+      value = value.toString();
       index = this.hasPrompt() ? 2 : 1;
       _ref1 = this.items;
       for (data in _ref1) {
         label = _ref1[data];
-        if (value === data) {
+        if (value === data.toString()) {
           break;
         }
         index++;
@@ -5439,6 +5440,11 @@
       if (this.confirmClose()) {
         this.setupRequest(this.model.fetch());
       }
+      this.request.done((function(_this) {
+        return function() {
+          return _this.updateModelMetaState();
+        };
+      })(this));
       return this;
     };
 
@@ -5530,13 +5536,20 @@
     };
 
     Form.prototype.updateModelState = function() {
-      var html, isDeleted, isNew, permit, _ref1;
+      var isDeleted, isNew, permit;
       permit = this.model.entity.getPermissions();
       isNew = this.model.isNew();
       isDeleted = this.model.isDeleted || false;
       this.$el.toggleClass("destroyed", isDeleted);
       this.$btnSave.text(isNew ? Cruddy.lang.create : Cruddy.lang.save);
       this.$btnSave.toggle(!isDeleted && (isNew ? permit.create : permit.update));
+      return this.updateModelMetaState();
+    };
+
+    Form.prototype.updateModelMetaState = function() {
+      var html, isDeleted, isNew, _ref1;
+      isNew = this.model.isNew();
+      isDeleted = this.model.isDeleted || false;
       this.$serviceMenu.toggle(!isNew);
       if (!isNew) {
         this.$serviceMenuItems.html(this.renderServiceMenuItems());
@@ -5545,8 +5558,10 @@
         _ref1.remove();
       }
       this.$btnExtraActions = null;
-      if (!isNew && !isDeleted && (html = this.renderExtraActionsButton())) {
-        this.$btnSave.before(this.$btnExtraActions = $(html));
+      if (this.model.entity.updatePermitted()) {
+        if (!isNew && !isDeleted && (html = this.renderExtraActionsButton())) {
+          this.$btnSave.before(this.$btnExtraActions = $(html));
+        }
       }
       return this;
     };
@@ -5577,7 +5592,7 @@
       mainAction = _.find(this.model.meta.actions, function(item) {
         return !item.disabled;
       }) || _.first(this.model.meta.actions);
-      button = "<button data-action=\"saveWithAction\" data-action-id=\"" + mainAction.id + "\" type=\"button\" class=\"btn btn-info\" " + (class_if(mainAction.isDisabled, "disabled")) + ">\n    " + mainAction.title + "\n</button>";
+      button = "<button data-action=\"saveWithAction\" data-action-id=\"" + mainAction.id + "\" type=\"button\" class=\"btn btn-" + mainAction.state + "\" " + (class_if(mainAction.isDisabled, "disabled")) + ">\n    " + mainAction.title + "\n</button>";
       return this.wrapWithExtraActions(button, mainAction);
     };
 
@@ -5594,7 +5609,7 @@
         action = actions[_i];
         html += "<li class=\"" + (class_if(action.disabled, "disabled")) + "\">\n    <a data-action=\"saveWithAction\" data-action-id=\"" + action.id + "\" href=\"#\">" + action.title + "</a>\n</li>";
       }
-      return "<div class=\"btn-group dropup\">\n    " + button + "\n\n    <button type=\"button\" class=\"btn btn-info dropdown-toggle\" data-toggle=\"dropdown\">\n        <span class=\"caret\"></span>\n    </button>\n\n    <ul class=\"dropdown-menu dropdown-menu-right\" role=\"menu\">\n        " + html + "\n    </ul>\n</div>";
+      return "<div class=\"btn-group dropup\">\n    " + button + "\n\n    <button type=\"button\" class=\"btn btn-default dropdown-toggle\" data-toggle=\"dropdown\">\n        <span class=\"caret\"></span>\n    </button>\n\n    <ul class=\"dropdown-menu dropdown-menu-right\" role=\"menu\">\n        " + html + "\n    </ul>\n</div>";
     };
 
     Form.prototype.remove = function() {

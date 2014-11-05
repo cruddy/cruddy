@@ -1638,7 +1638,7 @@ class Cruddy.Inputs.Slug extends Backbone.View
         """
 class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
     tagName: "select"
-
+    
     initialize: (options) ->
         @items = options.items ? {}
         @prompt = options.prompt ? null
@@ -1652,10 +1652,11 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
         this
 
     optionIndex: (value) ->
+        value = value.toString()
         index = if @hasPrompt() then 2 else 1
 
         for data, label of @items
-            break if value == data
+            break if value == data.toString()
 
             index++
 
@@ -3627,6 +3628,8 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         @setupRequest @model.fetch() if @confirmClose()
 
+        @request.done => @updateModelMetaState()
+
         return this
 
     setupRequest: (request) ->
@@ -3716,13 +3719,20 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         @$btnSave.text if isNew then Cruddy.lang.create else Cruddy.lang.save
         @$btnSave.toggle not isDeleted and if isNew then permit.create else permit.update
 
+        @updateModelMetaState()
+
+    updateModelMetaState: ->
+        isNew = @model.isNew()
+        isDeleted = @model.isDeleted or false
+
         @$serviceMenu.toggle not isNew
         @$serviceMenuItems.html @renderServiceMenuItems() unless isNew
 
         @$btnExtraActions?.remove()
         @$btnExtraActions = null
 
-        @$btnSave.before @$btnExtraActions = $ html if not isNew and not isDeleted and html = @renderExtraActionsButton()
+        if @model.entity.updatePermitted()
+            @$btnSave.before @$btnExtraActions = $ html if not isNew and not isDeleted and html = @renderExtraActionsButton()
 
         return this
 
@@ -3800,7 +3810,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         mainAction = _.find(@model.meta.actions, (item) -> not item.disabled) or _.first(@model.meta.actions)
 
         button = """
-            <button data-action="saveWithAction" data-action-id="#{ mainAction.id }" type="button" class="btn btn-info" #{ class_if mainAction.isDisabled, "disabled" }>
+            <button data-action="saveWithAction" data-action-id="#{ mainAction.id }" type="button" class="btn btn-#{ mainAction.state }" #{ class_if mainAction.isDisabled, "disabled" }>
                 #{ mainAction.title }
             </button>
         """
@@ -3823,7 +3833,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
             <div class="btn-group dropup">
                 #{ button }
 
-                <button type="button" class="btn btn-info dropdown-toggle" data-toggle="dropdown">
+                <button type="button" class="btn btn-default dropdown-toggle" data-toggle="dropdown">
                     <span class="caret"></span>
                 </button>
 

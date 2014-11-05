@@ -1652,9 +1652,9 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
         this
 
     optionIndex: (value) ->
-        index = if @hasPrompt() then 2 else 1
+        return 1 if not value?
 
-        return index unless value?
+        index = if @hasPrompt() then 2 else 1
 
         value = value.toString()
 

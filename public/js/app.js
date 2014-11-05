@@ -2280,10 +2280,10 @@
 
     Select.prototype.optionIndex = function(value) {
       var data, index, label, _ref1;
-      index = this.hasPrompt() ? 2 : 1;
       if (value == null) {
-        return index;
+        return 1;
       }
+      index = this.hasPrompt() ? 2 : 1;
       value = value.toString();
       _ref1 = this.items;
       for (data in _ref1) {

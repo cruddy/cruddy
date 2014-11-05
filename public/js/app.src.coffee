@@ -1638,7 +1638,7 @@ class Cruddy.Inputs.Slug extends Backbone.View
         """
 class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
     tagName: "select"
-    
+
     initialize: (options) ->
         @items = options.items ? {}
         @prompt = options.prompt ? null
@@ -1652,8 +1652,11 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
         this
 
     optionIndex: (value) ->
-        value = value.toString()
         index = if @hasPrompt() then 2 else 1
+
+        return index unless value?
+
+        value = value.toString()
 
         for data, label of @items
             break if value == data.toString()

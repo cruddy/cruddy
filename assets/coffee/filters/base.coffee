@@ -5,3 +5,5 @@ class Cruddy.Filters.Base extends Cruddy.Attribute
     getClass: -> "filter filter__" + @attributes.type + " filter--" + @id
 
     createFilterInput: -> throw "Implement required"
+
+    prepareData: (value) -> value

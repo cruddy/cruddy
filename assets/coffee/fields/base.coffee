@@ -50,3 +50,7 @@ class Cruddy.Fields.Base extends Cruddy.Attribute
     copyAttribute: (model, copy) -> model.get @id
 
     parse: (model, value) -> value
+
+    prepareAttribute: (value) -> value
+
+    prepareFilterData: (value) -> value

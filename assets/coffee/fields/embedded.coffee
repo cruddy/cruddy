@@ -29,4 +29,6 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
 
     copyAttribute: (model, copy) -> model.get(@id).copy(copy)
 
+    prepareAttribute: (value) -> if value then value.serialize() else value
+
     isCopyable: -> yes

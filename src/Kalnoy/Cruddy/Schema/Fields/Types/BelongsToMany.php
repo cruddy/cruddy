@@ -28,11 +28,11 @@ class BelongsToMany extends BasicRelation implements Filter {
      */
     public function applyFilterConstraint(QueryBuilder $builder, $data)
     {
-        if ($id = array_get($data, 'id'))
+        if (is_array($data))
         {
-            $builder->whereExists(function ($q) use ($id)
+            $builder->whereExists(function ($q) use ($data)
             {
-                $this->initNestedQuery($q, $id);
+                $this->initNestedQuery($q, $data);
             });
         }
     }
@@ -41,11 +41,11 @@ class BelongsToMany extends BasicRelation implements Filter {
      * Init nested query for filter.
      *
      * @param QueryBuilder $query
-     * @param mixed        $id
+     * @param array $ids
      *
      * @return void
      */
-    protected function initNestedQuery(QueryBuilder $query, $id)
+    protected function initNestedQuery(QueryBuilder $query, array $ids)
     {
         $connection = $query->getConnection();
         $keyName = $connection->raw($this->relation->getParent()->getQualifiedKeyName());
@@ -53,7 +53,7 @@ class BelongsToMany extends BasicRelation implements Filter {
         $query
             ->from($this->relation->getTable())
             ->select($connection->raw('1'))
-            ->where($this->relation->getForeignKey(), $keyName)
-            ->where($this->relation->getOtherKey(), $id);
+            ->where($this->relation->getForeignKey(), '=', $keyName)
+            ->whereIn($this->relation->getOtherKey(), $ids);
     }
 }

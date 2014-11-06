@@ -6,6 +6,7 @@ use Eloquent;
 use Illuminate\Database\Eloquent\Model;
 use Kalnoy\Cruddy\Schema\Fields\InlineRelation;
 use Kalnoy\Cruddy\Service\Validation\ValidationException;
+use Symfony\Component\Finder\Exception\OperationNotPermitedException;
 
 class Data {
 
@@ -95,6 +96,8 @@ class Data {
      */
     public function save()
     {
+        if ( ! $this->isPermitted()) return false;
+
         $repo = $this->entity->getRepository();
 
         $model = $this->id ? $repo->find($this->id) : $repo->newModel();
@@ -158,7 +161,7 @@ class Data {
 
         foreach ($data as $id => $item)
         {
-            if (($relation = $fields->get($id)) and $relation instanceof InlineRelation)
+            if ($item and ($relation = $fields->get($id)) and $relation instanceof InlineRelation)
             {
                 $this->inner[$relation->getId()] = InnerDataCollection::make($relation, $item);
             }
@@ -240,5 +243,13 @@ class Data {
                 throw new ActionException($result);
             }
         }
+    }
+
+    /**
+     * @return bool
+     */
+    protected function isPermitted()
+    {
+        return $this->entity->isPermitted($this->getAction());
     }
 }

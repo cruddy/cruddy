@@ -7,3 +7,5 @@ class Cruddy.Filters.Proxy extends Cruddy.Filters.Base
         super
 
     createFilterInput: (model) -> @field.createFilterInput model
+
+    prepareData: (value) -> @field.prepareFilterData value

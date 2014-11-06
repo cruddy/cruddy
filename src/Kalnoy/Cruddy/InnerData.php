@@ -46,15 +46,13 @@ class InnerData extends Data {
      */
     protected function process(array $data)
     {
-        $this->id = array_get($data, 'id');
-        $this->isDeleted = array_get($data, 'isDeleted', false);
+        $this->id = array_get($data, '__id');
+        $this->isDeleted = array_get($data, '__d', false);
 
-        parent::process(array_get($data, 'attributes', []));
+        parent::process($data);
     }
 
     /**
-     * @param Model $model
-     *
      * @return array|null
      */
     public function getValidationErrors()
@@ -62,6 +60,9 @@ class InnerData extends Data {
         return $this->isDeleted ? null : parent::getValidationErrors();
     }
 
+    /**
+     * @param Model $model
+     */
     protected function fillModel(Model $model)
     {
         parent::fillModel($model);

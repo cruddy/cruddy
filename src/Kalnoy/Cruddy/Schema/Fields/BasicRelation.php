@@ -145,16 +145,6 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessor {
     /**
      * {@inheritdoc}
      */
-    public function process($data)
-    {
-        if ( ! is_array($data)) return null;
-
-        return $this->multiple ? array_pluck($data, 'id') : $data['id'];
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function constraintBuilder(Builder $query, array $options)
     {
         if (isset($this->filter))

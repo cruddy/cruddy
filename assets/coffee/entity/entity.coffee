@@ -119,6 +119,12 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
     hasChangedSinceSync: (model) -> return yes for field in @fields.models when field.hasChangedSinceSync model
 
+    prepareAttributes: (attributes) ->
+        result = {}
+        result[key] = field.prepareAttribute value for key, value of attributes when field = @getField key
+
+        return result
+
     # Get url that handles syncing
     url: (id) -> entity_url @id, id
 

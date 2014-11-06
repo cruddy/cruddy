@@ -165,7 +165,7 @@ class Cruddy.Entity.Page extends Cruddy.View
         return if (filters = @dataSource.entity.filters).isEmpty()
 
         return new FilterList
-            model: @dataSource.filter
+            model: @dataSource
             entity: @model
             filters: filters
 

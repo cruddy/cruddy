@@ -32,6 +32,8 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
         this
 
+    getValue: -> super or if @multiple then [] else null
+
     displayLoading: (dataSource, xhr) ->
         @$el.addClass "loading"
 
@@ -66,9 +68,9 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
         if @multiple
             if item.id of @selected
-                value = _.filter @model.get(@key), (item) -> item.id != id
+                value = _.filter @getValue(), (item) -> item.id != id
             else
-                value = _.clone @model.get(@key)
+                value = _.clone @getValue()
                 value.push item
         else
             value = item
@@ -112,6 +114,8 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
     makeSelectedMap: (data) ->
         @selected = {}
+
+        return this unless data
 
         if @multiple
             @selected[item.id] = yes for item in data

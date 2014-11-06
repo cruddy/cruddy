@@ -54,10 +54,12 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
     getKey: (e) -> $(e.currentTarget).closest(".ed-item").data "key"
 
+    getValue: -> super or if @multiple then [] else null
+
     removeItem: (e) ->
         if @multiple
             i = @getKey e
-            value = _.clone @model.get(@key)
+            value = _.clone @getValue()
             value.splice i, 1
         else
             value = null

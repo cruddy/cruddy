@@ -84,12 +84,11 @@ class Cruddy.Fields.RelatedCollection extends Backbone.Collection
             field: @field
 
     serialize: ->
-        models = @filter (model) -> not model.isDeleted or not model.isNew()
+        permit = @owner.entity.getPermissions()
 
-        return if _.isEmpty models
+        models = @filter (model) -> model.isSaveable()
 
         data = {}
-
-        data[item.cid] = item for item in models
+        data[item.cid] = item.serialize() for item in models
 
         return data

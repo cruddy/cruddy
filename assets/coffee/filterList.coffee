@@ -12,14 +12,29 @@ class FilterList extends Backbone.View
         @availableFilters = options.filters
         @filterModel = new Backbone.Model
 
-        @listenTo @model, "change", (model) -> @filterModel.set model.attributes
+        @listenTo @model, "request", => @toggleButtons yes
+        @listenTo @model, "data", => @toggleButtons no
 
         this
 
+    toggleButtons: (disabled) ->
+        @$buttons.prop "disabled", disabled
+
+        return
+
     apply: ->
-        @model.set @filterModel.attributes
+        @model.filter.set @getFiltersData()
 
         return this
+
+    getFiltersData: ->
+        data = {}
+
+        data[key] = filter.prepareData value for key, value of @filterModel.attributes when filter = @availableFilters.get key
+
+        console.log data
+
+        return data
 
     reset: ->
         input.empty() for input in @filters
@@ -37,12 +52,14 @@ class FilterList extends Backbone.View
             @items.append input.render().el
             input.$el.wrap("""<div class="form-group #{ filter.getClass() }"></div>""").parent().before "<label>#{ filter.getLabel() }</label>"
 
+        @$buttons = @$el.find ".fl-btn"
+
         this
 
     template: -> """
         <div class="filter-list-container"></div>
-        <button type="button" class="btn btn-primary btn-apply">#{ Cruddy.lang.filter_apply }</button>
-        <button type="button" class="btn btn-default btn-reset">#{ Cruddy.lang.filter_reset }</button>
+        <button type="button" class="btn fl-btn btn-primary btn-apply">#{ Cruddy.lang.filter_apply }</button>
+        <button type="button" class="btn fl-btn btn-default btn-reset">#{ Cruddy.lang.filter_reset }</button>
     """
 
     dispose: ->

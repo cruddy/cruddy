@@ -17,6 +17,7 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         placeholder: Cruddy.lang.any_value
         owner: @entity.id + "." + @id
         constraint: @attributes.constraint
+        multiple: yes
 
     isEditable: -> @getReference().viewPermitted() and super
 
@@ -28,3 +29,12 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         return item.title unless ref.viewPermitted()
 
         """<a href="#{ ref.link item.id }">#{ _.escape item.title }</a>"""
+
+    prepareAttribute: (value) ->
+        return null unless value?
+
+        return _.pluck value, "id" if _.isArray value
+
+        return value.id
+
+    prepareFilterData: (value) -> @prepareAttribute value

@@ -62,7 +62,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
     sync: (method, model, options) ->
         if method in ["update", "create"]
             # Form data will allow us to upload files via AJAX request
-            options.data = new AdvFormData(options.attrs ? @attributes).original
+            options.data = new AdvFormData(@entity.prepareAttributes options.attrs ? @attributes).original
 
             # Set the content type to false to let browser handle it
             options.contentType = false
@@ -82,9 +82,16 @@ class Cruddy.Entity.Instance extends Backbone.Model
     hasChangedSinceSync: -> return @entity.hasChangedSinceSync this
 
     # Get whether is allowed to save instance
-    isSaveable: -> (@isNew() and @entity.createPermitted()) or (not @isNew() and @entity.updatePermitted())
+    isSaveable: ->
+        isNew = @isNew()
+        permit = @entity.getPermissions()
 
-    serialize: -> if @isDeleted then { id: @id, isDeleted: yes } else { attributes: @attributes, id: @id }
+        return ((isNew and permit.create) or (not isNew and permit.update)) and (not @isDeleted or not isNew)
+
+    serialize: ->
+        data = if @isDeleted then {} else @entity.prepareAttributes @attributes
+
+        return $.extend data, { __id: @id, __d: @isDeleted }
 
     # Get current action on the model
     action: -> if @isNew() then "create" else "update"

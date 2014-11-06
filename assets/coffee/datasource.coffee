@@ -23,7 +23,7 @@ class DataSource extends Backbone.Model
             error: (xhr) => @trigger "error", this, xhr
 
         @listenTo filter, "change", =>
-            @set current_page: 1, silent: yes
+            @set { current_page: 1 }, silent: yes
             @fetch()
 
         @on "change", => @fetch() unless @_hold
@@ -72,17 +72,16 @@ class DataSource extends Backbone.Model
             per_page: @get "per_page"
             keywords: @get "search"
 
-        filters = @filterData()
+        filters = @filtersData()
 
         data.filters = filters unless _.isEmpty filters
         data.columns = @columns.join "," if @columns?
 
         data
 
-    filterData: ->
+    filtersData: ->
         data = {}
 
-        for key, value of @filter.attributes when not _.isEmpty value
-            data[key] = value
+        data[key] = value for key, value of @filter.attributes when not _.isEmpty value
 
         return data

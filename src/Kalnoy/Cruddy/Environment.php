@@ -200,7 +200,7 @@ class Environment {
     {
         return [
             'locale' => $this->config->get('app.locale'),
-            'brandName' => $this->config('brand'),
+            'brandName' => Helpers::tryTranslate($this->config('brand')),
             'uri' => $this->config('uri'),
             'ace_theme' => $this->config('ace_theme', 'chrome'),
             'entities' => $this->entities->available(),

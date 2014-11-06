@@ -21,7 +21,7 @@ class Proxy extends BaseFilter {
     protected $type = 'proxy';
 
     /**
-     * @var Filter
+     * @var Filter|Field
      */
     protected $field;
 
@@ -51,6 +51,16 @@ class Proxy extends BaseFilter {
     public function applyFilterConstraint(Builder $builder, $data)
     {
         $this->field->applyFilterConstraint($builder, $data);
+    }
+
+    /**
+     * Generate a label.
+     *
+     * @return string
+     */
+    protected function generateLabel()
+    {
+        return $this->translate('filters') ?: $this->field->getLabel();
     }
 
     /**

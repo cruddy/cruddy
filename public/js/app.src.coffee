@@ -136,28 +136,15 @@ class AdvFormData
         @original = new FormData
         @append data if data?
 
-    append: (name, value) ->
-        if value is undefined
-            value = name
-            name = null
-
+    append: (value, name) ->
         return if value is undefined
 
         return @original.append name, value if value instanceof File or value instanceof Blob
 
-        if _.isArray value
-            return @append name, "" if _.isEmpty value
+        if _.isObject(value) or _.isArray(value)
+            return @original.append name, "" if _.isEmpty(value)
 
-            @append @key(name, key), _value for _value, key in value
-
-            return
-
-        if _.isObject value
-            if _.isFunction value.serialize
-                @append name, value.serialize()
-
-            else
-                @append @key(name, key), _value for key, _value of value
+            _.each value, (value, key) => @append value, @key(name, key)
 
             return
 
@@ -211,7 +198,7 @@ class DataSource extends Backbone.Model
             error: (xhr) => @trigger "error", this, xhr
 
         @listenTo filter, "change", =>
-            @set current_page: 1, silent: yes
+            @set { current_page: 1 }, silent: yes
             @fetch()
 
         @on "change", => @fetch() unless @_hold
@@ -260,18 +247,17 @@ class DataSource extends Backbone.Model
             per_page: @get "per_page"
             keywords: @get "search"
 
-        filters = @filterData()
+        filters = @filtersData()
 
         data.filters = filters unless _.isEmpty filters
         data.columns = @columns.join "," if @columns?
 
         data
 
-    filterData: ->
+    filtersData: ->
         data = {}
 
-        for key, value of @filter.attributes when not _.isEmpty value
-            data[key] = value
+        data[key] = value for key, value of @filter.attributes when not _.isEmpty value
 
         return data
 
@@ -627,14 +613,27 @@ class FilterList extends Backbone.View
         @availableFilters = options.filters
         @filterModel = new Backbone.Model
 
-        @listenTo @model, "change", (model) -> @filterModel.set model.attributes
+        @listenTo @model, "request", => @toggleButtons yes
+        @listenTo @model, "data", => @toggleButtons no
 
         this
 
+    toggleButtons: (disabled) ->
+        @$buttons.prop "disabled", disabled
+
+        return
+
     apply: ->
-        @model.set @filterModel.attributes
+        @model.filter.set @getFiltersData()
 
         return this
+
+    getFiltersData: ->
+        data = {}
+
+        data[key] = filter.prepareData value for key, value of @filterModel.attributes when filter = @availableFilters.get key
+
+        return data
 
     reset: ->
         input.empty() for input in @filters
@@ -652,12 +651,14 @@ class FilterList extends Backbone.View
             @items.append input.render().el
             input.$el.wrap("""<div class="form-group #{ filter.getClass() }"></div>""").parent().before "<label>#{ filter.getLabel() }</label>"
 
+        @$buttons = @$el.find ".fl-btn"
+
         this
 
     template: -> """
         <div class="filter-list-container"></div>
-        <button type="button" class="btn btn-primary btn-apply">#{ Cruddy.lang.filter_apply }</button>
-        <button type="button" class="btn btn-default btn-reset">#{ Cruddy.lang.filter_reset }</button>
+        <button type="button" class="btn fl-btn btn-primary btn-apply">#{ Cruddy.lang.filter_apply }</button>
+        <button type="button" class="btn fl-btn btn-default btn-reset">#{ Cruddy.lang.filter_reset }</button>
     """
 
     dispose: ->
@@ -906,10 +907,12 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
     getKey: (e) -> $(e.currentTarget).closest(".ed-item").data "key"
 
+    getValue: -> super or if @multiple then [] else null
+
     removeItem: (e) ->
         if @multiple
             i = @getKey e
-            value = _.clone @model.get(@key)
+            value = _.clone @getValue()
             value.splice i, 1
         else
             value = null
@@ -940,7 +943,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
             @editingForm = form = Cruddy.Entity.Form.display instance
 
             form.once "saved", (model) =>
-                btn.parent().siblings("input").val model.title
+                btn.parent().siblings("input").val model.getTitle()
                 form.remove()
 
             form.once "destroyed", (model) => @removeItem e
@@ -1195,6 +1198,8 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
         this
 
+    getValue: -> super or if @multiple then [] else null
+
     displayLoading: (dataSource, xhr) ->
         @$el.addClass "loading"
 
@@ -1229,9 +1234,9 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
         if @multiple
             if item.id of @selected
-                value = _.filter @model.get(@key), (item) -> item.id != id
+                value = _.filter @getValue(), (item) -> item.id != id
             else
-                value = _.clone @model.get(@key)
+                value = _.clone @getValue()
                 value.push item
         else
             value = item
@@ -1275,6 +1280,8 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
     makeSelectedMap: (data) ->
         @selected = {}
+
+        return this unless data
 
         if @multiple
             @selected[item.id] = yes for item in data
@@ -2320,6 +2327,10 @@ class Cruddy.Fields.Base extends Cruddy.Attribute
     copyAttribute: (model, copy) -> model.get @id
 
     parse: (model, value) -> value
+
+    prepareAttribute: (value) -> value
+
+    prepareFilterData: (value) -> value
 class Cruddy.Fields.Input extends Cruddy.Fields.Base
 
     createEditableInput: (model, inputId) ->
@@ -2455,6 +2466,7 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         placeholder: Cruddy.lang.any_value
         owner: @entity.id + "." + @id
         constraint: @attributes.constraint
+        multiple: yes
 
     isEditable: -> @getReference().viewPermitted() and super
 
@@ -2466,6 +2478,15 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         return item.title unless ref.viewPermitted()
 
         """<a href="#{ ref.link item.id }">#{ _.escape item.title }</a>"""
+
+    prepareAttribute: (value) ->
+        return null unless value?
+
+        return _.pluck value, "id" if _.isArray value
+
+        return value.id
+
+    prepareFilterData: (value) -> @prepareAttribute value
 class Cruddy.Fields.File extends Cruddy.Fields.Base
 
     createEditableInput: (model) -> new Cruddy.Inputs.FileList
@@ -2815,16 +2836,14 @@ class Cruddy.Fields.RelatedCollection extends Backbone.Collection
             field: @field
 
     serialize: ->
-        models = @filter (model) -> not model.isDeleted or not model.isNew()
+        permit = @owner.entity.getPermissions()
 
-        return if _.isEmpty models
+        models = @filter (model) -> model.isSaveable()
 
         data = {}
-
-        data[item.cid] = item for item in models
+        data[item.cid] = item.serialize() for item in models
 
         return data
-
 class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
 
     viewConstructor: Cruddy.Fields.EmbeddedView
@@ -2856,12 +2875,19 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
 
     copyAttribute: (model, copy) -> model.get(@id).copy(copy)
 
+    prepareAttribute: (value) -> if value then value.serialize() else value
+
     isCopyable: -> yes
 class Cruddy.Fields.Number extends Cruddy.Fields.Input
 
     createFilterInput: (model) -> new Cruddy.Inputs.NumberFilter
         model: model
         key: @id
+
+    prepareFilterData: (value) ->
+        return if _.isEmpty value.val
+
+        return value
 class Cruddy.Fields.Computed extends Cruddy.Fields.Base
     createInput: (model) -> new Cruddy.Inputs.Static { model: model, key: @id, formatter: this }
 
@@ -2974,6 +3000,8 @@ class Cruddy.Filters.Base extends Cruddy.Attribute
     getClass: -> "filter filter__" + @attributes.type + " filter--" + @id
 
     createFilterInput: -> throw "Implement required"
+
+    prepareData: (value) -> value
 class Cruddy.Filters.Proxy extends Cruddy.Filters.Base
 
     initialize: (attributes) ->
@@ -2983,6 +3011,8 @@ class Cruddy.Filters.Proxy extends Cruddy.Filters.Base
         super
 
     createFilterInput: (model) -> @field.createFilterInput model
+
+    prepareData: (value) -> @field.prepareFilterData value
 class BaseFormatter
     defaultOptions: {}
 
@@ -3132,6 +3162,12 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
     hasChangedSinceSync: (model) -> return yes for field in @fields.models when field.hasChangedSinceSync model
 
+    prepareAttributes: (attributes) ->
+        result = {}
+        result[key] = field.prepareAttribute value for key, value of attributes when field = @getField key
+
+        return result
+
     # Get url that handles syncing
     url: (id) -> entity_url @id, id
 
@@ -3233,7 +3269,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
     sync: (method, model, options) ->
         if method in ["update", "create"]
             # Form data will allow us to upload files via AJAX request
-            options.data = new AdvFormData(options.attrs ? @attributes).original
+            options.data = new AdvFormData(@entity.prepareAttributes options.attrs ? @attributes).original
 
             # Set the content type to false to let browser handle it
             options.contentType = false
@@ -3253,9 +3289,16 @@ class Cruddy.Entity.Instance extends Backbone.Model
     hasChangedSinceSync: -> return @entity.hasChangedSinceSync this
 
     # Get whether is allowed to save instance
-    isSaveable: -> (@isNew() and @entity.createPermitted()) or (not @isNew() and @entity.updatePermitted())
+    isSaveable: ->
+        isNew = @isNew()
+        permit = @entity.getPermissions()
 
-    serialize: -> if @isDeleted then { id: @id, isDeleted: yes } else { attributes: @attributes, id: @id }
+        return ((isNew and permit.create) or (not isNew and permit.update)) and (not @isDeleted or not isNew)
+
+    serialize: ->
+        data = if @isDeleted then {} else @entity.prepareAttributes @attributes
+
+        return $.extend data, { __id: @id, __d: @isDeleted }
 
     # Get current action on the model
     action: -> if @isNew() then "create" else "update"
@@ -3430,7 +3473,7 @@ class Cruddy.Entity.Page extends Cruddy.View
         return if (filters = @dataSource.entity.filters).isEmpty()
 
         return new FilterList
-            model: @dataSource.filter
+            model: @dataSource
             entity: @model
             filters: filters
 
@@ -3544,12 +3587,14 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         # Ctrl + Enter
         if e.ctrlKey and e.keyCode is 13
-            @save()
+            @saveModel()
             return false
 
         # Escape
         if e.keyCode is 27
-            @close()
+            @closeForm()
+            e.preventDefault()
+
             return false
 
         this
@@ -3850,15 +3895,14 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         @trigger "remove", @
 
         @request.abort() if @request
+        $(document).off "." + @cid
 
-        @$el.one(TRANSITIONEND, =>
-            $(document).off "." + @cid
-
+        @$el.one TRANSITIONEND, =>
             @trigger "removed", @
 
             super
-        )
-        .removeClass "opened"
+
+        @$el.removeClass "opened"
 
         super
 

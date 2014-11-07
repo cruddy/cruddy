@@ -90,7 +90,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
             @editingForm = form = Cruddy.Entity.Form.display instance
 
             form.once "saved", (model) =>
-                btn.parent().siblings("input").val model.title
+                btn.parent().siblings("input").val model.getTitle()
                 form.remove()
 
             form.once "destroyed", (model) => @removeItem e

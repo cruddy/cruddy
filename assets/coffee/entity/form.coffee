@@ -44,12 +44,14 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         # Ctrl + Enter
         if e.ctrlKey and e.keyCode is 13
-            @save()
+            @saveModel()
             return false
 
         # Escape
         if e.keyCode is 27
-            @close()
+            @closeForm()
+            e.preventDefault()
+
             return false
 
         this
@@ -350,15 +352,14 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         @trigger "remove", @
 
         @request.abort() if @request
+        $(document).off "." + @cid
 
-        @$el.one(TRANSITIONEND, =>
-            $(document).off "." + @cid
-
+        @$el.one TRANSITIONEND, =>
             @trigger "removed", @
 
             super
-        )
-        .removeClass "opened"
+
+        @$el.removeClass "opened"
 
         super
 

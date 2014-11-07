@@ -32,8 +32,6 @@ class FilterList extends Backbone.View
 
         data[key] = filter.prepareData value for key, value of @filterModel.attributes when filter = @availableFilters.get key
 
-        console.log data
-
         return data
 
     reset: ->

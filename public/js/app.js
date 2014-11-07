@@ -250,37 +250,22 @@
       }
     }
 
-    AdvFormData.prototype.append = function(name, value) {
-      var key, _i, _len, _value;
-      if (value === void 0) {
-        value = name;
-        name = null;
-      }
+    AdvFormData.prototype.append = function(value, name) {
       if (value === void 0) {
         return;
       }
       if (value instanceof File || value instanceof Blob) {
         return this.original.append(name, value);
       }
-      if (_.isArray(value)) {
+      if (_.isObject(value) || _.isArray(value)) {
         if (_.isEmpty(value)) {
-          return this.append(name, "");
+          return this.original.append(name, "");
         }
-        for (key = _i = 0, _len = value.length; _i < _len; key = ++_i) {
-          _value = value[key];
-          this.append(this.key(name, key), _value);
-        }
-        return;
-      }
-      if (_.isObject(value)) {
-        if (_.isFunction(value.serialize)) {
-          this.append(name, value.serialize());
-        } else {
-          for (key in value) {
-            _value = value[key];
-            this.append(this.key(name, key), _value);
-          }
-        }
+        _.each(value, (function(_this) {
+          return function(value, key) {
+            return _this.append(value, _this.key(name, key));
+          };
+        })(this));
         return;
       }
       return this.original.append(name, this.process(value));
@@ -377,7 +362,8 @@
       this.listenTo(filter, "change", (function(_this) {
         return function() {
           _this.set({
-            current_page: 1,
+            current_page: 1
+          }, {
             silent: true
           });
           return _this.fetch();
@@ -459,7 +445,7 @@
         per_page: this.get("per_page"),
         keywords: this.get("search")
       };
-      filters = this.filterData();
+      filters = this.filtersData();
       if (!_.isEmpty(filters)) {
         data.filters = filters;
       }
@@ -469,7 +455,7 @@
       return data;
     };
 
-    DataSource.prototype.filterData = function() {
+    DataSource.prototype.filtersData = function() {
       var data, key, value, _ref1;
       data = {};
       _ref1 = this.filter.attributes;
@@ -939,15 +925,39 @@
       this.entity = options.entity;
       this.availableFilters = options.filters;
       this.filterModel = new Backbone.Model;
-      this.listenTo(this.model, "change", function(model) {
-        return this.filterModel.set(model.attributes);
-      });
+      this.listenTo(this.model, "request", (function(_this) {
+        return function() {
+          return _this.toggleButtons(true);
+        };
+      })(this));
+      this.listenTo(this.model, "data", (function(_this) {
+        return function() {
+          return _this.toggleButtons(false);
+        };
+      })(this));
       return this;
     };
 
+    FilterList.prototype.toggleButtons = function(disabled) {
+      this.$buttons.prop("disabled", disabled);
+    };
+
     FilterList.prototype.apply = function() {
-      this.model.set(this.filterModel.attributes);
+      this.model.filter.set(this.getFiltersData());
       return this;
+    };
+
+    FilterList.prototype.getFiltersData = function() {
+      var data, filter, key, value, _ref1;
+      data = {};
+      _ref1 = this.filterModel.attributes;
+      for (key in _ref1) {
+        value = _ref1[key];
+        if (filter = this.availableFilters.get(key)) {
+          data[key] = filter.prepareData(value);
+        }
+      }
+      return data;
     };
 
     FilterList.prototype.reset = function() {
@@ -972,11 +982,12 @@
         this.items.append(input.render().el);
         input.$el.wrap("<div class=\"form-group " + (filter.getClass()) + "\"></div>").parent().before("<label>" + (filter.getLabel()) + "</label>");
       }
+      this.$buttons = this.$el.find(".fl-btn");
       return this;
     };
 
     FilterList.prototype.template = function() {
-      return "<div class=\"filter-list-container\"></div>\n<button type=\"button\" class=\"btn btn-primary btn-apply\">" + Cruddy.lang.filter_apply + "</button>\n<button type=\"button\" class=\"btn btn-default btn-reset\">" + Cruddy.lang.filter_reset + "</button>";
+      return "<div class=\"filter-list-container\"></div>\n<button type=\"button\" class=\"btn fl-btn btn-primary btn-apply\">" + Cruddy.lang.filter_apply + "</button>\n<button type=\"button\" class=\"btn fl-btn btn-default btn-reset\">" + Cruddy.lang.filter_reset + "</button>";
     };
 
     FilterList.prototype.dispose = function() {
@@ -1354,11 +1365,15 @@
       return $(e.currentTarget).closest(".ed-item").data("key");
     };
 
+    EntityDropdown.prototype.getValue = function() {
+      return EntityDropdown.__super__.getValue.apply(this, arguments) || (this.multiple ? [] : null);
+    };
+
     EntityDropdown.prototype.removeItem = function(e) {
       var i, value;
       if (this.multiple) {
         i = this.getKey(e);
-        value = _.clone(this.model.get(this.key));
+        value = _.clone(this.getValue());
         value.splice(i, 1);
       } else {
         value = null;
@@ -1393,7 +1408,7 @@
           var form;
           _this.editingForm = form = Cruddy.Entity.Form.display(instance);
           form.once("saved", function(model) {
-            btn.parent().siblings("input").val(model.title);
+            btn.parent().siblings("input").val(model.getTitle());
             return form.remove();
           });
           form.once("destroyed", function(model) {
@@ -1689,6 +1704,10 @@
       return this;
     };
 
+    EntitySelector.prototype.getValue = function() {
+      return EntitySelector.__super__.getValue.apply(this, arguments) || (this.multiple ? [] : null);
+    };
+
     EntitySelector.prototype.displayLoading = function(dataSource, xhr) {
       this.$el.addClass("loading");
       xhr.always((function(_this) {
@@ -1727,11 +1746,11 @@
       }
       if (this.multiple) {
         if (item.id in this.selected) {
-          value = _.filter(this.model.get(this.key), function(item) {
+          value = _.filter(this.getValue(), function(item) {
             return item.id !== id;
           });
         } else {
-          value = _.clone(this.model.get(this.key));
+          value = _.clone(this.getValue());
           value.push(item);
         }
       } else {
@@ -1786,6 +1805,9 @@
     EntitySelector.prototype.makeSelectedMap = function(data) {
       var item, _i, _len;
       this.selected = {};
+      if (!data) {
+        return this;
+      }
       if (this.multiple) {
         for (_i = 0, _len = data.length; _i < _len; _i++) {
           item = data[_i];
@@ -3281,6 +3303,14 @@
       return value;
     };
 
+    Base.prototype.prepareAttribute = function(value) {
+      return value;
+    };
+
+    Base.prototype.prepareFilterData = function(value) {
+      return value;
+    };
+
     return Base;
 
   })(Cruddy.Attribute);
@@ -3595,7 +3625,8 @@
         allowEdit: false,
         placeholder: Cruddy.lang.any_value,
         owner: this.entity.id + "." + this.id,
-        constraint: this.attributes.constraint
+        constraint: this.attributes.constraint,
+        multiple: true
       });
     };
 
@@ -3614,6 +3645,20 @@
         return item.title;
       }
       return "<a href=\"" + (ref.link(item.id)) + "\">" + (_.escape(item.title)) + "</a>";
+    };
+
+    Relation.prototype.prepareAttribute = function(value) {
+      if (value == null) {
+        return null;
+      }
+      if (_.isArray(value)) {
+        return _.pluck(value, "id");
+      }
+      return value.id;
+    };
+
+    Relation.prototype.prepareFilterData = function(value) {
+      return this.prepareAttribute(value);
     };
 
     return Relation;
@@ -4180,17 +4225,15 @@
     };
 
     RelatedCollection.prototype.serialize = function() {
-      var data, item, models, _i, _len;
+      var data, item, models, permit, _i, _len;
+      permit = this.owner.entity.getPermissions();
       models = this.filter(function(model) {
-        return !model.isDeleted || !model.isNew();
+        return model.isSaveable();
       });
-      if (_.isEmpty(models)) {
-        return;
-      }
       data = {};
       for (_i = 0, _len = models.length; _i < _len; _i++) {
         item = models[_i];
-        data[item.cid] = item;
+        data[item.cid] = item.serialize();
       }
       return data;
     };
@@ -4253,6 +4296,14 @@
       return model.get(this.id).copy(copy);
     };
 
+    Embedded.prototype.prepareAttribute = function(value) {
+      if (value) {
+        return value.serialize();
+      } else {
+        return value;
+      }
+    };
+
     Embedded.prototype.isCopyable = function() {
       return true;
     };
@@ -4273,6 +4324,13 @@
         model: model,
         key: this.id
       });
+    };
+
+    Number.prototype.prepareFilterData = function(value) {
+      if (_.isEmpty(value.val)) {
+        return;
+      }
+      return value;
     };
 
     return Number;
@@ -4505,6 +4563,10 @@
       throw "Implement required";
     };
 
+    Base.prototype.prepareData = function(value) {
+      return value;
+    };
+
     return Base;
 
   })(Cruddy.Attribute);
@@ -4525,6 +4587,10 @@
 
     Proxy.prototype.createFilterInput = function(model) {
       return this.field.createFilterInput(model);
+    };
+
+    Proxy.prototype.prepareData = function(value) {
+      return this.field.prepareFilterData(value);
     };
 
     return Proxy;
@@ -4772,6 +4838,18 @@
       }
     };
 
+    Entity.prototype.prepareAttributes = function(attributes) {
+      var field, key, result, value;
+      result = {};
+      for (key in attributes) {
+        value = attributes[key];
+        if (field = this.getField(key)) {
+          result[key] = field.prepareAttribute(value);
+        }
+      }
+      return result;
+    };
+
     Entity.prototype.url = function(id) {
       return entity_url(this.id, id);
     };
@@ -4915,7 +4993,7 @@
     Instance.prototype.sync = function(method, model, options) {
       var _ref1;
       if (method === "update" || method === "create") {
-        options.data = new AdvFormData((_ref1 = options.attrs) != null ? _ref1 : this.attributes).original;
+        options.data = new AdvFormData(this.entity.prepareAttributes((_ref1 = options.attrs) != null ? _ref1 : this.attributes)).original;
         options.contentType = false;
         options.processData = false;
       }
@@ -4940,21 +5018,19 @@
     };
 
     Instance.prototype.isSaveable = function() {
-      return (this.isNew() && this.entity.createPermitted()) || (!this.isNew() && this.entity.updatePermitted());
+      var isNew, permit;
+      isNew = this.isNew();
+      permit = this.entity.getPermissions();
+      return ((isNew && permit.create) || (!isNew && permit.update)) && (!this.isDeleted || !isNew);
     };
 
     Instance.prototype.serialize = function() {
-      if (this.isDeleted) {
-        return {
-          id: this.id,
-          isDeleted: true
-        };
-      } else {
-        return {
-          attributes: this.attributes,
-          id: this.id
-        };
-      }
+      var data;
+      data = this.isDeleted ? {} : this.entity.prepareAttributes(this.attributes);
+      return $.extend(data, {
+        __id: this.id,
+        __d: this.isDeleted
+      });
     };
 
     Instance.prototype.action = function() {
@@ -5214,7 +5290,7 @@
         return;
       }
       return new FilterList({
-        model: this.dataSource.filter,
+        model: this.dataSource,
         entity: this.model,
         filters: filters
       });
@@ -5333,11 +5409,12 @@
         return false;
       }
       if (e.ctrlKey && e.keyCode === 13) {
-        this.save();
+        this.saveModel();
         return false;
       }
       if (e.keyCode === 27) {
-        this.close();
+        this.closeForm();
+        e.preventDefault();
         return false;
       }
       return this;
@@ -5620,13 +5697,14 @@
       if (this.request) {
         this.request.abort();
       }
+      $(document).off("." + this.cid);
       this.$el.one(TRANSITIONEND, (function(_this) {
         return function() {
-          $(document).off("." + _this.cid);
           _this.trigger("removed", _this);
           return Form.__super__.remove.apply(_this, arguments);
         };
-      })(this)).removeClass("opened");
+      })(this));
+      this.$el.removeClass("opened");
       return Form.__super__.remove.apply(this, arguments);
     };
 

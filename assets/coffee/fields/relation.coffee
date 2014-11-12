@@ -37,4 +37,4 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
 
         return value.id
 
-    prepareFilterData: (value) -> @prepareAttribute value
+    prepareFilterData: (value) -> @prepareAttribute(value).join ","

@@ -26,11 +26,6 @@ class DateTime extends BaseTextField {
     /**
      * {@inheritdoc}
      */
-    protected $filterType = self::FILTER_NONE;
-
-    /**
-     * {@inheritdoc}
-     */
     protected $inputType = 'text';
 
     /**

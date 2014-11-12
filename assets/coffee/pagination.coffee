@@ -29,13 +29,13 @@ class Pagination extends Backbone.View
         this
 
     page: (n) ->
-        @model.set "current_page", n if n > 0 and n <= @model.get "last_page"
+        @model.set "page", n if n > 0 and n <= @model.getLastPage()
 
         this
 
-    previous: -> @page @model.get("current_page") - 1
+    previous: -> @page @model.get("page") - 1
 
-    next: -> @page @model.get("current_page") + 1
+    next: -> @page @model.get("page") + 1
 
     navigate: (e) ->
         e.preventDefault()
@@ -48,22 +48,23 @@ class Pagination extends Backbone.View
         this
 
     render: ->
-        last = @model.get("last_page")
+        if @model.hasData()
+            last = @model.getLastPage()
 
-        @$el.toggle last? and last > 1
+            @$el.toggle last? and last > 1
 
-        @$el.html @template @model.get("current_page"), last if last > 1
+            @$el.html @template @model.get("page"), last if last > 1
 
         this
 
     template: (current, last) ->
         html = ""
         html += @renderLink current - 1, "&larr; #{ Cruddy.lang.prev }", "previous" + if current > 1 then "" else " disabled"
-        html += @renderStats() if @model.get("total")?
+        html += @renderStats() if @model.getTotal()?
         html += @renderLink current + 1, "#{ Cruddy.lang.next } &rarr;", "next" + if current < last then "" else " disabled"
 
         html
 
-    renderStats: -> """<li class="stats"><span>#{ @model.get "from" } - #{ @model.get "to" } / #{ @model.get "total" }</span></li>"""
+    renderStats: -> """<li class="stats"><span>#{ @model.getFrom() } - #{ @model.getTo() } / #{ @model.getTotal() }</span></li>"""
 
     renderLink: (page, label, className = "") -> """<li class="#{ className }"><a href="#" data-page="#{ page }">#{ label }</a></li>"""

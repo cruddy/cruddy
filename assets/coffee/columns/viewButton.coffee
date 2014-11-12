@@ -8,8 +8,8 @@ class Cruddy.Columns.ViewButton extends Cruddy.Columns.Base
 
     canOrder: -> false
 
-    render: (item) -> @wrapWithActions item, """
-        <a href="#{ @entity.link item.meta.id }" class="btn btn-default btn-view btn-xs auto-hide-target">
+    render: (model) -> @wrapWithActions model, """
+        <a onclick="Cruddy.app.entityView.displayForm('#{ model.meta.id }', this);return false;" class="btn btn-default btn-view btn-xs auto-hide-target" href="#{ @entity.link model.meta.id }">
             #{ b_icon("pencil") }
         </a>
     """
@@ -30,23 +30,23 @@ class Cruddy.Columns.ViewButton extends Cruddy.Columns.Base
         </button>
     """
 
-    renderActions: (item) ->
+    renderActions: (model) ->
         html = """<ul class="dropdown-menu" role="menu">"""
 
-        unless noPresentationActions = _.isEmpty item.meta.presentationActions
-            html += render_presentation_actions item.meta.presentationActions
+        unless noPresentationActions = _.isEmpty model.meta.presentationActions
+            html += render_presentation_actions model.meta.presentationActions
 
-        unless _.isEmpty item.meta.actions
+        unless _.isEmpty model.meta.actions
             html += render_divider() unless noPresentationActions
-            html += @renderAction action for action in item.meta.actions
+            html += @renderAction action, model for action in model.meta.actions
 
         html += "</ul>"
 
         return html
 
-    renderAction: (action) -> """
+    renderAction: (action, model) -> """
         <li class="#{ if action.disabled then "disabled" else "" }">
-            <a href="#" data-action="executeCustomAction" data-action-id="#{ action.id }">
+            <a onclick="Cruddy.app.entityView.executeCustomAction('#{ action.id }', '#{ model.meta.id }', this);return false;" href="javascript:void;">
                 #{ _.escape action.title }
             </a>
         </li>

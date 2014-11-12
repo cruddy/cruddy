@@ -28,13 +28,12 @@ class BelongsToMany extends BasicRelation implements Filter {
      */
     public function applyFilterConstraint(QueryBuilder $builder, $data)
     {
-        if (is_array($data))
+        if (empty($data)) return;
+
+        $builder->whereExists(function ($q) use ($data)
         {
-            $builder->whereExists(function ($q) use ($data)
-            {
-                $this->initNestedQuery($q, $data);
-            });
-        }
+            $this->initNestedQuery($q, explode(',', $data));
+        });
     }
 
     /**

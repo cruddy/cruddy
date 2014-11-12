@@ -12,11 +12,10 @@ class Cruddy.Entity.Page extends Cruddy.View
         super
 
     initialize: (options) ->
-        @dataSource = @model.createDataSource @getDatasourceData()
+        @dataSource = @setupDataSource()
 
         # Make sure that those events not fired twice
         after_break =>
-            @listenTo @dataSource, "change", (model) -> Cruddy.router.refreshQuery @getDatasourceDefaults(), model.attributes, trigger: no
             @listenTo Cruddy.router, "route:index", @handleRouteUpdated
 
         super
@@ -24,27 +23,36 @@ class Cruddy.Entity.Page extends Cruddy.View
     pageUnloadConfirmationMessage: -> return @form?.pageUnloadConfirmationMessage()
 
     handleRouteUpdated: ->
-        @dataSource.set @getDatasourceData()
+        @_updateDataSourceFromQuery()
 
         @_displayForm().fail => @_syncQueryParameters replace: yes
 
         return this
 
-    getDatasourceData: ->_.pick Cruddy.router.query.keys, "search", "per_page", "order_dir", "order_by"
+    setupDataSource: ->
+        @dataSource = ds = @model.getDataSource()
 
-    getDatasourceDefaults: ->
-        return @dsDefaults if @dsDefaults
+        @_updateDataSourceFromQuery silent: yes
 
-        @dsDefaults = data =
-            current_page: 1
-            order_by: @model.get "order_by"
-            order_dir: "asc"
-            search: ""
+        ds.fetch() unless ds.inProgress() or ds.hasData()
 
-        if data.order_by and (col = @model.columns.get(data.order_by))
-            data.order_dir = col.get "order_dir"
+        @listenTo ds, "change", (model) -> Cruddy.router.refreshQuery model.defaults, model.attributes, trigger: no
 
-        return data
+        #@defaultFilters = filters = {}
+        #filters[filter.id] = null for filter in @model.filters.models
+
+        #@listenTo ds.filter, "change", (model) ->
+        #    Cruddy.router.refreshQuery filters, model.attributes, { trigger: no, base: "f" }
+
+        return ds
+
+    _updateDataSourceFromQuery: (options) ->
+        @dataSource.set @getDatasourceData(), options
+        #@dataSource.filter.set Cruddy.router.query.keys.f || {}
+
+        return
+
+    getDatasourceData: ->_.pick Cruddy.router.query.keys, "keywords", "per_page", "order_dir", "order_by", "page"
 
     _syncQueryParameters: (options) ->
         router = Cruddy.router
@@ -59,7 +67,7 @@ class Cruddy.Entity.Page extends Cruddy.View
         return this
 
     _displayForm: (instanceId) ->
-        return if @loadingForm
+        return @loadingForm if @loadingForm
 
         instanceId = instanceId ? Cruddy.router.getQuery("id")
 
@@ -151,7 +159,6 @@ class Cruddy.Entity.Page extends Cruddy.View
         @$component("pagination_view").append @paginationView.render().el       if @paginationView
 
         @handleRouteUpdated()
-        @dataSource.fetch()
 
         return this
 
@@ -171,7 +178,7 @@ class Cruddy.Entity.Page extends Cruddy.View
 
     createSearchInputView: -> new Cruddy.Inputs.Search
         model: @dataSource
-        key: "search"
+        key: "keywords"
 
     template: -> """
         <div class="content-header">
@@ -233,3 +240,9 @@ class Cruddy.Entity.Page extends Cruddy.View
         title = @form.model.getTitle() + TITLE_SEPARATOR + title if @form?
 
         title
+
+    executeCustomAction: (actionId, modelId, el) ->
+        if el and not $(el).parent().is "disabled"
+            @model.executeAction modelId, actionId, success: => @dataSource.fetch()
+
+        return this

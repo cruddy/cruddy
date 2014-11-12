@@ -332,14 +332,18 @@
     }
 
     DataSource.prototype.defaults = {
-      data: [],
-      search: ""
+      page: 1,
+      per_page: null,
+      keywords: "",
+      order_by: null,
+      order_dir: "asc"
     };
 
     DataSource.prototype.initialize = function(attributes, options) {
       var entity, filter;
       this.entity = entity = options.entity;
       this.filter = filter = new Backbone.Model;
+      this.defaults = _.clone(this.attributes);
       this.options = {
         url: entity.url(),
         dataType: "json",
@@ -347,9 +351,7 @@
         displayLoading: true,
         success: (function(_this) {
           return function(resp) {
-            _this._hold = true;
-            _this.set(resp);
-            _this._hold = false;
+            _this.resp = resp;
             return _this.trigger("data", _this, resp.data);
           };
         })(this),
@@ -361,39 +363,36 @@
       };
       this.listenTo(filter, "change", (function(_this) {
         return function() {
-          _this.set({
-            current_page: 1
-          }, {
-            silent: true
+          _this.set("page", 1, {
+            noFetch: true
           });
           return _this.fetch();
         };
       })(this));
-      this.on("change", (function(_this) {
+      this.on("change:keywords", (function(_this) {
         return function() {
-          if (!_this._hold) {
-            return _this.fetch();
-          }
+          return _this.set("page", 1);
         };
       })(this));
-      return this.on("change:search", (function(_this) {
-        return function() {
-          if (!_this._hold) {
-            return _this.set({
-              current_page: 1,
-              silent: true
-            });
+      return this.on("change", (function(_this) {
+        return function(model, options) {
+          if (!options.noFetch) {
+            return _this.fetch();
           }
         };
       })(this));
     };
 
     DataSource.prototype.hasData = function() {
-      return !_.isEmpty(this.get("data"));
+      return this.resp != null;
+    };
+
+    DataSource.prototype.isEmpty = function() {
+      return !this.hasData() || _.isEmpty(this.resp.data);
     };
 
     DataSource.prototype.hasMore = function() {
-      return this.get("current_page") < this.get("last_page");
+      return this.hasData() && this.resp.current_page < this.resp.last_page;
     };
 
     DataSource.prototype.isFull = function() {
@@ -404,17 +403,11 @@
       return this.request != null;
     };
 
-    DataSource.prototype.holdFetch = function() {
-      this._hold = true;
-      return this;
-    };
-
     DataSource.prototype.fetch = function() {
-      this._hold = false;
       if (this.request != null) {
         this.request.abort();
       }
-      this.options.data = this.data();
+      this.options.data = this._requestData();
       this.request = $.ajax(this.options);
       this.request.always((function(_this) {
         return function() {
@@ -425,37 +418,44 @@
       return this.request;
     };
 
-    DataSource.prototype.more = function() {
-      if (this.isFull()) {
+    DataSource.prototype.next = function() {
+      if (this.inProgress() || this.isFull()) {
         return;
       }
       this.set({
-        current_page: this.get("current_page") + 1,
-        silent: true
+        page: this.get("page") + 1
       });
-      return this.fetch();
+      return this;
     };
 
-    DataSource.prototype.data = function() {
-      var data, filters;
-      data = {
-        order_by: this.get("order_by"),
-        order_dir: this.get("order_dir"),
-        page: this.get("current_page"),
-        per_page: this.get("per_page"),
-        keywords: this.get("search")
-      };
-      filters = this.filtersData();
-      if (!_.isEmpty(filters)) {
-        data.filters = filters;
+    DataSource.prototype.prev = function() {
+      var page;
+      if (this.inProgress() || (page = this.get("page")) <= 1) {
+        return;
       }
-      if (this.columns != null) {
-        data.columns = this.columns.join(",");
+      this.set({
+        page: page - 1
+      });
+      return this;
+    };
+
+    DataSource.prototype._requestData = function() {
+      var data, filters, key, value, _ref1;
+      data = {};
+      _ref1 = this.attributes;
+      for (key in _ref1) {
+        value = _ref1[key];
+        if (_.isNumber(value) || !_.isEmpty(value)) {
+          data[key] = value;
+        }
+      }
+      if (!_.isEmpty(filters = this._filtersData())) {
+        data.filters = filters;
       }
       return data;
     };
 
-    DataSource.prototype.filtersData = function() {
+    DataSource.prototype._filtersData = function() {
       var data, key, value, _ref1;
       data = {};
       _ref1 = this.filter.attributes;
@@ -466,6 +466,31 @@
         }
       }
       return data;
+    };
+
+    DataSource.prototype.getData = function() {
+      var _ref1;
+      return (_ref1 = this.resp) != null ? _ref1.data : void 0;
+    };
+
+    DataSource.prototype.getTotal = function() {
+      var _ref1;
+      return (_ref1 = this.resp) != null ? _ref1.total : void 0;
+    };
+
+    DataSource.prototype.getFrom = function() {
+      var _ref1;
+      return (_ref1 = this.resp) != null ? _ref1.from : void 0;
+    };
+
+    DataSource.prototype.getTo = function() {
+      var _ref1;
+      return (_ref1 = this.resp) != null ? _ref1.to : void 0;
+    };
+
+    DataSource.prototype.getLastPage = function() {
+      var _ref1;
+      return (_ref1 = this.resp) != null ? _ref1.last_page : void 0;
     };
 
     return DataSource;
@@ -616,18 +641,18 @@
     };
 
     Pagination.prototype.page = function(n) {
-      if (n > 0 && n <= this.model.get("last_page")) {
-        this.model.set("current_page", n);
+      if (n > 0 && n <= this.model.getLastPage()) {
+        this.model.set("page", n);
       }
       return this;
     };
 
     Pagination.prototype.previous = function() {
-      return this.page(this.model.get("current_page") - 1);
+      return this.page(this.model.get("page") - 1);
     };
 
     Pagination.prototype.next = function() {
-      return this.page(this.model.get("current_page") + 1);
+      return this.page(this.model.get("page") + 1);
     };
 
     Pagination.prototype.navigate = function(e) {
@@ -644,10 +669,12 @@
 
     Pagination.prototype.render = function() {
       var last;
-      last = this.model.get("last_page");
-      this.$el.toggle((last != null) && last > 1);
-      if (last > 1) {
-        this.$el.html(this.template(this.model.get("current_page"), last));
+      if (this.model.hasData()) {
+        last = this.model.getLastPage();
+        this.$el.toggle((last != null) && last > 1);
+        if (last > 1) {
+          this.$el.html(this.template(this.model.get("page"), last));
+        }
       }
       return this;
     };
@@ -656,7 +683,7 @@
       var html;
       html = "";
       html += this.renderLink(current - 1, "&larr; " + Cruddy.lang.prev, "previous" + (current > 1 ? "" : " disabled"));
-      if (this.model.get("total") != null) {
+      if (this.model.getTotal() != null) {
         html += this.renderStats();
       }
       html += this.renderLink(current + 1, "" + Cruddy.lang.next + " &rarr;", "next" + (current < last ? "" : " disabled"));
@@ -664,7 +691,7 @@
     };
 
     Pagination.prototype.renderStats = function() {
-      return "<li class=\"stats\"><span>" + (this.model.get("from")) + " - " + (this.model.get("to")) + " / " + (this.model.get("total")) + "</span></li>";
+      return "<li class=\"stats\"><span>" + (this.model.getFrom()) + " - " + (this.model.getTo()) + " / " + (this.model.getTotal()) + "</span></li>";
     };
 
     Pagination.prototype.renderLink = function(page, label, className) {
@@ -796,12 +823,12 @@
 
     DataGrid.prototype.renderBody = function() {
       var html, item, _i, _len, _ref1;
-      if (!this.model.hasData()) {
+      if (this.model.isEmpty()) {
         this.$items.html(this.emptyTemplate());
         return this;
       }
       html = "";
-      _ref1 = this.model.get("data");
+      _ref1 = this.model.getData();
       for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
         item = _ref1[_i];
         html += this.renderRow(item);
@@ -863,18 +890,6 @@
           return $el.attr("disabled", false);
         }
       });
-    };
-
-    DataGrid.prototype.executeCustomAction = function(id, $el) {
-      if (!$el.parent().is("disabled")) {
-        this.entity.executeAction(id, $el.data("actionId"), {
-          success: (function(_this) {
-            return function() {
-              return _this.model.fetch();
-            };
-          })(this)
-        });
-      }
     };
 
     DataGrid.prototype.template = function() {
@@ -3658,7 +3673,7 @@
     };
 
     Relation.prototype.prepareFilterData = function(value) {
-      return this.prepareAttribute(value);
+      return this.prepareAttribute(value).join(",");
     };
 
     return Relation;
@@ -4330,7 +4345,7 @@
       if (_.isEmpty(value.val)) {
         return;
       }
-      return value;
+      return value.op + value.val;
     };
 
     return Number;
@@ -4468,8 +4483,8 @@
       return false;
     };
 
-    ViewButton.prototype.render = function(item) {
-      return this.wrapWithActions(item, "<a href=\"" + (this.entity.link(item.meta.id)) + "\" class=\"btn btn-default btn-view btn-xs auto-hide-target\">\n    " + (b_icon("pencil")) + "\n</a>");
+    ViewButton.prototype.render = function(model) {
+      return this.wrapWithActions(model, "<a onclick=\"Cruddy.app.entityView.displayForm('" + model.meta.id + "', this);return false;\" class=\"btn btn-default btn-view btn-xs auto-hide-target\" href=\"" + (this.entity.link(model.meta.id)) + "\">\n    " + (b_icon("pencil")) + "\n</a>");
     };
 
     ViewButton.prototype.wrapWithActions = function(item, html) {
@@ -4487,28 +4502,28 @@
       return "<button type=\"button\" class=\"btn btn-default dropdown-toggle\" data-toggle=\"dropdown\">\n    <span class=\"caret\"></span>\n</button>";
     };
 
-    ViewButton.prototype.renderActions = function(item) {
+    ViewButton.prototype.renderActions = function(model) {
       var action, html, noPresentationActions, _i, _len, _ref1;
       html = "<ul class=\"dropdown-menu\" role=\"menu\">";
-      if (!(noPresentationActions = _.isEmpty(item.meta.presentationActions))) {
-        html += render_presentation_actions(item.meta.presentationActions);
+      if (!(noPresentationActions = _.isEmpty(model.meta.presentationActions))) {
+        html += render_presentation_actions(model.meta.presentationActions);
       }
-      if (!_.isEmpty(item.meta.actions)) {
+      if (!_.isEmpty(model.meta.actions)) {
         if (!noPresentationActions) {
           html += render_divider();
         }
-        _ref1 = item.meta.actions;
+        _ref1 = model.meta.actions;
         for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
           action = _ref1[_i];
-          html += this.renderAction(action);
+          html += this.renderAction(action, model);
         }
       }
       html += "</ul>";
       return html;
     };
 
-    ViewButton.prototype.renderAction = function(action) {
-      return "<li class=\"" + (action.disabled ? "disabled" : "") + "\">\n    <a href=\"#\" data-action=\"executeCustomAction\" data-action-id=\"" + action.id + "\">\n        " + (_.escape(action.title)) + "\n    </a>\n</li>";
+    ViewButton.prototype.renderAction = function(action, model) {
+      return "<li class=\"" + (action.disabled ? "disabled" : "") + "\">\n    <a onclick=\"Cruddy.app.entityView.executeCustomAction('" + action.id + "', '" + model.meta.id + "', this);return false;\" href=\"javascript:void;\">\n        " + (_.escape(action.title)) + "\n    </a>\n</li>";
     };
 
     return ViewButton;
@@ -4705,6 +4720,13 @@
       return new DataSource(data, {
         entity: this
       });
+    };
+
+    Entity.prototype.getDataSource = function() {
+      if (!this.dataSource) {
+        this.dataSource = this.createDataSource();
+      }
+      return this.dataSource;
     };
 
     Entity.prototype.createFilters = function(columns) {
@@ -5073,14 +5095,9 @@
     }
 
     Page.prototype.initialize = function(options) {
-      this.dataSource = this.model.createDataSource(this.getDatasourceData());
+      this.dataSource = this.setupDataSource();
       after_break((function(_this) {
         return function() {
-          _this.listenTo(_this.dataSource, "change", function(model) {
-            return Cruddy.router.refreshQuery(this.getDatasourceDefaults(), model.attributes, {
-              trigger: false
-            });
-          });
           return _this.listenTo(Cruddy.router, "route:index", _this.handleRouteUpdated);
         };
       })(this));
@@ -5093,7 +5110,7 @@
     };
 
     Page.prototype.handleRouteUpdated = function() {
-      this.dataSource.set(this.getDatasourceData());
+      this._updateDataSourceFromQuery();
       this._displayForm().fail((function(_this) {
         return function() {
           return _this._syncQueryParameters({
@@ -5104,25 +5121,29 @@
       return this;
     };
 
-    Page.prototype.getDatasourceData = function() {
-      return _.pick(Cruddy.router.query.keys, "search", "per_page", "order_dir", "order_by");
+    Page.prototype.setupDataSource = function() {
+      var ds;
+      this.dataSource = ds = this.model.getDataSource();
+      this._updateDataSourceFromQuery({
+        silent: true
+      });
+      if (!(ds.inProgress() || ds.hasData())) {
+        ds.fetch();
+      }
+      this.listenTo(ds, "change", function(model) {
+        return Cruddy.router.refreshQuery(model.defaults, model.attributes, {
+          trigger: false
+        });
+      });
+      return ds;
     };
 
-    Page.prototype.getDatasourceDefaults = function() {
-      var col, data;
-      if (this.dsDefaults) {
-        return this.dsDefaults;
-      }
-      this.dsDefaults = data = {
-        current_page: 1,
-        order_by: this.model.get("order_by"),
-        order_dir: "asc",
-        search: ""
-      };
-      if (data.order_by && (col = this.model.columns.get(data.order_by))) {
-        data.order_dir = col.get("order_dir");
-      }
-      return data;
+    Page.prototype._updateDataSourceFromQuery = function(options) {
+      this.dataSource.set(this.getDatasourceData(), options);
+    };
+
+    Page.prototype.getDatasourceData = function() {
+      return _.pick(Cruddy.router.query.keys, "keywords", "per_page", "order_dir", "order_by", "page");
     };
 
     Page.prototype._syncQueryParameters = function(options) {
@@ -5143,7 +5164,7 @@
     Page.prototype._displayForm = function(instanceId) {
       var compareId, dfd, instance, resolve, _ref1;
       if (this.loadingForm) {
-        return;
+        return this.loadingForm;
       }
       instanceId = instanceId != null ? instanceId : Cruddy.router.getQuery("id");
       if (instanceId instanceof Cruddy.Entity.Instance) {
@@ -5267,7 +5288,6 @@
         this.$component("pagination_view").append(this.paginationView.render().el);
       }
       this.handleRouteUpdated();
-      this.dataSource.fetch();
       return this;
     };
 
@@ -5299,7 +5319,7 @@
     Page.prototype.createSearchInputView = function() {
       return new Cruddy.Inputs.Search({
         model: this.dataSource,
-        key: "search"
+        key: "keywords"
       });
     };
 
@@ -5347,6 +5367,19 @@
         title = this.form.model.getTitle() + TITLE_SEPARATOR + title;
       }
       return title;
+    };
+
+    Page.prototype.executeCustomAction = function(actionId, modelId, el) {
+      if (el && !$(el).parent().is("disabled")) {
+        this.model.executeAction(modelId, actionId, {
+          success: (function(_this) {
+            return function() {
+              return _this.dataSource.fetch();
+            };
+          })(this)
+        });
+      }
+      return this;
     };
 
     return Page;
@@ -5919,6 +5952,9 @@
       $(document.body).on("click", "a", (function(_this) {
         return function(e) {
           var fragment, handler, _i, _len, _ref1;
+          if (e.isDefaultPrevented()) {
+            return;
+          }
           fragment = e.currentTarget.href;
           if (fragment.indexOf(root) !== 0) {
             return;
@@ -5960,16 +5996,22 @@
     };
 
     Router.prototype.refreshQuery = function(defaults, actual, options) {
-      var key, q, val, value;
+      var base, key, q, val, value, _key;
+      if (options == null) {
+        options = {};
+      }
       q = this.query.copy();
+      base = options.base || null;
       for (key in defaults) {
         val = defaults[key];
-        if ((value = actual[key]) !== val) {
-          q.SET(key, value);
+        _key = base ? base + "[" + key + "]" : key;
+        if (key in actual && (value = actual[key]) !== val) {
+          q.SET(_key, value);
         } else {
-          q.REMOVE(key);
+          q.REMOVE(_key);
         }
       }
+      console.log(q);
       return this.updateQuery(q, options);
     };
 

@@ -75,8 +75,10 @@ abstract class BaseNumber extends BaseInput implements Filter {
      */
     public function applyFilterConstraint(QueryBuilder $builder, $data)
     {
-        $operator = array_get($data, 'op');
-        $value = array_get($data, 'val');
+        if (empty($data)) return;
+
+        $operator = substr($data, 0, 1);
+        $value = $this->cast(substr($data, 1));
 
         if ($value and $operator) $builder->where($this->id, $operator, $value);
     }

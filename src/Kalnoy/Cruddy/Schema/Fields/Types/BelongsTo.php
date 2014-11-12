@@ -31,9 +31,8 @@ class BelongsTo extends BasicRelation implements Filter {
      */
     public function applyFilterConstraint(QueryBuilder $builder, $data)
     {
-        if (is_array($data))
-        {
-            $builder->whereIn($this->relation->getForeignKey(), $data);
-        }
+        if (empty($data)) return;
+
+        $builder->whereIn($this->relation->getForeignKey(), explode(',', $data));
     }
 }

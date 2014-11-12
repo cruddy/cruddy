@@ -1,11 +1,15 @@
 class DataSource extends Backbone.Model
     defaults:
-        data: []
-        search: ""
+        page: 1
+        per_page: null
+        keywords: ""
+        order_by: null
+        order_dir: "asc"
 
     initialize: (attributes, options) ->
         @entity = entity = options.entity
         @filter = filter = new Backbone.Model
+        @defaults = _.clone @attributes
 
         @options =
             url: entity.url()
@@ -14,40 +18,33 @@ class DataSource extends Backbone.Model
             displayLoading: yes
 
             success: (resp) =>
-                @_hold = true
-                @set resp
-                @_hold = false
+                @resp = resp
 
                 @trigger "data", this, resp.data
 
             error: (xhr) => @trigger "error", this, xhr
 
         @listenTo filter, "change", =>
-            @set { current_page: 1 }, silent: yes
+            @set "page", 1, noFetch: yes
             @fetch()
 
-        @on "change", => @fetch() unless @_hold
-        @on "change:search", => @set current_page: 1, silent: yes unless @_hold
+        @on "change:keywords", => @set "page", 1
+        @on "change", (model, options) => @fetch() unless options.noFetch
 
-    hasData: -> not _.isEmpty @get "data"
+    hasData: -> @resp?
 
-    hasMore: -> @get("current_page") < @get("last_page")
+    isEmpty: -> not @hasData() or _.isEmpty @resp.data
+
+    hasMore: -> @hasData() and @resp.current_page < @resp.last_page
 
     isFull: -> not @hasMore()
 
     inProgress: -> @request?
 
-    holdFetch: ->
-        @_hold = yes
-
-        return this
-
     fetch: ->
-        @_hold = no
-
         @request.abort() if @request?
 
-        @options.data = @data()
+        @options.data = @_requestData()
 
         @request = $.ajax @options
 
@@ -57,31 +54,38 @@ class DataSource extends Backbone.Model
 
         @request
 
-    more: ->
-        return if @isFull()
+    next: ->
+        return if @inProgress() or @isFull()
 
-        @set current_page: @get("current_page") + 1, silent: yes
+        @set page: @get("page") + 1
 
-        @fetch()
+        return this
 
-    data: ->
-        data =
-            order_by: @get "order_by"
-            order_dir: @get "order_dir"
-            page: @get "current_page"
-            per_page: @get "per_page"
-            keywords: @get "search"
+    prev: ->
+        return if @inProgress() or (page = @get "page") <= 1
 
-        filters = @filtersData()
+        @set page: page - 1
 
-        data.filters = filters unless _.isEmpty filters
-        data.columns = @columns.join "," if @columns?
+        return this
+
+    _requestData: ->
+        data = {}
+
+        data[key] = value for key, value of @attributes when _.isNumber(value) or not _.isEmpty value
+
+        data.filters = filters unless _.isEmpty filters = @_filtersData()
 
         data
 
-    filtersData: ->
+    _filtersData: ->
         data = {}
 
         data[key] = value for key, value of @filter.attributes when not _.isEmpty value
 
         return data
+
+    getData: -> @resp?.data
+    getTotal: -> @resp?.total
+    getFrom: -> @resp?.from
+    getTo: -> @resp?.to
+    getLastPage: -> @resp?.last_page

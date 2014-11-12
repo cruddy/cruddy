@@ -6,7 +6,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 
 /**
  * Handles morph to many relation.
- * 
+ *
  * @since 1.0.0
  */
 class MorphToMany extends BelongsToMany {
@@ -20,4 +20,5 @@ class MorphToMany extends BelongsToMany {
 
         $query->where($this->relation->getMorphType(), '=', $this->relation->getMorphClass());
     }
+
 }

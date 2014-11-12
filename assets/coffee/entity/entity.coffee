@@ -37,6 +37,11 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
         return new DataSource data, entity: this
 
+    getDataSource: ->
+        @dataSource = @createDataSource() unless @dataSource
+
+        return @dataSource
+
     # Create filters for specified columns
     createFilters: (columns = @columns) ->
         filters = (col.createFilter() for col in columns.models when col.get("filter_type") is "complex")

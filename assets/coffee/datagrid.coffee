@@ -96,13 +96,13 @@ class DataGrid extends Cruddy.View
         return title
 
     renderBody: ->
-        unless @model.hasData()
+        if @model.isEmpty()
             @$items.html @emptyTemplate()
 
             return this
 
         html = ""
-        html += @renderRow item for item in @model.get "data"
+        html += @renderRow item for item in @model.getData()
 
         @$items.html html
 
@@ -157,12 +157,6 @@ class DataGrid extends Cruddy.View
 
             fail: ->
                 $el.attr "disabled", no
-
-        return
-
-    executeCustomAction: (id, $el) ->
-        unless $el.parent().is "disabled"
-            @entity.executeAction id, $el.data("actionId"), success: => @model.fetch()
 
         return
 

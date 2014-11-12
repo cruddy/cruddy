@@ -175,12 +175,16 @@ class Cruddy.Attribute extends Backbone.Model
     isVisible: -> @attributes.hide is no
 class DataSource extends Backbone.Model
     defaults:
-        data: []
-        search: ""
+        page: 1
+        per_page: null
+        keywords: ""
+        order_by: null
+        order_dir: "asc"
 
     initialize: (attributes, options) ->
         @entity = entity = options.entity
         @filter = filter = new Backbone.Model
+        @defaults = _.clone @attributes
 
         @options =
             url: entity.url()
@@ -189,40 +193,33 @@ class DataSource extends Backbone.Model
             displayLoading: yes
 
             success: (resp) =>
-                @_hold = true
-                @set resp
-                @_hold = false
+                @resp = resp
 
                 @trigger "data", this, resp.data
 
             error: (xhr) => @trigger "error", this, xhr
 
         @listenTo filter, "change", =>
-            @set { current_page: 1 }, silent: yes
+            @set "page", 1, noFetch: yes
             @fetch()
 
-        @on "change", => @fetch() unless @_hold
-        @on "change:search", => @set current_page: 1, silent: yes unless @_hold
+        @on "change:keywords", => @set "page", 1
+        @on "change", (model, options) => @fetch() unless options.noFetch
 
-    hasData: -> not _.isEmpty @get "data"
+    hasData: -> @resp?
 
-    hasMore: -> @get("current_page") < @get("last_page")
+    isEmpty: -> not @hasData() or _.isEmpty @resp.data
+
+    hasMore: -> @hasData() and @resp.current_page < @resp.last_page
 
     isFull: -> not @hasMore()
 
     inProgress: -> @request?
 
-    holdFetch: ->
-        @_hold = yes
-
-        return this
-
     fetch: ->
-        @_hold = no
-
         @request.abort() if @request?
 
-        @options.data = @data()
+        @options.data = @_requestData()
 
         @request = $.ajax @options
 
@@ -232,34 +229,41 @@ class DataSource extends Backbone.Model
 
         @request
 
-    more: ->
-        return if @isFull()
+    next: ->
+        return if @inProgress() or @isFull()
 
-        @set current_page: @get("current_page") + 1, silent: yes
+        @set page: @get("page") + 1
 
-        @fetch()
+        return this
 
-    data: ->
-        data =
-            order_by: @get "order_by"
-            order_dir: @get "order_dir"
-            page: @get "current_page"
-            per_page: @get "per_page"
-            keywords: @get "search"
+    prev: ->
+        return if @inProgress() or (page = @get "page") <= 1
 
-        filters = @filtersData()
+        @set page: page - 1
 
-        data.filters = filters unless _.isEmpty filters
-        data.columns = @columns.join "," if @columns?
+        return this
+
+    _requestData: ->
+        data = {}
+
+        data[key] = value for key, value of @attributes when _.isNumber(value) or not _.isEmpty value
+
+        data.filters = filters unless _.isEmpty filters = @_filtersData()
 
         data
 
-    filtersData: ->
+    _filtersData: ->
         data = {}
 
         data[key] = value for key, value of @filter.attributes when not _.isEmpty value
 
         return data
+
+    getData: -> @resp?.data
+    getTotal: -> @resp?.total
+    getFrom: -> @resp?.from
+    getTo: -> @resp?.to
+    getLastPage: -> @resp?.last_page
 
 class SearchDataSource extends Backbone.Model
     defaults:
@@ -372,13 +376,13 @@ class Pagination extends Backbone.View
         this
 
     page: (n) ->
-        @model.set "current_page", n if n > 0 and n <= @model.get "last_page"
+        @model.set "page", n if n > 0 and n <= @model.getLastPage()
 
         this
 
-    previous: -> @page @model.get("current_page") - 1
+    previous: -> @page @model.get("page") - 1
 
-    next: -> @page @model.get("current_page") + 1
+    next: -> @page @model.get("page") + 1
 
     navigate: (e) ->
         e.preventDefault()
@@ -391,23 +395,24 @@ class Pagination extends Backbone.View
         this
 
     render: ->
-        last = @model.get("last_page")
+        if @model.hasData()
+            last = @model.getLastPage()
 
-        @$el.toggle last? and last > 1
+            @$el.toggle last? and last > 1
 
-        @$el.html @template @model.get("current_page"), last if last > 1
+            @$el.html @template @model.get("page"), last if last > 1
 
         this
 
     template: (current, last) ->
         html = ""
         html += @renderLink current - 1, "&larr; #{ Cruddy.lang.prev }", "previous" + if current > 1 then "" else " disabled"
-        html += @renderStats() if @model.get("total")?
+        html += @renderStats() if @model.getTotal()?
         html += @renderLink current + 1, "#{ Cruddy.lang.next } &rarr;", "next" + if current < last then "" else " disabled"
 
         html
 
-    renderStats: -> """<li class="stats"><span>#{ @model.get "from" } - #{ @model.get "to" } / #{ @model.get "total" }</span></li>"""
+    renderStats: -> """<li class="stats"><span>#{ @model.getFrom() } - #{ @model.getTo() } / #{ @model.getTotal() }</span></li>"""
 
     renderLink: (page, label, className = "") -> """<li class="#{ className }"><a href="#" data-page="#{ page }">#{ label }</a></li>"""
 
@@ -509,13 +514,13 @@ class DataGrid extends Cruddy.View
         return title
 
     renderBody: ->
-        unless @model.hasData()
+        if @model.isEmpty()
             @$items.html @emptyTemplate()
 
             return this
 
         html = ""
-        html += @renderRow item for item in @model.get "data"
+        html += @renderRow item for item in @model.getData()
 
         @$items.html html
 
@@ -570,12 +575,6 @@ class DataGrid extends Cruddy.View
 
             fail: ->
                 $el.attr "disabled", no
-
-        return
-
-    executeCustomAction: (id, $el) ->
-        unless $el.parent().is "disabled"
-            @entity.executeAction id, $el.data("actionId"), success: => @model.fetch()
 
         return
 
@@ -2486,7 +2485,7 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
 
         return value.id
 
-    prepareFilterData: (value) -> @prepareAttribute value
+    prepareFilterData: (value) -> @prepareAttribute(value).join ","
 class Cruddy.Fields.File extends Cruddy.Fields.Base
 
     createEditableInput: (model) -> new Cruddy.Inputs.FileList
@@ -2887,7 +2886,7 @@ class Cruddy.Fields.Number extends Cruddy.Fields.Input
     prepareFilterData: (value) ->
         return if _.isEmpty value.val
 
-        return value
+        return value.op + value.val
 class Cruddy.Fields.Computed extends Cruddy.Fields.Base
     createInput: (model) -> new Cruddy.Inputs.Static { model: model, key: @id, formatter: this }
 
@@ -2935,8 +2934,8 @@ class Cruddy.Columns.ViewButton extends Cruddy.Columns.Base
 
     canOrder: -> false
 
-    render: (item) -> @wrapWithActions item, """
-        <a href="#{ @entity.link item.meta.id }" class="btn btn-default btn-view btn-xs auto-hide-target">
+    render: (model) -> @wrapWithActions model, """
+        <a onclick="Cruddy.app.entityView.displayForm('#{ model.meta.id }', this);return false;" class="btn btn-default btn-view btn-xs auto-hide-target" href="#{ @entity.link model.meta.id }">
             #{ b_icon("pencil") }
         </a>
     """
@@ -2957,23 +2956,23 @@ class Cruddy.Columns.ViewButton extends Cruddy.Columns.Base
         </button>
     """
 
-    renderActions: (item) ->
+    renderActions: (model) ->
         html = """<ul class="dropdown-menu" role="menu">"""
 
-        unless noPresentationActions = _.isEmpty item.meta.presentationActions
-            html += render_presentation_actions item.meta.presentationActions
+        unless noPresentationActions = _.isEmpty model.meta.presentationActions
+            html += render_presentation_actions model.meta.presentationActions
 
-        unless _.isEmpty item.meta.actions
+        unless _.isEmpty model.meta.actions
             html += render_divider() unless noPresentationActions
-            html += @renderAction action for action in item.meta.actions
+            html += @renderAction action, model for action in model.meta.actions
 
         html += "</ul>"
 
         return html
 
-    renderAction: (action) -> """
+    renderAction: (action, model) -> """
         <li class="#{ if action.disabled then "disabled" else "" }">
-            <a href="#" data-action="executeCustomAction" data-action-id="#{ action.id }">
+            <a onclick="Cruddy.app.entityView.executeCustomAction('#{ action.id }', '#{ model.meta.id }', this);return false;" href="javascript:void;">
                 #{ _.escape action.title }
             </a>
         </li>
@@ -3079,6 +3078,11 @@ class Cruddy.Entity.Entity extends Backbone.Model
         data = $.extend {}, defaults, data
 
         return new DataSource data, entity: this
+
+    getDataSource: ->
+        @dataSource = @createDataSource() unless @dataSource
+
+        return @dataSource
 
     # Create filters for specified columns
     createFilters: (columns = @columns) ->
@@ -3320,11 +3324,10 @@ class Cruddy.Entity.Page extends Cruddy.View
         super
 
     initialize: (options) ->
-        @dataSource = @model.createDataSource @getDatasourceData()
+        @dataSource = @setupDataSource()
 
         # Make sure that those events not fired twice
         after_break =>
-            @listenTo @dataSource, "change", (model) -> Cruddy.router.refreshQuery @getDatasourceDefaults(), model.attributes, trigger: no
             @listenTo Cruddy.router, "route:index", @handleRouteUpdated
 
         super
@@ -3332,27 +3335,36 @@ class Cruddy.Entity.Page extends Cruddy.View
     pageUnloadConfirmationMessage: -> return @form?.pageUnloadConfirmationMessage()
 
     handleRouteUpdated: ->
-        @dataSource.set @getDatasourceData()
+        @_updateDataSourceFromQuery()
 
         @_displayForm().fail => @_syncQueryParameters replace: yes
 
         return this
 
-    getDatasourceData: ->_.pick Cruddy.router.query.keys, "search", "per_page", "order_dir", "order_by"
+    setupDataSource: ->
+        @dataSource = ds = @model.getDataSource()
 
-    getDatasourceDefaults: ->
-        return @dsDefaults if @dsDefaults
+        @_updateDataSourceFromQuery silent: yes
 
-        @dsDefaults = data =
-            current_page: 1
-            order_by: @model.get "order_by"
-            order_dir: "asc"
-            search: ""
+        ds.fetch() unless ds.inProgress() or ds.hasData()
 
-        if data.order_by and (col = @model.columns.get(data.order_by))
-            data.order_dir = col.get "order_dir"
+        @listenTo ds, "change", (model) -> Cruddy.router.refreshQuery model.defaults, model.attributes, trigger: no
 
-        return data
+        #@defaultFilters = filters = {}
+        #filters[filter.id] = null for filter in @model.filters.models
+
+        #@listenTo ds.filter, "change", (model) ->
+        #    Cruddy.router.refreshQuery filters, model.attributes, { trigger: no, base: "f" }
+
+        return ds
+
+    _updateDataSourceFromQuery: (options) ->
+        @dataSource.set @getDatasourceData(), options
+        #@dataSource.filter.set Cruddy.router.query.keys.f || {}
+
+        return
+
+    getDatasourceData: ->_.pick Cruddy.router.query.keys, "keywords", "per_page", "order_dir", "order_by", "page"
 
     _syncQueryParameters: (options) ->
         router = Cruddy.router
@@ -3367,7 +3379,7 @@ class Cruddy.Entity.Page extends Cruddy.View
         return this
 
     _displayForm: (instanceId) ->
-        return if @loadingForm
+        return @loadingForm if @loadingForm
 
         instanceId = instanceId ? Cruddy.router.getQuery("id")
 
@@ -3459,7 +3471,6 @@ class Cruddy.Entity.Page extends Cruddy.View
         @$component("pagination_view").append @paginationView.render().el       if @paginationView
 
         @handleRouteUpdated()
-        @dataSource.fetch()
 
         return this
 
@@ -3479,7 +3490,7 @@ class Cruddy.Entity.Page extends Cruddy.View
 
     createSearchInputView: -> new Cruddy.Inputs.Search
         model: @dataSource
-        key: "search"
+        key: "keywords"
 
     template: -> """
         <div class="content-header">
@@ -3541,6 +3552,12 @@ class Cruddy.Entity.Page extends Cruddy.View
         title = @form.model.getTitle() + TITLE_SEPARATOR + title if @form?
 
         title
+
+    executeCustomAction: (actionId, modelId, el) ->
+        if el and not $(el).parent().is "disabled"
+            @model.executeAction modelId, actionId, success: => @dataSource.fetch()
+
+        return this
 # View that displays a form for an entity instance
 class Cruddy.Entity.Form extends Cruddy.Layout.Layout
     className: "entity-form"
@@ -4068,13 +4085,13 @@ class Router extends Backbone.Router
         entities = Cruddy.entities
 
         @addRoute "index", entities
-        #@addRoute "update", entities, "([^/]+)"
-        #@addRoute "create", entities, "create"
 
         root = Cruddy.baseUrl
         history = Backbone.history
 
         $(document.body).on "click", "a", (e) =>
+            return if e.isDefaultPrevented()
+
             fragment = e.currentTarget.href
 
             return if fragment.indexOf(root) isnt 0
@@ -4109,14 +4126,19 @@ class Router extends Backbone.Router
     # Set the query parameter value
     setQuery: (key, value, options) -> @updateQuery @query.set(key, value), options
 
-    refreshQuery: (defaults, actual, options) ->
+    refreshQuery: (defaults, actual, options = {}) ->
         q = @query.copy()
+        base = options.base or null
 
         for key, val of defaults
-            if (value = actual[key]) isnt val
-                q.SET key, value
+            _key = if base then base + "[" + key + "]" else key
+
+            if key of actual and (value = actual[key]) isnt val
+                q.SET _key, value
             else
-                q.REMOVE key
+                q.REMOVE _key
+
+        console.log q
 
         @updateQuery q, options
 

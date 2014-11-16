@@ -3002,14 +3002,16 @@ class Cruddy.Entity.Entity extends Backbone.Model
         new Backbone.Collection filters
 
     # Create an instance for this entity
-    createInstance: (attributes = {}, options = {}) ->
+    createInstance: (data = {}, options = {}) ->
         options.entity = this
 
-        attributes = _.extend {}, @get("defaults"), attributes.attributes
+        attrs = _.extend {}, @get("defaults"), data.attributes
 
-        instance = new Cruddy.Entity.Instance attributes, options
+        instance = new Cruddy.Entity.Instance attrs, options
 
-        instance.fillExtra attributes
+        instance.fillExtra data
+        
+        return instance
 
     # Get relation field
     getRelation: (id) ->

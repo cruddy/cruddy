@@ -4593,18 +4593,19 @@
       return new Backbone.Collection(filters);
     };
 
-    Entity.prototype.createInstance = function(attributes, options) {
-      var instance;
-      if (attributes == null) {
-        attributes = {};
+    Entity.prototype.createInstance = function(data, options) {
+      var attrs, instance;
+      if (data == null) {
+        data = {};
       }
       if (options == null) {
         options = {};
       }
       options.entity = this;
-      attributes = _.extend({}, this.get("defaults"), attributes.attributes);
-      instance = new Cruddy.Entity.Instance(attributes, options);
-      return instance.fillExtra(attributes);
+      attrs = _.extend({}, this.get("defaults"), data.attributes);
+      instance = new Cruddy.Entity.Instance(attrs, options);
+      instance.fillExtra(data);
+      return instance;
     };
 
     Entity.prototype.getRelation = function(id) {

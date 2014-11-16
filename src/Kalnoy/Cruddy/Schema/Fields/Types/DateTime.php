@@ -2,8 +2,9 @@
 
 namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
-use Kalnoy\Cruddy\Schema\Fields\BaseTextField;
+use Kalnoy\Cruddy\Schema\Fields\BaseField;
 use Illuminate\Database\Eloquent\Model as Eloquent;
+use Illuminate\Database\Query\Builder;
 use Carbon\Carbon;
 
 /**
@@ -11,7 +12,7 @@ use Carbon\Carbon;
  *
  * @since 1.0.0
  */
-class DateTime extends BaseTextField {
+class DateTime extends BaseField {
 
     /**
      * {@inheritdoc}
@@ -24,9 +25,9 @@ class DateTime extends BaseTextField {
     protected $type = 'datetime';
 
     /**
-     * {@inheritdoc}
+     * @var bool
      */
-    protected $inputType = 'text';
+    protected $canOrder = true;
 
     /**
      * {@inheritdoc}
@@ -52,6 +53,16 @@ class DateTime extends BaseTextField {
         if ( ! $value instanceof Carbon) $value = new Carbon($value);
 
         return $value->getTimestamp();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function order(Builder $builder, $direction)
+    {
+        $builder->orderBy($this->id, $direction);
+
+        return $this;
     }
 
 }

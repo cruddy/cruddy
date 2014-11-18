@@ -1,7 +1,6 @@
 <?php
 
 namespace Kalnoy\Cruddy\Schema\Fields\InlineTypes;
-use Kalnoy\Cruddy\Schema\Fields\InlineTypes\MorphOne;
 
 /**
  * Morph many inline editing.

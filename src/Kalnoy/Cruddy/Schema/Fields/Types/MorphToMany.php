@@ -14,9 +14,9 @@ class MorphToMany extends BelongsToMany {
     /**
      * {@inheritdoc}
      */
-    protected function initNestedQuery(QueryBuilder $query, $data)
+    protected function initNestedQuery(QueryBuilder $query, array $ids)
     {
-        parent::initNestedQuery($query, $data);
+        parent::initNestedQuery($query, $ids);
 
         $query->where($this->relation->getMorphType(), '=', $this->relation->getMorphClass());
     }

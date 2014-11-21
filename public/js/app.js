@@ -505,7 +505,8 @@
     }
 
     SearchDataSource.prototype.defaults = {
-      search: ""
+      keywords: null,
+      constraint: null
     };
 
     SearchDataSource.prototype.initialize = function(attributes, options) {
@@ -514,7 +515,6 @@
       this.data = [];
       this.page = null;
       this.more = true;
-      this.filters = new Backbone.Model;
       this.options = {
         url: options.url,
         type: "get",
@@ -551,8 +551,7 @@
       if (options.ajaxOptions != null) {
         $.extend(true, this.options, options.ajaxOptions);
       }
-      this.on("change:search", this.refresh, this);
-      this.listenTo(this.filters, "change", this.refresh);
+      this.on("change", this.refresh, this);
       return this;
     };
 
@@ -561,21 +560,15 @@
       return this.fetchPage(1);
     };
 
-    SearchDataSource.prototype._fetch = function(q, page, filters) {
+    SearchDataSource.prototype.fetchPage = function(page) {
       if (this.request != null) {
         this.request.abort();
       }
-      $.extend(this.options.data, {
-        page: page,
-        keywords: q,
-        filters: filters
+      $.extend(this.options.data, this.attributes, {
+        page: page
       });
       this.trigger("request", this, this.request = $.ajax(this.options));
       return this.request;
-    };
-
-    SearchDataSource.prototype.fetchPage = function(page) {
-      return this._fetch(this.get("search"), page, this.filters.attributes);
     };
 
     SearchDataSource.prototype.next = function() {
@@ -1465,7 +1458,7 @@
       if (this.selector) {
         value = this.model.get(this.constraint.field);
         if ((_ref1 = this.selector.dataSource) != null) {
-          _ref1.filters.set(this.constraint.otherField, value);
+          _ref1.set("constraint", value);
         }
         this.selector.attributesForNewModel[this.constraint.otherField] = value;
       }
@@ -1888,7 +1881,7 @@
     EntitySelector.prototype.renderSearch = function() {
       this.searchInput = new Cruddy.Inputs.Search({
         model: this.dataSource,
-        key: "search"
+        key: "keywords"
       });
       this.$el.prepend(this.searchInput.render().$el);
       this.searchInput.$el.wrap("<div class=search-input-container></div>");

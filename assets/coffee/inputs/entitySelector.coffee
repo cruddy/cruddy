@@ -172,7 +172,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
     renderSearch: ->
         @searchInput = new Cruddy.Inputs.Search
             model: @dataSource
-            key: "search"
+            key: "keywords"
 
         @$el.prepend @searchInput.render().$el
 

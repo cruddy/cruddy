@@ -151,6 +151,23 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessor {
         {
             call_user_func($this->filter, $query, $options);
         }
+
+        if ($this->constraint and ($constraintData = array_get($options, 'constraint')))
+        {
+            $this->applyConstraint($query, $constraintData);
+        }
+    }
+
+    /**
+     * @param Builder $query
+     * @param $constraintData
+     */
+    protected function applyConstraint(Builder $query, $constraintData)
+    {
+        /** @var Filter $filterer */
+        $filterer = $this->findField($this->reference, $this->constraint['otherField']);
+
+        $filterer->applyFilterConstraint($query->getQuery(), $constraintData);
     }
 
     /**
@@ -167,5 +184,4 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessor {
 
         ] + parent::toArray();
     }
-
 }

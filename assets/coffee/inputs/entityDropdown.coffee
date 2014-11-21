@@ -118,7 +118,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     applyConstraint: (reset = no) ->
         if @selector
             value = @model.get @constraint.field
-            @selector.dataSource?.filters.set @constraint.otherField, value
+            @selector.dataSource?.set "constraint", value
             @selector.attributesForNewModel[@constraint.otherField] = value
 
         @model.set(@key, if @multiple then [] else null) if reset

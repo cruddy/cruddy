@@ -213,14 +213,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
 
         if (isset($options['owner']) && static::$env !== null)
         {
-            $field = static::$env->field($options['owner']);
-
-            if ( ! $field instanceof SearchProcessor)
-            {
-                throw new RuntimeException("The field [{$options['owner']}] is not a search processor.");
-            }
-
-            $processor->add($field);
+            $processor->add(static::$env->field($options['owner']));
         }
 
         return $processor;

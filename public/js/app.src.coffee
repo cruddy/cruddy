@@ -261,7 +261,8 @@ class DataSource extends Backbone.Model
 
 class SearchDataSource extends Backbone.Model
     defaults:
-        search: ""
+        keywords: null
+        constraint: null
 
     initialize: (attributes, options) ->
         @resetData = no
@@ -269,8 +270,6 @@ class SearchDataSource extends Backbone.Model
         @data = []
         @page = null
         @more = yes
-
-        @filters = new Backbone.Model
 
         @options =
             url: options.url
@@ -302,8 +301,7 @@ class SearchDataSource extends Backbone.Model
 
         $.extend yes, @options, options.ajaxOptions if options.ajaxOptions?
 
-        @on "change:search", @refresh, this
-        @listenTo @filters, "change", @refresh
+        @on "change", @refresh, this
 
         this
 
@@ -312,19 +310,14 @@ class SearchDataSource extends Backbone.Model
 
         @fetchPage 1
 
-    _fetch: (q, page, filters) ->
+    fetchPage: (page) ->
         @request.abort() if @request?
 
-        $.extend @options.data,
-            page: page
-            keywords: q
-            filters: filters
+        $.extend @options.data, @attributes, { page: page }
 
         @trigger "request", this, @request = $.ajax @options
 
         @request
-
-    fetchPage: (page) -> @_fetch @get("search"), page, @filters.attributes
 
     next: ->
         @fetchPage if @page? then @page + 1 else 1 if @more
@@ -948,7 +941,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     applyConstraint: (reset = no) ->
         if @selector
             value = @model.get @constraint.field
-            @selector.dataSource?.filters.set @constraint.otherField, value
+            @selector.dataSource?.set "constraint", value
             @selector.attributesForNewModel[@constraint.otherField] = value
 
         @model.set(@key, if @multiple then [] else null) if reset
@@ -1309,7 +1302,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
     renderSearch: ->
         @searchInput = new Cruddy.Inputs.Search
             model: @dataSource
-            key: "search"
+            key: "keywords"
 
         @$el.prepend @searchInput.render().$el
 
@@ -3010,7 +3003,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
         instance = new Cruddy.Entity.Instance attrs, options
 
         instance.fillExtra data
-        
+
         return instance
 
     # Get relation field

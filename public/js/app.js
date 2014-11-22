@@ -5456,7 +5456,7 @@
     };
 
     Form.prototype.copy = function() {
-      Cruddy.app.page.displayForm(this.model.copy());
+      Cruddy.app.entityView.displayForm(this.model.copy());
       return this;
     };
 

@@ -3645,7 +3645,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         this
 
     copy: ->
-        Cruddy.app.page.displayForm @model.copy()
+        Cruddy.app.entityView.displayForm @model.copy()
 
         this
 

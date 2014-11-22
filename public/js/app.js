@@ -446,7 +446,7 @@
       _ref1 = this.filter.attributes;
       for (key in _ref1) {
         value = _ref1[key];
-        if (!_.isEmpty(value)) {
+        if (value !== "" && value !== null) {
           data[key] = value;
         }
       }

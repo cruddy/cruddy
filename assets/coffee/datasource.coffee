@@ -82,7 +82,7 @@ class DataSource extends Backbone.Model
     filterData: ->
         data = {}
 
-        for key, value of @filter.attributes when not _.isEmpty value
+        for key, value of @filter.attributes when value isnt "" and value isnt null
             data[key] = value
 
         return data

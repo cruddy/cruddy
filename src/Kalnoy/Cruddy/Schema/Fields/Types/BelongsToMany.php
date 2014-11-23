@@ -32,7 +32,7 @@ class BelongsToMany extends BasicRelation implements Filter {
 
         $builder->whereExists(function ($q) use ($data)
         {
-            $this->initNestedQuery($q, explode(',', $data));
+            $this->initNestedQuery($q, $this->parseData($data));
         });
     }
 

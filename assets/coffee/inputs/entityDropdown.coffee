@@ -119,8 +119,9 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
     applyConstraint: (reset = no) ->
         if @selector
+            field = @model.entity.getField @constraint.field
             value = @model.get @constraint.field
-            @selector.dataSource?.set "constraint", value
+            @selector.dataSource?.set "constraint", field.prepareAttribute value
             @selector.attributesForNewModel[@constraint.otherField] = value
 
         @model.set(@key, if @multiple then [] else null) if reset
@@ -227,7 +228,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
     renderItems: ->
         html = ""
-        html += @itemTemplate value.title, key for value, key in @getValue()
+        html += @itemTemplate @itemToString(value), key for value, key in @getValue()
         @items.html html
         @items.toggleClass "has-items", html isnt ""
 
@@ -245,12 +246,14 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     updateItem: ->
         value = @getValue()
 
-        @itemTitle.val if value then value.title else ""
+        @itemTitle.val if value then @itemToString(value) else ""
 
         @itemDelete.toggle !!value
         @itemEdit.toggle !!value
 
         this
+
+    itemToString: (item) -> item.title or item.id
 
     itemTemplate: (value, key = null) ->
         html = """

@@ -62,6 +62,18 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessor {
     }
 
     /**
+     * @param mixed $value
+     *
+     * @return array|mixed
+     */
+    public function process($value)
+    {
+        $value = $this->parseData($value);
+
+        return $this->multiple ? $value : reset($value);
+    }
+
+    /**
      * Constraint options with other field.
      *
      * @param string $field
@@ -183,5 +195,15 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessor {
             'constraint' => $this->constraint,
 
         ] + parent::toArray();
+    }
+
+    /**
+     * @param $data
+     *
+     * @return array
+     */
+    protected function parseData($data)
+    {
+        return explode(',', $data);
     }
 }

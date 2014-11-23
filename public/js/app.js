@@ -461,7 +461,7 @@
       _ref1 = this.filter.attributes;
       for (key in _ref1) {
         value = _ref1[key];
-        if (!_.isEmpty(value)) {
+        if (value != null) {
           data[key] = value;
         }
       }
@@ -933,6 +933,7 @@
       this.entity = options.entity;
       this.availableFilters = options.filters;
       this.filterModel = new Backbone.Model;
+      this.filterModel.entity = this.entity;
       this.listenTo(this.model, "request", (function(_this) {
         return function() {
           return _this.toggleButtons(true);
@@ -943,6 +944,7 @@
           return _this.toggleButtons(false);
         };
       })(this));
+      this.syncFiltersData();
       return this;
     };
 
@@ -952,6 +954,7 @@
 
     FilterList.prototype.apply = function() {
       this.model.filter.set(this.getFiltersData());
+      console.log(this.model.filter.attributes);
       return this;
     };
 
@@ -966,6 +969,18 @@
         }
       }
       return data;
+    };
+
+    FilterList.prototype.syncFiltersData = function() {
+      var data, filter, _i, _len, _ref1;
+      data = {};
+      _ref1 = this.availableFilters.models;
+      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
+        filter = _ref1[_i];
+        data[filter.id] = filter.parseData(this.model.filter.get(filter.id));
+      }
+      this.filterModel.set(data);
+      return this;
     };
 
     FilterList.prototype.reset = function() {
@@ -1451,14 +1466,15 @@
     };
 
     EntityDropdown.prototype.applyConstraint = function(reset) {
-      var value, _ref1;
+      var field, value, _ref1;
       if (reset == null) {
         reset = false;
       }
       if (this.selector) {
+        field = this.model.entity.getField(this.constraint.field);
         value = this.model.get(this.constraint.field);
         if ((_ref1 = this.selector.dataSource) != null) {
-          _ref1.set("constraint", value);
+          _ref1.set("constraint", field.prepareAttribute(value));
         }
         this.selector.attributesForNewModel[this.constraint.otherField] = value;
       }
@@ -1576,7 +1592,7 @@
       _ref1 = this.getValue();
       for (key = _i = 0, _len = _ref1.length; _i < _len; key = ++_i) {
         value = _ref1[key];
-        html += this.itemTemplate(value.title, key);
+        html += this.itemTemplate(this.itemToString(value), key);
       }
       this.items.html(html);
       this.items.toggleClass("has-items", html !== "");
@@ -1594,10 +1610,14 @@
     EntityDropdown.prototype.updateItem = function() {
       var value;
       value = this.getValue();
-      this.itemTitle.val(value ? value.title : "");
+      this.itemTitle.val(value ? this.itemToString(value) : "");
       this.itemDelete.toggle(!!value);
       this.itemEdit.toggle(!!value);
       return this;
+    };
+
+    EntityDropdown.prototype.itemToString = function(item) {
+      return item.title || item.id;
     };
 
     EntityDropdown.prototype.itemTemplate = function(value, key) {
@@ -3319,6 +3339,10 @@
       return value;
     };
 
+    Base.prototype.parseFilterData = function(value) {
+      return value;
+    };
+
     return Base;
 
   })(Cruddy.Attribute);
@@ -3660,13 +3684,30 @@
         return null;
       }
       if (_.isArray(value)) {
-        return _.pluck(value, "id");
+        return _.pluck(value, "id").join(",");
       }
       return value.id;
     };
 
     Relation.prototype.prepareFilterData = function(value) {
-      return this.prepareAttribute(value).join(",");
+      return this.prepareAttribute(value);
+    };
+
+    Relation.prototype.parseFilterData = function(value) {
+      if (value == null) {
+        return null;
+      }
+      if (!this.attributes.multiple) {
+        return {
+          id: value
+        };
+      }
+      value = value.split(",");
+      return _.map(value, function(value) {
+        return {
+          id: value
+        };
+      });
     };
 
     return Relation;
@@ -4336,9 +4377,23 @@
 
     Number.prototype.prepareFilterData = function(value) {
       if (_.isEmpty(value.val)) {
-        return;
+        return null;
       }
       return value.op + value.val;
+    };
+
+    Number.prototype.parseFilterData = function(value) {
+      var op, val;
+      op = "=";
+      val = null;
+      if (value != null) {
+        op = value[0];
+        val = value.substr(1);
+      }
+      return {
+        op: op,
+        val: val
+      };
     };
 
     return Number;
@@ -4575,6 +4630,10 @@
       return value;
     };
 
+    Base.prototype.parseData = function(value) {
+      return value;
+    };
+
     return Base;
 
   })(Cruddy.Attribute);
@@ -4599,6 +4658,10 @@
 
     Proxy.prototype.prepareData = function(value) {
       return this.field.prepareFilterData(value);
+    };
+
+    Proxy.prototype.parseData = function(value) {
+      return this.field.parseFilterData(value);
     };
 
     return Proxy;
@@ -5331,7 +5394,7 @@
     };
 
     Page.prototype.remove = function() {
-      var _ref1, _ref2, _ref3, _ref4, _ref5, _ref6;
+      var _ref1, _ref2, _ref3, _ref4, _ref5;
       if ((_ref1 = this.form) != null) {
         _ref1.remove();
       }
@@ -5346,9 +5409,6 @@
       }
       if ((_ref5 = this.searchInputView) != null) {
         _ref5.remove();
-      }
-      if ((_ref6 = this.dataSource) != null) {
-        _ref6.stopListening();
       }
       return Page.__super__.remove.apply(this, arguments);
     };

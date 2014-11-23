@@ -33,8 +33,17 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
     prepareAttribute: (value) ->
         return null unless value?
 
-        return _.pluck value, "id" if _.isArray value
+        return _.pluck(value, "id").join(",") if _.isArray value
 
         return value.id
 
-    prepareFilterData: (value) -> @prepareAttribute(value).join ","
+    prepareFilterData: (value) -> @prepareAttribute(value)
+
+    parseFilterData: (value) ->
+        return null unless value?
+
+        return { id: value } unless @attributes.multiple
+
+        value = value.split ","
+
+        return _.map value, (value) -> { id: value }

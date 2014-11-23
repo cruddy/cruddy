@@ -230,8 +230,6 @@ class Cruddy.Entity.Page extends Cruddy.View
         @paginationView?.remove()
         @searchInputView?.remove()
 
-        @dataSource?.stopListening()
-
         super
 
     getPageTitle: ->

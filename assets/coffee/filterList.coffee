@@ -11,9 +11,12 @@ class FilterList extends Backbone.View
         @entity = options.entity
         @availableFilters = options.filters
         @filterModel = new Backbone.Model
+        @filterModel.entity = @entity
 
         @listenTo @model, "request", => @toggleButtons yes
         @listenTo @model, "data", => @toggleButtons no
+
+        @syncFiltersData()
 
         this
 
@@ -25,6 +28,8 @@ class FilterList extends Backbone.View
     apply: ->
         @model.filter.set @getFiltersData()
 
+        console.log @model.filter.attributes
+
         return this
 
     getFiltersData: ->
@@ -33,6 +38,14 @@ class FilterList extends Backbone.View
         data[key] = filter.prepareData value for key, value of @filterModel.attributes when filter = @availableFilters.get key
 
         return data
+
+    syncFiltersData: ->
+        data = {}
+        data[filter.id] = filter.parseData @model.filter.get filter.id for filter in @availableFilters.models
+
+        @filterModel.set data
+
+        return this
 
     reset: ->
         input.empty() for input in @filters

@@ -255,7 +255,7 @@ class DataSource extends Backbone.Model
     _filtersData: ->
         data = {}
 
-        data[key] = value for key, value of @filter.attributes when not _.isEmpty value
+        data[key] = value for key, value of @filter.attributes when value?
 
         return data
 
@@ -604,9 +604,12 @@ class FilterList extends Backbone.View
         @entity = options.entity
         @availableFilters = options.filters
         @filterModel = new Backbone.Model
+        @filterModel.entity = @entity
 
         @listenTo @model, "request", => @toggleButtons yes
         @listenTo @model, "data", => @toggleButtons no
+
+        @syncFiltersData()
 
         this
 
@@ -618,6 +621,8 @@ class FilterList extends Backbone.View
     apply: ->
         @model.filter.set @getFiltersData()
 
+        console.log @model.filter.attributes
+
         return this
 
     getFiltersData: ->
@@ -626,6 +631,14 @@ class FilterList extends Backbone.View
         data[key] = filter.prepareData value for key, value of @filterModel.attributes when filter = @availableFilters.get key
 
         return data
+
+    syncFiltersData: ->
+        data = {}
+        data[filter.id] = filter.parseData @model.filter.get filter.id for filter in @availableFilters.models
+
+        @filterModel.set data
+
+        return this
 
     reset: ->
         input.empty() for input in @filters
@@ -964,8 +977,9 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
     applyConstraint: (reset = no) ->
         if @selector
+            field = @model.entity.getField @constraint.field
             value = @model.get @constraint.field
-            @selector.dataSource?.set "constraint", value
+            @selector.dataSource?.set "constraint", field.prepareAttribute value
             @selector.attributesForNewModel[@constraint.otherField] = value
 
         @model.set(@key, if @multiple then [] else null) if reset
@@ -1072,7 +1086,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
     renderItems: ->
         html = ""
-        html += @itemTemplate value.title, key for value, key in @getValue()
+        html += @itemTemplate @itemToString(value), key for value, key in @getValue()
         @items.html html
         @items.toggleClass "has-items", html isnt ""
 
@@ -1090,12 +1104,14 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     updateItem: ->
         value = @getValue()
 
-        @itemTitle.val if value then value.title else ""
+        @itemTitle.val if value then @itemToString(value) else ""
 
         @itemDelete.toggle !!value
         @itemEdit.toggle !!value
 
         this
+
+    itemToString: (item) -> item.title or item.id
 
     itemTemplate: (value, key = null) ->
         html = """
@@ -2323,6 +2339,8 @@ class Cruddy.Fields.Base extends Cruddy.Attribute
     prepareAttribute: (value) -> value
 
     prepareFilterData: (value) -> value
+
+    parseFilterData: (value) -> value
 class Cruddy.Fields.Input extends Cruddy.Fields.Base
 
     createEditableInput: (model, inputId) ->
@@ -2474,11 +2492,20 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
     prepareAttribute: (value) ->
         return null unless value?
 
-        return _.pluck value, "id" if _.isArray value
+        return _.pluck(value, "id").join(",") if _.isArray value
 
         return value.id
 
-    prepareFilterData: (value) -> @prepareAttribute(value).join ","
+    prepareFilterData: (value) -> @prepareAttribute(value)
+
+    parseFilterData: (value) ->
+        return null unless value?
+
+        return { id: value } unless @attributes.multiple
+
+        value = value.split ","
+
+        return _.map value, (value) -> { id: value }
 class Cruddy.Fields.File extends Cruddy.Fields.Base
 
     createEditableInput: (model) -> new Cruddy.Inputs.FileList
@@ -2877,9 +2904,19 @@ class Cruddy.Fields.Number extends Cruddy.Fields.Input
         key: @id
 
     prepareFilterData: (value) ->
-        return if _.isEmpty value.val
+        return null if _.isEmpty value.val
 
         return value.op + value.val
+
+    parseFilterData: (value) ->
+        op = "="
+        val = null
+
+        if value?
+            op = value[0]
+            val = value.substr 1
+
+        return op: op, val: val
 class Cruddy.Fields.Computed extends Cruddy.Fields.Base
     createInput: (model) -> new Cruddy.Inputs.Static { model: model, key: @id, formatter: this }
 
@@ -2994,6 +3031,8 @@ class Cruddy.Filters.Base extends Cruddy.Attribute
     createFilterInput: -> throw "Implement required"
 
     prepareData: (value) -> value
+
+    parseData: (value) -> value
 class Cruddy.Filters.Proxy extends Cruddy.Filters.Base
 
     initialize: (attributes) ->
@@ -3005,6 +3044,8 @@ class Cruddy.Filters.Proxy extends Cruddy.Filters.Base
     createFilterInput: (model) -> @field.createFilterInput model
 
     prepareData: (value) -> @field.prepareFilterData value
+
+    parseData: (value) -> @field.parseFilterData value
 class BaseFormatter
     defaultOptions: {}
 
@@ -3534,8 +3575,6 @@ class Cruddy.Entity.Page extends Cruddy.View
         @dataView?.remove()
         @paginationView?.remove()
         @searchInputView?.remove()
-
-        @dataSource?.stopListening()
 
         super
 

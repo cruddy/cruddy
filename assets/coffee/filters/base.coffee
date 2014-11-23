@@ -7,3 +7,5 @@ class Cruddy.Filters.Base extends Cruddy.Attribute
     createFilterInput: -> throw "Implement required"
 
     prepareData: (value) -> value
+
+    parseData: (value) -> value

@@ -1,9 +1,14 @@
+[![Latest Stable Version](https://poser.pugx.org/kalnoy/cruddy/v/stable.svg)](https://packagist.org/packages/kalnoy/cruddy)
+[![Total Downloads](https://poser.pugx.org/kalnoy/cruddy/downloads.svg)](https://packagist.org/packages/kalnoy/cruddy)
+[![Latest Unstable Version](https://poser.pugx.org/kalnoy/cruddy/v/unstable.svg)](https://packagist.org/packages/kalnoy/cruddy)
+[![License](https://poser.pugx.org/kalnoy/cruddy/license.svg)](https://packagist.org/packages/kalnoy/cruddy)
+
 Cruddy is a powerfull tool for backend applications. Based on [Laravel 4](http://laravel.com),
 allows to view, create and update your entities with less effort and coding.
 
 __Highlights:__
 
-*   Many field & column types, extendable via plugins
+*   Many field & column types, extensible via plugins
 *   JavaScript-enabled UI, completely asynchronous
 *   Embedded forms for editing related models
 *   and more

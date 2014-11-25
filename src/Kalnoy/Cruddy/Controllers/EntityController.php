@@ -14,6 +14,7 @@ use Kalnoy\Cruddy\Environment;
 use Kalnoy\Cruddy\ModelNotFoundException;
 use Kalnoy\Cruddy\OperationNotPermittedException;
 use Kalnoy\Cruddy\Service\Validation\ValidationException;
+use Redirect;
 use Response;
 use Log;
 
@@ -103,6 +104,11 @@ class EntityController extends Controller {
     {
         return $this->resolve($entity, 'view', function (Request $request, Entity $entity) use ($id)
         {
+            if ( ! $request->ajax())
+            {
+                return Redirect::route('cruddy.index', [ $entity->getId(), 'id' => $id ]);
+            }
+
             return Response::make($entity->find($id));
         });
     }

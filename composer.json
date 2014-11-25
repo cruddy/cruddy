@@ -1,22 +1,23 @@
 {
     "name": "kalnoy/cruddy",
+
     "description": "Backend interface for handling CRUD operations on your Laravel Eloquent models.",
+
     "authors": [
         {
             "name": "Alexander Kalnoy",
             "email": "lazychaser@gmail.com"
         }
     ],
+
     "keywords": ["dashboard", "crud", "administrator", "admin", "backend", "laravel", "eloquent", "cms"],
+
+    "license": "MIT",
+
     "require": {
         "php": ">=5.4.0",
         "laravel/framework": "~4.2",
         "intervention/image": "~2.0"
-    },
-
-    "require-dev": {
-        "mockery/mockery": "~0.8",
-        "phpunit/phpunit": "~3.7"
     },
 
     "autoload": {

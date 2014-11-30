@@ -183,7 +183,6 @@ class DataSource extends Backbone.Model
 
     initialize: (attributes, options) ->
         @entity = entity = options.entity
-        @filter = filter = new Backbone.Model
         @defaults = _.clone @attributes
 
         @options =
@@ -198,10 +197,6 @@ class DataSource extends Backbone.Model
                 @trigger "data", this, resp.data
 
             error: (xhr) => @trigger "error", this, xhr
-
-        @listenTo filter, "change", =>
-            @set "page", 1, noFetch: yes
-            @fetch()
 
         @on "change:keywords", => @set "page", 1
         @on "change", (model, options) => @fetch() unless options.noFetch
@@ -219,7 +214,7 @@ class DataSource extends Backbone.Model
     fetch: ->
         @request.abort() if @request?
 
-        @options.data = @_requestData()
+        @options.data = @_getRequestData()
 
         @request = $.ajax @options
 
@@ -243,21 +238,12 @@ class DataSource extends Backbone.Model
 
         return this
 
-    _requestData: ->
+    _getRequestData: ->
         data = {}
 
-        data[key] = value for key, value of @attributes when _.isNumber(value) or not _.isEmpty value
-
-        data.filters = filters unless _.isEmpty filters = @_filtersData()
+        data[key] = value for key, value of @attributes when _.isNumber(value) or not _.isEmpty(value)
 
         data
-
-    _filtersData: ->
-        data = {}
-
-        data[key] = value for key, value of @filter.attributes when value?
-
-        return data
 
     getData: -> @resp?.data
     getTotal: -> @resp?.total
@@ -430,7 +416,7 @@ class DataGrid extends Cruddy.View
 
         @addActionColumns @columns
 
-        @listenTo @model, "data", => @renderBody()
+        @listenTo @model, "data", => @renderBody() if @$items?
         @listenTo @model, "change:order_by change:order_dir", @markOrderColumn
 
         @listenTo @entity, "change:instance", @markActiveItem
@@ -603,38 +589,45 @@ class FilterList extends Backbone.View
     initialize: (options) ->
         @entity = options.entity
         @availableFilters = options.filters
+
         @filterModel = new Backbone.Model
         @filterModel.entity = @entity
 
-        @listenTo @model, "request", => @toggleButtons yes
-        @listenTo @model, "data", => @toggleButtons no
+        @listenTo @model, "request", => @_toggleButtons yes
+        @listenTo @model, "data", => @_toggleButtons no
+        @listenTo @model, "change", => @_setDataFromDataSource() unless @_applying
 
-        @syncFiltersData()
+        @_setDataFromDataSource()
 
         this
 
-    toggleButtons: (disabled) ->
+    _toggleButtons: (disabled) ->
         @$buttons.prop "disabled", disabled
 
         return
 
     apply: ->
-        @model.filter.set @getFiltersData()
+        @_applying = yes
 
-        console.log @model.filter.attributes
+        @model.set $.extend @_prepareData(), page: 1
+
+        @_applying = no
 
         return this
 
-    getFiltersData: ->
+    _prepareData: ->
         data = {}
 
-        data[key] = filter.prepareData value for key, value of @filterModel.attributes when filter = @availableFilters.get key
+        for key, value of @filterModel.attributes when filter = @availableFilters.get(key)
+            data[filter.getDataKey()] = filter.prepareData(value)
 
         return data
 
-    syncFiltersData: ->
+    _setDataFromDataSource: ->
         data = {}
-        data[filter.id] = filter.parseData @model.filter.get filter.id for filter in @availableFilters.models
+
+        for filter in @availableFilters.models
+            data[filter.id] = filter.parseData @model.get filter.getDataKey()
 
         @filterModel.set data
 
@@ -1111,7 +1104,14 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         this
 
-    itemToString: (item) -> item.title or item.id
+    itemToString: (item) ->
+        return item.title if item.title?
+
+        return item.id unless @selector?
+
+        data = @selector.dataSource.getById item.id
+
+        return if data? then data.title else item.id
 
     itemTemplate: (value, key = null) ->
         html = """
@@ -1242,7 +1242,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
         if @multiple
             if item.id of @selected
-                value = _.filter @getValue(), (item) -> item.id != id
+                value = _.filter @getValue(), (_item) -> _item.id.toString() != item.id.toString()
             else
                 value = _.clone @getValue()
                 value.push item
@@ -1804,7 +1804,7 @@ class Cruddy.Inputs.NumberFilter extends Cruddy.Inputs.Base
         "change": "changeValue"
 
     initialize: ->
-        @defaultOp = "="
+        @defaultOp = ">"
 
         @setValue @emptyValue(), silent: yes if not @getValue()
 
@@ -2338,7 +2338,7 @@ class Cruddy.Fields.Base extends Cruddy.Attribute
 
     prepareAttribute: (value) -> value
 
-    prepareFilterData: (value) -> value
+    prepareFilterData: (value) -> @prepareAttribute value
 
     parseFilterData: (value) -> value
 class Cruddy.Fields.Input extends Cruddy.Fields.Base
@@ -2428,7 +2428,7 @@ class Cruddy.Fields.DateTime extends Cruddy.Fields.BaseDateTime
 
     formatDate: (value) -> moment.unix(value).fromNow()
 class Cruddy.Fields.Boolean extends Cruddy.Fields.Base
-    
+
     createEditableInput: (model) -> new Cruddy.Inputs.Boolean
         model: model
         key: @id
@@ -2439,6 +2439,20 @@ class Cruddy.Fields.Boolean extends Cruddy.Fields.Base
         tripleState: yes
 
     format: (value) -> if value then Cruddy.lang.yes else Cruddy.lang.no
+
+    prepareAttribute: (value) ->
+        return 0 if value is false
+        return 1 if value is true
+
+        return null
+
+    parseFilterData: (value) ->
+        value = parseInt value
+
+        return true if value is 1
+        return false if value is 0
+
+        return null
 class Cruddy.Fields.BaseRelation extends Cruddy.Fields.Base
 
     isVisible: -> @getReference().viewPermitted() and super
@@ -2496,12 +2510,17 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
 
         return value.id
 
-    prepareFilterData: (value) -> @prepareAttribute(value)
+    prepareFilterData: (value) ->
+        value = super
+
+        return if _.isEmpty value then null else value
 
     parseFilterData: (value) ->
-        return null unless value?
+        return null unless _.isString(value) or _.isNumber(value)
 
-        return { id: value } unless @attributes.multiple
+        value = value.toString()
+
+        return null unless value.length
 
         value = value.split ","
 
@@ -2906,15 +2925,23 @@ class Cruddy.Fields.Number extends Cruddy.Fields.Input
     prepareFilterData: (value) ->
         return null if _.isEmpty value.val
 
-        return value.op + value.val
+        return (if value.op is "=" then "" else value.op) + value.val
 
     parseFilterData: (value) ->
-        op = "="
+        op = ">"
         val = null
 
-        if value?
+        if _.isString(value) and value.length
             op = value[0]
-            val = value.substr 1
+            if op in [ "=", "<", ">" ]
+                val = value.substr 1
+            else
+                op = "="
+                val = value
+
+        else if _.isNumber value
+            op = "="
+            val = value
 
         return op: op, val: val
 class Cruddy.Fields.Computed extends Cruddy.Fields.Base
@@ -3033,6 +3060,8 @@ class Cruddy.Filters.Base extends Cruddy.Attribute
     prepareData: (value) -> value
 
     parseData: (value) -> value
+
+    getDataKey: -> @get("data_key") or @id
 class Cruddy.Filters.Proxy extends Cruddy.Filters.Base
 
     initialize: (attributes) ->
@@ -3358,49 +3387,49 @@ class Cruddy.Entity.Page extends Cruddy.View
         super
 
     initialize: (options) ->
-        @dataSource = @setupDataSource()
+        @dataSource = @_setupDataSource()
 
         # Make sure that those events not fired twice
         after_break =>
-            @listenTo Cruddy.router, "route:index", @handleRouteUpdated
+            @listenTo Cruddy.router, "route:index", @_updateFromQuery
 
         super
 
-    pageUnloadConfirmationMessage: -> return @form?.pageUnloadConfirmationMessage()
-
-    handleRouteUpdated: ->
+    _updateFromQuery: ->
         @_updateDataSourceFromQuery()
 
-        @_displayForm().fail => @_syncQueryParameters replace: yes
+        @_displayForm().fail => @_updateModelIdInQuery replace: yes
 
         return this
 
-    setupDataSource: ->
-        @dataSource = ds = @model.getDataSource()
+    _setupDataSource: ->
+        @dataSource = dataSource = @model.getDataSource()
 
-        @_updateDataSourceFromQuery silent: yes
+        @_updateFromQuery()
 
-        ds.fetch() unless ds.inProgress() or ds.hasData()
+        dataSource.fetch() unless dataSource.inProgress() or dataSource.hasData()
 
-        @listenTo ds, "change", (model) -> Cruddy.router.refreshQuery model.defaults, model.attributes, trigger: no
+        @listenTo dataSource, "change",  @_refreshQuery
 
-        #@defaultFilters = filters = {}
-        #filters[filter.id] = null for filter in @model.filters.models
+        return dataSource
 
-        #@listenTo ds.filter, "change", (model) ->
-        #    Cruddy.router.refreshQuery filters, model.attributes, { trigger: no, base: "f" }
+    _refreshQuery: ->
+        dataSource = @dataSource
 
-        return ds
+        Cruddy.router.refreshQuery dataSource.attributes, dataSource.defaults, trigger: no
+
+        return this
 
     _updateDataSourceFromQuery: (options) ->
-        @dataSource.set @getDatasourceData(), options
-        #@dataSource.filter.set Cruddy.router.query.keys.f || {}
+        data = $.extend {}, @dataSource.defaults, _.omit Cruddy.router.query.keys, [ "id" ]
+
+        data[key] = null for key of @dataSource.attributes when not (key of data)
+
+        @dataSource.set data, options
 
         return
 
-    getDatasourceData: ->_.pick Cruddy.router.query.keys, "keywords", "per_page", "order_dir", "order_by", "page"
-
-    _syncQueryParameters: (options) ->
+    _updateModelIdInQuery: (options) ->
         router = Cruddy.router
 
         options = $.extend { trigger: no, replace: no }, options
@@ -3476,7 +3505,7 @@ class Cruddy.Entity.Page extends Cruddy.View
 
         this
 
-    displayForm: (id) -> @_displayForm(id).done => @_syncQueryParameters()
+    displayForm: (id) -> @_displayForm(id).done => @_updateModelIdInQuery()
 
     create: ->
         @displayForm "new"
@@ -3503,8 +3532,6 @@ class Cruddy.Entity.Page extends Cruddy.View
         @$component("filter_list_view").append @filterListView.render().el      if @filterListView
         @$component("data_view").append @dataView.render().el                   if @dataView
         @$component("pagination_view").append @paginationView.render().el       if @paginationView
-
-        @handleRouteUpdated()
 
         return this
 
@@ -3590,6 +3617,8 @@ class Cruddy.Entity.Page extends Cruddy.View
             @model.executeAction modelId, actionId, success: => @dataSource.fetch()
 
         return this
+
+    pageUnloadConfirmationMessage: -> return @form?.pageUnloadConfirmationMessage()
 # View that displays a form for an entity instance
 class Cruddy.Entity.Form extends Cruddy.Layout.Layout
     className: "entity-form"
@@ -4158,21 +4187,16 @@ class Router extends Backbone.Router
     # Set the query parameter value
     setQuery: (key, value, options) -> @updateQuery @query.set(key, value), options
 
-    refreshQuery: (defaults, actual, options = {}) ->
-        q = @query.copy()
-        base = options.base or null
+    refreshQuery: (params, defaults = {}, options) ->
+        query = @query.copy()
 
-        for key, val of defaults
-            _key = if base then base + "[" + key + "]" else key
-
-            if key of actual and (value = actual[key]) isnt val
-                q.SET _key, value
+        for key, value of params
+            if value is null or (key of defaults and value == defaults[key])
+                query.REMOVE key
             else
-                q.REMOVE _key
+                query.SET key, value
 
-        console.log q
-
-        @updateQuery q, options
+        @updateQuery query, options
 
     # Remove the key from the query
     removeQuery: (key, options) -> @updateQuery @query.remove(key), options

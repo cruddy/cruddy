@@ -8,7 +8,6 @@ class DataSource extends Backbone.Model
 
     initialize: (attributes, options) ->
         @entity = entity = options.entity
-        @filter = filter = new Backbone.Model
         @defaults = _.clone @attributes
 
         @options =
@@ -23,10 +22,6 @@ class DataSource extends Backbone.Model
                 @trigger "data", this, resp.data
 
             error: (xhr) => @trigger "error", this, xhr
-
-        @listenTo filter, "change", =>
-            @set "page", 1, noFetch: yes
-            @fetch()
 
         @on "change:keywords", => @set "page", 1
         @on "change", (model, options) => @fetch() unless options.noFetch
@@ -44,7 +39,7 @@ class DataSource extends Backbone.Model
     fetch: ->
         @request.abort() if @request?
 
-        @options.data = @_requestData()
+        @options.data = @_getRequestData()
 
         @request = $.ajax @options
 
@@ -68,21 +63,12 @@ class DataSource extends Backbone.Model
 
         return this
 
-    _requestData: ->
+    _getRequestData: ->
         data = {}
 
-        data[key] = value for key, value of @attributes when _.isNumber(value) or not _.isEmpty value
-
-        data.filters = filters unless _.isEmpty filters = @_filtersData()
+        data[key] = value for key, value of @attributes when _.isNumber(value) or not _.isEmpty(value)
 
         data
-
-    _filtersData: ->
-        data = {}
-
-        data[key] = value for key, value of @filter.attributes when value?
-
-        return data
 
     getData: -> @resp?.data
     getTotal: -> @resp?.total

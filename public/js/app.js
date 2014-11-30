@@ -340,9 +340,8 @@
     };
 
     DataSource.prototype.initialize = function(attributes, options) {
-      var entity, filter;
+      var entity;
       this.entity = entity = options.entity;
-      this.filter = filter = new Backbone.Model;
       this.defaults = _.clone(this.attributes);
       this.options = {
         url: entity.url(),
@@ -361,14 +360,6 @@
           };
         })(this)
       };
-      this.listenTo(filter, "change", (function(_this) {
-        return function() {
-          _this.set("page", 1, {
-            noFetch: true
-          });
-          return _this.fetch();
-        };
-      })(this));
       this.on("change:keywords", (function(_this) {
         return function() {
           return _this.set("page", 1);
@@ -407,7 +398,7 @@
       if (this.request != null) {
         this.request.abort();
       }
-      this.options.data = this._requestData();
+      this.options.data = this._getRequestData();
       this.request = $.ajax(this.options);
       this.request.always((function(_this) {
         return function() {
@@ -439,29 +430,13 @@
       return this;
     };
 
-    DataSource.prototype._requestData = function() {
-      var data, filters, key, value, _ref1;
+    DataSource.prototype._getRequestData = function() {
+      var data, key, value, _ref1;
       data = {};
       _ref1 = this.attributes;
       for (key in _ref1) {
         value = _ref1[key];
         if (_.isNumber(value) || !_.isEmpty(value)) {
-          data[key] = value;
-        }
-      }
-      if (!_.isEmpty(filters = this._filtersData())) {
-        data.filters = filters;
-      }
-      return data;
-    };
-
-    DataSource.prototype._filtersData = function() {
-      var data, key, value, _ref1;
-      data = {};
-      _ref1 = this.filter.attributes;
-      for (key in _ref1) {
-        value = _ref1[key];
-        if (value != null) {
           data[key] = value;
         }
       }
@@ -723,7 +698,9 @@
       this.addActionColumns(this.columns);
       this.listenTo(this.model, "data", (function(_this) {
         return function() {
-          return _this.renderBody();
+          if (_this.$items != null) {
+            return _this.renderBody();
+          }
         };
       })(this));
       this.listenTo(this.model, "change:order_by change:order_dir", this.markOrderColumn);
@@ -936,48 +913,58 @@
       this.filterModel.entity = this.entity;
       this.listenTo(this.model, "request", (function(_this) {
         return function() {
-          return _this.toggleButtons(true);
+          return _this._toggleButtons(true);
         };
       })(this));
       this.listenTo(this.model, "data", (function(_this) {
         return function() {
-          return _this.toggleButtons(false);
+          return _this._toggleButtons(false);
         };
       })(this));
-      this.syncFiltersData();
+      this.listenTo(this.model, "change", (function(_this) {
+        return function() {
+          if (!_this._applying) {
+            return _this._setDataFromDataSource();
+          }
+        };
+      })(this));
+      this._setDataFromDataSource();
       return this;
     };
 
-    FilterList.prototype.toggleButtons = function(disabled) {
+    FilterList.prototype._toggleButtons = function(disabled) {
       this.$buttons.prop("disabled", disabled);
     };
 
     FilterList.prototype.apply = function() {
-      this.model.filter.set(this.getFiltersData());
-      console.log(this.model.filter.attributes);
+      this._applying = true;
+      this.model.set($.extend(this._prepareData(), {
+        page: 1
+      }));
+      this._applying = false;
       return this;
     };
 
-    FilterList.prototype.getFiltersData = function() {
+    FilterList.prototype._prepareData = function() {
       var data, filter, key, value, _ref1;
       data = {};
       _ref1 = this.filterModel.attributes;
       for (key in _ref1) {
         value = _ref1[key];
         if (filter = this.availableFilters.get(key)) {
-          data[key] = filter.prepareData(value);
+          data[filter.getDataKey()] = filter.prepareData(value);
         }
       }
       return data;
     };
 
-    FilterList.prototype.syncFiltersData = function() {
+    FilterList.prototype._setDataFromDataSource = function() {
       var data, filter, _i, _len, _ref1;
       data = {};
       _ref1 = this.availableFilters.models;
       for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
         filter = _ref1[_i];
-        data[filter.id] = filter.parseData(this.model.filter.get(filter.id));
+        data[filter.id] = filter.parseData(this.model.get(filter.getDataKey()));
       }
       this.filterModel.set(data);
       return this;
@@ -1617,7 +1604,19 @@
     };
 
     EntityDropdown.prototype.itemToString = function(item) {
-      return item.title || item.id;
+      var data;
+      if (item.title != null) {
+        return item.title;
+      }
+      if (this.selector == null) {
+        return item.id;
+      }
+      data = this.selector.dataSource.getById(item.id);
+      if (data != null) {
+        return data.title;
+      } else {
+        return item.id;
+      }
     };
 
     EntityDropdown.prototype.itemTemplate = function(value, key) {
@@ -1774,8 +1773,8 @@
       }
       if (this.multiple) {
         if (item.id in this.selected) {
-          value = _.filter(this.getValue(), function(item) {
-            return item.id !== id;
+          value = _.filter(this.getValue(), function(_item) {
+            return _item.id.toString() !== item.id.toString();
           });
         } else {
           value = _.clone(this.getValue());
@@ -2528,7 +2527,7 @@
     };
 
     NumberFilter.prototype.initialize = function() {
-      this.defaultOp = "=";
+      this.defaultOp = ">";
       if (!this.getValue()) {
         this.setValue(this.emptyValue(), {
           silent: true
@@ -3336,7 +3335,7 @@
     };
 
     Base.prototype.prepareFilterData = function(value) {
-      return value;
+      return this.prepareAttribute(value);
     };
 
     Base.prototype.parseFilterData = function(value) {
@@ -3578,6 +3577,27 @@
       }
     };
 
+    Boolean.prototype.prepareAttribute = function(value) {
+      if (value === false) {
+        return 0;
+      }
+      if (value === true) {
+        return 1;
+      }
+      return null;
+    };
+
+    Boolean.prototype.parseFilterData = function(value) {
+      value = parseInt(value);
+      if (value === 1) {
+        return true;
+      }
+      if (value === 0) {
+        return false;
+      }
+      return null;
+    };
+
     return Boolean;
 
   })(Cruddy.Fields.Base);
@@ -3690,17 +3710,21 @@
     };
 
     Relation.prototype.prepareFilterData = function(value) {
-      return this.prepareAttribute(value);
+      value = Relation.__super__.prepareFilterData.apply(this, arguments);
+      if (_.isEmpty(value)) {
+        return null;
+      } else {
+        return value;
+      }
     };
 
     Relation.prototype.parseFilterData = function(value) {
-      if (value == null) {
+      if (!(_.isString(value) || _.isNumber(value))) {
         return null;
       }
-      if (!this.attributes.multiple) {
-        return {
-          id: value
-        };
+      value = value.toString();
+      if (!value.length) {
+        return null;
       }
       value = value.split(",");
       return _.map(value, function(value) {
@@ -4379,16 +4403,24 @@
       if (_.isEmpty(value.val)) {
         return null;
       }
-      return value.op + value.val;
+      return (value.op === "=" ? "" : value.op) + value.val;
     };
 
     Number.prototype.parseFilterData = function(value) {
       var op, val;
-      op = "=";
+      op = ">";
       val = null;
-      if (value != null) {
+      if (_.isString(value) && value.length) {
         op = value[0];
-        val = value.substr(1);
+        if (op === "=" || op === "<" || op === ">") {
+          val = value.substr(1);
+        } else {
+          op = "=";
+          val = value;
+        }
+      } else if (_.isNumber(value)) {
+        op = "=";
+        val = value;
       }
       return {
         op: op,
@@ -4632,6 +4664,10 @@
 
     Base.prototype.parseData = function(value) {
       return value;
+    };
+
+    Base.prototype.getDataKey = function() {
+      return this.get("data_key") || this.id;
     };
 
     return Base;
@@ -5151,25 +5187,20 @@
     }
 
     Page.prototype.initialize = function(options) {
-      this.dataSource = this.setupDataSource();
+      this.dataSource = this._setupDataSource();
       after_break((function(_this) {
         return function() {
-          return _this.listenTo(Cruddy.router, "route:index", _this.handleRouteUpdated);
+          return _this.listenTo(Cruddy.router, "route:index", _this._updateFromQuery);
         };
       })(this));
       return Page.__super__.initialize.apply(this, arguments);
     };
 
-    Page.prototype.pageUnloadConfirmationMessage = function() {
-      var _ref1;
-      return (_ref1 = this.form) != null ? _ref1.pageUnloadConfirmationMessage() : void 0;
-    };
-
-    Page.prototype.handleRouteUpdated = function() {
+    Page.prototype._updateFromQuery = function() {
       this._updateDataSourceFromQuery();
       this._displayForm().fail((function(_this) {
         return function() {
-          return _this._syncQueryParameters({
+          return _this._updateModelIdInQuery({
             replace: true
           });
         };
@@ -5177,32 +5208,38 @@
       return this;
     };
 
-    Page.prototype.setupDataSource = function() {
-      var ds;
-      this.dataSource = ds = this.model.getDataSource();
-      this._updateDataSourceFromQuery({
-        silent: true
-      });
-      if (!(ds.inProgress() || ds.hasData())) {
-        ds.fetch();
+    Page.prototype._setupDataSource = function() {
+      var dataSource;
+      this.dataSource = dataSource = this.model.getDataSource();
+      this._updateFromQuery();
+      if (!(dataSource.inProgress() || dataSource.hasData())) {
+        dataSource.fetch();
       }
-      this.listenTo(ds, "change", function(model) {
-        return Cruddy.router.refreshQuery(model.defaults, model.attributes, {
-          trigger: false
-        });
+      this.listenTo(dataSource, "change", this._refreshQuery);
+      return dataSource;
+    };
+
+    Page.prototype._refreshQuery = function() {
+      var dataSource;
+      dataSource = this.dataSource;
+      Cruddy.router.refreshQuery(dataSource.attributes, dataSource.defaults, {
+        trigger: false
       });
-      return ds;
+      return this;
     };
 
     Page.prototype._updateDataSourceFromQuery = function(options) {
-      this.dataSource.set(this.getDatasourceData(), options);
+      var data, key;
+      data = $.extend({}, this.dataSource.defaults, _.omit(Cruddy.router.query.keys, ["id"]));
+      for (key in this.dataSource.attributes) {
+        if (!(key in data)) {
+          data[key] = null;
+        }
+      }
+      this.dataSource.set(data, options);
     };
 
-    Page.prototype.getDatasourceData = function() {
-      return _.pick(Cruddy.router.query.keys, "keywords", "per_page", "order_dir", "order_by", "page");
-    };
-
-    Page.prototype._syncQueryParameters = function(options) {
+    Page.prototype._updateModelIdInQuery = function(options) {
       var router;
       router = Cruddy.router;
       options = $.extend({
@@ -5305,7 +5342,7 @@
     Page.prototype.displayForm = function(id) {
       return this._displayForm(id).done((function(_this) {
         return function() {
-          return _this._syncQueryParameters();
+          return _this._updateModelIdInQuery();
         };
       })(this));
     };
@@ -5343,7 +5380,6 @@
       if (this.paginationView) {
         this.$component("pagination_view").append(this.paginationView.render().el);
       }
-      this.handleRouteUpdated();
       return this;
     };
 
@@ -5433,6 +5469,11 @@
         });
       }
       return this;
+    };
+
+    Page.prototype.pageUnloadConfirmationMessage = function() {
+      var _ref1;
+      return (_ref1 = this.form) != null ? _ref1.pageUnloadConfirmationMessage() : void 0;
     };
 
     return Page;
@@ -6048,24 +6089,21 @@
       return this.updateQuery(this.query.set(key, value), options);
     };
 
-    Router.prototype.refreshQuery = function(defaults, actual, options) {
-      var base, key, q, val, value, _key;
-      if (options == null) {
-        options = {};
+    Router.prototype.refreshQuery = function(params, defaults, options) {
+      var key, query, value;
+      if (defaults == null) {
+        defaults = {};
       }
-      q = this.query.copy();
-      base = options.base || null;
-      for (key in defaults) {
-        val = defaults[key];
-        _key = base ? base + "[" + key + "]" : key;
-        if (key in actual && (value = actual[key]) !== val) {
-          q.SET(_key, value);
+      query = this.query.copy();
+      for (key in params) {
+        value = params[key];
+        if (value === null || (key in defaults && value === defaults[key])) {
+          query.REMOVE(key);
         } else {
-          q.REMOVE(_key);
+          query.SET(key, value);
         }
       }
-      console.log(q);
-      return this.updateQuery(q, options);
+      return this.updateQuery(query, options);
     };
 
     Router.prototype.removeQuery = function(key, options) {

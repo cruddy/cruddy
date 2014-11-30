@@ -77,8 +77,16 @@ abstract class BaseNumber extends BaseInput implements Filter {
     {
         if (empty($data)) return;
 
-        $operator = substr($data, 0, 1);
-        $value = $this->cast(substr($data, 1));
+        if (is_numeric($data))
+        {
+            $operator = '=';
+            $value = $data;
+        }
+        else
+        {
+            $operator = substr($data, 0, 1);
+            $value = $this->cast(substr($data, 1));
+        }
 
         if ($value and $operator) $builder->where($this->id, $operator, $value);
     }

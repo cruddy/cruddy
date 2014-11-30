@@ -53,6 +53,6 @@ class Cruddy.Fields.Base extends Cruddy.Attribute
 
     prepareAttribute: (value) -> value
 
-    prepareFilterData: (value) -> value
+    prepareFilterData: (value) -> @prepareAttribute value
 
     parseFilterData: (value) -> value

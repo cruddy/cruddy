@@ -49,7 +49,7 @@ class Boolean extends BaseField implements Filter {
      */
     public function process($value)
     {
-        return $value === 'true' || $value === '1' || $value === 'on' ? 1 : 0;
+        return $value === 'true' || $value == '1' || $value === 'on' ? 1 : 0;
     }
 
     /**

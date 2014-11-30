@@ -6,7 +6,7 @@ class Cruddy.Inputs.NumberFilter extends Cruddy.Inputs.Base
         "change": "changeValue"
 
     initialize: ->
-        @defaultOp = "="
+        @defaultOp = ">"
 
         @setValue @emptyValue(), silent: yes if not @getValue()
 

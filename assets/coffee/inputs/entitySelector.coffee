@@ -68,7 +68,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
         if @multiple
             if item.id of @selected
-                value = _.filter @getValue(), (item) -> item.id != id
+                value = _.filter @getValue(), (_item) -> _item.id.toString() != item.id.toString()
             else
                 value = _.clone @getValue()
                 value.push item

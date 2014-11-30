@@ -7,14 +7,22 @@ class Cruddy.Fields.Number extends Cruddy.Fields.Input
     prepareFilterData: (value) ->
         return null if _.isEmpty value.val
 
-        return value.op + value.val
+        return (if value.op is "=" then "" else value.op) + value.val
 
     parseFilterData: (value) ->
-        op = "="
+        op = ">"
         val = null
 
-        if value?
+        if _.isString(value) and value.length
             op = value[0]
-            val = value.substr 1
+            if op in [ "=", "<", ">" ]
+                val = value.substr 1
+            else
+                op = "="
+                val = value
+
+        else if _.isNumber value
+            op = "="
+            val = value
 
         return op: op, val: val

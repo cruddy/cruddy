@@ -10,38 +10,45 @@ class FilterList extends Backbone.View
     initialize: (options) ->
         @entity = options.entity
         @availableFilters = options.filters
+
         @filterModel = new Backbone.Model
         @filterModel.entity = @entity
 
-        @listenTo @model, "request", => @toggleButtons yes
-        @listenTo @model, "data", => @toggleButtons no
+        @listenTo @model, "request", => @_toggleButtons yes
+        @listenTo @model, "data", => @_toggleButtons no
+        @listenTo @model, "change", => @_setDataFromDataSource() unless @_applying
 
-        @syncFiltersData()
+        @_setDataFromDataSource()
 
         this
 
-    toggleButtons: (disabled) ->
+    _toggleButtons: (disabled) ->
         @$buttons.prop "disabled", disabled
 
         return
 
     apply: ->
-        @model.filter.set @getFiltersData()
+        @_applying = yes
 
-        console.log @model.filter.attributes
+        @model.set $.extend @_prepareData(), page: 1
+
+        @_applying = no
 
         return this
 
-    getFiltersData: ->
+    _prepareData: ->
         data = {}
 
-        data[key] = filter.prepareData value for key, value of @filterModel.attributes when filter = @availableFilters.get key
+        for key, value of @filterModel.attributes when filter = @availableFilters.get(key)
+            data[filter.getDataKey()] = filter.prepareData(value)
 
         return data
 
-    syncFiltersData: ->
+    _setDataFromDataSource: ->
         data = {}
-        data[filter.id] = filter.parseData @model.filter.get filter.id for filter in @availableFilters.models
+
+        for filter in @availableFilters.models
+            data[filter.id] = filter.parseData @model.get filter.getDataKey()
 
         @filterModel.set data
 

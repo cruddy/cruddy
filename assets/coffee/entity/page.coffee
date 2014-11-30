@@ -12,49 +12,49 @@ class Cruddy.Entity.Page extends Cruddy.View
         super
 
     initialize: (options) ->
-        @dataSource = @setupDataSource()
+        @dataSource = @_setupDataSource()
 
         # Make sure that those events not fired twice
         after_break =>
-            @listenTo Cruddy.router, "route:index", @handleRouteUpdated
+            @listenTo Cruddy.router, "route:index", @_updateFromQuery
 
         super
 
-    pageUnloadConfirmationMessage: -> return @form?.pageUnloadConfirmationMessage()
-
-    handleRouteUpdated: ->
+    _updateFromQuery: ->
         @_updateDataSourceFromQuery()
 
-        @_displayForm().fail => @_syncQueryParameters replace: yes
+        @_displayForm().fail => @_updateModelIdInQuery replace: yes
 
         return this
 
-    setupDataSource: ->
-        @dataSource = ds = @model.getDataSource()
+    _setupDataSource: ->
+        @dataSource = dataSource = @model.getDataSource()
 
-        @_updateDataSourceFromQuery silent: yes
+        @_updateFromQuery()
 
-        ds.fetch() unless ds.inProgress() or ds.hasData()
+        dataSource.fetch() unless dataSource.inProgress() or dataSource.hasData()
 
-        @listenTo ds, "change", (model) -> Cruddy.router.refreshQuery model.defaults, model.attributes, trigger: no
+        @listenTo dataSource, "change",  @_refreshQuery
 
-        #@defaultFilters = filters = {}
-        #filters[filter.id] = null for filter in @model.filters.models
+        return dataSource
 
-        #@listenTo ds.filter, "change", (model) ->
-        #    Cruddy.router.refreshQuery filters, model.attributes, { trigger: no, base: "f" }
+    _refreshQuery: ->
+        dataSource = @dataSource
 
-        return ds
+        Cruddy.router.refreshQuery dataSource.attributes, dataSource.defaults, trigger: no
+
+        return this
 
     _updateDataSourceFromQuery: (options) ->
-        @dataSource.set @getDatasourceData(), options
-        #@dataSource.filter.set Cruddy.router.query.keys.f || {}
+        data = $.extend {}, @dataSource.defaults, _.omit Cruddy.router.query.keys, [ "id" ]
+
+        data[key] = null for key of @dataSource.attributes when not (key of data)
+
+        @dataSource.set data, options
 
         return
 
-    getDatasourceData: ->_.pick Cruddy.router.query.keys, "keywords", "per_page", "order_dir", "order_by", "page"
-
-    _syncQueryParameters: (options) ->
+    _updateModelIdInQuery: (options) ->
         router = Cruddy.router
 
         options = $.extend { trigger: no, replace: no }, options
@@ -130,7 +130,7 @@ class Cruddy.Entity.Page extends Cruddy.View
 
         this
 
-    displayForm: (id) -> @_displayForm(id).done => @_syncQueryParameters()
+    displayForm: (id) -> @_displayForm(id).done => @_updateModelIdInQuery()
 
     create: ->
         @displayForm "new"
@@ -157,8 +157,6 @@ class Cruddy.Entity.Page extends Cruddy.View
         @$component("filter_list_view").append @filterListView.render().el      if @filterListView
         @$component("data_view").append @dataView.render().el                   if @dataView
         @$component("pagination_view").append @paginationView.render().el       if @paginationView
-
-        @handleRouteUpdated()
 
         return this
 
@@ -244,3 +242,5 @@ class Cruddy.Entity.Page extends Cruddy.View
             @model.executeAction modelId, actionId, success: => @dataSource.fetch()
 
         return this
+
+    pageUnloadConfirmationMessage: -> return @form?.pageUnloadConfirmationMessage()

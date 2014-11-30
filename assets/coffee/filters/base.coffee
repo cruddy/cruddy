@@ -9,3 +9,5 @@ class Cruddy.Filters.Base extends Cruddy.Attribute
     prepareData: (value) -> value
 
     parseData: (value) -> value
+
+    getDataKey: -> @get("data_key") or @id

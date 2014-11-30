@@ -37,12 +37,17 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
 
         return value.id
 
-    prepareFilterData: (value) -> @prepareAttribute(value)
+    prepareFilterData: (value) ->
+        value = super
+
+        return if _.isEmpty value then null else value
 
     parseFilterData: (value) ->
-        return null unless value?
+        return null unless _.isString(value) or _.isNumber(value)
 
-        return { id: value } unless @attributes.multiple
+        value = value.toString()
+
+        return null unless value.length
 
         value = value.split ","
 

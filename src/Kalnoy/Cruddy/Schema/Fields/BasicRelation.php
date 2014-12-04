@@ -198,12 +198,14 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessor {
     }
 
     /**
-     * @param $data
+     * @param string $data
      *
      * @return array
      */
     protected function parseData($data)
     {
+        if (empty($data)) return [];
+
         return explode(',', $data);
     }
 }

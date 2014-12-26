@@ -1,5 +1,5 @@
-develop
-=======
+v0.4.0
+======
 
 *   Plain formatter now doesn't use escaping
 *   #49: fixed image displayed when no data provided

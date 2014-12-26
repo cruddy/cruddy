@@ -28,5 +28,11 @@
         "psr-0": {
             "Kalnoy\\Cruddy\\": "src/"
         }
+    },
+
+    "extra": {
+        "branch-alias": {
+            "dev-master": "v0.5.x-dev"
+        }
     }
 }

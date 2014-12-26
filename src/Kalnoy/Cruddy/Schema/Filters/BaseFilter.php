@@ -16,6 +16,13 @@ use Kalnoy\Cruddy\Schema\Entry;
 abstract class BaseFilter extends Entry implements Filter {
 
     /**
+     * The list of internal keys that cannot be used as filter id.
+     *
+     * @var array
+     */
+    static $sysKeys = [ 'page', 'per_page', 'keywords', 'order_by', 'order_dir' ];
+
+    /**
      * Get field label.
      *
      * @return string
@@ -41,12 +48,23 @@ abstract class BaseFilter extends Entry implements Filter {
     }
 
     /**
+     * @return string
+     */
+    public function getDataKey()
+    {
+        if (in_array($this->id, static::$sysKeys)) return 'f_'.$this->id;
+
+        return $this->id;
+    }
+
+    /**
      * @return array
      */
     public function toArray()
     {
         return [
             'label' => $this->getLabel(),
+            'data_key' => $this->getDataKey(),
 
         ] + parent::toArray();
     }

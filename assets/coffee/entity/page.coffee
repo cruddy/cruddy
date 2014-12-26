@@ -12,41 +12,49 @@ class Cruddy.Entity.Page extends Cruddy.View
         super
 
     initialize: (options) ->
-        @dataSource = @model.createDataSource @getDatasourceData()
+        @dataSource = @_setupDataSource()
 
         # Make sure that those events not fired twice
         after_break =>
-            @listenTo @dataSource, "change", (model) -> Cruddy.router.refreshQuery @getDatasourceDefaults(), model.attributes, trigger: no
-            @listenTo Cruddy.router, "route:index", @handleRouteUpdated
+            @listenTo Cruddy.router, "route:index", @_updateFromQuery
 
         super
 
-    pageUnloadConfirmationMessage: -> return @form?.pageUnloadConfirmationMessage()
+    _updateFromQuery: ->
+        @_updateDataSourceFromQuery()
 
-    handleRouteUpdated: ->
-        @dataSource.set @getDatasourceData()
-
-        @_displayForm().fail => @_syncQueryParameters replace: yes
+        @_displayForm().fail => @_updateModelIdInQuery replace: yes
 
         return this
 
-    getDatasourceData: ->_.pick Cruddy.router.query.keys, "search", "per_page", "order_dir", "order_by"
+    _setupDataSource: ->
+        @dataSource = dataSource = @model.getDataSource()
 
-    getDatasourceDefaults: ->
-        return @dsDefaults if @dsDefaults
+        @_updateFromQuery()
 
-        @dsDefaults = data =
-            current_page: 1
-            order_by: @model.get "order_by"
-            order_dir: "asc"
-            search: ""
+        dataSource.fetch() unless dataSource.inProgress() or dataSource.hasData()
 
-        if data.order_by and (col = @model.columns.get(data.order_by))
-            data.order_dir = col.get "order_dir"
+        @listenTo dataSource, "change",  @_refreshQuery
 
-        return data
+        return dataSource
 
-    _syncQueryParameters: (options) ->
+    _refreshQuery: ->
+        dataSource = @dataSource
+
+        Cruddy.router.refreshQuery dataSource.attributes, dataSource.defaults, trigger: no
+
+        return this
+
+    _updateDataSourceFromQuery: (options) ->
+        data = $.extend {}, @dataSource.defaults, _.omit Cruddy.router.query.keys, [ "id" ]
+
+        data[key] = null for key of @dataSource.attributes when not (key of data)
+
+        @dataSource.set data, options
+
+        return
+
+    _updateModelIdInQuery: (options) ->
         router = Cruddy.router
 
         options = $.extend { trigger: no, replace: no }, options
@@ -59,7 +67,7 @@ class Cruddy.Entity.Page extends Cruddy.View
         return this
 
     _displayForm: (instanceId) ->
-        return if @loadingForm
+        return @loadingForm if @loadingForm
 
         instanceId = instanceId ? Cruddy.router.getQuery("id")
 
@@ -122,7 +130,7 @@ class Cruddy.Entity.Page extends Cruddy.View
 
         this
 
-    displayForm: (id) -> @_displayForm(id).done => @_syncQueryParameters()
+    displayForm: (id) -> @_displayForm(id).done => @_updateModelIdInQuery()
 
     create: ->
         @displayForm "new"
@@ -150,9 +158,6 @@ class Cruddy.Entity.Page extends Cruddy.View
         @$component("data_view").append @dataView.render().el                   if @dataView
         @$component("pagination_view").append @paginationView.render().el       if @paginationView
 
-        @handleRouteUpdated()
-        @dataSource.fetch()
-
         return this
 
     createDataView: -> new DataGrid
@@ -165,13 +170,13 @@ class Cruddy.Entity.Page extends Cruddy.View
         return if (filters = @dataSource.entity.filters).isEmpty()
 
         return new FilterList
-            model: @dataSource.filter
+            model: @dataSource
             entity: @model
             filters: filters
 
     createSearchInputView: -> new Cruddy.Inputs.Search
         model: @dataSource
-        key: "search"
+        key: "keywords"
 
     template: -> """
         <div class="content-header">
@@ -223,8 +228,6 @@ class Cruddy.Entity.Page extends Cruddy.View
         @paginationView?.remove()
         @searchInputView?.remove()
 
-        @dataSource?.stopListening()
-
         super
 
     getPageTitle: ->
@@ -233,3 +236,11 @@ class Cruddy.Entity.Page extends Cruddy.View
         title = @form.model.getTitle() + TITLE_SEPARATOR + title if @form?
 
         title
+
+    executeCustomAction: (actionId, modelId, el) ->
+        if el and not $(el).parent().is "disabled"
+            @model.executeAction modelId, actionId, success: => @dataSource.fetch()
+
+        return this
+
+    pageUnloadConfirmationMessage: -> return @form?.pageUnloadConfirmationMessage()

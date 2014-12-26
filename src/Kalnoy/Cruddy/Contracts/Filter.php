@@ -8,10 +8,10 @@ interface Filter extends Entry {
 
     /**
      * @param Builder $builder
-     * @param $data
+     * @param $input
      *
      * @return void
      */
-    public function applyFilterConstraint(Builder $builder, $data);
+    public function applyFilterConstraint(Builder $builder, $input);
 
 }

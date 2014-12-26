@@ -14,10 +14,14 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
         this
 
     optionIndex: (value) ->
+        return 1 if not value?
+
         index = if @hasPrompt() then 2 else 1
 
+        value = value.toString()
+
         for data, label of @items
-            break if value == data
+            break if value == data.toString()
 
             index++
 

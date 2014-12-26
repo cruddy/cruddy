@@ -1,7 +1,10 @@
 <?php
 
 namespace Kalnoy\Cruddy\Contracts;
-use Kalnoy\Cruddy\Contracts\SearchProcessor;
+
+use Closure;
+use Eloquent;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Repository interface.
@@ -16,7 +19,7 @@ interface Repository {
     /**
      * Get new eloquent model.
      *
-     * @return \Illuminate\Database\Eloquent\Model
+     * @return Eloquent
      */
     public function newModel();
 
@@ -25,7 +28,7 @@ interface Repository {
     *
     * @param mixed  $id
     *
-    * @return \Illuminate\Database\Eloquent\Model
+    * @return Model
     *
     * @throws \Kalnoy\Cruddy\ModelNotFoundException
     */
@@ -47,25 +50,15 @@ interface Repository {
     public function search(array $options, SearchProcessor $processor = null);
 
     /**
-     * Create new eloquent model with input.
+     * Save the model.
      *
+     * @param Model $model
      * @param array $input
+     * @param callable $extra
      *
-     * @return \Illuminate\Database\Eloquent\Model
+     * @return void
      */
-    public function create(array $input);
-
-    /**
-     * Update existing eloquent model with input.
-     *
-     * @param int   $id
-     * @param array $input
-     *
-     * @return \Illuminate\Database\Eloquent\Model
-     *
-     * @throws \Kalnoy\Cruddy\ModelNotFoundException
-     */
-    public function update($id, array $input);
+    public function save(Model $model, array $input, Closure $extra = null);
 
     /**
      * Delete a model or a set of model.

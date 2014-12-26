@@ -2,15 +2,16 @@
 
 namespace Kalnoy\Cruddy;
 
+use Kalnoy\Cruddy\Schema\AttributesCollection;
+use Kalnoy\Cruddy\Schema\BaseCollection;
 use RuntimeException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Contracts\JsonableInterface;
 use Illuminate\Support\Contracts\ArrayableInterface;
-use Illuminate\Database\Eloquent\Model as Eloquent;
+use Illuminate\Database\Eloquent\Model;
 use Kalnoy\Cruddy\Contracts\Schema as SchemaContract;
 use Kalnoy\Cruddy\Schema\InstanceFactory;
 use Kalnoy\Cruddy\Contracts\InlineRelation;
-use Kalnoy\Cruddy\Service\Validation\ValidationException;
 use Kalnoy\Cruddy\Contracts\SearchProcessor;
 use Kalnoy\Cruddy\Repo\ChainedSearchProcessor;
 
@@ -76,13 +77,6 @@ class Entity implements JsonableInterface, ArrayableInterface {
     private $validator;
 
     /**
-     * The list of related entities.
-     *
-     * @var Contracts\InlineRelation[]
-     */
-    protected $related = [];
-
-    /**
      * The list of all actions.
      *
      * @var array
@@ -118,41 +112,47 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Extract model fields.
      *
-     * @param array|\Illuminate\Database\Eloquent\Model $model
+     * @param array|Model $model
      *
      * @return array
      */
-    public function extract($model)
+    public function extract($model, AttributesCollection $collection = null)
     {
         if ( ! $model) return null;
 
         if (is_array($model) or $model instanceof Collection)
         {
-            return $this->extractAll($model);
+            return $this->extractAll($model, $collection);
         }
 
-        $attributes = $this->getFields()->extract($model);
-        $title = $this->schema->toString($model);
-        $extra = $this->schema->extra($model, false);
+        if ($collection === null) $collection = $this->getFields();
 
-        return compact('attributes', 'title', 'extra');
+        $attributes = $collection->extract($model);
+        $meta = $this->getMetaDataForModel($model);
+
+        return compact('attributes', 'meta');
     }
 
     /**
      * Extract fields of all models.
      *
      * @param array|Collection $items
+     * @param AttributesCollection $collection
      *
      * @return array
      */
-    public function extractAll($items)
+    public function extractAll($items, AttributesCollection $collection = null)
     {
         if ($items instanceof Collection)
         {
             $items = $items->all();
         }
 
-        return array_map([ $this, 'extract' ], $items);
+        return array_map(function ($model) use ($collection)
+        {
+            return $this->extract($model, $collection);
+
+        }, $items);
     }
 
     /**
@@ -190,7 +190,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
         }
         else
         {
-            $results->setItems($this->getColumns()->extractAll($results->getItems()));
+            $results->setItems($this->extractAll($results->getItems(), $this->getColumns()));
         }
 
         return $results;
@@ -239,7 +239,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     /**
      * Convert item to a simple representation which is used by an entity dropdown.
      *
-     * @param array|\Illuminate\Database\Eloquent\Model $model
+     * @param array|Model $model
      *
      * @return array
      */
@@ -252,85 +252,20 @@ class Entity implements JsonableInterface, ArrayableInterface {
             return $this->simplifyAll($model);
         }
 
+        return $this->getMetaDataForModel($model, true);
+    }
+
+    /**
+     * @param Model $model
+     * @param bool $simplified
+     *
+     * @return array
+     */
+    public function getMetaDataForModel(Model $model, $simplified = false)
+    {
         $id = $model->getKey();
-        $title = $this->schema->toString($model);
-        $extra = $this->schema->extra($model, true);
 
-        return compact('id', 'title', 'extra');
-    }
-
-    /**
-     * Create new model and return extracted attributes.
-     *
-     * @param array $attributes
-     *
-     * @return array
-     */
-    public function create(array $attributes)
-    {
-        return $this->processAndSave(compact('attributes'));
-    }
-
-    /**
-     * Update a model and return its extracted attributes.
-     *
-     * @param mixed $id
-     * @param array $attributes
-     *
-     * @return array
-     */
-    public function update($id, array $attributes)
-    {
-        return $this->processAndSave(compact('id', 'attributes'));
-    }
-
-    /**
-     * Save an item and all of its related items.
-     *
-     * @param array $data
-     *
-     * @return \Illuminate\Database\Eloquent\Model
-     *
-     * @throws ModelNotFoundException
-     * @throws ModelNotSavedException
-     */
-    public function save(array $data)
-    {
-        $repo = $this->getRepository();
-
-        /**
-         * @var array $attributes
-         * @var mixed $id
-         * @var array $related
-         */
-        extract($data);
-
-        $action = $this->actionFromData($data);
-
-        $eventResult = $this->fireEvent('saving', [ $action, $attributes ]);
-
-        // If saving event returned non-null result, we'll throw a ModelNotSavedException
-        // with that result.
-        if ( ! is_null($eventResult))
-        {
-            throw new ModelNotSavedException($eventResult);
-        }
-
-        $data = $this->getFields()->cleanInput($action, $attributes);
-
-        if (isset($extra)) $data += $extra;
-
-        switch ($action)
-        {
-            case 'create': $model = $repo->create($data); break;
-            case 'update': $model = $repo->update($id, $data); break;
-        }
-
-        $this->saveRelated($model, $related);
-
-        $this->fireEvent('saved', [ $action, $model ], false);
-
-        return $model;
+        return compact('id') + $this->schema->meta($model, $simplified);
     }
 
     /**
@@ -384,144 +319,13 @@ class Entity implements JsonableInterface, ArrayableInterface {
      *
      * @return mixed
      */
-    protected function fireEvent($event, array $payload, $halt = true)
+    public function fireEvent($event, array $payload, $halt = true)
     {
         if ( ! isset(static::$env)) return null;
 
         $event = "entity.{$event}: {$this->id}";
 
         return static::$env->getDispatcher()->fire($event, $payload, $halt);
-    }
-
-    /**
-     * Perform validation and return processed data that can be then saved.
-     *
-     * @param array  $input
-     *
-     * @return array
-     *
-     * @throws Service\Validation\ValidationException
-     */
-    public function process(array $input)
-    {
-        $action = $this->actionFromData($input);
-
-        // We will process an input by a collection of fields to remove any
-        // garbage
-        $attributes = $this->getFields()->process($input['attributes']);
-
-        // Now we will validate those attributes
-        $errors = $this->validate($action, $attributes);
-
-        // And now time to process related items if any from raw input
-        $related = $this->processRelated($action, $input['attributes'], $errors);
-
-        if ( ! empty($errors)) throw new ValidationException($errors);
-
-        $id = array_get($input, 'id');
-
-        return compact('id', 'attributes', 'related');
-    }
-
-    /**
-     * Validate input.
-     *
-     * @param string $action
-     * @param array  $attributes
-     *
-     * @return array
-     */
-    public function validate($action, array $attributes)
-    {
-        $labels    = $this->getFields()->validationLabels();
-        $validator = $this->getValidator();
-
-        if ( ! $validator->validFor($action, $attributes, $labels))
-        {
-            return $validator->errors();
-        }
-
-        return [];
-    }
-
-    /**
-     * Get an action from the data.
-     *
-     * @param mixed $data
-     *
-     * @return string
-     */
-    public function actionFromData($data)
-    {
-        return empty($data['id']) ? 'create' : 'update';
-    }
-
-    /**
-     * Process and validate related items.
-     *
-     * If corresponding input key doesn't exists, nothing will happen with the
-     * related items (i.e. they will not be removed).
-     *
-     * @param string $action
-     * @param array  $input
-     * @param array  $errors
-     *
-     * @return array
-     */
-    protected function processRelated($action, array $input, array &$errors)
-    {
-        $data = [];
-
-        foreach ($this->related as $id => $item)
-        {
-            if ( ! isset($input[$id])) continue;
-
-            try
-            {
-                if ( ! $item->isDisabled($action))
-                {
-                    $data[$id] = $item->processInput($input[$id]);
-                }
-            }
-
-            catch (ValidationException $e)
-            {
-                $errors[$id] = $e->getErrors();
-            }
-        }
-
-        return $data;
-    }
-
-    /**
-     * Save related items.
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     * @param array                               $data
-     *
-     * @return void
-     */
-    protected function saveRelated(Eloquent $model, array $data)
-    {
-        foreach ($data as $id => $item)
-        {
-            $this->related[$id]->save($model, $item);
-        }
-    }
-
-    /**
-     * Process, save and return extracted attributes of the model.
-     *
-     * If $input contains `id` attribute it is condisdered that model is exists
-     * and Cruddy will try to update it; it will create a new model otherwise.
-     *
-     * @param array $input
-     *
-     * @return array
-     */
-    public function processAndSave($input)
-    {
-        return $this->extract($this->save($this->process($input)));
     }
 
     /**
@@ -566,20 +370,6 @@ class Entity implements JsonableInterface, ArrayableInterface {
     }
 
     /**
-     * Add inline relation.
-     *
-     * @param Contracts\InlineRelation $relation
-     *
-     * @return $this
-     */
-    public function relates(InlineRelation $relation)
-    {
-        $this->related[$relation->getId()] = $relation;
-
-        return $this;
-    }
-
-    /**
      * Get field collection.
      *
      * @return Schema\Fields\Collection
@@ -598,11 +388,9 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     protected function createFields()
     {
-        $factory = $this->getFieldsFactory();
+        $collection = new Schema\Fields\Collection($this);
 
-        $collection = new Schema\Fields\Collection;
-
-        $schema = new InstanceFactory($factory, $this, $collection);
+        $schema = new InstanceFactory($this->getFieldsFactory(), $collection);
 
         $this->schema->fields($schema);
 
@@ -628,15 +416,13 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function createColumns()
     {
-        $factory = $this->getColumnsFactory();
+        $collection = new Schema\Columns\Collection($this);
 
-        $collection = new Schema\Columns\Collection;
-
-        $schema = new InstanceFactory($factory, $this, $collection);
+        $schema = new InstanceFactory($this->getColumnsFactory(), $collection);
 
         $this->schema->columns($schema);
 
-        return $this->ensurePrimaryColumn($collection);
+        return $collection;
     }
 
     /**
@@ -654,36 +440,11 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function createFilters()
     {
-        $factory = $this->getFiltersFactory();
+        $collection = new Schema\Filters\Collection($this);
 
-        $collection = new Schema\Filters\Collection;
-
-        $schema = new InstanceFactory($factory, $this, $collection);
+        $schema = new InstanceFactory($this->getFiltersFactory(), $collection);
 
         $this->schema->filters($schema);
-
-        return $collection;
-    }
-
-    /**
-     * Ensure that primary column is exists.
-     *
-     * @param Schema\Columns\Collection $collection
-     *
-     * @return Schema\Columns\Collection
-     */
-    protected function ensurePrimaryColumn($collection)
-    {
-        $keyName = $this->getRepository()->newModel()->getKeyName();
-
-        if ( ! $collection->has($keyName))
-        {
-            $field = $this->getFields()->get($keyName);
-
-            $column = new Schema\Columns\Types\Proxy($this, $keyName, $field);
-
-            $collection->add($column->hide());
-        }
 
         return $collection;
     }
@@ -769,20 +530,6 @@ class Entity implements JsonableInterface, ArrayableInterface {
     }
 
     /**
-     * Get list of related entities.
-     *
-     * @return array
-     */
-    public function getRelatedEntities()
-    {
-        return array_map(function ($item)
-        {
-            return $item->getReference();
-
-        }, $this->related);
-    }
-
-    /**
      * Get list of plural and singular forms of title.
      *
      * @return array
@@ -854,6 +601,16 @@ class Entity implements JsonableInterface, ArrayableInterface {
     }
 
     /**
+     * @param $action
+     *
+     * @return bool
+     */
+    public function isPermitted($action)
+    {
+        return $this->getPermissionsDriver()->isPermitted($action, $this);
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function toArray()
@@ -863,6 +620,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
         return
         [
             'id' => $this->id,
+            'primary_key' => $model->getKeyName(),
             'soft_deleting' => false,
             'defaults' => $this->getFields()->extract($model),
             'title' => $this->getTitle(),
@@ -870,7 +628,6 @@ class Entity implements JsonableInterface, ArrayableInterface {
             'fields' => $this->getFields()->export(),
             'columns' => $this->getColumns()->export(),
             'filters' => $this->getFilters()->export(),
-            'related' => array_keys($this->related),
 
         ] + $this->schema->toArray() + [ 'view' => 'Cruddy.Entity.Page' ];
     }
@@ -914,4 +671,5 @@ class Entity implements JsonableInterface, ArrayableInterface {
     {
         return app('cruddy.permissions')->driver();
     }
+
 }

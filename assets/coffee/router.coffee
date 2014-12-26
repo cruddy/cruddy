@@ -8,13 +8,13 @@ class Router extends Backbone.Router
         entities = Cruddy.entities
 
         @addRoute "index", entities
-        #@addRoute "update", entities, "([^/]+)"
-        #@addRoute "create", entities, "create"
 
         root = Cruddy.baseUrl
         history = Backbone.history
 
         $(document.body).on "click", "a", (e) =>
+            return if e.isDefaultPrevented()
+
             fragment = e.currentTarget.href
 
             return if fragment.indexOf(root) isnt 0
@@ -49,16 +49,16 @@ class Router extends Backbone.Router
     # Set the query parameter value
     setQuery: (key, value, options) -> @updateQuery @query.set(key, value), options
 
-    refreshQuery: (defaults, actual, options) ->
-        q = @query.copy()
+    refreshQuery: (params, defaults = {}, options) ->
+        query = @query.copy()
 
-        for key, val of defaults
-            if (value = actual[key]) isnt val
-                q.SET key, value
+        for key, value of params
+            if value is null or (key of defaults and value == defaults[key])
+                query.REMOVE key
             else
-                q.REMOVE key
+                query.SET key, value
 
-        @updateQuery q, options
+        @updateQuery query, options
 
     # Remove the key from the query
     removeQuery: (key, options) -> @updateQuery @query.remove(key), options

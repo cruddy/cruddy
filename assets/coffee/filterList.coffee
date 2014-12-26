@@ -10,14 +10,47 @@ class FilterList extends Backbone.View
     initialize: (options) ->
         @entity = options.entity
         @availableFilters = options.filters
-        @filterModel = new Backbone.Model
 
-        @listenTo @model, "change", (model) -> @filterModel.set model.attributes
+        @filterModel = new Backbone.Model
+        @filterModel.entity = @entity
+
+        @listenTo @model, "request", => @_toggleButtons yes
+        @listenTo @model, "data", => @_toggleButtons no
+        @listenTo @model, "change", => @_setDataFromDataSource() unless @_applying
+
+        @_setDataFromDataSource()
 
         this
 
+    _toggleButtons: (disabled) ->
+        @$buttons.prop "disabled", disabled
+
+        return
+
     apply: ->
-        @model.set @filterModel.attributes
+        @_applying = yes
+
+        @model.set $.extend @_prepareData(), page: 1
+
+        @_applying = no
+
+        return this
+
+    _prepareData: ->
+        data = {}
+
+        for key, value of @filterModel.attributes when filter = @availableFilters.get(key)
+            data[filter.getDataKey()] = filter.prepareData(value)
+
+        return data
+
+    _setDataFromDataSource: ->
+        data = {}
+
+        for filter in @availableFilters.models
+            data[filter.id] = filter.parseData @model.get filter.getDataKey()
+
+        @filterModel.set data
 
         return this
 
@@ -37,12 +70,14 @@ class FilterList extends Backbone.View
             @items.append input.render().el
             input.$el.wrap("""<div class="form-group #{ filter.getClass() }"></div>""").parent().before "<label>#{ filter.getLabel() }</label>"
 
+        @$buttons = @$el.find ".fl-btn"
+
         this
 
     template: -> """
         <div class="filter-list-container"></div>
-        <button type="button" class="btn btn-primary btn-apply">#{ Cruddy.lang.filter_apply }</button>
-        <button type="button" class="btn btn-default btn-reset">#{ Cruddy.lang.filter_reset }</button>
+        <button type="button" class="btn fl-btn btn-primary btn-apply">#{ Cruddy.lang.filter_apply }</button>
+        <button type="button" class="btn fl-btn btn-default btn-reset">#{ Cruddy.lang.filter_reset }</button>
     """
 
     dispose: ->

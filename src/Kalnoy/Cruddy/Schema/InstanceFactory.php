@@ -20,13 +20,6 @@ class InstanceFactory {
     protected $factory;
 
     /**
-     * The entity.
-     *
-     * @var Entity
-     */
-    protected $entity;
-
-    /**
      * The collection to where attributes are placed.
      *
      * @var BaseCollection
@@ -40,10 +33,9 @@ class InstanceFactory {
      * @param Entity         $entity
      * @param BaseCollection $collection
      */
-    public function __construct(BaseFactory $factory, Entity $entity, BaseCollection $collection)
+    public function __construct(BaseFactory $factory, BaseCollection $collection)
     {
         $this->factory = $factory;
-        $this->entity = $entity;
         $this->collection = $collection;
     }
 
@@ -57,6 +49,7 @@ class InstanceFactory {
      */
     public function __call($method, $parameters)
     {
-        return $this->factory->resolve($method, $this->entity, $this->collection, $parameters);
+        return $this->factory->resolve($method, $this->collection, $parameters);
     }
+
 }

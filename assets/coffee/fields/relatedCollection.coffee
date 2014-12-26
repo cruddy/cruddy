@@ -9,9 +9,27 @@ class Cruddy.Fields.RelatedCollection extends Backbone.Collection
         @deleted = no
         @removedSoftly = 0
 
-        @listenTo @owner, "sync", => @deleted = false
+        @listenTo @owner, "sync", (model, resp, options) ->
+            @deleted = no
+            @_triggerItems "sync", {}, options
+
+        @listenTo @owner, "request", (model, xhr, options) -> @_triggerItems "request", xhr, options
+        @listenTo @owner, "invalid", @_handleInvalidEvent
 
         super
+
+    _handleInvalidEvent: (model, errors) ->
+        return unless @field.id of errors
+
+        for cid, itemErrors of errors[@field.id] when item = @get cid
+            item.trigger "invalid", item, itemErrors
+
+        return
+
+    _triggerItems: (event, param1, param2) ->
+        model.trigger event, model, param1, param2 for model in @models
+
+        return
 
     add: ->
         @removeSoftDeleted() if @maxItems and @models.length >= @maxItems
@@ -20,13 +38,13 @@ class Cruddy.Fields.RelatedCollection extends Backbone.Collection
 
     removeSoftDeleted: -> @remove @filter((m) -> m.isDeleted)
 
-    remove: (m) ->
+    remove: (models) ->
         @deleted = yes
 
-        if _.isArray m
-            @removedSoftly-- for item in m when item.isDeleted
+        if _.isArray models
+            @removedSoftly-- for item in models when item.isDeleted
         else
-            @removedSoftly-- if m.isDeleted
+            @removedSoftly-- if modes.isDeleted
 
         super
 
@@ -66,15 +84,11 @@ class Cruddy.Fields.RelatedCollection extends Backbone.Collection
             field: @field
 
     serialize: ->
-        if @field.isMultiple()
-            models = @filter (m) -> not m.isDeleted
+        permit = @owner.entity.getPermissions()
 
-            return "" if _.isEmpty models
+        models = @filter (model) -> model.isSaveable()
 
-            data = {}
+        data = {}
+        data[item.cid] = item.serialize() for item in models
 
-            data[item.cid] = item for item in models
-
-            data
-        else
-            @find((m) -> not m.isDeleted) or ""
+        return data

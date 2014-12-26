@@ -6,6 +6,8 @@ use Exception;
 use Illuminate\Config\Repository as Config;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Kalnoy\Cruddy\ActionException;
+use Kalnoy\Cruddy\Data;
 use Kalnoy\Cruddy\Entity;
 use Kalnoy\Cruddy\EntityNotFoundException;
 use Kalnoy\Cruddy\Environment;
@@ -122,8 +124,25 @@ class EntityController extends Controller {
     {
         return $this->resolveSafe($entity, 'create', function (Request $request, Entity $entity)
         {
-            return Response::make($entity->create($request->all()));
+            $data = new Data($entity, $request->all());
+
+            return $this->validateAndSave($entity, $data);
         });
+    }
+
+    /**
+     * @param Entity $entity
+     * @param Data $data
+     *
+     * @return \Illuminate\Http\Response
+     */
+    protected function validateAndSave(Entity $entity, Data $data)
+    {
+        $data->validate();
+
+        $model = $data->save();
+
+        return Response::make($entity->extract($model));
     }
 
     /**
@@ -133,11 +152,36 @@ class EntityController extends Controller {
      *
      * @return Response
      */
-    public function update($entity, $id)
+    public function update($entity, $id, $action = null)
     {
-        return $this->resolveSafe($entity, 'update', function (Request $request, Entity $entity) use ($id)
+        return $this->resolveSafe($entity, 'update', function (Request $request, Entity $entity) use ($id, $action)
         {
-            return Response::make($entity->update($id, $request->all()));
+            $data = new Data($entity, $request->all(), $id);
+
+            $data->setCustomAction($action);
+
+            return $this->validateAndSave($entity, $data);
+        });
+    }
+
+    /**
+     * Execute custom action on model.
+     *
+     * @param  string $entity
+     *
+     * @return Response
+     */
+    public function executeCustomAction($entity, $id, $action = null)
+    {
+        return $this->resolveSafe($entity, 'update', function (Request $request, Entity $entity) use ($id, $action)
+        {
+            $data = new Data($entity, [], $id);
+
+            $data->setCustomAction($action);
+
+            $data->save();
+
+            return Response::json('ok');
         });
     }
 
@@ -214,18 +258,9 @@ class EntityController extends Controller {
             return $this->responseError($e->getMessage(), 403);
         }
 
-        catch (Exception $e)
+        catch (ActionException $e)
         {
-            $message = 'Internal server error.';
-
-            if ($this->config->get('app.debug'))
-            {
-                Log::error($e);
-
-                $message = get_class($e).': '.$e->getMessage();
-            }
-
-            return $this->responseError($message);
+            return $this->responseError($e->getMessage());
         }
     }
 

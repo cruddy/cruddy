@@ -3,6 +3,7 @@
 namespace Kalnoy\Cruddy\Contracts;
 
 use Illuminate\Database\Eloquent\Model as Eloquent;
+use Illuminate\Database\Eloquent\Model;
 use Kalnoy\Cruddy\Contracts\Field;
 
 /**
@@ -15,22 +16,16 @@ use Kalnoy\Cruddy\Contracts\Field;
 interface InlineRelation extends Field {
 
     /**
-     * Process input and return data to save.
-     *
-     * @param array $input
-     *
-     * @return array
-     */
-    public function processInput($input);
-
-    /**
-     * Save previously processed data.
-     *
-     * @param Eloquent $model
-     * @param array    $data
+     * @param Model $model
+     * @param Model $parent
      *
      * @return void
      */
-    public function save(Eloquent $model, array $data);
+    public function joinModels(Model $model, Model $parent);
+
+    /**
+     * @return \Kalnoy\Cruddy\Entity
+     */
+    public function getReference();
 
 }

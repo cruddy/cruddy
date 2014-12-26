@@ -54,10 +54,12 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
     getKey: (e) -> $(e.currentTarget).closest(".ed-item").data "key"
 
+    getValue: -> super or if @multiple then [] else null
+
     removeItem: (e) ->
         if @multiple
             i = @getKey e
-            value = _.clone @model.get(@key)
+            value = _.clone @getValue()
             value.splice i, 1
         else
             value = null
@@ -88,7 +90,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
             @editingForm = form = Cruddy.Entity.Form.display instance
 
             form.once "saved", (model) =>
-                btn.parent().siblings("input").val model.title
+                btn.parent().siblings("input").val model.getTitle()
                 form.remove()
 
             form.once "destroyed", (model) => @removeItem e
@@ -117,8 +119,9 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
     applyConstraint: (reset = no) ->
         if @selector
+            field = @model.entity.getField @constraint.field
             value = @model.get @constraint.field
-            @selector.dataSource?.set "constraint", value
+            @selector.dataSource?.set "constraint", field.prepareAttribute value
             @selector.attributesForNewModel[@constraint.otherField] = value
 
         @model.set(@key, if @multiple then [] else null) if reset
@@ -225,7 +228,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
     renderItems: ->
         html = ""
-        html += @itemTemplate value.title, key for value, key in @getValue()
+        html += @itemTemplate @itemToString(value), key for value, key in @getValue()
         @items.html html
         @items.toggleClass "has-items", html isnt ""
 
@@ -243,12 +246,21 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     updateItem: ->
         value = @getValue()
 
-        @itemTitle.val if value then value.title else ""
+        @itemTitle.val if value then @itemToString(value) else ""
 
         @itemDelete.toggle !!value
         @itemEdit.toggle !!value
 
         this
+
+    itemToString: (item) ->
+        return item.title if item.title?
+
+        return item.id unless @selector?
+
+        data = @selector.dataSource.getById item.id
+
+        return if data? then data.title else item.id
 
     itemTemplate: (value, key = null) ->
         html = """

@@ -2,10 +2,13 @@
 
 namespace Kalnoy\Cruddy\Schema;
 
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Fluent;
 use Kalnoy\Cruddy\Contracts\Schema;
 use Kalnoy\Cruddy\Repo\Stub as StubRepository;
 use Kalnoy\Cruddy\Service\Validation\FluentValidator;
 use Kalnoy\Cruddy\Entity;
+use Symfony\Component\Process\Exception\RuntimeException;
 
 /**
  * Base schema.
@@ -154,13 +157,77 @@ abstract class BaseSchema implements Schema {
     protected function rules($validate) {}
 
     /**
-     * {@inheritdoc}
+     * @param Actions\Collection $actions
      */
-    public function extra($model, $simplified)
-    {
-        if ($simplified) return [];
+    protected function actions($actions) {}
 
-        return [ 'external' => $this->externalUrl($model) ];
+    /**
+     * @param Model $model
+     *
+     * @return array
+     */
+    protected function exportActions(Model $model)
+    {
+        return $this->getActions()->export($model);
+    }
+
+    /**
+     * @return Actions\Collection
+     */
+    protected function getActions()
+    {
+        $collection = new Actions\Collection;
+
+        $this->actions($collection);
+
+        return $collection;
+    }
+
+    /**
+     * @param Model $model
+     * @param $action
+     *
+     * @return mixed
+     */
+    public function executeAction(Model $model, $action)
+    {
+        return $this->getActions()->execute($model, $action);
+    }
+
+    /**
+     * @param Model $model
+     * @param bool $simplified
+     *
+     * @return array
+     */
+    public function meta(Model $model, $simplified)
+    {
+        $meta['title'] = $this->toString($model);
+
+        if ( ! $simplified)
+        {
+            $meta['presentationActions'] = $this->exportPresentationActions($model);
+            $meta['actions'] = $this->exportActions($model);
+        }
+
+        return $meta;
+    }
+
+    /**
+     * @param Model $model
+     *
+     * @return array
+     */
+    protected function exportPresentationActions(Model $model)
+    {
+        $result = [];
+
+        if ($value = $this->externalUrl($model))
+        {
+            $result[app('cruddy.lang')->translate('cruddy::js.view_external')] = $value;
+        }
+
+        return $result;
     }
 
     /**
@@ -173,10 +240,11 @@ abstract class BaseSchema implements Schema {
     protected function externalUrl($model) {}
 
     /**
-     * {@inheritdoc}
+     * Convert the model to string.
      *
-     * Default implementation will try to get {@see $titleAttribute} attribute and if one
-     * is not set will return model's key.
+     * @param Model $model
+     *
+     * @return string
      */
     public function toString($model)
     {

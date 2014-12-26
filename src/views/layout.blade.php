@@ -9,7 +9,7 @@
     <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
         <div class="container-fluid">
             <div class="navbar-header">
-                <a href="{{ $brand_url }}" class="navbar-brand">{{ $brand }}</a>
+                <a href="{{ $brand_url }}" target="_blank" class="navbar-brand">{{ $brand }}</a>
             </div>
 
             <div class="navbar-collapse">

@@ -13,9 +13,9 @@ interface SearchProcessor {
      * Apply search conditions to the builder.
      *
      * @param Builder $builder
-     * @param array   $options
+     * @param array   $input
      *
      * @return void
      */
-    public function constraintBuilder(Builder $builder, array $options);
+    public function constraintBuilder(Builder $builder, array $input);
 }

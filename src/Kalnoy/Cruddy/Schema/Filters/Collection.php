@@ -11,40 +11,22 @@ use Kalnoy\Cruddy\Schema\BaseCollection;
 class Collection extends BaseCollection implements SearchProcessor {
 
     /**
-     * Apply complex filters.
-     *
-     * @param \Illuminate\Database\Query\Builder $builder
-     * @param array                              $data
-     *
-     * @return void
+     * @param EloquentBuilder $builder
+     * @param array $input
      */
-    protected function applyFilterConstraints(QueryBuilder $builder, array $data)
+    public function constraintBuilder(EloquentBuilder $builder, array $input)
     {
-        foreach ($data as $key => $value)
+        $query = $builder->getQuery();
+
+        /** @var BaseFilter $filter */
+        foreach ($this->items as $filter)
         {
-            if ( ! empty($value) && $this->has($key))
+            $key = $filter->getDataKey();
+
+            if (isset($input[$key]))
             {
-                /**
-                 * @var Filter $item
-                 */
-                $item = $this->get($key);
-
-                if ($item instanceof Filter)
-                {
-                    $item->applyFilterConstraint($builder, $value);
-                }
+                $filter->applyFilterConstraint($query, $input[$key]);
             }
-        }
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function constraintBuilder(EloquentBuilder $builder, array $options)
-    {
-        if ($value = array_get($options, 'filters'))
-        {
-            $this->applyFilterConstraints($builder->getQuery(), $value);
         }
     }
 }

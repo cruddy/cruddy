@@ -48,9 +48,15 @@
             font-size: 14px;
         }
 
-        .btn-save {
-            padding-left: 10px;
-            padding-right: 10px;
+        > .btn, > .btn-group {
+            + .btn, + .btn-group {
+                margin-left: 5px;
+            }
+        }
+
+        > .btn-save {
+            padding-left: 15px;
+            padding-right: 15px;
         }
 
         .flash {
@@ -169,9 +175,20 @@
         }
     }
 
+    .fs-deleted-message {
+        display: none;
+    }
+
     &.loading {
-        .fs-btn-refresh > .glyphicon {
-            .animation(loading 1s ease-in-out infinite);
+//        > footer > .loading {
+//            .animation(loading 1s ease-in-out infinite);
+//        }
+    }
+
+    &.destroyed {
+
+        .fs-deleted-message {
+            display: block;
         }
     }
 }

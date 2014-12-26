@@ -3,26 +3,15 @@ class AdvFormData
         @original = new FormData
         @append data if data?
 
-    append: (name, value) ->
-        if value is undefined
-            value = name
-            name = null
+    append: (value, name) ->
+        return if value is undefined
 
         return @original.append name, value if value instanceof File or value instanceof Blob
 
-        if _.isArray value
-            return @append name, "" if _.isEmpty value
+        if _.isObject(value) or _.isArray(value)
+            return @original.append name, "" if _.isEmpty(value)
 
-            @append @key(name, key), _value for _value, key in value
-
-            return
-
-        if _.isObject value
-            if _.isFunction value.serialize
-                @append name, value.serialize()
-                
-            else
-                @append @key(name, key), _value for key, _value of value
+            _.each value, (value, key) => @append value, @key(name, key)
 
             return
 

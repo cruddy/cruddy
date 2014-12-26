@@ -2,9 +2,9 @@
 
 namespace Kalnoy\Cruddy\Repo;
 
+use Closure;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Model as Eloquent;
-use Illuminate\Filesystem\Filesystem;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Pagination\Paginator;
 use Kalnoy\Cruddy\Contracts\Repository;
@@ -36,7 +36,7 @@ abstract class BaseRepository implements Repository {
     /**
      * The mode instance.
      *
-     * @var Eloquent
+     * @var Model
      */
     protected $model;
 
@@ -51,12 +51,12 @@ abstract class BaseRepository implements Repository {
     /**
      * Fill the model attributes.
      *
-     * @param Eloquent $model
-     * @param array    $input
+     * @param Model $model
+     * @param array $input
      *
-     * @return Eloquent
+     * @return Model
      */
-    protected function fill(Eloquent $model, array $input)
+    protected function fill(Model $model, array $input)
     {
         foreach ($input as $key => $value)
         {
@@ -141,34 +141,16 @@ abstract class BaseRepository implements Repository {
     }
 
     /**
-     * {@inheritdoc}
-     */
-    public function create(array $input)
-    {
-        return $this->save($this->newModel(), $input);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function update($id, array $input)
-    {
-        $model = $this->find($id);
-
-        return $this->save($model, $input);
-    }
-
-    /**
      * Save a model.
      *
-     * @param Eloquent $instance
-     * @param array    $input
+     * @param Model $instance
+     * @param array $input
+     * @param callable $extra
      *
      * @throws Exception
-     *
-     * @return Eloquent
+     * @return Model
      */
-    protected function save(Eloquent $instance, array $input)
+    public function save(Model $instance, array $input, Closure $extra = null)
     {
         $this->resetPostSaveCallbacks();
 
@@ -176,7 +158,11 @@ abstract class BaseRepository implements Repository {
 
         try
         {
-            if (false === $this->fill($instance, $input)->save())
+            $this->fill($instance, $input);
+
+            if ($extra) $extra($instance);
+
+            if (false === $instance->save())
             {
                 $className = get_class($instance);
 
@@ -201,12 +187,12 @@ abstract class BaseRepository implements Repository {
     /**
      * Sync relationships.
      *
-     * @param Eloquent $instance
+     * @param Model $instance
      * @param array    $input
      *
      * @return $this
      */
-    protected function syncRelations(Eloquent $instance, array $input)
+    protected function syncRelations(Model $instance, array $input)
     {
         foreach ($input as $key => $value)
         {
@@ -222,12 +208,12 @@ abstract class BaseRepository implements Repository {
     /**
      * Get relationship query.
      *
-     * @param Eloquent $instance
+     * @param Model $instance
      * @param string   $key
      *
-     * @return null|\Illuminate\Database\Eloquent\Relations\Relation
+     * @return null|\Illuminate\Database\\Relations\Relation
      */
-    protected function getRelation(Eloquent $instance, $key)
+    protected function getRelation(Model $instance, $key)
     {
         if ( ! method_exists($instance, $key)) return null;
 
@@ -253,12 +239,12 @@ abstract class BaseRepository implements Repository {
     /**
      * Sync one given relationship.
      *
-     * @param Eloquent                                         $instance
-     * @param \Illuminate\Database\Eloquent\Relations\Relation $relation
+     * @param Model                                         $instance
+     * @param \Illuminate\Database\\Relations\Relation $relation
      * @param string                                           $key
      * @param array                                            $data
      */
-    protected function syncRelation(Eloquent $instance, Relation $relation, $key, $data)
+    protected function syncRelation(Model $instance, Relation $relation, $key, $data)
     {
         $method = 'sync'.class_basename($relation);
 
@@ -271,13 +257,13 @@ abstract class BaseRepository implements Repository {
     /**
      * Sync BelongsToMany relationship.
      *
-     * @param Eloquent $instance
+     * @param Model $instance
      * @param string   $key
      * @param array    $data
      *
      * @return $this
      */
-    protected function syncBelongsToMany(Eloquent $instance, $key, $data)
+    protected function syncBelongsToMany(Model $instance, $key, $data)
     {
         $data = is_array($data) ? $data : [];
 
@@ -293,13 +279,13 @@ abstract class BaseRepository implements Repository {
     /**
      * Sync MorphToMany relationship.
      *
-     * @param Eloquent $instance
+     * @param Model $instance
      * @param string   $key
      * @param array    $data
      *
      * @return  $this
      */
-    protected function syncMorphToMany(Eloquent $instance, $key, $data)
+    protected function syncMorphToMany(Model $instance, $key, $data)
     {
         return $this->syncBelongsToMany($instance, $key, $data);
     }
@@ -307,13 +293,13 @@ abstract class BaseRepository implements Repository {
     /**
      * Sync BelongsTo relationship.
      *
-     * @param Eloquent $instance
+     * @param Model $instance
      * @param string   $key
      * @param int      $data
      *
      * @return $this
      */
-    protected function syncBelongsTo(Eloquent $instance, $key, $data)
+    protected function syncBelongsTo(Model $instance, $key, $data)
     {
         $foreignKey = $instance->$key()->getForeignKey();
 
@@ -341,11 +327,11 @@ abstract class BaseRepository implements Repository {
     /**
      * Fire post save callbacks.
      *
-     * @param Eloquent $instance
+     * @param Model $instance
      *
-     * @return Eloquent
+     * @return Model
      */
-    protected function firePostSaveCallbacks(Eloquent $instance)
+    protected function firePostSaveCallbacks(Model $instance)
     {
         foreach ($this->postSave as $callback)
         {
@@ -421,6 +407,8 @@ abstract class BaseRepository implements Repository {
     public function delete($ids)
     {
         $ids = is_array($ids) ? $ids : func_get_args();
+
+        if (empty($ids)) return 0;
 
         $key = $this->model->getKeyName();
 

@@ -15,6 +15,11 @@ develop
 *   Refactored navigation to remove duplicate requests
 *   Records are now cached for quicker responses
 *   Added `cruddy::custom` layout for custom pages
+*   `saving` event is now fired after the model is filled, and the handler receives model, rather than input
+*   Data grid is now able to display extra actions for rows
+*   Added custom save actions for model
+*   #24: Filters can now be passed in query string
+*   #63: use query without scopes for getting items
 
 v0.3.2
 ======

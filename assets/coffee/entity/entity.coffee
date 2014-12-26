@@ -37,6 +37,11 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
         return new DataSource data, entity: this
 
+    getDataSource: ->
+        @dataSource = @createDataSource() unless @dataSource
+
+        return @dataSource
+
     # Create filters for specified columns
     createFilters: (columns = @columns) ->
         filters = (col.createFilter() for col in columns.models when col.get("filter_type") is "complex")
@@ -47,24 +52,11 @@ class Cruddy.Entity.Entity extends Backbone.Model
     createInstance: (data = {}, options = {}) ->
         options.entity = this
 
-        attrs = _.extend {}, @get("defaults"), data.attributes
+        attributes = _.extend {}, @get("defaults"), data.attributes
 
-        instance = new Cruddy.Entity.Instance attrs, options
+        instance = new Cruddy.Entity.Instance attributes, options
 
-        instance.fillExtra data
-
-        return instance
-
-    # Get relation field
-    getRelation: (id) ->
-        field = @field id
-
-        if not field instanceof Cruddy.Fields.BaseRelation
-            console.error "The field #{id} is not a relation."
-
-            return
-
-        field
+        instance.setMetaFromResponse data
 
     # Get a field with specified id
     field: (id) ->
@@ -74,6 +66,8 @@ class Cruddy.Entity.Entity extends Backbone.Model
             return
 
         return field
+
+    getField: (id) -> @fields.get id
 
     search: (options = {}) -> new SearchDataSource {}, $.extend { url: @url() }, options
 
@@ -107,27 +101,34 @@ class Cruddy.Entity.Entity extends Backbone.Model
         options.type = "POST"
         options.dataType = "json"
         options.data = _method: "DELETE"
+        options.displayLoading = yes
 
         return $.ajax options
 
-    # Load a model and set it as current
-    actionUpdate: (id) -> @load(id).then (instance) =>
-        @set "instance", instance
+    # Destroy a model
+    executeAction: (id, action, options = {}) ->
+        options.url = @url id + "/" + action
+        options.type = "POST"
+        options.dataType = "json"
+        options.displayLoading = yes
 
-        instance
-
-    # Create new model and set it as current
-    actionCreate: -> @set "instance", @createInstance()
+        return $.ajax options
 
     # Get only those attributes are not unique for the model
-    getCopyableAttributes: (model, attributes) ->
+    getCopyableAttributes: (model, copy) ->
         data = {}
-        data[field.id] = attributes[field.id] for field in @fields.models when not field.isUnique() and field.id of attributes and not _.contains(@attributes.related, field.id)
 
-        for ref in @attributes.related when ref of attributes
-            data[ref] = @getRelation(ref).copy model, attributes[ref]
+        data[field.id] = field.copyAttribute(model, copy) for field in @fields.models when field.isCopyable()
 
         data
+
+    hasChangedSinceSync: (model) -> return yes for field in @fields.models when field.hasChangedSinceSync model
+
+    prepareAttributes: (attributes) ->
+        result = {}
+        result[key] = field.prepareAttribute value for key, value of attributes when field = @getField key
+
+        return result
 
     # Get url that handles syncing
     url: (id) -> entity_url @id, id
@@ -164,3 +165,5 @@ class Cruddy.Entity.Entity extends Backbone.Model
     viewPermitted: -> @permissions.view
 
     isSoftDeleting: -> @attributes.soft_deleting
+
+    getPrimaryKey: -> @attributes.primary_key or "id"

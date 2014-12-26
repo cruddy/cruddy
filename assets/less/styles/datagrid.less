@@ -50,21 +50,34 @@
 
         > .item {
 
-            > .col__button > .btn {
+            > .col__auto-hide > .auto-hide-target {
                 visibility: hidden;
+
+                &.open {
+                    visibility: visible;
+                }
+            }
+
+            > .col__view-button {
+                width: 60px;
+
+                .dropdown-toggle {
+                    padding-left: 4px;
+                    padding-right: 4px;
+                }
             }
 
             // Display buttons when hoverd
             &.active, &:hover {
 
-                > .col__button > .btn {
+                > .col__auto-hide > .auto-hide-target {
                     visibility: visible;
                 }
             }
 
             &.active {
 
-                > .col__view-button > .btn {
+                > .col__view-button .btn-view {
                     cursor: not-allowed;
                     pointer-events: none; // Future-proof disabling of clicks
                     .opacity(.65);

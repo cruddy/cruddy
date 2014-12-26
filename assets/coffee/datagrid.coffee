@@ -19,7 +19,7 @@ class DataGrid extends Cruddy.View
 
         @addActionColumns @columns
 
-        @listenTo @model, "data", => @renderBody()
+        @listenTo @model, "data", => @renderBody() if @$items?
         @listenTo @model, "change:order_by change:order_dir", @markOrderColumn
 
         @listenTo @entity, "change:instance", @markActiveItem
@@ -96,13 +96,13 @@ class DataGrid extends Cruddy.View
         return title
 
     renderBody: ->
-        unless @model.hasData()
+        if @model.isEmpty()
             @$items.html @emptyTemplate()
 
             return this
 
         html = ""
-        html += @renderRow item for item in @model.get "data"
+        html += @renderRow item for item in @model.getData()
 
         @$items.html html
 
@@ -110,16 +110,16 @@ class DataGrid extends Cruddy.View
 
     renderRow: (item) ->
         html = """
-            <tr class="item #{ @itemStates item }" id="#{ @itemRowId item }" data-id="#{ item.id }">"""
+            <tr class="item #{ @itemStates item }" id="#{ @itemRowId item }" data-id="#{ item.meta.id }">"""
 
         html += @renderCell columns, item for columns in @columns
 
         html += "</tr>"
 
     itemStates: (item) ->
-        states = if item._states then item._states else ""
+        states = if item.attributes._states then item.attributes._states else ""
 
-        states += " active" if (instance = @entity.get "instance")? and item.id == instance.id
+        states += " active" if (instance = @entity.get "instance")? and item.meta.id == instance.id
 
         return states
 
@@ -136,18 +136,18 @@ class DataGrid extends Cruddy.View
         if action and action = this[action]
             e.preventDefault()
 
-            action.call this, $el
+            action.call this, $el.closest(".item").data("id"), $el
 
         return
 
-    deleteItem: ($el) ->
+    deleteItem: (id, $el) ->
         return if not confirm Cruddy.lang.confirm_delete
 
         $row = $el.closest ".item"
 
         $el.attr "disabled", yes
 
-        @entity.destroy $row.data("id"),
+        @entity.destroy id,
 
             displayLoading: yes
 
@@ -177,6 +177,6 @@ class DataGrid extends Cruddy.View
 
     $colCell: (id) -> @$component "col-" + id
 
-    itemRowId: (item) -> @componentId "item-" + item.id
+    itemRowId: (item) -> @componentId "item-" + item.meta.id
 
-    $itemRow: (item) -> @$component "item-" + item.id
+    $itemRow: (item) -> @$component "item-" + item.meta.id

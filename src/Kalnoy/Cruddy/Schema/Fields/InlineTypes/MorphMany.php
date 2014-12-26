@@ -1,13 +1,13 @@
 <?php
 
-namespace Kalnoy\Cruddy\Schema\Fields\Types;
+namespace Kalnoy\Cruddy\Schema\Fields\InlineTypes;
 
 /**
  * Morph many inline editing.
- * 
+ *
  * @since 1.0.0
  */
-class MorphManyInline extends MorphOneInline {
+class MorphMany extends MorphOne {
 
     /**
      * {@inheritdoc}

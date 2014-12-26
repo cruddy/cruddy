@@ -1,51 +1,37 @@
 class Cruddy.Entity.Instance extends Backbone.Model
+
     constructor: (attributes, options) ->
         @entity = options.entity
-        @related = {}
+        @idAttribute = @entity.getPrimaryKey()
+        @meta = {}
 
         super
 
     initialize: (attributes, options) ->
-        @original = _.clone attributes
+        @syncOriginalAttributes()
 
         @on "error", @handleErrorEvent, this
-        @on "invalid", @handleInvalidEvent, this
         @on "sync", @handleSyncEvent, this
         @on "destroy", @handleDestroyEvent, this
 
-        @on event, @triggerRelated(event), this for event in ["sync", "request"]
-
         this
 
-    handleSyncEvent: (model, resp) ->
+    syncOriginalAttributes: ->
         @original = _.clone @attributes
-
-        @fillExtra resp if resp.attributes
-
-        this
-
-    fillExtra: (resp) ->
-        @extra = resp.extra ? {}
-        @title = resp.title ? null
 
         return this
 
-    # Get a function handler that passes events to the related models
-    triggerRelated: (event) ->
-        slice = Array.prototype.slice
+    handleSyncEvent: (model, resp) ->
+        @syncOriginalAttributes()
 
-        (model) ->
-            for id, related of @related
-                relation = @entity.getRelation id
-                relation.triggerRelated.call relation, event, related, slice.call arguments, 1
-
-            this
-
-    handleInvalidEvent: (model, errors) ->
-        # Trigger errors for related models
-        @entity.getRelation(id).processErrors model, errors[id] for id, model of @related when id of errors
+        @setMetaFromResponse resp
 
         this
+
+    setMetaFromResponse: (resp) ->
+        @meta = _.clone resp.meta if resp.meta?
+
+        return this
 
     handleErrorEvent: (model, xhr) ->
         @trigger "invalid", this, xhr.responseJSON if xhr.status is 400
@@ -59,36 +45,24 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
     validate: ->
         @set "errors", {}
-        null
+
+        return null
 
     link: -> @entity.link if @isNew() then "create" else @id
 
     url: -> @entity.url @id
 
     set: (key, val, options) ->
-        if typeof key is "object"
-            attrs = key
-            options = val
-            is_copy = options?.is_copy
-
-            for id in @entity.get "related" when id of attrs
-                relation = @entity.getRelation id
-                relationAttrs = attrs[id]
-
-                if is_copy
-                    related = @related[id] = relationAttrs
-                else
-                    related = @related[id] = relation.createInstance this, relationAttrs
-
-                # Attribute will now hold instance
-                attrs[id] = related
+        if _.isObject key
+            for attributeId, value of key when field = @entity.getField attributeId
+                key[attributeId] = field.parse this, value
 
         super
 
     sync: (method, model, options) ->
         if method in ["update", "create"]
             # Form data will allow us to upload files via AJAX request
-            options.data = new AdvFormData(options.attrs ? @attributes).original
+            options.data = new AdvFormData(@entity.prepareAttributes options.attrs ? @attributes).original
 
             # Set the content type to false to let browser handle it
             options.contentType = false
@@ -101,25 +75,27 @@ class Cruddy.Entity.Instance extends Backbone.Model
     copy: ->
         copy = @entity.createInstance()
 
-        copy.set @getCopyableAttributes(copy),
-            silent: yes
-            is_copy: yes
+        copy.set @entity.getCopyableAttributes(this, copy), silent: yes
 
         copy
 
-    getCopyableAttributes: (copy) -> @entity.getCopyableAttributes copy, @attributes
-
-    hasChangedSinceSync: ->
-        return yes for key, value of @attributes when if key of @related then @entity.getRelation(key).hasChangedSinceSync value else not _.isEqual value, @original[key]
-
-        no
+    hasChangedSinceSync: -> return @entity.hasChangedSinceSync this
 
     # Get whether is allowed to save instance
-    isSaveable: -> (@isNew() and @entity.createPermitted()) or (not @isNew() and @entity.updatePermitted())
+    isSaveable: ->
+        isNew = @isNew()
+        permit = @entity.getPermissions()
 
-    serialize: -> { attributes: @attributes, id: @id }
+        return ((isNew and permit.create) or (not isNew and permit.update)) and (not @isDeleted or not isNew)
+
+    serialize: ->
+        data = if @isDeleted then {} else @entity.prepareAttributes @attributes
+
+        return $.extend data, { __id: @id, __d: @isDeleted }
 
     # Get current action on the model
     action: -> if @isNew() then "create" else "update"
 
-    getTitle: -> @title ? Cruddy.lang.model_new_record
+    getTitle: -> if @isNew() then Cruddy.lang.model_new_record else @meta.title
+
+    getOriginal: (key) -> @original[key]

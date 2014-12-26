@@ -2,6 +2,7 @@
 
 namespace Kalnoy\Cruddy\Contracts;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Contracts\ArrayableInterface;
 
 /**
@@ -60,23 +61,16 @@ interface Schema extends ArrayableInterface {
      */
     public function validator();
 
+    public function executeAction(Model $model, $action);
+
     /**
      * Get additional model attributes that will be available for the UI.
      *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     * @param bool                                $simplified
+     * @param Model $model
+     * @param bool  $simplified
      *
      * @return array
      */
-    public function extra($model, $simplified);
-
-    /**
-     * Convert model to a string.
-     *
-     * @param \Illuminate\Database\Eloquent\Model $model
-     *
-     * @return string
-     */
-    public function toString($model);
+    public function meta(Model $model, $simplified);
 
 }

@@ -34,7 +34,12 @@ $router->post('{cruddy_entity}', [
     'uses' => 'EntityController@store',
 ]);
 
-$router->put('{cruddy_entity}/{id}', [
+$router->post('{cruddy_entity}/{id}/{action}', [
+    'as' => 'cruddy.action',
+    'uses' => 'EntityController@executeCustomAction',
+]);
+
+$router->put('{cruddy_entity}/{id}/{action?}', [
     'as' => 'cruddy.update',
     'uses' => 'EntityController@update',
 ]);

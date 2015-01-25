@@ -1,0 +1,55 @@
+@vendor: "../vendor";
+@twbs: "@{vendor}/bootstrap/less";
+
+@import "variables";
+
+@import "bootstrap";
+@import (inline) "@{vendor}/fancybox/source/jquery.fancybox.css";
+
+/* ==========================================================================
+   APPLICATION STYLES
+   ========================================================================== */
+
+html, body {
+    height: 100%;
+}
+
+body.loading:before {
+    content: '';
+    position: absolute;
+
+    .size(100%, @navbar-height);
+    top: 0;
+    left: 0;
+
+    z-index: @zindex-navbar-fixed + 1;
+
+    background: url("../img/loader-bars.gif") center center no-repeat rgba(255, 255, 255, 0.3);
+}
+
+.cruddy-global-error {
+    display: none;
+    position: fixed;
+    margin: 0;
+    bottom: 0;
+    left: 0;
+    z-index: @zindex-modal + 1;
+    border-radius: 0;
+    border-top-right-radius: @border-radius-large;
+    font-size: @font-size-large;
+    max-width: 600px;
+
+    > .data {
+        margin-right: 5px;
+    }
+
+    > .close {
+        font-size: 21px;
+    }
+}
+
+@import "layout";
+@import "entity-page";
+@import "inputs";
+@import "form";
+@import "datagrid";

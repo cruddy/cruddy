@@ -2382,136 +2382,6 @@
 
   })(Cruddy.Inputs.Text);
 
-  Cruddy.Inputs.Code = (function(_super) {
-    __extends(Code, _super);
-
-    function Code() {
-      return Code.__super__.constructor.apply(this, arguments);
-    }
-
-    Code.prototype.initialize = function(options) {
-      var session, _ref1, _ref2;
-      this.$el.height(((_ref1 = options.height) != null ? _ref1 : 100) + "px");
-      this.editor = ace.edit(this.el);
-      this.editor.setTheme("ace/theme/" + ((_ref2 = options.theme) != null ? _ref2 : Cruddy.ace_theme));
-      session = this.editor.getSession();
-      if (options.mode) {
-        session.setMode("ace/mode/" + options.mode);
-      }
-      session.setUseWrapMode(true);
-      session.setWrapLimitRange(null, null);
-      return Code.__super__.initialize.apply(this, arguments);
-    };
-
-    Code.prototype.applyChanges = function(value, external) {
-      if (external) {
-        this.editor.setValue(value);
-        this.editor.getSession().getSelection().clearSelection();
-      }
-      return this;
-    };
-
-    Code.prototype.render = function() {
-      this.editor.on("blur", (function(_this) {
-        return function() {
-          return _this.model.set(_this.key, _this.editor.getValue(), {
-            input: _this
-          });
-        };
-      })(this));
-      return Code.__super__.render.apply(this, arguments);
-    };
-
-    Code.prototype.remove = function() {
-      var _ref1;
-      if ((_ref1 = this.editor) != null) {
-        _ref1.destroy();
-      }
-      this.editor = null;
-      return Code.__super__.remove.apply(this, arguments);
-    };
-
-    Code.prototype.focus = function() {
-      var _ref1;
-      if ((_ref1 = this.editor) != null) {
-        _ref1.focus();
-      }
-      return this;
-    };
-
-    return Code;
-
-  })(Cruddy.Inputs.Base);
-
-  Cruddy.Inputs.Markdown = (function(_super) {
-    __extends(Markdown, _super);
-
-    function Markdown() {
-      return Markdown.__super__.constructor.apply(this, arguments);
-    }
-
-    Markdown.prototype.events = {
-      "show.bs.tab [data-toggle=tab]": "showTab",
-      "shown.bs.tab [data-toggle=tab]": "shownTab"
-    };
-
-    Markdown.prototype.initialize = function(options) {
-      var _ref1;
-      this.height = (_ref1 = options.height) != null ? _ref1 : 200;
-      this.editorInput = new Cruddy.Inputs.Code({
-        model: this.model,
-        key: this.key,
-        theme: options.theme,
-        mode: "markdown",
-        height: this.height
-      });
-      return Markdown.__super__.initialize.apply(this, arguments);
-    };
-
-    Markdown.prototype.showTab = function(e) {
-      if ($(e.target).data("tab") === "preview") {
-        this.renderPreview();
-      }
-      return this;
-    };
-
-    Markdown.prototype.shownTab = function(e) {
-      if ($(e.traget).data("tab") === "editor") {
-        return this.editorInput.focus();
-      }
-    };
-
-    Markdown.prototype.render = function() {
-      this.$el.html(this.template());
-      this.$(".tab-pane-editor").append(this.editorInput.render().el);
-      this.preview = this.$(".tab-pane-preview");
-      return this;
-    };
-
-    Markdown.prototype.renderPreview = function() {
-      this.preview.html(marked(this.getValue()));
-      return this;
-    };
-
-    Markdown.prototype.template = function() {
-      return "<div class=\"markdown-editor\">\n    <a href=\"https://help.github.com/articles/github-flavored-markdown\" target=\"_blank\" class=\"hint\">GitHub flavored markdown</a>\n\n    <ul class=\"nav nav-tabs\">\n        <li class=\"active\"><a href=\"#" + this.cid + "-editor\" data-toggle=\"tab\" data-tab=\"editor\" tab-index=\"-1\">" + Cruddy.lang.markdown_source + "</a></li>\n        <li><a href=\"#" + this.cid + "-preview\" data-toggle=\"tab\" data-tab=\"preview\" tab-index=\"-1\">" + Cruddy.lang.markdown_parsed + "</a></li>\n    </ul>\n\n    <div class=\"tab-content\">\n        <div class=\"tab-pane-editor tab-pane active\" id=\"" + this.cid + "-editor\"></div>\n        <div class=\"tab-pane-preview tab-pane\" id=\"" + this.cid + "-preview\" style=\"height:" + this.height + "px\"></div>\n    </div>\n</div>";
-    };
-
-    Markdown.prototype.focus = function() {
-      var tab;
-      tab = this.$("[data-tab=editor]");
-      if (tab.hasClass("active")) {
-        this.editorInput.focus();
-      } else {
-        tab.tab("show");
-      }
-      return this;
-    };
-
-    return Markdown;
-
-  })(Cruddy.Inputs.Base);
-
   Cruddy.Inputs.NumberFilter = (function(_super) {
     __extends(NumberFilter, _super);
 
@@ -3896,63 +3766,6 @@
     return Enum;
 
   })(Cruddy.Fields.Input);
-
-  Cruddy.Fields.Markdown = (function(_super) {
-    __extends(Markdown, _super);
-
-    function Markdown() {
-      return Markdown.__super__.constructor.apply(this, arguments);
-    }
-
-    Markdown.prototype.createEditableInput = function(model) {
-      return new Cruddy.Inputs.Markdown({
-        model: model,
-        key: this.id,
-        height: this.attributes.height,
-        theme: this.attributes.theme
-      });
-    };
-
-    Markdown.prototype.format = function(value) {
-      if (value) {
-        return "<div class=\"well limit-height\">" + (marked(value)) + "</div>";
-      } else {
-        return NOT_AVAILABLE;
-      }
-    };
-
-    return Markdown;
-
-  })(Cruddy.Fields.Base);
-
-  Cruddy.Fields.Code = (function(_super) {
-    __extends(Code, _super);
-
-    function Code() {
-      return Code.__super__.constructor.apply(this, arguments);
-    }
-
-    Code.prototype.createEditableInput = function(model) {
-      return new Cruddy.Inputs.Code({
-        model: model,
-        key: this.id,
-        height: this.attributes.height,
-        mode: this.attributes.mode,
-        theme: this.attributes.theme
-      });
-    };
-
-    Code.prototype.format = function(value) {
-      if (value) {
-        return "<div class=\"limit-height\">" + value + "</div>";
-      } else {
-        return NOT_AVAILABLE;
-      }
-    };
-
-    return Code;
-
-  })(Cruddy.Fields.Base);
 
   Cruddy.Fields.EmbeddedView = (function(_super) {
     __extends(EmbeddedView, _super);
@@ -5774,7 +5587,7 @@
     };
 
     Form.prototype.template = function() {
-      return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n        <ul id=\"" + (this.componentId("nav")) + "\" class=\"nav navbar-nav\"></ul>\n\n        <ul id=\"" + (this.componentId("service-menu")) + "\" class=\"nav navbar-nav navbar-right\">\n            <li class=\"dropdown\">\n                <a class=\"dropdown-toggle\" data-toggle=\"dropdown\" href=\"#\">\n                    <span class=\"glyphicon glyphicon-th\"></span> <span class=\"caret\"></span>\n                </a>\n\n                <ul class=\"dropdown-menu\" role=\"menu\" id=\"" + (this.componentId("service-menu-items")) + "\"></ul>\n            </li>\n        </ul>\n    </div>\n</div>\n\n<div class=\"tab-content\" id=\"" + (this.componentId("body")) + "\"></div>\n\n<footer id=\"" + (this.componentId("footer")) + "\">\n    <span class=\"fs-deleted-message\">" + Cruddy.lang.model_deleted + "</span>\n\n    <button data-action=\"closeForm\" id=\"" + (this.componentId("close")) + "\" type=\"button\" class=\"btn btn-default\">" + Cruddy.lang.close + "</button><!--\n    --><button data-action=\"saveModel\" id=\"" + (this.componentId("save")) + "\" type=\"button\" class=\"btn btn-primary btn-save\"></button>\n\n    <div class=\"progress\">\n        <div id=\"" + (this.componentId("progress")) + "\" class=\"progress-bar form-save-progress\"></div>\n    </div>\n</footer>";
+      return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n        <ul id=\"" + (this.componentId("nav")) + "\" class=\"nav navbar-nav\"></ul>\n\n        <ul id=\"" + (this.componentId("service-menu")) + "\" class=\"nav navbar-nav navbar-right\">\n            <li class=\"dropdown\">\n                <a class=\"dropdown-toggle\" data-toggle=\"dropdown\" href=\"#\">\n                    <span class=\"glyphicon glyphicon-option-horizontal\"></span>\n                </a>\n\n                <ul class=\"dropdown-menu\" role=\"menu\" id=\"" + (this.componentId("service-menu-items")) + "\"></ul>\n            </li>\n        </ul>\n    </div>\n</div>\n\n<div class=\"tab-content\" id=\"" + (this.componentId("body")) + "\"></div>\n\n<footer id=\"" + (this.componentId("footer")) + "\">\n    <span class=\"fs-deleted-message\">" + Cruddy.lang.model_deleted + "</span>\n\n    <button data-action=\"closeForm\" id=\"" + (this.componentId("close")) + "\" type=\"button\" class=\"btn btn-default\">" + Cruddy.lang.close + "</button><!--\n    --><button data-action=\"saveModel\" id=\"" + (this.componentId("save")) + "\" type=\"button\" class=\"btn btn-primary btn-save\"></button>\n\n    <div class=\"progress\">\n        <div id=\"" + (this.componentId("progress")) + "\" class=\"progress-bar form-save-progress\"></div>\n    </div>\n</footer>";
     };
 
     Form.prototype.renderServiceMenuItems = function() {

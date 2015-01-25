@@ -249,7 +249,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
                 <ul id="#{ @componentId "service-menu" }" class="nav navbar-nav navbar-right">
                     <li class="dropdown">
                         <a class="dropdown-toggle" data-toggle="dropdown" href="#">
-                            <span class="glyphicon glyphicon-th"></span> <span class="caret"></span>
+                            <span class="glyphicon glyphicon-option-horizontal"></span>
                         </a>
 
                         <ul class="dropdown-menu" role="menu" id="#{ @componentId "service-menu-items" }"></ul>

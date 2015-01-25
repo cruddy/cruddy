@@ -11,9 +11,7 @@ module.exports = function(grunt) {
 
         coffee: {
 
-            options: {
-                sourceMap: true
-            },
+            options: { sourceMap: true },
 
             app: {
                 src: [
@@ -44,8 +42,6 @@ module.exports = function(grunt) {
                     '<%= app %>/inputs/search.coffee',
                     '<%= app %>/inputs/slug.coffee',
                     '<%= app %>/inputs/select.coffee',
-                    '<%= app %>/inputs/code.coffee',
-                    '<%= app %>/inputs/markdown.coffee',
                     '<%= app %>/inputs/numberFilter.coffee',
                     '<%= app %>/inputs/datetime.coffee',
 
@@ -78,8 +74,6 @@ module.exports = function(grunt) {
                     '<%= app %>/fields/imageFormatter.coffee',
                     '<%= app %>/fields/slug.coffee',
                     '<%= app %>/fields/enum.coffee',
-                    '<%= app %>/fields/markdown.coffee',
-                    '<%= app %>/fields/code.coffee',
                     '<%= app %>/fields/embeddedView.coffee',
                     '<%= app %>/fields/embeddedItemView.coffee',
                     '<%= app %>/fields/relatedCollection.coffee',
@@ -110,11 +104,11 @@ module.exports = function(grunt) {
                     '<%= app %>/entity/form.coffee',
 
                     '<%= app %>/app.coffee',
-                    '<%= app %>/router.coffee',
+                    '<%= app %>/router.coffee'
                 ],
 
-                dest: 'public/js/app.js',
-            },
+                dest: 'public/js/app.js'
+            }
         },
 
         concat: {
@@ -135,50 +129,39 @@ module.exports = function(grunt) {
                     // Bootstrap components
                     '<%= bootstrap %>/js/tab.js',
                     '<%= bootstrap %>/js/dropdown.js',
-                    '<%= bootstrap %>/js/tooltip.js',
+                    '<%= bootstrap %>/js/tooltip.js'
                 ],
 
-                dest: 'public/js/vendor.js',
-            },
+                dest: 'public/js/vendor.js'
+            }
         },
 
         uglify: {
             all: {
-                options: {
-                    sourceMap: true
-                },
+                options: { sourceMap: true },
 
                 expand: true,
                 cwd:  'public/js',
                 src:  ['*.js', '!*.min.js'],
                 dest: 'public/js/',
-                ext:  '.min.js',
-            },
+                ext:  '.min.js'
+            }
         },
 
         less: {
             styles: {
                 options: {
-                    paths: [
-                        '<%= bootstrap %>/less',
-                    ],
-
                     sourceMap: true,
                     sourceMapFilename: "public/css/styles.min.css.map",
-                    sourceMapBasepath: "public/css/",
+                    sourceMapURL: "styles.min.css.map",
+                    sourceMapBasepath: "assets",
                     outputSourceFiles: true,
 
-                    compress: true,
-                    // cleancss: true
+                    compress: true
                 },
 
-                files: {
-                    'public/css/styles.min.css': [
-                        '<%= vendor %>/fancybox/source/jquery.fancybox.css',
-                        '<%= less_src %>/styles/styles.less',
-                    ]
-                }
-            },
+                files: { 'public/css/styles.min.css': '<%= less_src %>/styles.less' }
+            }
         },
 
         copy: {
@@ -186,21 +169,21 @@ module.exports = function(grunt) {
                 expand: true,
                 cwd: '<%= bootstrap %>/dist/fonts/',
                 src: '*',
-                dest: 'public/fonts/',
+                dest: 'public/fonts/'
             },
 
             fancybox: {
                 expand: true,
                 cwd: '<%= vendor %>/fancybox/source',
                 src: ['*.png', '*.gif'],
-                dest: 'public/css',
+                dest: 'public/css'
             },
 
             ace: {
                 expand: true,
                 cwd: '<%= vendor %>/ace-builds/src-min-noconflict',
                 src: '*.js',
-                dest: 'public/js/ace',
+                dest: 'public/js/ace'
             }
         },
 
@@ -208,26 +191,24 @@ module.exports = function(grunt) {
 
             styles: {
                 files: '<%= less_src %>/**/*.less',
-                tasks: ['less:styles'],
+                tasks: [ 'less:styles' ]
             },
 
             coffee: {
-                files: [
-                    '<%= app %>/**/*.coffee',
-                ],
+                files: '<%= app %>/**/*.coffee',
 
-                tasks: ['app-dev'],
+                tasks: [ 'app-dev' ]
             },
 
             reload: {
                 files: [
                     'public/css/*.min.css',
-                    'public/js/*.js',
+                    'public/js/*.js'
                 ],
 
-                options: { livereload: true },
-            },
-        },
+                options: { livereload: true }
+            }
+        }
     });
 
     grunt.loadNpmTasks('grunt-contrib-coffee');
@@ -241,15 +222,15 @@ module.exports = function(grunt) {
     grunt.registerTask('vendor', ['concat:vendor', 'copy:fancybox', 'copy:ace']);
 
     // Backend scripts
-    grunt.registerTask('app-dev', ['coffee:app']);
+    grunt.registerTask('app-dev', [ 'coffee:app' ]);
     grunt.registerTask('app', ['app-dev', 'uglify']);
 
-    grunt.registerTask('css', ['less']);
-    grunt.registerTask('scripts', ['app']);
+    grunt.registerTask('styles', [ 'less' ]);
+    grunt.registerTask('scripts', [ 'app' ]);
 
     // Default task
-    grunt.registerTask('default', ['css', 'scripts']);
+    grunt.registerTask('default', [ 'styles', 'scripts' ]);
 
     // Install project
-    grunt.registerTask('install', ['copy:fonts', 'vendor', 'default']);
+    grunt.registerTask('install', [ 'copy:fonts', 'vendor', 'default' ]);
 };

@@ -13,8 +13,10 @@ use Kalnoy\Cruddy\Entity;
  */
 class Factory extends BaseFactory {
 
-    protected $macros =
-    [
+    /**
+     * @var array
+     */
+    protected $macros = [
         'increments' => 'Kalnoy\Cruddy\Schema\Fields\Types\Primary',
         'string' => 'Kalnoy\Cruddy\Schema\Fields\Types\String',
         'text' => 'Kalnoy\Cruddy\Schema\Fields\Types\Text',
@@ -27,8 +29,6 @@ class Factory extends BaseFactory {
         'bool' => 'Kalnoy\Cruddy\Schema\Fields\Types\Boolean',
         'file' => 'Kalnoy\Cruddy\Schema\Fields\Types\File',
         'image' => 'Kalnoy\Cruddy\Schema\Fields\Types\Image',
-        'markdown' => 'Kalnoy\Cruddy\Schema\Fields\Types\Markdown',
-        'code' => 'Kalnoy\Cruddy\Schema\Fields\Types\Code',
         'integer' => 'Kalnoy\Cruddy\Schema\Fields\Types\Integer',
         'float' => 'Kalnoy\Cruddy\Schema\Fields\Types\Float',
     ];

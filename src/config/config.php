@@ -20,9 +20,6 @@
     // I.e. `auth.basic` or `auth`.
     'auth_filter' => null,
 
-    // The default ace theme.
-    'ace_theme' => 'chrome',
-
     // The list of key value pairs where key is the entity id and value is
     // an entity class name. For example:
     //

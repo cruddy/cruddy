@@ -86,7 +86,9 @@ class Environment {
      */
     public function config($key, $default = null)
     {
-        return $this->config->get("cruddy::{$key}", $default);
+        if (strpos($key, '::') === false) $key = 'cruddy::'.$key;
+
+        return $this->config->get($key, $default);
     }
 
     /**
@@ -202,7 +204,6 @@ class Environment {
             'locale' => $this->config->get('app.locale'),
             'brandName' => Helpers::tryTranslate($this->config('brand')),
             'uri' => $this->config('uri'),
-            'ace_theme' => $this->config('ace_theme', 'chrome'),
             'entities' => $this->entities->available(),
             'lang' => $this->lang->ui(),
             'permissions' => $this->permissions(),

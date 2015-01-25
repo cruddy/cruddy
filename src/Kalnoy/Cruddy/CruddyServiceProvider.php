@@ -30,7 +30,7 @@ class CruddyServiceProvider extends ServiceProvider {
      *
      * @var int
      */
-    protected $build = 24;
+    protected $build = 25;
 
 	/**
 	 * Bootstrap the application events.
@@ -206,10 +206,7 @@ class CruddyServiceProvider extends ServiceProvider {
      */
     protected function getCssFiles($baseDir)
     {
-        return $this->assets($baseDir.'/css',
-        [
-            'styles.min.css',
-        ]);
+        return $this->assets($baseDir.'/css', [ 'styles.min.css' ]);
     }
 
     /**
@@ -223,9 +220,7 @@ class CruddyServiceProvider extends ServiceProvider {
     {
         $suffix = $this->app['config']->get('app.debug') ? '' : '.min';
 
-        return $this->assets($baseDir.'/js',
-        [
-            'ace/ace.js',
+        return $this->assets($baseDir.'/js', [
             "vendor{$suffix}.js",
             "app{$suffix}.js",
         ]);

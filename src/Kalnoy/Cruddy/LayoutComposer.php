@@ -70,7 +70,7 @@ class LayoutComposer {
 
         $view->scripts = $this->assets->scripts();
         $view->styles = $this->assets->styles();
-        $view->mainMenu = $this->menuBuilder->render($this->cruddy->config('menu', []));
+        $view->mainMenu = $this->menuBuilder->render($this->cruddy->config('menu', []), [ 'class' => 'nav navbar-nav' ]);
         $view->serviceMenu = $this->menuBuilder->render(
             $this->cruddy->config('service_menu', []), [ 'class' => 'nav navbar-nav navbar-right']
         );

@@ -85,7 +85,12 @@ class CruddyServiceProvider extends ServiceProvider {
     {
         $this->app->bindShared('cruddy.menu', function ($app)
         {
-            return new MenuBuilder($app['cruddy'], $app['cruddy.lang'], $app['html'], $app['url']);
+            $builder = new MenuBuilder($app['cruddy'], $app['html'], $app['request']);
+
+            $builder->setUrlGenerator($app['url']);
+            $builder->setTranslator($app['translator']);
+
+            return $builder;
         });
     }
 

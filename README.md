@@ -18,5 +18,6 @@ __Links:__
 *   [Online demo](http://cruddy-demo.eu1.frbit.net)
 *   [Documentation & Getting Started](https://github.com/lazychaser/cruddy/wiki/Home)
 *   [FAQ](https://github.com/lazychaser/cruddy/wiki/Home#faq)
+*   [Plugins](https://github.com/lazychaser/cruddy/wiki/Plugins)
 
 __[Support Cruddy](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=4XER3ZN496WCU)__

@@ -10,14 +10,15 @@
         }
     ],
 
-    "keywords": ["dashboard", "crud", "administrator", "admin", "backend", "laravel", "eloquent", "cms"],
+    "keywords": [ "dashboard", "crud", "administrator", "admin", "backend", "laravel", "eloquent", "cms" ],
 
     "license": "MIT",
 
     "require": {
         "php": ">=5.4.0",
         "laravel/framework": "~4.2",
-        "intervention/image": "~2.0"
+        "intervention/image": "~2.0",
+        "kalnoy/illuminate-menu": "~1.0"
     },
 
     "autoload": {
@@ -25,9 +26,7 @@
             "src/exceptions.php"
         ],
 
-        "psr-0": {
-            "Kalnoy\\Cruddy\\": "src/"
-        }
+        "psr-0": { "Kalnoy\\Cruddy\\": "src/" }
     },
 
     "extra": {

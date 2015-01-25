@@ -536,8 +536,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     public function getTitle()
     {
-        return
-        [
+        return [
             'plural' => $this->makeTitle('plural'),
             'singular' => $this->makeTitle('singular'),
         ];
@@ -572,7 +571,11 @@ class Entity implements JsonableInterface, ArrayableInterface {
      */
     protected function makeTitle($plurality)
     {
-        $result = $this->translate("title.{$plurality}");
+        $result = $this->translate("::{$this->id}.title.{$plurality}");
+
+        if ($result !== null) return $result;
+
+        $result = $this->translate("::entities.titles.{$this->id}.{$plurality}");
 
         if ($result !== null) return $result;
 
@@ -617,8 +620,7 @@ class Entity implements JsonableInterface, ArrayableInterface {
     {
         $model = $this->getRepository()->newModel();
 
-        return
-        [
+        return [
             'id' => $this->id,
             'primary_key' => $model->getKeyName(),
             'soft_deleting' => false,

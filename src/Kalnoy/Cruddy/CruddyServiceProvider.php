@@ -30,7 +30,7 @@ class CruddyServiceProvider extends ServiceProvider {
      *
      * @var int
      */
-    protected $build = 24;
+    protected $build = 25;
 
 	/**
 	 * Bootstrap the application events.

@@ -16954,7 +16954,7 @@ var block = {
   lheading: /^([^\n]+)\n *(=|-){2,} *(?:\n+|$)/,
   blockquote: /^( *>[^\n]+(\n(?!def)[^\n]+)*\n*)+/,
   list: /^( *)(bull) [\s\S]+?(?:hr|def|\n{2,}(?! )(?!\1bull )\n*|\s*$)/,
-  html: /^ *(?:comment|closed|closing) *(?:\n{2,}|\s*$)/,
+  html: /^ *(?:comment *(?:\n|\s*$)|closed *(?:\n{2,}|\s*$)|closing *(?:\n{2,}|\s*$))/,
   def: /^ *\[([^\]]+)\]: *<?([^\s>]+)>?(?: +["(]([^\n]+)[")])? *(?:\n+|$)/,
   table: noop,
   paragraph: /^((?:[^\n]+\n?(?!hr|heading|lheading|blockquote|tag|def))+)\n*/,
@@ -17802,7 +17802,7 @@ Renderer.prototype.link = function(href, title, text) {
     } catch (e) {
       return '';
     }
-    if (prot.indexOf('javascript:') === 0) {
+    if (prot.indexOf('javascript:') === 0 || prot.indexOf('vbscript:') === 0) {
       return '';
     }
   }
@@ -18088,8 +18088,13 @@ function marked(src, opt, callback) {
 
     pending = tokens.length;
 
-    var done = function() {
-      var out, err;
+    var done = function(err) {
+      if (err) {
+        opt.highlight = highlight;
+        return callback(err);
+      }
+
+      var out;
 
       try {
         out = Parser.parse(tokens, opt);
@@ -18118,6 +18123,7 @@ function marked(src, opt, callback) {
           return --pending || done();
         }
         return highlight(token.text, token.lang, function(err, code) {
+          if (err) return done(err);
           if (code == null || code === token.text) {
             return --pending || done();
           }
@@ -18187,7 +18193,7 @@ marked.inlineLexer = InlineLexer.output;
 
 marked.parse = marked;
 
-if (typeof exports === 'object') {
+if (typeof module !== 'undefined' && typeof exports === 'object') {
   module.exports = marked;
 } else if (typeof define === 'function' && define.amd) {
   define(function() { return marked; });

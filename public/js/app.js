@@ -5052,6 +5052,7 @@
 
     Instance.prototype.syncOriginalAttributes = function() {
       this.original = _.clone(this.attributes);
+      this.primaryKey = this.id;
       return this;
     };
 
@@ -5084,11 +5085,11 @@
     };
 
     Instance.prototype.link = function() {
-      return this.entity.link(this.isNew() ? "create" : this.id);
+      return this.entity.link(this.primaryKey || "create");
     };
 
     Instance.prototype.url = function() {
-      return this.entity.url(this.id);
+      return this.entity.url(this.primaryKey);
     };
 
     Instance.prototype.set = function(key, val, options) {
@@ -5165,6 +5166,10 @@
 
     Instance.prototype.getOriginal = function(key) {
       return this.original[key];
+    };
+
+    Instance.prototype.isNew = function() {
+      return !this.primaryKey;
     };
 
     return Instance;
@@ -5247,7 +5252,7 @@
         replace: false
       }, options);
       if (this.form) {
-        router.setQuery("id", this.form.model.id || "new", options);
+        router.setQuery("id", this.form.model.primaryKey || "new", options);
       } else {
         router.removeQuery("id", options);
       }
@@ -5328,7 +5333,10 @@
       })(this));
       form.on("saved", (function(_this) {
         return function() {
-          return _this.dataSource.fetch();
+          _this.dataSource.fetch();
+          return _this._updateModelIdInQuery({
+            replace: true
+          });
         };
       })(this));
       form.on("saved remove", function() {

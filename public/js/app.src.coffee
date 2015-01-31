@@ -3292,6 +3292,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
     syncOriginalAttributes: ->
         @original = _.clone @attributes
+        @primaryKey = @id
 
         return this
 
@@ -3322,9 +3323,9 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
         return null
 
-    link: -> @entity.link if @isNew() then "create" else @id
+    link: -> @entity.link @primaryKey or "create"
 
-    url: -> @entity.url @id
+    url: -> @entity.url @primaryKey
 
     set: (key, val, options) ->
         if _.isObject key
@@ -3373,6 +3374,8 @@ class Cruddy.Entity.Instance extends Backbone.Model
     getTitle: -> if @isNew() then Cruddy.lang.model_new_record else @meta.title
 
     getOriginal: (key) -> @original[key]
+
+    isNew: -> ! @primaryKey
 class Cruddy.Entity.Page extends Cruddy.View
     className: "page entity-page"
 
@@ -3435,7 +3438,7 @@ class Cruddy.Entity.Page extends Cruddy.View
         options = $.extend { trigger: no, replace: no }, options
 
         if @form
-            router.setQuery "id", @form.model.id or "new", options
+            router.setQuery "id", @form.model.primaryKey or "new", options
         else
             router.removeQuery "id", options
 
@@ -3496,7 +3499,10 @@ class Cruddy.Entity.Page extends Cruddy.View
 
             @stopListening instance
 
-        form.on "saved", => @dataSource.fetch()
+        form.on "saved", =>
+            @dataSource.fetch()
+            @_updateModelIdInQuery replace: yes
+
         form.on "saved remove", -> Cruddy.app.updateTitle()
 
         @model.set "instance", instance

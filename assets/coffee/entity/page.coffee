@@ -60,7 +60,7 @@ class Cruddy.Entity.Page extends Cruddy.View
         options = $.extend { trigger: no, replace: no }, options
 
         if @form
-            router.setQuery "id", @form.model.id or "new", options
+            router.setQuery "id", @form.model.primaryKey or "new", options
         else
             router.removeQuery "id", options
 
@@ -121,7 +121,10 @@ class Cruddy.Entity.Page extends Cruddy.View
 
             @stopListening instance
 
-        form.on "saved", => @dataSource.fetch()
+        form.on "saved", =>
+            @dataSource.fetch()
+            @_updateModelIdInQuery replace: yes
+
         form.on "saved remove", -> Cruddy.app.updateTitle()
 
         @model.set "instance", instance

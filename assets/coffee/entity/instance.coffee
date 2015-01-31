@@ -18,6 +18,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
     syncOriginalAttributes: ->
         @original = _.clone @attributes
+        @primaryKey = @id
 
         return this
 
@@ -48,9 +49,9 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
         return null
 
-    link: -> @entity.link if @isNew() then "create" else @id
+    link: -> @entity.link @primaryKey or "create"
 
-    url: -> @entity.url @id
+    url: -> @entity.url @primaryKey
 
     set: (key, val, options) ->
         if _.isObject key
@@ -99,3 +100,5 @@ class Cruddy.Entity.Instance extends Backbone.Model
     getTitle: -> if @isNew() then Cruddy.lang.model_new_record else @meta.title
 
     getOriginal: (key) -> @original[key]
+
+    isNew: -> ! @primaryKey

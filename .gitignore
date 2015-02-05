@@ -1,7 +1,6 @@
 /.idea
 /vendor
-/app/config/local
-/assets/vendor
+/resources/assets/vendor
 /node_modules
 composer.phar
 composer.lock

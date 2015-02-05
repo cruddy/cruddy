@@ -16,9 +16,9 @@
 
     "require": {
         "php": ">=5.4.0",
-        "laravel/framework": "~4.2",
+        "laravel/framework": "~5.0.0",
         "intervention/image": "~2.0",
-        "kalnoy/illuminate-menu": "~1.0"
+        "kalnoy/illuminate-menu": "~2.0"
     },
 
     "autoload": {
@@ -26,8 +26,10 @@
             "src/exceptions.php"
         ],
 
-        "psr-0": { "Kalnoy\\Cruddy\\": "src/" }
+        "psr-4": { "Kalnoy\\Cruddy\\": "src/" }
     },
+
+    "minimum-stability": "dev",
 
     "extra": {
         "branch-alias": {

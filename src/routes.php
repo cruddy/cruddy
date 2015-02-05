@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @var \Illuminate\Routing\Router $router
+ * @var \Illuminate\Contracts\Routing\Registrar $router
  */
 
 $router->get('/', [

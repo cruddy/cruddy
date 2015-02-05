@@ -4,10 +4,10 @@ module.exports = function(grunt) {
     grunt.initConfig({
         pkg: grunt.file.readJSON('package.json'),
 
-        bootstrap: 'assets/vendor/bootstrap',
-        vendor: 'assets/vendor',
-        less_src: 'assets/less',
-        app: 'assets/coffee',
+        bootstrap: 'resources/assets/vendor/bootstrap',
+        vendor: 'resources/assets/vendor',
+        less_src: 'resources/assets/less',
+        app: 'resources/assets/coffee',
 
         coffee: {
 

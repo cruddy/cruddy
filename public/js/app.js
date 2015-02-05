@@ -245,6 +245,7 @@
   AdvFormData = (function() {
     function AdvFormData(data) {
       this.original = new FormData;
+      this.original.append("_token", Cruddy.token);
       if (data != null) {
         this.append(data);
       }
@@ -351,7 +352,7 @@
         success: (function(_this) {
           return function(resp) {
             _this.resp = resp;
-            return _this.trigger("data", _this, resp.data);
+            return _this.trigger("data", _this, resp.items);
           };
         })(this),
         error: (function(_this) {
@@ -379,11 +380,11 @@
     };
 
     DataSource.prototype.isEmpty = function() {
-      return !this.hasData() || _.isEmpty(this.resp.data);
+      return !this.hasData() || _.isEmpty(this.resp.items);
     };
 
     DataSource.prototype.hasMore = function() {
-      return this.hasData() && this.resp.current_page < this.resp.last_page;
+      return this.hasData() && this.resp.page < this.resp.lastPage;
     };
 
     DataSource.prototype.isFull = function() {
@@ -445,7 +446,7 @@
 
     DataSource.prototype.getData = function() {
       var _ref1;
-      return (_ref1 = this.resp) != null ? _ref1.data : void 0;
+      return (_ref1 = this.resp) != null ? _ref1.items : void 0;
     };
 
     DataSource.prototype.getTotal = function() {
@@ -465,7 +466,7 @@
 
     DataSource.prototype.getLastPage = function() {
       var _ref1;
-      return (_ref1 = this.resp) != null ? _ref1.last_page : void 0;
+      return (_ref1 = this.resp) != null ? _ref1.lastPage : void 0;
     };
 
     return DataSource;

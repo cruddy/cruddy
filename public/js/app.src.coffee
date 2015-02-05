@@ -134,6 +134,7 @@ class Cruddy.View extends Backbone.View
 class AdvFormData
     constructor: (data) ->
         @original = new FormData
+        @original.append "_token", Cruddy.token
         @append data if data?
 
     append: (value, name) ->
@@ -194,7 +195,7 @@ class DataSource extends Backbone.Model
             success: (resp) =>
                 @resp = resp
 
-                @trigger "data", this, resp.data
+                @trigger "data", this, resp.items
 
             error: (xhr) => @trigger "error", this, xhr
 
@@ -203,9 +204,9 @@ class DataSource extends Backbone.Model
 
     hasData: -> @resp?
 
-    isEmpty: -> not @hasData() or _.isEmpty @resp.data
+    isEmpty: -> not @hasData() or _.isEmpty @resp.items
 
-    hasMore: -> @hasData() and @resp.current_page < @resp.last_page
+    hasMore: -> @hasData() and @resp.page < @resp.lastPage
 
     isFull: -> not @hasMore()
 
@@ -245,11 +246,11 @@ class DataSource extends Backbone.Model
 
         data
 
-    getData: -> @resp?.data
+    getData: -> @resp?.items
     getTotal: -> @resp?.total
     getFrom: -> @resp?.from
     getTo: -> @resp?.to
-    getLastPage: -> @resp?.last_page
+    getLastPage: -> @resp?.lastPage
 
 class SearchDataSource extends Backbone.Model
     defaults:

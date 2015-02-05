@@ -3,7 +3,7 @@
 [![Latest Unstable Version](https://poser.pugx.org/kalnoy/cruddy/v/unstable.svg)](https://packagist.org/packages/kalnoy/cruddy)
 [![License](https://poser.pugx.org/kalnoy/cruddy/license.svg)](https://packagist.org/packages/kalnoy/cruddy)
 
-Cruddy is a powerfull tool for backend applications. Based on [Laravel 4](http://laravel.com),
+Cruddy is a powerfull tool for backend applications. Based on [Laravel](http://laravel.com),
 allows to view, create and update your entities with less effort and coding.
 
 __Highlights:__

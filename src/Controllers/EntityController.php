@@ -1,0 +1,297 @@
+<?php
+
+namespace Kalnoy\Cruddy\Controllers;
+
+use Exception;
+use Illuminate\Config\Repository as Config;
+use Illuminate\Http\Request;
+use Illuminate\Routing\Controller;
+use Kalnoy\Cruddy\ActionException;
+use Kalnoy\Cruddy\Data;
+use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\EntityNotFoundException;
+use Kalnoy\Cruddy\Environment;
+use Kalnoy\Cruddy\ModelNotFoundException;
+use Kalnoy\Cruddy\OperationNotPermittedException;
+use Kalnoy\Cruddy\Service\Validation\ValidationException;
+
+/**
+ * This controller handles requests to the api.
+ *
+ * @since 1.0.0
+ */
+class EntityController extends Controller {
+
+    /**
+     * The cruddy environment.
+     *
+     * @var Environment
+     */
+    protected $environment;
+
+    /**
+     * @var Config
+     */
+    protected $config;
+
+    /**
+     * @var Request
+     */
+    protected $request;
+
+    /**
+     * Initialize the controller.
+     *
+     * @param Environment $environment
+     * @param Request $request
+     * @param Config $config
+     */
+    public function __construct(Environment $environment, Request $request, Config $config)
+    {
+        $this->environment = $environment;
+        $this->config = $config;
+        $this->request = $request;
+    }
+
+    /**
+     * Get a list of models of specified entity.
+     *
+     * @param string $entity
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function index($entity)
+    {
+        return $this->resolve($entity, 'view', function (Request $request, Entity $entity)
+        {
+            if ( ! $request->ajax()) return $this->loadingView();
+
+            $options = $this->prepareSearchOptions($request->all());
+
+            return response($entity->search($options));
+        });
+    }
+
+    /**
+     * Prepare search options that received form the input.
+     *
+     * @param array $options
+     *
+     * @return array
+     */
+    protected function prepareSearchOptions(array $options)
+    {
+        if (isset($options['order_by']) && isset($options['order_dir']))
+        {
+            $options['order'] = [$options['order_by'] => $options['order_dir']];
+        }
+
+        return $options;
+    }
+
+    /**
+     * View an item of specific entity type.
+     *
+     * @param  string $entity
+     * @param  int $id
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function show($entity, $id)
+    {
+        return $this->resolve($entity, 'view', function (Request $request, Entity $entity) use ($id)
+        {
+            if ( ! $request->ajax())
+            {
+                return redirect(route('cruddy.index', [ $entity->getId(), 'id' => $id ]));
+            }
+
+            return response($entity->find($id));
+        });
+    }
+
+    /**
+     * Create an entity instance.
+     *
+     * @param  string $entity
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function store($entity)
+    {
+        return $this->resolveSafe($entity, 'create', function (Request $request, Entity $entity)
+        {
+            $data = new Data($entity, $request->all());
+
+            return $this->validateAndSave($entity, $data);
+        });
+    }
+
+    /**
+     * @param Entity $entity
+     * @param Data $data
+     *
+     * @return \Illuminate\Http\Response
+     */
+    protected function validateAndSave(Entity $entity, Data $data)
+    {
+        $data->validate();
+
+        $model = $data->save();
+
+        return response($entity->extract($model));
+    }
+
+    /**
+     * Update an entity instance.
+     *
+     * @param string $entity
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function update($entity, $id, $action = null)
+    {
+        return $this->resolveSafe($entity, 'update', function (Request $request, Entity $entity) use ($id, $action)
+        {
+            $data = new Data($entity, $request->all(), $id);
+
+            $data->setCustomAction($action);
+
+            return $this->validateAndSave($entity, $data);
+        });
+    }
+
+    /**
+     * Execute custom action on model.
+     *
+     * @param string $entity
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function executeCustomAction($entity, $id, $action = null)
+    {
+        return $this->resolveSafe($entity, 'update', function (Request $request, Entity $entity) use ($id, $action)
+        {
+            $data = new Data($entity, [], $id);
+
+            $data->setCustomAction($action);
+
+            $data->save();
+
+            return response()->json('ok');
+        });
+    }
+
+    /**
+     * Destroy a model.
+     *
+     * @param $entity
+     * @param $id
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy($entity, $id)
+    {
+        return $this->resolveSafe($entity, 'delete', function (Request $request, Entity $entity) use ($id)
+        {
+            return response('{}', $entity->delete($id) ? 200 : 404);
+        });
+    }
+
+    /**
+     * Resolve a model type and execute callback.
+     *
+     * @param  string   $id
+     * @param  string   $method
+     * @param  Callable $callback
+     * @param  bool     $transaction
+     *
+     * @throws \Exception
+     * @return \Illuminate\Http\Response
+     */
+    protected function resolve($id, $method, Callable $callback, $transaction = false)
+    {
+        try
+        {
+            $entity = $this->environment->entity($id);
+
+            if ( ! $this->environment->isPermitted($method, $entity))
+            {
+                $message = $this->environment->translate("cruddy::app.forbidden.{$method}", [':entity' => $id]);
+
+                throw new OperationNotPermittedException($message);
+            }
+
+            if ($transaction)
+            {
+                $connection = $entity->getRepository()->newModel()->getConnection();
+
+                return $connection->transaction(function () use ($entity, $callback)
+                {
+                    return $callback($this->request, $entity);
+                });
+            }
+
+            return $callback($this->request, $entity);
+        }
+
+        catch (ValidationException $e)
+        {
+            return response($e->getErrors(), 400);
+        }
+
+        catch (EntityNotFoundException $e)
+        {
+            return $this->responseError($e->getMessage(), 404);
+        }
+
+        catch (ModelNotFoundException $e)
+        {
+            return $this->responseError('Specified model not found.', 404);
+        }
+
+        catch (OperationNotPermittedException $e)
+        {
+            return $this->responseError($e->getMessage(), 403);
+        }
+
+        catch (ActionException $e)
+        {
+            return $this->responseError($e->getMessage());
+        }
+    }
+
+    /**
+     * Resolve a model type and execute callback enclosed in transaction.
+     *
+     * @param  string   $id
+     * @param  string   $method
+     * @param  Callable $callback
+     *
+     * @return \Illuminate\Http\Response
+     */
+    protected function resolveSafe($id, $method, Callable $callback)
+    {
+        return $this->resolve($id, $method, $callback, true);
+    }
+
+    /**
+     * @return mixed
+     */
+    private function loadingView()
+    {
+        return view('cruddy::loading');
+    }
+
+    /**
+     * @param $error
+     * @param $status
+     *
+     * @return \Illuminate\Http\JsonResponse
+     */
+    protected function responseError($error, $status = 500)
+    {
+        return response()->json(compact('error'), $status);
+    }
+
+}

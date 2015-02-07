@@ -26,7 +26,7 @@ class CruddyController extends Controller {
      */
     public function index(Environment $cruddy)
     {
-        $dashboard = $cruddy->config('cruddy.dashboard', 'cruddy::dashboard');
+        $dashboard = config('cruddy.dashboard', 'cruddy::dashboard');
 
        if ($dashboard[0] === '@') return redirect(route('cruddy.index', [ substr($dashboard, 1) ]));
 

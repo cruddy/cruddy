@@ -2,6 +2,8 @@
 
 namespace Kalnoy\Cruddy;
 
+use Illuminate\Contracts\Events\Dispatcher;
+use Kalnoy\Cruddy\Contracts\SearchProcessor;
 use Kalnoy\Cruddy\Schema\AttributesCollection;
 use Illuminate\Support\Collection;
 use Illuminate\Contracts\Support\Jsonable;
@@ -19,11 +21,19 @@ use Kalnoy\Cruddy\Repo\ChainedSearchProcessor;
 class Entity implements Jsonable, Arrayable {
 
     /**
-     * Cruddy environment.
-     *
-     * @var Environment
+     * @var Dispatcher
      */
-    protected static $env;
+    protected static $dispatcher;
+
+    /**
+     * @var Repository
+     */
+    protected $entities;
+
+    /**
+     * @var Lang
+     */
+    protected $lang;
 
     /**
      * The schema.
@@ -100,7 +110,7 @@ class Entity implements Jsonable, Arrayable {
      */
     public function find($id)
     {
-        $model = $this->getRepository()->find($id);
+        $model = $this->repository()->find($id);
 
         return $this->extract($model);
     }
@@ -121,7 +131,7 @@ class Entity implements Jsonable, Arrayable {
             return $this->extractAll($model, $collection);
         }
 
-        if ($collection === null) $collection = $this->getFields();
+        if ($collection === null) $collection = $this->fields();
 
         $attributes = $collection->extract($model);
         $meta = $this->getMetaDataForModel($model);
@@ -178,7 +188,7 @@ class Entity implements Jsonable, Arrayable {
      */
     public function search(array $options)
     {
-        $results = $this->getRepository()->search($options, $this->getSearchProcessor($options));
+        $results = $this->repository()->search($options, $this->getSearchProcessor($options));
 
         if (array_get($options, 'simple'))
         {
@@ -186,7 +196,7 @@ class Entity implements Jsonable, Arrayable {
         }
         else
         {
-            $results['items'] = $this->extractAll($results['items'], $this->getColumns());
+            $results['items'] = $this->extractAll($results['items'], $this->columns());
         }
 
         return $results;
@@ -202,14 +212,21 @@ class Entity implements Jsonable, Arrayable {
     protected function getSearchProcessor(array $options)
     {
         $processor = new ChainedSearchProcessor([
-            $this->getFields(),
-            $this->getColumns(),
-            $this->getFilters(),
+            $this->fields(),
+            $this->columns(),
+            $this->filters(),
         ]);
 
-        if (isset($options['owner']) && static::$env !== null)
+        if (isset($options['owner']))
         {
-            $processor->add(static::$env->field($options['owner']));
+            $field = $this->entities->field($options['owner']);
+
+            if ( ! $field instanceof SearchProcessor)
+            {
+                throw new \RuntimeException("Cannot use field [{$options['owner']}] as owner.");
+            }
+
+            $processor->add($field);
         }
 
         return $processor;
@@ -301,9 +318,9 @@ class Entity implements Jsonable, Arrayable {
      */
     public static function registerEvent($id, $event, $callback)
     {
-        if ( ! static::$env) return;
+        if ( ! static::$dispatcher) return;
 
-        static::$env->getDispatcher()->listen("entity.{$event}: {$id}", $callback);
+        static::$dispatcher->listen("entity.{$event}: {$id}", $callback);
     }
 
     /**
@@ -317,11 +334,27 @@ class Entity implements Jsonable, Arrayable {
      */
     public function fireEvent($event, array $payload, $halt = true)
     {
-        if ( ! isset(static::$env)) return null;
+        if ( ! isset(static::$dispatcher)) return null;
 
         $event = "entity.{$event}: {$this->id}";
 
-        return static::$env->getDispatcher()->fire($event, $payload, $halt);
+        return static::$dispatcher->fire($event, $payload, $halt);
+    }
+
+    /**
+     * @param Dispatcher $dispatcher
+     */
+    public static function setEventDispatcher(Dispatcher $dispatcher)
+    {
+        static::$dispatcher = $dispatcher;
+    }
+
+    /**
+     * @return Dispatcher
+     */
+    public static function getEventDispatcher()
+    {
+        return static::$dispatcher;
     }
 
     /**
@@ -333,7 +366,7 @@ class Entity implements Jsonable, Arrayable {
      */
     public function delete($ids)
     {
-        return $this->getRepository()->delete($ids);
+        return $this->repository()->delete($ids);
     }
 
     /**
@@ -349,20 +382,20 @@ class Entity implements Jsonable, Arrayable {
      */
     public function translate($key, $default = null)
     {
-        if ( ! static::$env) return $default;
+        $lang = $this->getLang();
 
         if (false !== $pos = strpos($key, '::'))
         {
             if ($pos === 0) $key = substr($key, 2);
 
-            return static::$env->translate($key, $default);
+            return $lang->translate($key, $default);
         }
 
-        $line = static::$env->translate("{$this->id}.{$key}");
+        $line = $lang->translate("{$this->id}.{$key}");
 
         if ($line !== null) return $line;
 
-        return static::$env->translate("entities.{$key}", $default);
+        return $lang->translate("entities.{$key}", $default);
     }
 
     /**
@@ -370,7 +403,7 @@ class Entity implements Jsonable, Arrayable {
      *
      * @return Schema\Fields\Collection
      */
-    public function getFields()
+    public function fields()
     {
         if ($this->fields === null) return $this->fields = $this->createFields();
 
@@ -398,7 +431,7 @@ class Entity implements Jsonable, Arrayable {
      *
      * @return Schema\Columns\Collection
      */
-    public function getColumns()
+    public function columns()
     {
         if ($this->columns === null) return $this->columns = $this->createColumns();
 
@@ -424,7 +457,7 @@ class Entity implements Jsonable, Arrayable {
     /**
      * @return Schema\Filters\Collection
      */
-    public function getFilters()
+    public function filters()
     {
         if ($this->filters === null) return $this->filters = $this->createFilters();
 
@@ -450,7 +483,7 @@ class Entity implements Jsonable, Arrayable {
      *
      * @return \Kalnoy\Cruddy\Contracts\Repository
      */
-    public function getRepository()
+    public function repository()
     {
         if ($this->repo === null)
         {
@@ -465,7 +498,7 @@ class Entity implements Jsonable, Arrayable {
      *
      * @return Contracts\Validator
      */
-    public function getValidator()
+    public function validator()
     {
         if ($this->validator === null)
         {
@@ -473,26 +506,6 @@ class Entity implements Jsonable, Arrayable {
         }
 
         return $this->validator;
-    }
-
-    /**
-     * Get cruddy environment instance.
-     *
-     * @return Environment
-     */
-    public static function getEnvironment()
-    {
-        return static::$env;
-    }
-
-    /**
-     * Set environment instance.
-     *
-     * @param Environment $env
-     */
-    public static function setEnvironment(Environment $env)
-    {
-        static::$env = $env;
     }
 
     /**
@@ -614,18 +627,18 @@ class Entity implements Jsonable, Arrayable {
      */
     public function toArray()
     {
-        $model = $this->getRepository()->newModel();
+        $model = $this->repository()->newModel();
 
         return [
             'id' => $this->id,
             'primary_key' => $model->getKeyName(),
             'soft_deleting' => false,
-            'defaults' => $this->getFields()->extract($model),
+            'defaults' => $this->fields()->extract($model),
             'title' => $this->getTitle(),
 
-            'fields' => $this->getFields()->export(),
-            'columns' => $this->getColumns()->export(),
-            'filters' => $this->getFilters()->export(),
+            'fields' => $this->fields()->export(),
+            'columns' => $this->columns()->export(),
+            'filters' => $this->filters()->export(),
 
         ] + $this->schema->toArray() + [ 'view' => 'Cruddy.Entity.Page' ];
     }
@@ -665,9 +678,41 @@ class Entity implements Jsonable, Arrayable {
     /**
      * @return Contracts\Permissions
      */
-    private function getPermissionsDriver()
+    protected function getPermissionsDriver()
     {
         return app('cruddy.permissions')->driver();
+    }
+
+    /**
+     * @param Repository $entities
+     */
+    public function setEntitiesRepository(Repository $entities)
+    {
+        $this->entities = $entities;
+    }
+
+    /**
+     * @return Repository
+     */
+    public function getEntitiesRepository()
+    {
+        return $this->entities;
+    }
+
+    /**
+     * @param Lang $lang
+     */
+    public function setLang(Lang $lang)
+    {
+        $this->lang = $lang;
+    }
+
+    /**
+     * @return Lang
+     */
+    public function getLang()
+    {
+        return $this->lang ?: app('cruddy.lang');
     }
 
 }

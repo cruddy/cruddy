@@ -2,19 +2,21 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>@yield('title', $brand)</title>
+    <title>@yield('title', $cruddyData['brandName'])</title>
     {!! $styles !!}
 </head>
 <body>
     <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
         <div class="container-fluid">
             <div class="navbar-header">
-                <a href="{!! url($brand_url) !!}" target="_blank" class="navbar-brand">{{ $brand }}</a>
+                <a href="{!! url(config('cruddy.brand_url', '/')) !!}" target="_blank" class="navbar-brand">
+                    {{ $cruddyData['brandName'] }}
+                </a>
             </div>
 
             <div class="navbar-collapse">
-                {!! $mainMenu !!}
-                {!! $serviceMenu !!}
+                {!! $menu->render(config('cruddy.menu', []), [ 'class' => 'nav navbar-nav' ]) !!}
+                {!! $menu->render(config('cruddy.service_menu', []), [ 'class' => 'nav navbar-nav navbar-right']) !!}
             </div>
         </div>
     </nav>

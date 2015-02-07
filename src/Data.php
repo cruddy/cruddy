@@ -69,8 +69,8 @@ class Data {
     public function getValidationErrors()
     {
         $result = [];
-        $labels = $this->entity->getFields()->validationLabels();
-        $validator = $this->entity->getValidator();
+        $labels = $this->entity->fields()->validationLabels();
+        $validator = $this->entity->validator();
 
         if ( ! $validator->validFor($this->getAction(), $this->input, $labels))
         {
@@ -98,7 +98,7 @@ class Data {
     {
         if ( ! $this->isPermitted()) return false;
 
-        $repo = $this->entity->getRepository();
+        $repo = $this->entity->repository();
 
         $model = $this->id ? $repo->find($this->id) : $repo->newModel();
 
@@ -147,7 +147,7 @@ class Data {
      */
     protected function process(array $data)
     {
-        $this->input = $this->entity->getFields()->process($data);
+        $this->input = $this->entity->fields()->process($data);
 
         $this->addInner($data);
     }
@@ -157,7 +157,7 @@ class Data {
      */
     protected function addInner(array $data)
     {
-        $fields = $this->entity->getFields();
+        $fields = $this->entity->fields();
 
         foreach ($data as $id => $item)
         {
@@ -189,7 +189,7 @@ class Data {
      */
     protected function getCleanedInput()
     {
-        return $this->entity->getFields()->cleanInput($this->getAction(), $this->input);
+        return $this->entity->fields()->cleanInput($this->getAction(), $this->input);
     }
 
     /**

@@ -66,18 +66,9 @@ class LayoutComposer {
             'token' => $this->request->getSession()->getToken(),
         ];
 
-        $view->brand = $view->cruddyData['brandName'];
-        $view->brand_url = $this->cruddy->config('cruddy.brand_url', '/');
-
         $view->scripts = $this->assets->scripts();
         $view->styles = $this->assets->styles();
 
-        $view->mainMenu = $this->menuBuilder->render(
-            $this->cruddy->config('cruddy.menu', []), [ 'class' => 'nav navbar-nav' ]
-        );
-
-        $view->serviceMenu = $this->menuBuilder->render(
-            $this->cruddy->config('service_menu', []), [ 'class' => 'nav navbar-nav navbar-right']
-        );
+        $view->menu = $this->menuBuilder;
     }
 }

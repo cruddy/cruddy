@@ -74,7 +74,7 @@ class Factory extends BaseFactory {
         if ($ref === null) $ref = str_plural($id);
 
         $ref = Entity::getEnvironment()->entity($ref);
-        $model = $entity->getRepository()->newModel();
+        $model = $entity->repository()->newModel();
 
         if ( ! method_exists($model, $id))
         {

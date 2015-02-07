@@ -84,7 +84,7 @@ class InnerDataCollection {
 
         if ($ref->isPermitted('delete'))
         {
-            $ref->getRepository()->delete($this->getIdsToDelete());
+            $ref->repository()->delete($this->getIdsToDelete());
         }
     }
 

@@ -56,6 +56,8 @@ class CruddyServiceProvider extends ServiceProvider {
         ], 'config');
 
         $this->registerRoutes($this->app['router'], $this->app['config']);
+
+        Entity::setEventDispatcher($this->app->make('events'));
 	}
 
 	/**
@@ -155,17 +157,11 @@ class CruddyServiceProvider extends ServiceProvider {
     {
         $this->app->singleton('cruddy', function (Container $app)
         {
-            $config = $app->make('config');
-
             $permissions = $app->make('cruddy.permissions');
-            $lang = $app->make('cruddy.lang');
             $repository = $app->make('cruddy.repository');
+            $lang = $app->make('cruddy.lang');
 
-            $env = new Environment($config, $repository, $permissions, $lang, $app->make('events'));
-
-            Entity::setEnvironment($env);
-
-            return $env;
+            return new Environment($repository, $permissions, $lang);
         });
     }
 
@@ -291,9 +287,6 @@ class CruddyServiceProvider extends ServiceProvider {
             'cruddy.thumbs' => 'Service\ThumbnailFactory',
             'cruddy.repository' => 'Repository',
             'cruddy.permissions' => 'Service\Permissions\PermissionsManager',
-//            'cruddy.fields' => 'Schema\Fields\Factory',
-//            'cruddy.columns' => 'Schema\Columns\Factory',
-//            'cruddy.filters' => 'Schema\Filters\Factory',
             'cruddy.menu' => 'Service\MenuBuilder',
             'cruddy.assets' => 'Assets',
         ];

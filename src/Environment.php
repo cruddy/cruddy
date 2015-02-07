@@ -17,11 +17,6 @@ use RuntimeException;
 class Environment {
 
     /**
-     * @var \Illuminate\Config\Repository
-     */
-    protected $config;
-
-    /**
      * The entities repository.
      *
      * @var Repository
@@ -39,29 +34,16 @@ class Environment {
     protected $lang;
 
     /**
-     * Event dispatcher.
-     *
-     * @var \Illuminate\Events\Dispatcher
-     */
-    protected $dispatcher;
-
-    /**
-     * @param Config             $config
-     * @param Repository         $entities
-     * @param FieldFactory       $fields
-     * @param ColumnFactory      $columns
+     * @param Config $config
+     * @param Repository $entities
      * @param PermissionsManager $permissions
-     * @param Lang               $lang
-     * @param Dispatcher         $dispatcher
+     * @param Lang $lang
      */
-    public function __construct(
-        Config $config, Repository $entities, PermissionsManager $permissions, Lang $lang, Dispatcher $dispatcher)
+    public function __construct(Repository $entities, PermissionsManager $permissions, Lang $lang)
     {
-        $this->config = $config;
         $this->entities = $entities;
         $this->permissions = $permissions;
         $this->lang = $lang;
-        $this->dispatcher = $dispatcher;
     }
 
     /**
@@ -74,32 +56,6 @@ class Environment {
     public function entity($id)
     {
         return $this->entities->resolve($id);
-    }
-
-    /**
-     * Get configuration option from cruddy configuration file.
-     *
-     * @param string $key
-     * @param mixed  $default
-     *
-     * @return mixed
-     */
-    public function config($key, $default = null)
-    {
-        return $this->config->get($key, $default);
-    }
-
-    /**
-     * Translate a key.
-     *
-     * @param string $key
-     * @param mixed $default
-     *
-     * @return string
-     */
-    public function translate($key, $default = null)
-    {
-        return $this->lang->translate($key, $default);
     }
 
     /**
@@ -116,17 +72,7 @@ class Environment {
      */
     public function field($id)
     {
-        list($entityId, $fieldId) = explode('.', $id, 2);
-
-        $entity = $this->entities->resolve($entityId);
-        $field = $entity->getFields()->get($fieldId);
-
-        if ( ! $field)
-        {
-            throw new RuntimeException("The field [{$fieldId}] of [{$entityId}] entity is not found.");
-        }
-
-        return $field;
+        return $this->entities->field($id);
     }
 
     /**
@@ -163,20 +109,6 @@ class Environment {
     }
 
     /**
-     * Resolve and convert all entities to array.
-     *
-     * @return array
-     */
-    public function schema()
-    {
-        return array_map(function (Entity $entity)
-        {
-            return $entity->toArray();
-
-        }, $this->entities->resolveAll());
-    }
-
-    /**
      * Get permissions for every entity.
      *
      * @return array
@@ -199,49 +131,13 @@ class Environment {
     public function data()
     {
         return [
-            'locale' => $this->config('app.locale'),
-            'brandName' => Helpers::tryTranslate($this->config('cruddy.brand')),
-            'uri' => $this->config('cruddy.uri'),
+            'locale' => config('app.locale', 'en'),
+            'brandName' => $this->lang->tryTranslate(config('cruddy.brand', 'Cruddy')),
+            'uri' => config('cruddy.uri', 'backend'),
             'entities' => $this->entities->available(),
             'lang' => $this->lang->ui(),
             'permissions' => $this->permissions(),
         ];
-    }
-
-    /**
-     * Get event dispatcher.
-     *
-     * @return \Illuminate\Events\Dispatcher
-     */
-    public function getDispatcher()
-    {
-        return $this->dispatcher;
-    }
-
-    /**
-     * Register saving event handler.
-     *
-     * @param string $id
-     * @param mixed $callback
-     *
-     * @return void
-     */
-    public function saving($id, $callback)
-    {
-        Entity::saving($id, $callback);
-    }
-
-    /**
-     * Register saved event handler.
-     *
-     * @param string $id
-     * @param mixed $callback
-     *
-     * @return void
-     */
-    public function saved($id, $callback)
-    {
-        Entity::saved($id, $callback);
     }
 
 }

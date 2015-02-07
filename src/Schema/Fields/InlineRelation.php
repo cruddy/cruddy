@@ -137,7 +137,7 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationCont
      */
     protected function appendReferenceRelations(array &$items, $key = null)
     {
-        foreach ($this->reference->getFields() as $field)
+        foreach ($this->reference->fields() as $field)
         {
             if ($field instanceof BaseRelation)
             {

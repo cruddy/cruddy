@@ -15,8 +15,6 @@ namespace Kalnoy\Cruddy\Schema\Fields;
  * @method Types\Boolean    bool(string $id)
  * @method Types\File       file(string $id)
  * @method Types\Image      image(string $id)
- * @method Types\Markdown   markdown(string $id)
- * @method Types\Code       code(string $id)
  * @method Types\Integer    integer(string $id)
  * @method Types\Float      float(string $id)
  * @method void             timestamps(bool $hide = false, bool $disableCreatedAt = null)
@@ -27,6 +25,8 @@ namespace Kalnoy\Cruddy\Schema\Fields;
  * @method Types\Computed   computed(string $id, mixed $accessor = null)
  *
  * @method \Kalnoy\Cruddy\CKEditor\CKEditor ckedit(string $id)
+ * @method \Kalnoy\Cruddy\Ace\Markdown markdown(string $id)
+ * @method \Kalnoy\Cruddy\Ace\Code code(string $id)
  */
 class InstanceFactory extends \Kalnoy\Cruddy\Schema\InstanceFactory {
 

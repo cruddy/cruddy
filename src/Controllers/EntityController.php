@@ -224,7 +224,7 @@ class EntityController extends Controller {
 
             if ($transaction)
             {
-                $connection = $entity->getRepository()->newModel()->getConnection();
+                $connection = $entity->repository()->newModel()->getConnection();
 
                 return $connection->transaction(function () use ($entity, $callback)
                 {

@@ -82,7 +82,7 @@ abstract class BaseField extends Attribute implements Field {
 
         if ($required !== null) return $required;
 
-        return $this->entity->getValidator()->getRequiredState($this->id);
+        return $this->entity->validator()->getRequiredState($this->id);
     }
 
     /**

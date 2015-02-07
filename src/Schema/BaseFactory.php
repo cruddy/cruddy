@@ -93,7 +93,7 @@ class BaseFactory {
      */
     protected function resolveField(Entity $entity, $id)
     {
-        $field = $entity->getFields()->get($id);
+        $field = $entity->fields()->get($id);
 
         if ($field === null)
         {

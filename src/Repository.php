@@ -2,6 +2,7 @@
 
 namespace Kalnoy\Cruddy;
 
+use Kalnoy\Cruddy\Contracts\Field;
 use RuntimeException;
 use Illuminate\Container\Container;
 
@@ -95,6 +96,7 @@ class Repository {
         $this->resolved[$id] = $entity = $schema->entity();
 
         $entity->setId($id);
+        $entity->setEntitiesRepository($this);
 
         return $entity;
     }
@@ -163,6 +165,28 @@ class Repository {
         }
 
         return $this->available;
+    }
+
+    /**
+     * Get a field with specified id.
+     *
+     * @param $id
+     *
+     * @return Field
+     */
+    public function field($id)
+    {
+        list($entityId, $fieldId) = explode('.', $id, 2);
+
+        $entity = $this->resolve($entityId);
+        $field = $entity->fields()->get($fieldId);
+
+        if ( ! $field)
+        {
+            throw new RuntimeException("The field [{$fieldId}] of [{$entityId}] entity is not found.");
+        }
+
+        return $field;
     }
 
 }

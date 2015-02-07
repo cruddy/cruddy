@@ -70,7 +70,7 @@ abstract class BaseRelation extends BaseField {
      */
     public function newRelationalQuery(Eloquent $model = null)
     {
-        $model = $model ?: $this->reference->getRepository()->newModel();
+        $model = $model ?: $this->reference->repository()->newModel();
 
         return $model->{$this->getRelationId()}();
     }

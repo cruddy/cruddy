@@ -2,6 +2,7 @@
 
 namespace Kalnoy\Cruddy\Schema\Columns\Types;
 
+use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Query\Builder;
 use Kalnoy\Cruddy\Schema\Columns\BaseColumn;
@@ -9,6 +10,10 @@ use Kalnoy\Cruddy\Entity;
 
 /**
  * Computed column that extracts data using a closure.
+ *
+ * @method $this eager(array $relations)
+ *
+ * @property array $eager
  *
  * @since 1.0.0
  */
@@ -94,5 +99,18 @@ class Computed extends BaseColumn {
     public function canOrder()
     {
         return isset($this->columnClause);
+    }
+
+    /**
+     * @param EloquentBuilder $builder
+     *
+     * @return void
+     */
+    public function modifyQuery(EloquentBuilder $builder)
+    {
+        if ($eager = $this->get('eager'))
+        {
+            $builder->with($eager);
+        }
     }
 }

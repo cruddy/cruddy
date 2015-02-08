@@ -16,9 +16,9 @@ class HasOne extends InlineRelation {
      * @param Model $model
      * @param Model $parent
      */
-    public function joinModels(Model $model, Model $parent)
+    public function attach(Model $model, Model $parent)
     {
-        parent::joinModels($model, $parent);
+        parent::attach($model, $parent);
 
         $model->setAttribute($this->relation->getPlainForeignKey(), $parent->getKey());
     }

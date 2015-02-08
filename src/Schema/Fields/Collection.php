@@ -124,4 +124,23 @@ class Collection extends AttributesCollection implements SearchProcessor {
     {
         return preg_split('/\s/', $keywords, -1, PREG_SPLIT_NO_EMPTY);
     }
+
+    /**
+     * Get a list of relations.
+     *
+     * @param string $owner
+     *
+     * @return array
+     */
+    public function relations($owner = null)
+    {
+        $data = [];
+
+        foreach ($this->items as $field)
+        {
+            if ($field instanceof BaseRelation) $data = array_merge($data, $field->relations($owner));
+        }
+
+        return $data;
+    }
 }

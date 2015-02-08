@@ -30,7 +30,7 @@ interface Attribute extends Entry {
      *
      * @param EloquentBuilder $builder
      *
-     * @return $this
+     * @return void
      */
     public function modifyQuery(EloquentBuilder $builder);
 

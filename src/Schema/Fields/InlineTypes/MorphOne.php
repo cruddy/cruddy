@@ -16,9 +16,9 @@ class MorphOne extends HasOne {
      * @param Model $model
      * @param Model $parent
      */
-    public function joinModels(Model $model, Model $parent)
+    public function attach(Model $model, Model $parent)
     {
-        parent::joinModels($model, $parent);
+        parent::attach($model, $parent);
 
         $model->setAttribute($this->relation->getPlainMorphType(), $this->relation->getMorphClass());
     }

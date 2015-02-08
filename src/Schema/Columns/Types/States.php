@@ -79,8 +79,7 @@ class States extends Attribute implements Column {
      */
     public function toArray()
     {
-        return
-        [
+        return [
             'hide' => true,
 
         ] + parent::toArray();

@@ -67,7 +67,7 @@ class InnerData extends Data {
     {
         parent::fillModel($model);
 
-        $this->relation->joinModels($model, $this->parent);
+        $this->relation->attach($model, $this->parent);
     }
 
     /**

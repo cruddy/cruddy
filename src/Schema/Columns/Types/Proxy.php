@@ -36,8 +36,8 @@ class Proxy extends BaseColumn {
     /**
      * Init column.
      *
-     * @param Entity         $entity
-     * @param string         $id
+     * @param Entity $entity
+     * @param string $id
      * @param \Kalnoy\Cruddy\Contracts\Field $field
      */
     public function __construct(Entity $entity, $id, Field $field)
@@ -61,8 +61,6 @@ class Proxy extends BaseColumn {
     public function modifyQuery(EloquentBuilder $builder)
     {
         $this->field->modifyQuery($builder);
-
-        return $this;
     }
 
     /**
@@ -71,8 +69,6 @@ class Proxy extends BaseColumn {
     public function order(QueryBuilder $builder, $data)
     {
         $this->field->order($builder, $data);
-
-        return $this;
     }
 
     /**
@@ -96,8 +92,7 @@ class Proxy extends BaseColumn {
      */
     public function toArray()
     {
-        return
-        [
+        return [
             'field' => $this->field->getId(),
 
         ] + parent::toArray();

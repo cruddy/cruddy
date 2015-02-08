@@ -83,8 +83,7 @@ abstract class BaseColumn extends Attribute implements Column {
      */
     public function toArray()
     {
-        return
-        [
+        return [
             'width' => $this->get('width'),
             'header' => $this->getHeader(),
             'order_dir' => $this->get('orderDir', 'asc'),

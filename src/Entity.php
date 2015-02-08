@@ -282,6 +282,16 @@ class Entity implements Jsonable, Arrayable {
     }
 
     /**
+     * @param string $owner
+     *
+     * @return array
+     */
+    public function relations($owner = null)
+    {
+        return $this->fields()->relations($owner);
+    }
+
+    /**
      * Register saving event.
      *
      * @param string $id

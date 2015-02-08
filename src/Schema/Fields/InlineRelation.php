@@ -81,7 +81,7 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationCont
      *
      * @return void
      */
-    public function joinModels(Model $model, Model $parent)
+    public function attach(Model $model, Model $parent)
     {
         $extra = $this->extra;
 
@@ -108,6 +108,20 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationCont
     }
 
     /**
+     * @param string $owner
+     *
+     * @return array
+     */
+    public function relations($owner)
+    {
+        $relations = parent::relations($owner);
+
+        $owner = $owner ? $owner.'.'.$this->reference->getId() : $this->reference->getId();
+
+        return array_merge($relations, $this->reference->relations($owner));
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function extractForColumn(Model $model)
@@ -116,48 +130,15 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationCont
     }
 
     /**
-     * {@inheritdoc}
-     */
-    protected function appendPreloadableRelations(array &$items, $key = null)
-    {
-        $relationId = $this->getKeyedRelationId($key);
-
-        $items[] = $relationId;
-
-        $this->appendReferenceRelations($items, $relationId);
-    }
-
-    /**
-     * Append preloadables from reference entity.
-     *
-     * @param array  $items
-     * @param string $key
-     *
-     * @return void
-     */
-    protected function appendReferenceRelations(array &$items, $key = null)
-    {
-        foreach ($this->reference->fields() as $field)
-        {
-            if ($field instanceof BaseRelation)
-            {
-                $field->appendPreloadableRelations($items, $key);
-            }
-        }
-    }
-
-    /**
      * Find inner relations and load them on target model.
      *
-     * @param mixed $loadee
+     * @param Model|\Illuminate\Database\Eloquent\Collection $loadee
      *
      * @return void
      */
     protected function loadRelations($loadee)
     {
-        $relations = [];
-
-        $this->appendReferenceRelations($relations);
+        $relations = $this->reference->relations();
 
         if ($relations) $loadee->load($relations);
     }
@@ -177,8 +158,7 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationCont
      */
     public function toArray()
     {
-        return
-        [
+        return [
             'multiple' => $this->multiple,
 
         ] + parent::toArray();

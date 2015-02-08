@@ -21,7 +21,7 @@ interface InlineRelation extends Field {
      *
      * @return void
      */
-    public function joinModels(Model $model, Model $parent);
+    public function attach(Model $model, Model $parent);
 
     /**
      * @return \Kalnoy\Cruddy\Entity

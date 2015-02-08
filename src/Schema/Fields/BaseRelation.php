@@ -86,6 +86,18 @@ abstract class BaseRelation extends BaseField {
     }
 
     /**
+     * Get a list of relations.
+     *
+     * @param $owner
+     *
+     * @return array
+     */
+    public function relations($owner)
+    {
+        return [ $this->getRelationId($owner) ];
+    }
+
+    /**
      * @param array  $relations
      * @param string $key
      *
@@ -133,11 +145,13 @@ abstract class BaseRelation extends BaseField {
     /**
      * Get relation id.
      *
+     * @param string $owner
+     *
      * @return string
      */
-    public function getRelationId()
+    public function getRelationId($owner = null)
     {
-        return $this->id;
+        return $owner ? $owner.'.'.$this->id : $this->id;
     }
 
     /**
@@ -156,8 +170,7 @@ abstract class BaseRelation extends BaseField {
      */
     public function toArray()
     {
-        return
-        [
+        return [
             'reference' => $this->reference->getId(),
 
         ] + parent::toArray();

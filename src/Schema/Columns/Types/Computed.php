@@ -11,9 +11,9 @@ use Kalnoy\Cruddy\Entity;
 /**
  * Computed column that extracts data using a closure.
  *
- * @method $this eager(array $relations)
+ * @method $this eager($relations)
  *
- * @property array $eager
+ * @property array|string $eager
  *
  * @since 1.0.0
  */

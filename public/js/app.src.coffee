@@ -3936,7 +3936,9 @@ class App extends Backbone.Model
         req.done (resp) =>
             @entities[entity.id] = new Cruddy.Entity.Entity entity for entity in resp
 
-            @dfd.resolve this
+            @dfd.resolve @
+
+            $(document).trigger "started.cruddy", @
 
             return
 
@@ -4131,3 +4133,28 @@ $ ->
         root: Cruddy.getHistoryRoot()
         pushState: true
         hashChange: false
+
+
+$(document).on "started.cruddy", (e, app) ->
+
+    $navbar = $ ".navbar"
+
+    changeEntity = (entity) ->
+        $navbar.find(".navbar-nav>.active").removeClass("active")
+
+        return unless entity?
+
+        $el = $navbar.find(".navbar-nav>[data-entity=#{ entity.id }]")
+
+        $el.addClass "active"
+
+        $el.find(".badge").fadeOut()
+
+    app.on "change:entity", (entity) ->
+        changeEntity entity
+
+        return
+
+    changeEntity app.get "entity"
+
+    return

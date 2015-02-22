@@ -44,7 +44,9 @@ class App extends Backbone.Model
         req.done (resp) =>
             @entities[entity.id] = new Cruddy.Entity.Entity entity for entity in resp
 
-            @dfd.resolve this
+            @dfd.resolve @
+
+            $(document).trigger "started.cruddy", @
 
             return
 

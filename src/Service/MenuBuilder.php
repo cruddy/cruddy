@@ -55,6 +55,21 @@ class MenuBuilder extends \Illuminate\Html\MenuBuilder {
     /**
      * @param array|string $options
      *
+     * @return string
+     */
+    protected function renderItem($options)
+    {
+        if (is_array($options) and isset($options['entity']))
+        {
+            $options['data-entity'] = $options['entity'];
+        }
+
+        return parent::renderItem($options);
+    }
+
+    /**
+     * @param array|string $options
+     *
      * @return bool
      */
     protected function isVisible($options)

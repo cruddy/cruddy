@@ -8,6 +8,7 @@ module.exports = function(grunt) {
         vendor: 'resources/assets/vendor',
         less_src: 'resources/assets/less',
         app: 'resources/assets/coffee',
+        dist: '../../../public/cruddy',
 
         coffee: {
 
@@ -104,7 +105,8 @@ module.exports = function(grunt) {
                     '<%= app %>/entity/form.coffee',
 
                     '<%= app %>/app.coffee',
-                    '<%= app %>/router.coffee'
+                    '<%= app %>/router.coffee',
+                    '<%= app %>/nav.coffee'
                 ],
 
                 dest: 'public/js/app.js'
@@ -137,14 +139,16 @@ module.exports = function(grunt) {
         },
 
         uglify: {
-            all: {
-                options: { sourceMap: true },
+            options: { sourceMap: true },
 
-                expand: true,
-                cwd:  'public/js',
-                src:  ['*.js', '!*.min.js'],
-                dest: 'public/js/',
-                ext:  '.min.js'
+            app: {
+                src:  'public/js/app.js',
+                dest: 'public/js/app.min.js'
+            },
+
+            vendor: {
+                src:  'public/js/vendor.js',
+                dest: 'public/js/vendor.min.js'
             }
         },
 
@@ -179,11 +183,11 @@ module.exports = function(grunt) {
                 dest: 'public/css'
             },
 
-            ace: {
+            dist_scripts: {
                 expand: true,
-                cwd: '<%= vendor %>/ace-builds/src-min-noconflict',
-                src: '*.js',
-                dest: 'public/js/ace'
+                cwd: 'public/js',
+                src: '*',
+                dest: '<%= dist %>/js'
             }
         },
 
@@ -197,7 +201,7 @@ module.exports = function(grunt) {
             coffee: {
                 files: '<%= app %>/**/*.coffee',
 
-                tasks: [ 'app-dev' ]
+                tasks: [ 'scripts', 'copy:dist_scripts' ]
             },
 
             reload: {
@@ -219,18 +223,14 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-copy');
 
     // Concat all needed vendor files
-    grunt.registerTask('vendor', ['concat:vendor', 'copy:fancybox', 'copy:ace']);
-
-    // Backend scripts
-    grunt.registerTask('app-dev', [ 'coffee:app' ]);
-    grunt.registerTask('app', ['app-dev', 'uglify']);
+    grunt.registerTask('vendor', [ 'concat:vendor', 'uglify:vendor', 'copy:fancybox', 'copy:fonts' ]);
 
     grunt.registerTask('styles', [ 'less' ]);
-    grunt.registerTask('scripts', [ 'app' ]);
+    grunt.registerTask('scripts', [ 'coffee', 'uglify:app' ]);
 
     // Default task
     grunt.registerTask('default', [ 'styles', 'scripts' ]);
 
     // Install project
-    grunt.registerTask('install', [ 'copy:fonts', 'vendor', 'default' ]);
+    grunt.registerTask('install', [ 'vendor', 'default' ]);
 };

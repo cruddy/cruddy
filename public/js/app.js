@@ -5747,6 +5747,7 @@
             _this.entities[entity.id] = new Cruddy.Entity.Entity(entity);
           }
           _this.dfd.resolve(_this);
+          $(document).trigger("started.cruddy", _this);
         };
       })(this));
       req.fail((function(_this) {
@@ -5990,6 +5991,25 @@
       pushState: true,
       hashChange: false
     });
+  });
+
+  $(document).on("started.cruddy", function(e, app) {
+    var $navbar, changeEntity;
+    $navbar = $(".navbar");
+    changeEntity = function(entity) {
+      var $el;
+      $navbar.find(".navbar-nav>.active").removeClass("active");
+      if (entity == null) {
+        return;
+      }
+      $el = $navbar.find(".navbar-nav>[data-entity=" + entity.id + "]");
+      $el.addClass("active");
+      return $el.find(".badge").fadeOut();
+    };
+    app.on("change:entity", function(entity) {
+      changeEntity(entity);
+    });
+    changeEntity(app.get("entity"));
   });
 
 }).call(this);

@@ -27,7 +27,7 @@ class MenuBuilder extends \Illuminate\Html\MenuBuilder {
      *
      * @param Environment $env
      */
-    public function __construct(Environment $env, HtmlBuilder $html, Request $request)
+    public function __construct(Environment $env, Request $request)
     {
         parent::__construct($request);
 

@@ -101,9 +101,7 @@ class CruddyServiceProvider extends ServiceProvider {
     {
         $this->app->singleton('cruddy.menu', function (Container $app)
         {
-            $html = $app->bound('html') ? $app->make('html') : new HtmlBuilder($app->make('url'));
-
-            $builder = new MenuBuilder($app->make('cruddy'), $html, $app->make('request'));
+            $builder = new MenuBuilder($app->make('cruddy'), $app->make('request'));
 
             $builder->setUrlGenerator($app->make('url'));
             $builder->setTranslator($app->make('translator'));

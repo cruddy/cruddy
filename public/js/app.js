@@ -5998,11 +5998,11 @@
     $navbar = $(".navbar");
     changeEntity = function(entity) {
       var $el;
-      $navbar.find(".navbar-nav>.active").removeClass("active");
+      $navbar.find(".navbar-nav li.active").removeClass("active");
       if (entity == null) {
         return;
       }
-      $el = $navbar.find(".navbar-nav>[data-entity=" + entity.id + "]");
+      $el = $navbar.find(".navbar-nav [data-entity=" + entity.id + "]");
       $el.addClass("active");
       return $el.find(".badge").fadeOut();
     };

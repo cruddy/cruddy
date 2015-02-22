@@ -3,11 +3,11 @@ $(document).on "started.cruddy", (e, app) ->
     $navbar = $ ".navbar"
 
     changeEntity = (entity) ->
-        $navbar.find(".navbar-nav>.active").removeClass("active")
+        $navbar.find(".navbar-nav li.active").removeClass("active")
 
         return unless entity?
 
-        $el = $navbar.find(".navbar-nav>[data-entity=#{ entity.id }]")
+        $el = $navbar.find(".navbar-nav [data-entity=#{ entity.id }]")
 
         $el.addClass "active"
 

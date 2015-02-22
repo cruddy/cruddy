@@ -4133,8 +4133,6 @@ $ ->
         root: Cruddy.getHistoryRoot()
         pushState: true
         hashChange: false
-
-
 $(document).on "started.cruddy", (e, app) ->
 
     $navbar = $ ".navbar"
@@ -4150,7 +4148,7 @@ $(document).on "started.cruddy", (e, app) ->
 
         $el.find(".badge").fadeOut()
 
-    app.on "change:entity", (entity) ->
+    app.on "change:entity", (app, entity) ->
         changeEntity entity
 
         return

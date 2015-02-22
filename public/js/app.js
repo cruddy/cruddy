@@ -6006,7 +6006,7 @@
       $el.addClass("active");
       return $el.find(".badge").fadeOut();
     };
-    app.on("change:entity", function(entity) {
+    app.on("change:entity", function(app, entity) {
       changeEntity(entity);
     });
     changeEntity(app.get("entity"));

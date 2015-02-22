@@ -48,12 +48,11 @@ class CruddyServiceProvider extends ServiceProvider {
         $this->publishes([
            __DIR__.'/../public' => public_path('cruddy'),
 
-        ], 'assets');
+        ], 'cruddy');
 
         $this->publishes([
            __DIR__.'/../config/cruddy.php' => config_path('cruddy.php'),
-
-        ], 'config');
+        ]);
 
         $this->registerRoutes($this->app['router'], $this->app['config']);
 

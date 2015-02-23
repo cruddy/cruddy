@@ -230,12 +230,7 @@ class CruddyServiceProvider extends ServiceProvider {
      */
     protected function getJsFiles($baseDir)
     {
-        $suffix = $this->app->make('config')->get('app.debug') ? '' : '.min';
-
-        return $this->assets($baseDir.'/js', [
-            "vendor{$suffix}.js",
-            "app{$suffix}.js",
-        ]);
+        return $this->assets($baseDir.'/js', [ 'vendor.min.js', 'app.min.js' ]);
     }
 
     /**
@@ -245,11 +240,11 @@ class CruddyServiceProvider extends ServiceProvider {
      */
     protected function registerCommands()
     {
-        $this->commands(
+        $this->commands([
             'Kalnoy\Cruddy\Console\MakeEntityCommand',
             'Kalnoy\Cruddy\Console\CompileCommand',
             'Kalnoy\Cruddy\Console\ClearCompiledCommand'
-        );
+        ]);
     }
 
     /**

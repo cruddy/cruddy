@@ -143,12 +143,20 @@ module.exports = function(grunt) {
 
             app: {
                 src:  'public/js/app.js',
-                dest: 'public/js/app.min.js'
+                dest: 'public/js/app.min.js',
+
+                options: {
+                    sourceMapIn: 'public/js/app.js.map'
+                }
             },
 
             vendor: {
                 src:  'public/js/vendor.js',
-                dest: 'public/js/vendor.min.js'
+                dest: 'public/js/vendor.min.js',
+
+                options: {
+                    sourceMapIn: 'public/js/vendor.js.map'
+                }
             }
         },
 
@@ -156,9 +164,9 @@ module.exports = function(grunt) {
             styles: {
                 options: {
                     sourceMap: true,
-                    sourceMapFilename: "public/css/styles.min.css.map",
-                    sourceMapURL: "styles.min.css.map",
-                    sourceMapBasepath: "assets",
+                    sourceMapFilename: 'public/css/styles.min.css.map',
+                    sourceMapURL: 'styles.min.css.map',
+                    sourceMapBasepath: 'assets',
                     outputSourceFiles: true,
 
                     compress: true

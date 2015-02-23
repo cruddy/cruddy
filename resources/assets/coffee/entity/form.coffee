@@ -71,7 +71,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
     displaySuccess: -> @displayAlert Cruddy.lang.success, "success", 3000
 
-    displayError: (xhr) -> @displayAlert Cruddy.lang.failure, "danger", 5000 unless xhr.status is 400
+    displayError: (xhr) -> @displayAlert Cruddy.lang.failure, "danger", 5000 unless xhr.status is VALIDATION_FAILED_CODE
 
     handleModelInvalidEvent: -> @displayAlert Cruddy.lang.invalid, "warning", 5000
 

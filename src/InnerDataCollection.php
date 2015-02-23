@@ -2,7 +2,7 @@
 
 namespace Kalnoy\Cruddy;
 
-use Eloquent;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Kalnoy\Cruddy\Contracts\InlineRelation;
 
@@ -42,9 +42,9 @@ class InnerDataCollection {
     }
 
     /**
-     * @param Eloquent $parent
+     * @param Model $parent
      */
-    public function save(Eloquent $parent)
+    public function save(Model $parent)
     {
         foreach ($this->items as $item)
         {

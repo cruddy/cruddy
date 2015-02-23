@@ -2,7 +2,9 @@ Cruddy = window.Cruddy || {}
 
 TRANSITIONEND = "transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd"
 NOT_AVAILABLE = "&mdash;"
-TITLE_SEPARATOR = " / ";
+TITLE_SEPARATOR = " / "
+VALIDATION_FAILED_CODE = 422
+
 moment.lang Cruddy.locale ? "en"
 
 Backbone.emulateHTTP = true

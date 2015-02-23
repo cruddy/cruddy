@@ -1,5 +1,5 @@
 (function() {
-  var AdvFormData, Alert, App, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, NOT_AVAILABLE, Pagination, Router, SearchDataSource, TITLE_SEPARATOR, TRANSITIONEND, after_break, b_btn, b_icon, class_if, entity_url, get, humanize, render_divider, render_presentation_action, render_presentation_actions, thumb, _ref,
+  var AdvFormData, Alert, App, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, NOT_AVAILABLE, Pagination, Router, SearchDataSource, TITLE_SEPARATOR, TRANSITIONEND, VALIDATION_FAILED_CODE, after_break, b_btn, b_icon, class_if, entity_url, get, humanize, render_divider, render_presentation_action, render_presentation_actions, thumb, _ref,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -10,6 +10,8 @@
   NOT_AVAILABLE = "&mdash;";
 
   TITLE_SEPARATOR = " / ";
+
+  VALIDATION_FAILED_CODE = 422;
 
   moment.lang((_ref = Cruddy.locale) != null ? _ref : "en");
 
@@ -504,7 +506,7 @@
             if (_this.resetData) {
               _this.data = [];
             }
-            _ref1 = resp.data;
+            _ref1 = resp.items;
             for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
               item = _ref1[_i];
               _this.data.push(item);
@@ -1815,10 +1817,7 @@
       })(this));
       form.once("created", (function(_this) {
         return function(model, resp) {
-          _this.selectItem({
-            id: model.id,
-            title: model.title
-          });
+          _this.selectItem(model.meta);
           form.remove();
         };
       })(this));
@@ -4884,7 +4883,7 @@
     };
 
     Instance.prototype.handleErrorEvent = function(model, xhr) {
-      if (xhr.status === 400) {
+      if (xhr.status === VALIDATION_FAILED_CODE) {
         this.trigger("invalid", this, xhr.responseJSON);
       }
     };
@@ -5388,7 +5387,7 @@
     };
 
     Form.prototype.displayError = function(xhr) {
-      if (xhr.status !== 400) {
+      if (xhr.status !== VALIDATION_FAILED_CODE) {
         return this.displayAlert(Cruddy.lang.failure, "danger", 5000);
       }
     };
@@ -5776,7 +5775,7 @@
 
     App.prototype.handleAjaxError = function(xhr) {
       var error, _ref1;
-      if (xhr.status === 400) {
+      if (xhr.status === VALIDATION_FAILED_CODE) {
         return;
       }
       if ((_ref1 = xhr.responseJSON) != null ? _ref1.error : void 0) {

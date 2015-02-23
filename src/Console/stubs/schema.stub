@@ -7,6 +7,9 @@ use Kalnoy\Cruddy\Service\Validation\FluentValidator;
 
 class {{class}} extends BaseSchema {
 
+    /**
+     * @var string
+     */
     protected $model = '{{model}}';
 
     /**

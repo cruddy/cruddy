@@ -2,7 +2,9 @@ Cruddy = window.Cruddy || {}
 
 TRANSITIONEND = "transitionend webkitTransitionEnd oTransitionEnd otransitionend MSTransitionEnd"
 NOT_AVAILABLE = "&mdash;"
-TITLE_SEPARATOR = " / ";
+TITLE_SEPARATOR = " / "
+VALIDATION_FAILED_CODE = 422
+
 moment.lang Cruddy.locale ? "en"
 
 Backbone.emulateHTTP = true
@@ -276,7 +278,7 @@ class SearchDataSource extends Backbone.Model
                 if @resetData
                     @data = []
 
-                @data.push item for item in resp.data
+                @data.push item for item in resp.items
 
                 @page = resp.current_page
                 @more = resp.current_page < resp.last_page
@@ -1273,9 +1275,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         form.once "remove", => @newModelForm = null
 
         form.once "created", (model, resp) =>
-            @selectItem
-                id: model.id
-                title: model.title
+            @selectItem model.meta
 
             form.remove()
 
@@ -3191,7 +3191,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
         return this
 
     handleErrorEvent: (model, xhr) ->
-        @trigger "invalid", this, xhr.responseJSON if xhr.status is 400
+        @trigger "invalid", this, xhr.responseJSON if xhr.status is VALIDATION_FAILED_CODE
 
         return
 
@@ -3580,7 +3580,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
     displaySuccess: -> @displayAlert Cruddy.lang.success, "success", 3000
 
-    displayError: (xhr) -> @displayAlert Cruddy.lang.failure, "danger", 5000 unless xhr.status is 400
+    displayError: (xhr) -> @displayAlert Cruddy.lang.failure, "danger", 5000 unless xhr.status is VALIDATION_FAILED_CODE
 
     handleModelInvalidEvent: -> @displayAlert Cruddy.lang.invalid, "warning", 5000
 
@@ -3967,7 +3967,7 @@ class App extends Backbone.Model
         this
 
     handleAjaxError: (xhr) ->
-        return if xhr.status is 400
+        return if xhr.status is VALIDATION_FAILED_CODE
 
         if xhr.responseJSON?.error
             if _.isObject error = xhr.responseJSON.error

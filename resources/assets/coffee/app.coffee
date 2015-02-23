@@ -75,7 +75,7 @@ class App extends Backbone.Model
         this
 
     handleAjaxError: (xhr) ->
-        return if xhr.status is 400
+        return if xhr.status is VALIDATION_FAILED_CODE
 
         if xhr.responseJSON?.error
             if _.isObject error = xhr.responseJSON.error

@@ -1,8 +1,9 @@
 <?php
 
-namespace Kalnoy\Cruddy\Controllers;
+namespace Kalnoy\Cruddy\Http\Controllers;
 
 use Exception;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Kalnoy\Cruddy\Compiler;
@@ -28,7 +29,7 @@ class CruddyController extends Controller {
     {
         $dashboard = config('cruddy.dashboard', 'cruddy::dashboard');
 
-       if ($dashboard[0] === '@') return redirect(route('cruddy.index', [ substr($dashboard, 1) ]));
+       if ($dashboard[0] === '@') return redirect()->route('cruddy.index', [ substr($dashboard, 1) ]);
 
        return view($dashboard, [ 'cruddy' => $cruddy ]);
     }
@@ -41,7 +42,7 @@ class CruddyController extends Controller {
      */
     public function schema(Compiler $compiler)
     {
-        return response($compiler->schema());
+        return new JsonResponse($compiler->schema());
     }
 
     /**

@@ -1,5 +1,4 @@
-<?php return
-[
+<?php return [
     'add' => 'Ajouter',
     'save' => 'Sauvegarder',
     'create' => 'Créer',
@@ -31,7 +30,7 @@
     'no'  => 'Non',
 
     'slug_sync' => 'Synchroniser',
-    
+
     'markdown_source' => 'Source',
     'markdown_parsed' => 'Analysé',
 

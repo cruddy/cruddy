@@ -35,6 +35,14 @@ class CruddyServiceProvider extends ServiceProvider {
      */
     protected $build = 26;
 
+    /**
+     * @var array
+     */
+    protected $middleware = [
+        'cruddy.transaction' => 'Kalnoy\Cruddy\Http\Middleware\RunInTransaction',
+        'cruddy.exceptions' => 'Kalnoy\Cruddy\Http\Middleware\ExceptionsHandler',
+    ];
+
 	/**
 	 * Bootstrap the application events.
 	 *
@@ -300,15 +308,16 @@ class CruddyServiceProvider extends ServiceProvider {
      */
     protected function registerRoutes(Router $router, Config $config)
     {
-        $before = $config->get('cruddy.auth_filter');
+        $this->applyRoutingPattern($router);
+        $this->registerMiddleware($router);
+
+        $middleware = $config->get('cruddy.middleware');
         $prefix = $config->get('cruddy.uri', 'backend');
-        $namespace = 'Kalnoy\Cruddy\Controllers';
+        $namespace = 'Kalnoy\Cruddy\Http\Controllers';
 
-        $router->group(compact('before', 'prefix', 'namespace'), function (Router $router)
+        $router->group(compact('middleware', 'prefix', 'namespace'), function (Router $router)
         {
-            $this->applyRoutingPattern($router);
-
-            require __DIR__.'/routes.php';
+            require __DIR__.'/Http/routes.php';
         });
     }
 
@@ -333,5 +342,16 @@ class CruddyServiceProvider extends ServiceProvider {
         {
             $viewFactory->composer('cruddy::layout', 'Kalnoy\Cruddy\LayoutComposer');
         });
+    }
+
+    /**
+     * @param Router $router
+     */
+    protected function registerMiddleware(Router $router)
+    {
+        foreach ($this->middleware as $name => $class)
+        {
+            $router->middleware($name, $class);
+        }
     }
 }

@@ -1,5 +1,4 @@
-<?php return
-[
+<?php return [
     'add' => 'Add',
     'save' => 'Save',
     'create' => 'Create',

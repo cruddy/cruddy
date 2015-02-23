@@ -16,9 +16,8 @@
     // The permissions driver.
     'permissions' => 'stub',
 
-    // The name of the filter that will be used for authentication.
-    // I.e. `auth.basic` or `auth`.
-    'auth_filter' => null,
+    // The middleware that wraps every request to Cruddy. Can be used for authentication.
+    'middleware' => null,
 
     // Main menu items.
     //
@@ -35,7 +34,7 @@
     // The list of key value pairs where key is the entity id and value is
     // an entity class name. For example:
     //
-    // 'users' => 'UserEntity'
+    // 'users' => 'App\Entities\User'
     //
     // Class is resolved out of IoC container.
     'entities' => [

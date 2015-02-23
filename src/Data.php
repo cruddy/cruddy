@@ -92,7 +92,7 @@ class Data {
     /**
      * Save the data and return the model.
      *
-     * @return Eloquent
+     * @return Model
      */
     public function save()
     {
@@ -136,9 +136,7 @@ class Data {
      *
      * @param Model $model
      */
-    protected function fillModel(Model $model)
-    {
-    }
+    protected function fillModel(Model $model) {}
 
     /**
      * Process the data.

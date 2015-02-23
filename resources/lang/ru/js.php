@@ -1,5 +1,4 @@
-<?php return
-[
+<?php return [
     'add' => 'Добавить',
     'save' => 'Сохранить',
     'create' => 'Создать',

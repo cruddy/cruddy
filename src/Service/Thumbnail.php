@@ -6,8 +6,8 @@ use Illuminate\Http\Response;
 
 /**
  * The thumbnail class.
- * 
- * @since 1.0.0 
+ *
+ * @since 1.0.0
  */
 class Thumbnail {
 
@@ -52,10 +52,9 @@ class Thumbnail {
      */
     public function response()
     {
-        $response = \Response::make($this->data);
+        $response = response($this->data, Response::HTTP_OK, [ 'Content-type' => $this->mime ]);
 
         $response->setExpires($this->expires);
-        $response->header('Content-type', $this->mime);
 
         return $response;
     }

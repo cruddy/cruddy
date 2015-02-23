@@ -35,7 +35,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
         return this
 
     handleErrorEvent: (model, xhr) ->
-        @trigger "invalid", this, xhr.responseJSON if xhr.status is 400
+        @trigger "invalid", this, xhr.responseJSON if xhr.status is VALIDATION_FAILED_CODE
 
         return
 

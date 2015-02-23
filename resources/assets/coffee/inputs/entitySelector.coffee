@@ -98,9 +98,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         form.once "remove", => @newModelForm = null
 
         form.once "created", (model, resp) =>
-            @selectItem
-                id: model.id
-                title: model.title
+            @selectItem model.meta
 
             form.remove()
 

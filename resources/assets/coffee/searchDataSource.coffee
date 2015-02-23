@@ -22,7 +22,7 @@ class SearchDataSource extends Backbone.Model
                 if @resetData
                     @data = []
 
-                @data.push item for item in resp.data
+                @data.push item for item in resp.items
 
                 @page = resp.current_page
                 @more = resp.current_page < resp.last_page

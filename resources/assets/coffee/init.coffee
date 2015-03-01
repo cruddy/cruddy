@@ -5,7 +5,7 @@ NOT_AVAILABLE = "&mdash;"
 TITLE_SEPARATOR = " / "
 VALIDATION_FAILED_CODE = 422
 
-moment.lang Cruddy.locale ? "en"
+moment.lang [ Cruddy.locale, "en" ]
 
 Backbone.emulateHTTP = true
 Backbone.emulateJSON = true

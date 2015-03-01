@@ -125,7 +125,7 @@ module.exports = function(grunt) {
                     '<%= vendor %>/underscore/underscore.js',
                     '<%= vendor %>/backbone/backbone.js',
                     '<%= vendor %>/moment/moment.js',
-                    '<%= vendor %>/moment/lang/ru.js',
+                    '<%= vendor %>/moment/lang/*.js',
                     '<%= vendor %>/marked/lib/marked.js',
 
                     // Bootstrap components
@@ -152,11 +152,7 @@ module.exports = function(grunt) {
 
             vendor: {
                 src:  'public/js/vendor.js',
-                dest: 'public/js/vendor.min.js',
-
-                options: {
-                    sourceMapIn: 'public/js/vendor.js.map'
-                }
+                dest: 'public/js/vendor.min.js'
             }
         },
 

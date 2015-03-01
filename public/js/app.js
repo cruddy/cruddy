@@ -1,5 +1,5 @@
 (function() {
-  var AdvFormData, Alert, App, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, NOT_AVAILABLE, Pagination, Router, SearchDataSource, TITLE_SEPARATOR, TRANSITIONEND, VALIDATION_FAILED_CODE, after_break, b_btn, b_icon, class_if, entity_url, get, humanize, render_divider, render_presentation_action, render_presentation_actions, thumb, _ref,
+  var AdvFormData, Alert, App, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, NOT_AVAILABLE, Pagination, Router, SearchDataSource, TITLE_SEPARATOR, TRANSITIONEND, VALIDATION_FAILED_CODE, after_break, b_btn, b_icon, class_if, entity_url, get, humanize, render_divider, render_presentation_action, render_presentation_actions, thumb,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -13,7 +13,7 @@
 
   VALIDATION_FAILED_CODE = 422;
 
-  moment.lang((_ref = Cruddy.locale) != null ? _ref : "en");
+  moment.lang([Cruddy.locale, "en"]);
 
   Backbone.emulateHTTP = true;
 
@@ -123,16 +123,16 @@
   };
 
   get = function(path, obj) {
-    var key, _i, _len, _ref1;
+    var key, _i, _len, _ref;
     if (obj == null) {
       obj = window;
     }
     if (_.isEmpty(path)) {
       return obj;
     }
-    _ref1 = path.split(".");
-    for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-      key = _ref1[_i];
+    _ref = path.split(".");
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      key = _ref[_i];
       if (!(key in obj)) {
         return;
       }
@@ -153,8 +153,8 @@
     Alert.prototype.className = "alert";
 
     Alert.prototype.initialize = function(options) {
-      var _ref1;
-      this.$el.addClass((_ref1 = this.className + "-" + options.type) != null ? _ref1 : "info");
+      var _ref;
+      this.$el.addClass((_ref = this.className + "-" + options.type) != null ? _ref : "info");
       this.$el.text(options.message);
       if (options.timeout != null) {
         setTimeout(((function(_this) {
@@ -434,11 +434,11 @@
     };
 
     DataSource.prototype._getRequestData = function() {
-      var data, key, value, _ref1;
+      var data, key, value, _ref;
       data = {};
-      _ref1 = this.attributes;
-      for (key in _ref1) {
-        value = _ref1[key];
+      _ref = this.attributes;
+      for (key in _ref) {
+        value = _ref[key];
         if (_.isNumber(value) || !_.isEmpty(value)) {
           data[key] = value;
         }
@@ -447,28 +447,28 @@
     };
 
     DataSource.prototype.getData = function() {
-      var _ref1;
-      return (_ref1 = this.resp) != null ? _ref1.items : void 0;
+      var _ref;
+      return (_ref = this.resp) != null ? _ref.items : void 0;
     };
 
     DataSource.prototype.getTotal = function() {
-      var _ref1;
-      return (_ref1 = this.resp) != null ? _ref1.total : void 0;
+      var _ref;
+      return (_ref = this.resp) != null ? _ref.total : void 0;
     };
 
     DataSource.prototype.getFrom = function() {
-      var _ref1;
-      return (_ref1 = this.resp) != null ? _ref1.from : void 0;
+      var _ref;
+      return (_ref = this.resp) != null ? _ref.from : void 0;
     };
 
     DataSource.prototype.getTo = function() {
-      var _ref1;
-      return (_ref1 = this.resp) != null ? _ref1.to : void 0;
+      var _ref;
+      return (_ref = this.resp) != null ? _ref.to : void 0;
     };
 
     DataSource.prototype.getLastPage = function() {
-      var _ref1;
-      return (_ref1 = this.resp) != null ? _ref1.lastPage : void 0;
+      var _ref;
+      return (_ref = this.resp) != null ? _ref.lastPage : void 0;
     };
 
     return DataSource;
@@ -502,13 +502,13 @@
         },
         success: (function(_this) {
           return function(resp) {
-            var item, _i, _len, _ref1;
+            var item, _i, _len, _ref;
             if (_this.resetData) {
               _this.data = [];
             }
-            _ref1 = resp.items;
-            for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-              item = _ref1[_i];
+            _ref = resp.items;
+            for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+              item = _ref[_i];
               _this.data.push(item);
             }
             _this.page = resp.current_page;
@@ -770,11 +770,11 @@
     };
 
     DataGrid.prototype.renderHead = function() {
-      var column, html, _i, _len, _ref1;
+      var column, html, _i, _len, _ref;
       html = "";
-      _ref1 = this.columns;
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        column = _ref1[_i];
+      _ref = this.columns;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        column = _ref[_i];
         html += this.renderHeadCell(column);
       }
       this.$header.html(html);
@@ -795,15 +795,15 @@
     };
 
     DataGrid.prototype.renderBody = function() {
-      var html, item, _i, _len, _ref1;
+      var html, item, _i, _len, _ref;
       if (this.model.isEmpty()) {
         this.$items.html(this.emptyTemplate());
         return this;
       }
       html = "";
-      _ref1 = this.model.getData();
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        item = _ref1[_i];
+      _ref = this.model.getData();
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        item = _ref[_i];
         html += this.renderRow(item);
       }
       this.$items.html(html);
@@ -811,11 +811,11 @@
     };
 
     DataGrid.prototype.renderRow = function(item) {
-      var columns, html, _i, _len, _ref1;
+      var columns, html, _i, _len, _ref;
       html = "<tr class=\"item " + (this.itemStates(item)) + "\" id=\"" + (this.itemRowId(item)) + "\" data-id=\"" + item.meta.id + "\">";
-      _ref1 = this.columns;
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        columns = _ref1[_i];
+      _ref = this.columns;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        columns = _ref[_i];
         html += this.renderCell(columns, item);
       }
       return html += "</tr>";
@@ -949,11 +949,11 @@
     };
 
     FilterList.prototype._prepareData = function() {
-      var data, filter, key, value, _ref1;
+      var data, filter, key, value, _ref;
       data = {};
-      _ref1 = this.filterModel.attributes;
-      for (key in _ref1) {
-        value = _ref1[key];
+      _ref = this.filterModel.attributes;
+      for (key in _ref) {
+        value = _ref[key];
         if (filter = this.availableFilters.get(key)) {
           data[filter.getDataKey()] = filter.prepareData(value);
         }
@@ -962,11 +962,11 @@
     };
 
     FilterList.prototype._setDataFromDataSource = function() {
-      var data, filter, _i, _len, _ref1;
+      var data, filter, _i, _len, _ref;
       data = {};
-      _ref1 = this.availableFilters.models;
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        filter = _ref1[_i];
+      _ref = this.availableFilters.models;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        filter = _ref[_i];
         data[filter.id] = filter.parseData(this.model.get(filter.getDataKey()));
       }
       this.filterModel.set(data);
@@ -974,23 +974,23 @@
     };
 
     FilterList.prototype.reset = function() {
-      var input, _i, _len, _ref1;
-      _ref1 = this.filters;
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        input = _ref1[_i];
+      var input, _i, _len, _ref;
+      _ref = this.filters;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        input = _ref[_i];
         input.empty();
       }
       return this.apply();
     };
 
     FilterList.prototype.render = function() {
-      var filter, input, _i, _len, _ref1;
+      var filter, input, _i, _len, _ref;
       this.dispose();
       this.$el.html(this.template());
       this.items = this.$(".filter-list-container");
-      _ref1 = this.availableFilters.models;
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        filter = _ref1[_i];
+      _ref = this.availableFilters.models;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        filter = _ref[_i];
         this.filters.push(input = filter.createFilterInput(this.filterModel));
         this.items.append(input.render().el);
         input.$el.wrap("<div class=\"form-group " + (filter.getClass()) + "\"></div>").parent().before("<label>" + (filter.getLabel()) + "</label>");
@@ -1004,11 +1004,11 @@
     };
 
     FilterList.prototype.dispose = function() {
-      var filter, _i, _len, _ref1;
+      var filter, _i, _len, _ref;
       if (this.filters != null) {
-        _ref1 = this.filters;
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          filter = _ref1[_i];
+        _ref = this.filters;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          filter = _ref[_i];
           filter.remove();
         }
       }
@@ -1258,8 +1258,8 @@
     };
 
     Boolean.prototype.initialize = function(options) {
-      var _ref1;
-      this.tripleState = (_ref1 = options.tripleState) != null ? _ref1 : false;
+      var _ref;
+      this.tripleState = (_ref = options.tripleState) != null ? _ref : false;
       return Boolean.__super__.initialize.apply(this, arguments);
     };
 
@@ -1302,9 +1302,9 @@
     };
 
     Boolean.prototype.focus = function() {
-      var _ref1;
-      if ((_ref1 = this.values) != null) {
-        _ref1[0].focus();
+      var _ref;
+      if ((_ref = this.values) != null) {
+        _ref[0].focus();
       }
       return this;
     };
@@ -1349,7 +1349,7 @@
     };
 
     EntityDropdown.prototype.initialize = function(options) {
-      var _ref1, _ref2, _ref3;
+      var _ref, _ref1, _ref2;
       if (options.multiple != null) {
         this.multiple = options.multiple;
       }
@@ -1359,9 +1359,9 @@
       if (options.owner != null) {
         this.owner = options.owner;
       }
-      this.allowEdit = ((_ref1 = options.allowEdit) != null ? _ref1 : true) && this.reference.updatePermitted();
-      this.placeholder = (_ref2 = options.placeholder) != null ? _ref2 : Cruddy.lang.not_selected;
-      this.enabled = (_ref3 = options.enabled) != null ? _ref3 : true;
+      this.allowEdit = ((_ref = options.allowEdit) != null ? _ref : true) && this.reference.updatePermitted();
+      this.placeholder = (_ref1 = options.placeholder) != null ? _ref1 : Cruddy.lang.not_selected;
+      this.enabled = (_ref2 = options.enabled) != null ? _ref2 : true;
       this.editing = false;
       this.disableDropdown = false;
       this.opened = false;
@@ -1456,15 +1456,15 @@
     };
 
     EntityDropdown.prototype.applyConstraint = function(reset) {
-      var field, value, _ref1;
+      var field, value, _ref;
       if (reset == null) {
         reset = false;
       }
       if (this.selector) {
         field = this.model.entity.getField(this.constraint.field);
         value = this.model.get(this.constraint.field);
-        if ((_ref1 = this.selector.dataSource) != null) {
-          _ref1.set("constraint", field.prepareAttribute(value));
+        if ((_ref = this.selector.dataSource) != null) {
+          _ref.set("constraint", field.prepareAttribute(value));
         }
         this.selector.attributesForNewModel[this.constraint.otherField] = value;
       }
@@ -1577,11 +1577,11 @@
     };
 
     EntityDropdown.prototype.renderItems = function() {
-      var html, key, value, _i, _len, _ref1;
+      var html, key, value, _i, _len, _ref;
       html = "";
-      _ref1 = this.getValue();
-      for (key = _i = 0, _len = _ref1.length; _i < _len; key = ++_i) {
-        value = _ref1[key];
+      _ref = this.getValue();
+      for (key = _i = 0, _len = _ref.length; _i < _len; key = ++_i) {
+        value = _ref[key];
         html += this.itemTemplate(this.itemToString(value), key);
       }
       this.items.html(html);
@@ -1671,12 +1671,12 @@
     };
 
     EntityDropdown.prototype.dispose = function() {
-      var _ref1, _ref2;
-      if ((_ref1 = this.selector) != null) {
-        _ref1.remove();
+      var _ref, _ref1;
+      if ((_ref = this.selector) != null) {
+        _ref.remove();
       }
-      if ((_ref2 = this.editingForm) != null) {
-        _ref2.remove();
+      if ((_ref1 = this.editingForm) != null) {
+        _ref1.remove();
       }
       return this;
     };
@@ -1710,13 +1710,13 @@
     };
 
     EntitySelector.prototype.initialize = function(options) {
-      var _ref1, _ref2, _ref3, _ref4;
+      var _ref, _ref1, _ref2, _ref3;
       EntitySelector.__super__.initialize.apply(this, arguments);
-      this.filter = (_ref1 = options.filter) != null ? _ref1 : false;
-      this.multiple = (_ref2 = options.multiple) != null ? _ref2 : false;
+      this.filter = (_ref = options.filter) != null ? _ref : false;
+      this.multiple = (_ref1 = options.multiple) != null ? _ref1 : false;
       this.reference = options.reference;
-      this.allowSearch = (_ref3 = options.allowSearch) != null ? _ref3 : true;
-      this.allowCreate = ((_ref4 = options.allowCreate) != null ? _ref4 : true) && this.reference.createPermitted();
+      this.allowSearch = (_ref2 = options.allowSearch) != null ? _ref2 : true;
+      this.allowCreate = ((_ref3 = options.allowCreate) != null ? _ref3 : true) && this.reference.createPermitted();
       this.attributesForNewModel = {};
       this.makeSelectedMap(this.getValue());
       if (this.reference.viewPermitted()) {
@@ -1849,13 +1849,13 @@
     };
 
     EntitySelector.prototype.renderItems = function() {
-      var html, item, _i, _len, _ref1;
+      var html, item, _i, _len, _ref;
       this.$more = null;
       html = "";
       if (this.dataSource.data.length || this.dataSource.more) {
-        _ref1 = this.dataSource.data;
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          item = _ref1[_i];
+        _ref = this.dataSource.data;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          item = _ref[_i];
           html += this.renderItem(item);
         }
         if (this.dataSource.more) {
@@ -1916,8 +1916,8 @@
     };
 
     EntitySelector.prototype.focus = function() {
-      var _ref1;
-      ((_ref1 = this.searchInput) != null ? _ref1.focus() : void 0) || this.entity.done((function(_this) {
+      var _ref;
+      ((_ref = this.searchInput) != null ? _ref.focus() : void 0) || this.entity.done((function(_this) {
         return function() {
           return _this.searchInput.focus();
         };
@@ -1926,12 +1926,12 @@
     };
 
     EntitySelector.prototype.dispose = function() {
-      var _ref1, _ref2;
-      if ((_ref1 = this.searchInput) != null) {
-        _ref1.remove();
+      var _ref, _ref1;
+      if ((_ref = this.searchInput) != null) {
+        _ref.remove();
       }
-      if ((_ref2 = this.newModelForm) != null) {
-        _ref2.remove();
+      if ((_ref1 = this.newModelForm) != null) {
+        _ref1.remove();
       }
       return this;
     };
@@ -1960,9 +1960,9 @@
     };
 
     FileList.prototype.initialize = function(options) {
-      var _ref1, _ref2, _ref3;
-      this.multiple = (_ref1 = options.multiple) != null ? _ref1 : false;
-      this.formatter = (_ref2 = options.formatter) != null ? _ref2 : {
+      var _ref, _ref1, _ref2;
+      this.multiple = (_ref = options.multiple) != null ? _ref : false;
+      this.formatter = (_ref1 = options.formatter) != null ? _ref1 : {
         format: function(value) {
           if (value instanceof File) {
             return value.name;
@@ -1971,7 +1971,7 @@
           }
         }
       };
-      this.accepts = (_ref3 = options.accepts) != null ? _ref3 : "";
+      this.accepts = (_ref2 = options.accepts) != null ? _ref2 : "";
       this.counter = 1;
       return FileList.__super__.initialize.apply(this, arguments);
     };
@@ -1992,20 +1992,20 @@
     };
 
     FileList.prototype.appendFiles = function(e) {
-      var file, value, _i, _j, _len, _len1, _ref1, _ref2;
+      var file, value, _i, _j, _len, _len1, _ref, _ref1;
       if (e.target.files.length === 0) {
         return;
       }
-      _ref1 = e.target.files;
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        file = _ref1[_i];
+      _ref = e.target.files;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        file = _ref[_i];
         file.cid = this.cid + "_" + this.counter++;
       }
       if (this.multiple) {
         value = _.clone(this.model.get(this.key));
-        _ref2 = e.target.files;
-        for (_j = 0, _len1 = _ref2.length; _j < _len1; _j++) {
-          file = _ref2[_j];
+        _ref1 = e.target.files;
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          file = _ref1[_j];
           value.push(file);
         }
       } else {
@@ -2019,13 +2019,13 @@
     };
 
     FileList.prototype.render = function() {
-      var html, item, value, _i, _len, _ref1;
+      var html, item, value, _i, _len, _ref;
       value = this.model.get(this.key);
       html = "";
       if (value) {
-        _ref1 = this.multiple ? value : [value];
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          item = _ref1[_i];
+        _ref = this.multiple ? value : [value];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          item = _ref[_i];
           html += this.renderItem(item);
         }
       }
@@ -2079,18 +2079,18 @@
     }
 
     ImageList.prototype.initialize = function(options) {
-      var _ref1, _ref2;
-      this.width = (_ref1 = options.width) != null ? _ref1 : 0;
-      this.height = (_ref2 = options.height) != null ? _ref2 : 80;
+      var _ref, _ref1;
+      this.width = (_ref = options.width) != null ? _ref : 0;
+      this.height = (_ref1 = options.height) != null ? _ref1 : 80;
       return ImageList.__super__.initialize.apply(this, arguments);
     };
 
     ImageList.prototype.render = function() {
-      var reader, _i, _len, _ref1;
+      var reader, _i, _len, _ref;
       ImageList.__super__.render.apply(this, arguments);
-      _ref1 = this.readers;
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        reader = _ref1[_i];
+      _ref = this.readers;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        reader = _ref[_i];
         reader.readAsDataURL(reader.item);
       }
       this.readers = [];
@@ -2205,10 +2205,10 @@
     }
 
     Slug.prototype.initialize = function(options) {
-      var chars, _ref1, _ref2;
-      chars = (_ref1 = options.chars) != null ? _ref1 : "a-z0-9\-_";
+      var chars, _ref, _ref1;
+      chars = (_ref = options.chars) != null ? _ref : "a-z0-9\-_";
       this.regexp = new RegExp("[^" + chars + "]+", "g");
-      this.separator = (_ref2 = options.separator) != null ? _ref2 : "-";
+      this.separator = (_ref1 = options.separator) != null ? _ref1 : "-";
       this.key = options.key;
       this.ref = _.isArray(options.ref) ? options.ref : options.ref ? [options.ref] : void 0;
       return Slug.__super__.initialize.apply(this, arguments);
@@ -2263,11 +2263,11 @@
     };
 
     Slug.prototype.getValue = function() {
-      var components, key, refValue, _i, _len, _ref1;
+      var components, key, refValue, _i, _len, _ref;
       components = [];
-      _ref1 = this.ref;
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        key = _ref1[_i];
+      _ref = this.ref;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        key = _ref[_i];
         refValue = this.model.get(key);
         if (refValue) {
           components.push(refValue);
@@ -2313,10 +2313,10 @@
     Select.prototype.tagName = "select";
 
     Select.prototype.initialize = function(options) {
-      var _ref1, _ref2, _ref3;
-      this.items = (_ref1 = options.items) != null ? _ref1 : {};
-      this.prompt = (_ref2 = options.prompt) != null ? _ref2 : null;
-      this.required = (_ref3 = options.required) != null ? _ref3 : false;
+      var _ref, _ref1, _ref2;
+      this.items = (_ref = options.items) != null ? _ref : {};
+      this.prompt = (_ref1 = options.prompt) != null ? _ref1 : null;
+      this.required = (_ref2 = options.required) != null ? _ref2 : false;
       return Select.__super__.initialize.apply(this, arguments);
     };
 
@@ -2328,15 +2328,15 @@
     };
 
     Select.prototype.optionIndex = function(value) {
-      var data, index, label, _ref1;
+      var data, index, label, _ref;
       if (value == null) {
         return 1;
       }
       index = this.hasPrompt() ? 2 : 1;
       value = value.toString();
-      _ref1 = this.items;
-      for (data in _ref1) {
-        label = _ref1[data];
+      _ref = this.items;
+      for (data in _ref) {
+        label = _ref[data];
         if (value === data.toString()) {
           break;
         }
@@ -2354,14 +2354,14 @@
     };
 
     Select.prototype.template = function() {
-      var html, key, value, _ref1, _ref2;
+      var html, key, value, _ref, _ref1;
       html = "";
       if (this.hasPrompt()) {
-        html += this.optionTemplate("", (_ref1 = this.prompt) != null ? _ref1 : Cruddy.lang.not_selected, this.required);
+        html += this.optionTemplate("", (_ref = this.prompt) != null ? _ref : Cruddy.lang.not_selected, this.required);
       }
-      _ref2 = this.items;
-      for (key in _ref2) {
-        value = _ref2[key];
+      _ref1 = this.items;
+      for (key in _ref1) {
+        value = _ref1[key];
         html += this.optionTemplate(key, value);
       }
       return html;
@@ -2501,9 +2501,9 @@
     __extends(Element, _super);
 
     function Element(options, parent) {
-      var _ref1;
+      var _ref;
       this.parent = parent;
-      this.disable = (_ref1 = options.disable) != null ? _ref1 : false;
+      this.disable = (_ref = options.disable) != null ? _ref : false;
       Element.__super__.constructor.apply(this, arguments);
     }
 
@@ -2595,11 +2595,11 @@
     };
 
     Container.prototype.render = function() {
-      var element, _i, _len, _ref1;
+      var element, _i, _len, _ref;
       if (this.items) {
-        _ref1 = this.items;
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          element = _ref1[_i];
+        _ref = this.items;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          element = _ref[_i];
           this.renderElement(element);
         }
       }
@@ -2607,10 +2607,10 @@
     };
 
     Container.prototype.remove = function() {
-      var item, _i, _len, _ref1;
-      _ref1 = this.items;
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        item = _ref1[_i];
+      var item, _i, _len, _ref;
+      _ref = this.items;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        item = _ref[_i];
         item.remove();
       }
       return Container.__super__.remove.apply(this, arguments);
@@ -2642,8 +2642,8 @@
     __extends(BaseFieldContainer, _super);
 
     function BaseFieldContainer(options) {
-      var _ref1;
-      this.title = (_ref1 = options.title) != null ? _ref1 : null;
+      var _ref;
+      this.title = (_ref = options.title) != null ? _ref : null;
       BaseFieldContainer.__super__.constructor.apply(this, arguments);
     }
 
@@ -2700,9 +2700,9 @@
     };
 
     TabPane.prototype.activate = function() {
-      var _ref1;
-      if ((_ref1 = this.header) != null) {
-        _ref1.activate();
+      var _ref;
+      if ((_ref = this.header) != null) {
+        _ref.activate();
       }
       after_break((function(_this) {
         return function() {
@@ -2722,9 +2722,9 @@
     };
 
     TabPane.prototype.handleValidationError = function() {
-      var _ref1;
-      if ((_ref1 = this.header) != null) {
-        _ref1.incrementErrors();
+      var _ref;
+      if ((_ref = this.header) != null) {
+        _ref.incrementErrors();
       }
       return TabPane.__super__.handleValidationError.apply(this, arguments);
     };
@@ -2896,11 +2896,11 @@
     FieldList.prototype.className = "field-list";
 
     FieldList.prototype.initialize = function() {
-      var field, _i, _len, _ref1;
+      var field, _i, _len, _ref;
       FieldList.__super__.initialize.apply(this, arguments);
-      _ref1 = this.entity.fields.models;
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        field = _ref1[_i];
+      _ref = this.entity.fields.models;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        field = _ref[_i];
         this.create({
           "class": "Field",
           field: field.id
@@ -2946,13 +2946,13 @@
     __extends(BaseView, _super);
 
     function BaseView(options) {
-      var className, field, model, _ref1;
+      var className, field, model, _ref;
       this.field = field = options.field;
       model = options.model;
       this.inputId = [model.entity.id, field.id, model.cid].join("__");
       className = "form-group field field__" + (field.getType()) + " field--" + field.id + " field--" + model.entity.id + "--" + field.id;
       this.className = this.className ? className + " " + this.className : className;
-      this.forceDisable = (_ref1 = options.forceDisable) != null ? _ref1 : false;
+      this.forceDisable = (_ref = options.forceDisable) != null ? _ref : false;
       BaseView.__super__.constructor.apply(this, arguments);
     }
 
@@ -3098,9 +3098,9 @@
     };
 
     InputView.prototype.dispose = function() {
-      var _ref1;
-      if ((_ref1 = this.input) != null) {
-        _ref1.remove();
+      var _ref;
+      if ((_ref = this.input) != null) {
+        _ref.remove();
       }
       return this;
     };
@@ -3839,14 +3839,14 @@
     };
 
     EmbeddedView.prototype.render = function() {
-      var model, _i, _len, _ref1;
+      var model, _i, _len, _ref;
       this.dispose();
       this.$el.html(this.template());
       this.body = this.$component("body");
       this.createButton = this.$(".btn-create");
-      _ref1 = this.collection.models;
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        model = _ref1[_i];
+      _ref = this.collection.models;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        model = _ref[_i];
         this.add(model);
       }
       return EmbeddedView.__super__.render.apply(this, arguments);
@@ -3868,10 +3868,10 @@
     };
 
     EmbeddedView.prototype.dispose = function() {
-      var cid, view, _ref1;
-      _ref1 = this.views;
-      for (cid in _ref1) {
-        view = _ref1[cid];
+      var cid, view, _ref;
+      _ref = this.views;
+      for (cid in _ref) {
+        view = _ref[cid];
         view.remove();
       }
       this.views = {};
@@ -3892,14 +3892,14 @@
     };
 
     EmbeddedView.prototype.focus = function() {
-      var _ref1, _ref2;
+      var _ref, _ref1;
       if (this.field.isMultiple()) {
-        if ((_ref1 = this.createButton[0]) != null) {
-          _ref1.focus();
+        if ((_ref = this.createButton[0]) != null) {
+          _ref.focus();
         }
       } else {
-        if ((_ref2 = this.focusable) != null) {
-          _ref2.focus();
+        if ((_ref1 = this.focusable) != null) {
+          _ref1.focus();
         }
       }
       return this;
@@ -3997,13 +3997,13 @@
     };
 
     RelatedCollection.prototype._handleInvalidEvent = function(model, errors) {
-      var cid, item, itemErrors, _ref1;
+      var cid, item, itemErrors, _ref;
       if (!(this.field.id in errors)) {
         return;
       }
-      _ref1 = errors[this.field.id];
-      for (cid in _ref1) {
-        itemErrors = _ref1[cid];
+      _ref = errors[this.field.id];
+      for (cid in _ref) {
+        itemErrors = _ref[cid];
         if (item = this.get(cid)) {
           item.trigger("invalid", item, itemErrors);
         }
@@ -4011,10 +4011,10 @@
     };
 
     RelatedCollection.prototype._triggerItems = function(event, param1, param2) {
-      var model, _i, _len, _ref1;
-      _ref1 = this.models;
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        model = _ref1[_i];
+      var model, _i, _len, _ref;
+      _ref = this.models;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        model = _ref[_i];
         model.trigger(event, model, param1, param2);
       }
     };
@@ -4078,13 +4078,13 @@
     };
 
     RelatedCollection.prototype.hasChangedSinceSync = function() {
-      var item, _i, _len, _ref1;
+      var item, _i, _len, _ref;
       if (this.deleted || this.removedSoftly) {
         return true;
       }
-      _ref1 = this.models;
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        item = _ref1[_i];
+      _ref = this.models;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        item = _ref[_i];
         if (item.hasChangedSinceSync()) {
           return true;
         }
@@ -4095,11 +4095,11 @@
     RelatedCollection.prototype.copy = function(copy) {
       var item, items;
       items = this.field.isUnique() ? [] : (function() {
-        var _i, _len, _ref1, _results;
-        _ref1 = this.models;
+        var _i, _len, _ref, _results;
+        _ref = this.models;
         _results = [];
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          item = _ref1[_i];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          item = _ref[_i];
           _results.push(item.copy());
         }
         return _results;
@@ -4318,8 +4318,8 @@
     }
 
     Proxy.prototype.initialize = function(attributes) {
-      var field, _ref1;
-      field = (_ref1 = attributes.field) != null ? _ref1 : attributes.id;
+      var field, _ref;
+      field = (_ref = attributes.field) != null ? _ref : attributes.id;
       this.field = attributes.entity.fields.get(field);
       return Proxy.__super__.initialize.apply(this, arguments);
     };
@@ -4396,7 +4396,7 @@
     };
 
     ViewButton.prototype.renderActions = function(model) {
-      var action, html, noPresentationActions, _i, _len, _ref1;
+      var action, html, noPresentationActions, _i, _len, _ref;
       html = "<ul class=\"dropdown-menu\" role=\"menu\">";
       if (!(noPresentationActions = _.isEmpty(model.meta.presentationActions))) {
         html += render_presentation_actions(model.meta.presentationActions);
@@ -4405,9 +4405,9 @@
         if (!noPresentationActions) {
           html += render_divider();
         }
-        _ref1 = model.meta.actions;
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          action = _ref1[_i];
+        _ref = model.meta.actions;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          action = _ref[_i];
           html += this.renderAction(action, model);
         }
       }
@@ -4495,8 +4495,8 @@
     }
 
     Proxy.prototype.initialize = function(attributes) {
-      var field, _ref1;
-      field = (_ref1 = attributes.field) != null ? _ref1 : attributes.id;
+      var field, _ref;
+      field = (_ref = attributes.field) != null ? _ref : attributes.id;
       this.field = attributes.entity.fields.get(field);
       return Proxy.__super__.initialize.apply(this, arguments);
     };
@@ -4640,11 +4640,11 @@
         columns = this.columns;
       }
       filters = (function() {
-        var _i, _len, _ref1, _results;
-        _ref1 = columns.models;
+        var _i, _len, _ref, _results;
+        _ref = columns.models;
         _results = [];
-        for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-          col = _ref1[_i];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          col = _ref[_i];
           if (col.get("filter_type") === "complex") {
             _results.push(col.createFilter());
           }
@@ -4742,11 +4742,11 @@
     };
 
     Entity.prototype.getCopyableAttributes = function(model, copy) {
-      var data, field, _i, _len, _ref1;
+      var data, field, _i, _len, _ref;
       data = {};
-      _ref1 = this.fields.models;
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        field = _ref1[_i];
+      _ref = this.fields.models;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        field = _ref[_i];
         if (field.isCopyable()) {
           data[field.id] = field.copyAttribute(model, copy);
         }
@@ -4755,10 +4755,10 @@
     };
 
     Entity.prototype.hasChangedSinceSync = function(model) {
-      var field, _i, _len, _ref1;
-      _ref1 = this.fields.models;
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        field = _ref1[_i];
+      var field, _i, _len, _ref;
+      _ref = this.fields.models;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        field = _ref[_i];
         if (field.hasChangedSinceSync(model)) {
           return true;
         }
@@ -4919,9 +4919,9 @@
     };
 
     Instance.prototype.sync = function(method, model, options) {
-      var _ref1;
+      var _ref;
       if (method === "update" || method === "create") {
-        options.data = new AdvFormData(this.entity.prepareAttributes((_ref1 = options.attrs) != null ? _ref1 : this.attributes)).original;
+        options.data = new AdvFormData(this.entity.prepareAttributes((_ref = options.attrs) != null ? _ref : this.attributes)).original;
         options.contentType = false;
         options.processData = false;
       }
@@ -5073,7 +5073,7 @@
     };
 
     Page.prototype._displayForm = function(instanceId) {
-      var compareId, dfd, instance, resolve, _ref1;
+      var compareId, dfd, instance, resolve, _ref;
       if (this.loadingForm) {
         return this.loadingForm;
       }
@@ -5113,8 +5113,8 @@
           return dfd.reject();
         });
       } else {
-        if ((_ref1 = this.form) != null) {
-          _ref1.remove();
+        if ((_ref = this.form) != null) {
+          _ref.remove();
         }
         dfd.resolve();
       }
@@ -5122,9 +5122,9 @@
     };
 
     Page.prototype._createAndRenderForm = function(instance) {
-      var form, _ref1;
-      if ((_ref1 = this.form) != null) {
-        _ref1.remove();
+      var form, _ref;
+      if ((_ref = this.form) != null) {
+        _ref.remove();
       }
       this.form = form = Cruddy.Entity.Form.display(instance);
       form.on("close", (function(_this) {
@@ -5251,21 +5251,21 @@
     };
 
     Page.prototype.remove = function() {
-      var _ref1, _ref2, _ref3, _ref4, _ref5;
-      if ((_ref1 = this.form) != null) {
+      var _ref, _ref1, _ref2, _ref3, _ref4;
+      if ((_ref = this.form) != null) {
+        _ref.remove();
+      }
+      if ((_ref1 = this.filterListView) != null) {
         _ref1.remove();
       }
-      if ((_ref2 = this.filterListView) != null) {
+      if ((_ref2 = this.dataView) != null) {
         _ref2.remove();
       }
-      if ((_ref3 = this.dataView) != null) {
+      if ((_ref3 = this.paginationView) != null) {
         _ref3.remove();
       }
-      if ((_ref4 = this.paginationView) != null) {
+      if ((_ref4 = this.searchInputView) != null) {
         _ref4.remove();
-      }
-      if ((_ref5 = this.searchInputView) != null) {
-        _ref5.remove();
       }
       return Page.__super__.remove.apply(this, arguments);
     };
@@ -5293,8 +5293,8 @@
     };
 
     Page.prototype.pageUnloadConfirmationMessage = function() {
-      var _ref1;
-      return (_ref1 = this.form) != null ? _ref1.pageUnloadConfirmationMessage() : void 0;
+      var _ref;
+      return (_ref = this.form) != null ? _ref.pageUnloadConfirmationMessage() : void 0;
     };
 
     return Page;
@@ -5337,13 +5337,13 @@
     };
 
     Form.prototype.setupDefaultLayout = function() {
-      var field, tab, _i, _len, _ref1;
+      var field, tab, _i, _len, _ref;
       tab = this.append(new Cruddy.Layout.TabPane({
         title: this.model.entity.get("title").singular
       }, this));
-      _ref1 = this.entity.fields.models;
-      for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-        field = _ref1[_i];
+      _ref = this.entity.fields.models;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        field = _ref[_i];
         tab.append(new Cruddy.Layout.Field({
           field: field.id
         }, tab));
@@ -5575,15 +5575,15 @@
     };
 
     Form.prototype.updateModelMetaState = function() {
-      var html, isDeleted, isNew, _ref1;
+      var html, isDeleted, isNew, _ref;
       isNew = this.model.isNew();
       isDeleted = this.model.isDeleted || false;
       this.$serviceMenu.toggle(!isNew);
       if (!isNew) {
         this.$serviceMenuItems.html(this.renderServiceMenuItems());
       }
-      if ((_ref1 = this.$btnExtraActions) != null) {
-        _ref1.remove();
+      if ((_ref = this.$btnExtraActions) != null) {
+        _ref.remove();
       }
       this.$btnExtraActions = null;
       if (this.model.entity.updatePermitted()) {
@@ -5774,11 +5774,11 @@
     };
 
     App.prototype.handleAjaxError = function(xhr) {
-      var error, _ref1;
+      var error, _ref;
       if (xhr.status === VALIDATION_FAILED_CODE) {
         return;
       }
-      if ((_ref1 = xhr.responseJSON) != null ? _ref1.error : void 0) {
+      if ((_ref = xhr.responseJSON) != null ? _ref.error : void 0) {
         if (_.isObject(error = xhr.responseJSON.error)) {
           error = error.type + ": " + error.message;
         }
@@ -5789,8 +5789,8 @@
     };
 
     App.prototype.pageUnloadConfirmationMessage = function() {
-      var _ref1;
-      return (_ref1 = this.entityView) != null ? _ref1.pageUnloadConfirmationMessage() : void 0;
+      var _ref;
+      return (_ref = this.entityView) != null ? _ref.pageUnloadConfirmationMessage() : void 0;
     };
 
     App.prototype.startLoading = function() {
@@ -5829,9 +5829,9 @@
     };
 
     App.prototype.dispose = function() {
-      var _ref1;
-      if ((_ref1 = this.entityView) != null) {
-        _ref1.remove();
+      var _ref;
+      if ((_ref = this.entityView) != null) {
+        _ref.remove();
       }
       this.entityView = null;
       return this;
@@ -5867,7 +5867,7 @@
       history = Backbone.history;
       $(document.body).on("click", "a", (function(_this) {
         return function(e) {
-          var fragment, handler, _i, _len, _ref1;
+          var fragment, handler, _i, _len, _ref;
           if (e.isDefaultPrevented()) {
             return;
           }
@@ -5876,9 +5876,9 @@
             return;
           }
           fragment = history.getFragment(fragment.slice(root.length));
-          _ref1 = history.handlers;
-          for (_i = 0, _len = _ref1.length; _i < _len; _i++) {
-            handler = _ref1[_i];
+          _ref = history.handlers;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            handler = _ref[_i];
             if (!(handler.route.test(fragment))) {
               continue;
             }

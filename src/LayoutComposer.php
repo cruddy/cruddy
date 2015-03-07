@@ -63,7 +63,7 @@ class LayoutComposer {
             'thumbUrl' => $this->url->route('cruddy.thumb'),
             'baseUrl' => $this->url->route('cruddy.home'),
             'root' => $this->request->root(),
-            'token' => $this->request->getSession()->getToken(),
+            'token' => csrf_token(),
         ];
 
         $view->scripts = $this->assets->scripts();

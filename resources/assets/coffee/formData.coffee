@@ -1,7 +1,6 @@
 class AdvFormData
     constructor: (data) ->
         @original = new FormData
-        @original.append "_token", Cruddy.token
         @append data if data?
 
     append: (value, name) ->

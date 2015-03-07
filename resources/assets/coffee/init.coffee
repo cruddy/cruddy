@@ -15,6 +15,8 @@ $(document)
         options.displayLoading = no if not Cruddy.app
         Cruddy.app.startLoading() if options.displayLoading
 
+        xhr.setRequestHeader "X-CSRF-TOKEN", Cruddy.token
+
         return
 
     .ajaxComplete (e, xhr, options) ->

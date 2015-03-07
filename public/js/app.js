@@ -26,6 +26,7 @@
     if (options.displayLoading) {
       Cruddy.app.startLoading();
     }
+    xhr.setRequestHeader("X-CSRF-TOKEN", Cruddy.token);
   }).ajaxComplete(function(e, xhr, options) {
     if (options.displayLoading) {
       Cruddy.app.doneLoading();
@@ -247,7 +248,6 @@
   AdvFormData = (function() {
     function AdvFormData(data) {
       this.original = new FormData;
-      this.original.append("_token", Cruddy.token);
       if (data != null) {
         this.append(data);
       }

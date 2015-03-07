@@ -15,6 +15,8 @@ $(document)
         options.displayLoading = no if not Cruddy.app
         Cruddy.app.startLoading() if options.displayLoading
 
+        xhr.setRequestHeader "X-CSRF-TOKEN", Cruddy.token
+
         return
 
     .ajaxComplete (e, xhr, options) ->
@@ -136,7 +138,6 @@ class Cruddy.View extends Backbone.View
 class AdvFormData
     constructor: (data) ->
         @original = new FormData
-        @original.append "_token", Cruddy.token
         @append data if data?
 
     append: (value, name) ->

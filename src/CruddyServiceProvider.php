@@ -59,6 +59,11 @@ class CruddyServiceProvider extends ServiceProvider {
         ], 'cruddy');
 
         $this->publishes([
+            __DIR__.'/../resources/views' => base_path('resources/views/vendor/cruddy'),
+
+        ], 'cruddy.views');
+
+        $this->publishes([
            __DIR__.'/../config/cruddy.php' => config_path('cruddy.php'),
         ]);
 

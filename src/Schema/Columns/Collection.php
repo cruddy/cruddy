@@ -28,7 +28,7 @@ class Collection extends AttributesCollection implements SearchProcessor {
         {
             return array_merge($relations, $item->eagerLoads());
 
-        }, []);
+        }, $this->entity->eagerLoads);
 
         return array_unique($relations);
     }

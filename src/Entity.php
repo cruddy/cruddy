@@ -90,6 +90,11 @@ class Entity implements Jsonable, Arrayable {
     protected static $actions = [ 'view', 'update', 'create', 'delete' ];
 
     /**
+     * @var array
+     */
+    public $eagerLoads = [];
+
+    /**
      * Init entity.
      *
      * @param SchemaContract $schema
@@ -279,6 +284,22 @@ class Entity implements Jsonable, Arrayable {
         $id = $model->getKey();
 
         return compact('id') + $this->schema->meta($model, $simplified);
+    }
+
+    /**
+     * @param null $owner
+     *
+     * @return array
+     */
+    public function eagerLoads($owner = null)
+    {
+        if (is_null($owner)) return $this->eagerLoads;
+
+        return array_map(function ($item) use ($owner)
+        {
+            return $owner.'.'.$item;
+
+        }, $this->eagerLoads);
     }
 
     /**

@@ -79,11 +79,20 @@ abstract class BaseSchema implements Schema {
     protected $view = 'Cruddy.Entity.Page';
 
     /**
+     * @var array
+     */
+    protected $eagerLoads = [];
+
+    /**
      * {@inheritdoc}
      */
     public function entity()
     {
-        return new Entity($this);
+        $entity = new Entity($this);
+
+        $entity->eagerLoads = $this->eagerLoads;
+
+        return $entity;
     }
 
     /**

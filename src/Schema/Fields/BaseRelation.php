@@ -80,7 +80,9 @@ abstract class BaseRelation extends BaseField {
      */
     public function eagerLoads()
     {
-        return $this->getRelationId();
+        $relation = $this->getRelationId();
+
+        return array_merge((array)$relation, $this->reference->eagerLoads($relation));
     }
 
     /**

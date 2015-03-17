@@ -78,11 +78,9 @@ abstract class BaseRelation extends BaseField {
     /**
      * {@inheritdoc}
      */
-    public function modifyQuery(EloquentBuilder $builder)
+    public function eagerLoads()
     {
-        $builder->with($this->getRelationId());
-
-        return $this;
+        return $this->getRelationId();
     }
 
     /**

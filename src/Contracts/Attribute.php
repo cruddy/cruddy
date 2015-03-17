@@ -26,13 +26,11 @@ interface Attribute extends Entry {
     public function extract(Eloquent $model);
 
     /**
-     * Modify eloquent query before requesting any data.
+     * Get a list of relations that should be eagerly loaded.
      *
-     * @param EloquentBuilder $builder
-     *
-     * @return void
+     * @return array
      */
-    public function modifyQuery(EloquentBuilder $builder);
+    public function eagerLoads();
 
     /**
      * Apply an order to the query builder.

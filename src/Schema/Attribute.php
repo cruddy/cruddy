@@ -29,9 +29,9 @@ abstract class Attribute extends Entry implements AttributeContract {
     /**
      * {@inheritdoc}
      */
-    public function modifyQuery(EloquentBuilder $builder)
+    public function eagerLoads()
     {
-        return $this;
+        return [];
     }
 
     /**

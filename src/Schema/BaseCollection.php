@@ -22,9 +22,11 @@ class BaseCollection extends Collection {
     /**
      * @param Entity $entity
      */
-    public function __construct(Entity $entity)
+    public function __construct(Entity $entity, array $items = [])
     {
         $this->entity = $entity;
+
+        parent::__construct($items);
     }
 
     /**
@@ -54,7 +56,7 @@ class BaseCollection extends Collection {
 
         $columns = array_combine($columns, $columns);
 
-        return new static(array_intersect_key($this->items, $columns));
+        return new static($this->entity, array_intersect_key($this->items, $columns));
     }
 
     /**

@@ -8,6 +8,10 @@ use Illuminate\Database\Eloquent\Model;
 /**
  * Computed field.
  *
+ * @method $this eager($relations)
+ *
+ * @property array|string $eager
+ *
  * @since 1.0.0
  */
 class Computed extends BaseField {
@@ -29,6 +33,8 @@ class Computed extends BaseField {
      */
     public function extract(Model $model)
     {
+        if ( ! $model->exists) return null;
+
         if (is_string($this->accessor)) return $model->{$this->accessor}();
 
         $accessor = $this->accessor;
@@ -58,6 +64,14 @@ class Computed extends BaseField {
     public function keep($value)
     {
         return false;
+    }
+
+    /**
+     * @return array
+     */
+    public function eagerLoads()
+    {
+        return $this->get('eager', []);
     }
 
 }

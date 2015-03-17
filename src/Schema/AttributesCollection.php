@@ -2,9 +2,9 @@
 
 namespace Kalnoy\Cruddy\Schema;
 
+use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Contracts\ArrayableInterface;
 
 class AttributesCollection extends BaseCollection {
 
@@ -24,7 +24,7 @@ class AttributesCollection extends BaseCollection {
         {
             $value = $attribute->extract($model);
 
-            if ($value instanceof ArrayableInterface)
+            if ($value instanceof Arrayable)
             {
                 $value = $value->toArray();
             }

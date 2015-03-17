@@ -102,15 +102,10 @@ class Computed extends BaseColumn {
     }
 
     /**
-     * @param EloquentBuilder $builder
-     *
-     * @return void
+     * @return array
      */
-    public function modifyQuery(EloquentBuilder $builder)
+    public function eagerLoads()
     {
-        if ($eager = $this->get('eager'))
-        {
-            $builder->with($eager);
-        }
+        return $this->get('eager', []);
     }
 }

@@ -4,6 +4,7 @@ namespace Kalnoy\Cruddy\Schema\Columns;
 
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
+use Kalnoy\Cruddy\Contracts\Column;
 use Kalnoy\Cruddy\Schema\AttributesCollection;
 use Kalnoy\Cruddy\Contracts\SearchProcessor;
 
@@ -17,21 +18,19 @@ use Kalnoy\Cruddy\Contracts\SearchProcessor;
 class Collection extends AttributesCollection implements SearchProcessor {
 
     /**
-     * Apply modifications to the query
+     * Get a list of relations that should be eagerly loaded.
      *
-     * @param EloquentBuilder $builder
-     *
-     * @return void
+     * @return array
      */
-    public function modifyQuery(EloquentBuilder $builder)
+    public function eagerLoads()
     {
-        /**
-         * @var \Kalnoy\Cruddy\Contracts\Column $item
-         */
-        foreach ($this->items as $item)
+        $relations = array_reduce($this->items, function ($relations, Column $item)
         {
-            $item->modifyQuery($builder);
-        }
+            return array_merge($relations, $item->eagerLoads());
+
+        }, []);
+
+        return array_unique($relations);
     }
 
     /**
@@ -60,7 +59,10 @@ class Collection extends AttributesCollection implements SearchProcessor {
      */
     public function constraintBuilder(EloquentBuilder $builder, array $options)
     {
-        $this->modifyQuery($builder);
+        if ($relations = $this->eagerLoads())
+        {
+            $builder->with($relations);
+        }
 
         $query = $builder->getQuery();
 

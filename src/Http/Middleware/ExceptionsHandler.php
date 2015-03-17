@@ -48,6 +48,8 @@ class ExceptionsHandler {
 
         catch (Exception $e)
         {
+            app('Illuminate\Contracts\Debug\ExceptionHandler')->report($e);
+
             return $this->responseError($e->getMessage());
         }
     }

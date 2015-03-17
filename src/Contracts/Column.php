@@ -11,6 +11,4 @@ use Kalnoy\Cruddy\Contracts\Attribute;
  */
 interface Column extends Attribute {
 
-
-
 }

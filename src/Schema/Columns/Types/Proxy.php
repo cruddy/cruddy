@@ -58,9 +58,9 @@ class Proxy extends BaseColumn {
     /**
      * {@inheritdoc}
      */
-    public function modifyQuery(EloquentBuilder $builder)
+    public function eagerLoads()
     {
-        $this->field->modifyQuery($builder);
+        return $this->field->eagerLoads();
     }
 
     /**

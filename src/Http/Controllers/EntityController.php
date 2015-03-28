@@ -2,20 +2,14 @@
 
 namespace Kalnoy\Cruddy\Http\Controllers;
 
-use Exception;
 use Illuminate\Config\Repository as Config;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Kalnoy\Cruddy\ActionException;
 use Kalnoy\Cruddy\Data;
 use Kalnoy\Cruddy\Entity;
-use Kalnoy\Cruddy\EntityNotFoundException;
 use Kalnoy\Cruddy\Environment;
-use Kalnoy\Cruddy\ModelNotFoundException;
 use Kalnoy\Cruddy\OperationNotPermittedException;
-use Kalnoy\Cruddy\Service\Validation\ValidationException;
-use Psy\Util\Json;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -57,7 +51,7 @@ class EntityController extends Controller {
      */
     public function index(Request $input, $entity)
     {
-        $entity = $this->resolve($entity, 'view');
+        $entity = $this->resolve($entity, Entity::READ);
 
         if ( ! $input->ajax()) return $this->loadingView();
 
@@ -94,7 +88,7 @@ class EntityController extends Controller {
      */
     public function show(Request $input, $entity, $id)
     {
-        $entity = $this->resolve($entity, 'view');
+        $entity = $this->resolve($entity, Entity::READ);
 
         if ( ! $input->ajax())
         {
@@ -114,7 +108,7 @@ class EntityController extends Controller {
      */
     public function store(Request $input, $entity)
     {
-        $entity = $this->resolve($entity, 'create');
+        $entity = $this->resolve($entity, Entity::CREATE);
 
         $data = new Data($entity, $input->all());
 
@@ -148,7 +142,7 @@ class EntityController extends Controller {
      */
     public function update(Request $input, $entity, $id, $action = null)
     {
-        $entity = $this->resolve($entity, 'update');
+        $entity = $this->resolve($entity, Entity::UPDATE);
 
         $data = new Data($entity, $input->all(), $id);
 
@@ -168,7 +162,7 @@ class EntityController extends Controller {
      */
     public function executeCustomAction($entity, $id, $action = null)
     {
-        $entity = $this->resolve($entity, 'update');
+        $entity = $this->resolve($entity, Entity::UPDATE);
 
         $data = new Data($entity, [], $id);
 
@@ -189,7 +183,7 @@ class EntityController extends Controller {
      */
     public function destroy($entity, $id)
     {
-        $entity = $this->resolve($entity, 'delete');
+        $entity = $this->resolve($entity, Entity::DELETE);
 
         return new JsonResponse(null, $entity->delete($id) ? Response::HTTP_OK : Response::HTTP_NOT_FOUND);
     }

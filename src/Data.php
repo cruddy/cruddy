@@ -4,6 +4,7 @@ namespace Kalnoy\Cruddy;
 
 use Eloquent;
 use Illuminate\Database\Eloquent\Model;
+use Kalnoy\Cruddy\Contracts\Permissions;
 use Kalnoy\Cruddy\Schema\Fields\InlineRelation;
 use Kalnoy\Cruddy\Service\Validation\ValidationException;
 use Symfony\Component\Finder\Exception\OperationNotPermitedException;
@@ -171,7 +172,7 @@ class Data {
      */
     public function getAction()
     {
-        return $this->id ? 'update' : 'create';
+        return $this->id ? Entity::UPDATE : Entity::CREATE;
     }
 
     /**

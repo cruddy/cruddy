@@ -22,7 +22,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
         @makeSelectedMap @getValue()
 
-        if @reference.viewPermitted()
+        if @reference.readPermitted()
             @primaryKey = "id"
 
             @dataSource = @reference.search ajaxOptions: data: owner: options.owner
@@ -148,7 +148,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         """<li class="item #{ className }" data-id="#{ item.id }">#{ item.title }</li>"""
 
     render: ->
-        if @reference.viewPermitted()
+        if @reference.readPermitted()
             @dispose()
 
             @$el.html @template()

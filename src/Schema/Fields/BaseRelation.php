@@ -53,7 +53,7 @@ abstract class BaseRelation extends BaseField {
      */
     public function extract(Eloquent $model)
     {
-        if ( ! $this->reference->isPermitted(Permissions::VIEW))
+        if ( ! $this->reference->isPermitted(Entity::READ))
         {
             return null;
         }

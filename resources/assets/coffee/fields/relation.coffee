@@ -19,14 +19,14 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         constraint: @attributes.constraint
         multiple: yes
 
-    isEditable: -> @getReference().viewPermitted() and super
+    isEditable: -> @getReference().readPermitted() and super
 
-    canFilter: -> @getReference().viewPermitted() and super
+    canFilter: -> @getReference().readPermitted() and super
 
     formatItem: (item) ->
         ref = @getReference()
 
-        return item.title unless ref.viewPermitted()
+        return item.title unless ref.readPermitted()
 
         """<a href="#{ ref.link item.id }">#{ _.escape item.title }</a>"""
 

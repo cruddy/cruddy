@@ -38,7 +38,7 @@ class Factory extends BaseFactory {
      *
      * They are disabled by default.
      *
-     * @param \Kalnoy\Cruddy\Entity $entity
+     * @param Entity $entity
      * @param Collection            $collection
      * @param bool                  $hide
      * @param bool                  $disable
@@ -50,7 +50,7 @@ class Factory extends BaseFactory {
         $this->resolve('datetime', $collection, [ 'created_at' ])
             ->unique()
             ->hide($hide)
-            ->disable($disable ? true : 'create');
+            ->disable($disable ? true : Entity::CREATE);
 
         $this->resolve('datetime', $collection, [ 'updated_at' ])
             ->unique()
@@ -61,7 +61,7 @@ class Factory extends BaseFactory {
     /**
      * Add relation field type.
      *
-     * @param \Kalnoy\Cruddy\Entity $entity
+     * @param Entity $entity
      * @param Collection            $collection
      * @param string                $id
      * @param string                $ref
@@ -111,7 +111,7 @@ class Factory extends BaseFactory {
     /**
      * Create inline relation field.
      *
-     * @param \Kalnoy\Cruddy\Entity $entity
+     * @param Entity $entity
      * @param Collection            $collection
      * @param string                $id
      * @param string                $ref
@@ -126,7 +126,7 @@ class Factory extends BaseFactory {
     /**
      * Create slug field.
      *
-     * @param \Kalnoy\Cruddy\Entity $entity
+     * @param Entity $entity
      * @param Collection            $collection
      * @param string                $id
      * @param array|string          $ref
@@ -147,7 +147,7 @@ class Factory extends BaseFactory {
     /**
      * Create enum field.
      *
-     * @param \Kalnoy\Cruddy\Entity $entity
+     * @param Entity $entity
      * @param Collection            $collection
      * @param string                $id
      * @param array|\Closure        $items
@@ -168,7 +168,7 @@ class Factory extends BaseFactory {
     /**
      * Create computed field.
      *
-     * @param \Kalnoy\Cruddy\Entity $entity
+     * @param Entity $entity
      * @param Collection            $collection
      * @param string                $id
      * @param string|\Closure       $accessor

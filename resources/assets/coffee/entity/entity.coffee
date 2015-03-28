@@ -156,13 +156,13 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
     getPermissions: -> @permissions
 
+    readPermitted: -> @permissions.read
+
     updatePermitted: -> @permissions.update
 
     createPermitted: -> @permissions.create
 
     deletePermitted: -> @permissions.delete
-
-    viewPermitted: -> @permissions.view
 
     isSoftDeleting: -> @attributes.soft_deleting
 

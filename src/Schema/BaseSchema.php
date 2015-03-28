@@ -4,6 +4,7 @@ namespace Kalnoy\Cruddy\Schema;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Fluent;
+use Kalnoy\Cruddy\Contracts\Permissions;
 use Kalnoy\Cruddy\Contracts\Schema;
 use Kalnoy\Cruddy\Repo\Stub as StubRepository;
 use Kalnoy\Cruddy\Service\Validation\FluentValidator;
@@ -20,12 +21,12 @@ abstract class BaseSchema implements Schema {
     /**
      * The state of model when it is new.
      */
-    const WHEN_NEW = 'create';
+    const WHEN_NEW = Entity::CREATE;
 
     /**
      * The state of model when it is exists.
      */
-    const WHEN_EXISTS = 'update';
+    const WHEN_EXISTS = Entity::UPDATE;
 
     /**
      * The model class name.

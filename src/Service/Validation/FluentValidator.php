@@ -5,6 +5,7 @@ namespace Kalnoy\Cruddy\Service\Validation;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Fluent;
 use Kalnoy\Cruddy\Contracts\Validator as ValidatorContract;
+use Kalnoy\Cruddy\Entity;
 
 /**
  * Fluent validator for validating input.
@@ -182,7 +183,7 @@ class FluentValidator extends Fluent implements ValidatorContract {
      */
     public function fresh(array $rules)
     {
-        $this->attributes['create'] = $rules;
+        $this->attributes[Entity::CREATE] = $rules;
 
         return $this;
     }
@@ -196,7 +197,7 @@ class FluentValidator extends Fluent implements ValidatorContract {
      */
     public function existing(array $rules)
     {
-        $this->attributes['update'] = $rules;
+        $this->attributes[Entity::UPDATE] = $rules;
 
         return $this;
     }
@@ -234,8 +235,8 @@ class FluentValidator extends Fluent implements ValidatorContract {
     protected function collectRequiredFields()
     {
         return $this->collectFieldsWithRule('required', $this->get('rules'), true)
-            + $this->collectFieldsWithRule('required', $this->get('create'), 'create')
-            + $this->collectFieldsWithRule('required', $this->get('update'), 'update');
+            + $this->collectFieldsWithRule('required', $this->get(Entity::CREATE), Entity::CREATE)
+            + $this->collectFieldsWithRule('required', $this->get(Entity::UPDATE), Entity::UPDATE);
     }
 
     /**

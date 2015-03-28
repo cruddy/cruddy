@@ -6,6 +6,7 @@ use Illuminate\Html\HtmlBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Routing\UrlGenerator;
 use Kalnoy\Cruddy\Contracts\Permissions;
+use Kalnoy\Cruddy\Entity;
 use Kalnoy\Cruddy\Environment;
 
 /**
@@ -78,7 +79,7 @@ class MenuBuilder extends \Illuminate\Html\MenuBuilder {
         {
             $entity = $this->env->getEntities()->resolve($options['entity']);
 
-            if ( ! $entity->isPermitted(Permissions::VIEW)) return false;
+            if ( ! $entity->isPermitted(Entity::READ)) return false;
         }
 
         return parent::isVisible($options);

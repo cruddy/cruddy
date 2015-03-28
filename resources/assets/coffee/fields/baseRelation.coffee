@@ -1,6 +1,6 @@
 class Cruddy.Fields.BaseRelation extends Cruddy.Fields.Base
 
-    isVisible: -> @getReference().viewPermitted() and super
+    isVisible: -> @getReference().readPermitted() and super
 
     # Get the referenced entity
     getReference: ->

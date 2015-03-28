@@ -83,11 +83,10 @@ class Cruddy.Entity.Instance extends Backbone.Model
     hasChangedSinceSync: -> return @entity.hasChangedSinceSync this
 
     # Get whether is allowed to save instance
-    isSaveable: ->
+    canBeSaved: ->
         isNew = @isNew()
-        permit = @entity.getPermissions()
 
-        return ((isNew and permit.create) or (not isNew and permit.update)) and (not @isDeleted or not isNew)
+        return ((isNew and @entity.createPermitted()) or (not isNew and @entity.updatePermitted())) and (not @isDeleted or not isNew)
 
     serialize: ->
         data = if @isDeleted then {} else @entity.prepareAttributes @attributes

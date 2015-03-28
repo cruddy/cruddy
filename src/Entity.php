@@ -3,6 +3,7 @@
 namespace Kalnoy\Cruddy;
 
 use Illuminate\Contracts\Events\Dispatcher;
+use Kalnoy\Cruddy\Contracts\Permissions;
 use Kalnoy\Cruddy\Contracts\SearchProcessor;
 use Kalnoy\Cruddy\Schema\AttributesCollection;
 use Illuminate\Support\Collection;
@@ -19,6 +20,26 @@ use Kalnoy\Cruddy\Repo\ChainedSearchProcessor;
  * @since 1.0.0
  */
 class Entity implements Jsonable, Arrayable {
+
+    /**
+     * Action for creating new items.
+     */
+    const CREATE = 'create';
+
+    /**
+     * Action for viewing an item.
+     */
+    const READ = 'read';
+
+    /**
+     * Action for updating items.
+     */
+    const UPDATE = 'update';
+
+    /**
+     * Action for deleting items.
+     */
+    const DELETE = 'delete';
 
     /**
      * @var Dispatcher
@@ -81,13 +102,6 @@ class Entity implements Jsonable, Arrayable {
      * @var Contracts\Validator
      */
     private $validator;
-
-    /**
-     * The list of all actions.
-     *
-     * @var array
-     */
-    protected static $actions = [ 'view', 'update', 'create', 'delete' ];
 
     /**
      * @var array
@@ -633,14 +647,15 @@ class Entity implements Jsonable, Arrayable {
     {
         $permissions = $this->getPermissionsDriver();
 
-        $data = [];
+        $keys = [ self::CREATE, self::READ, self::UPDATE, self::DELETE ];
 
-        foreach (static::$actions as $action)
+        $values = array_map(function ($key) use ($permissions)
         {
-            $data[$action] = $permissions->isPermitted($action, $this);
-        }
+            return $permissions->isPermitted($key, $this);
 
-        return $data;
+        }, $keys);
+
+        return array_combine($keys, $values);
     }
 
     /**

@@ -1200,7 +1200,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
         @makeSelectedMap @getValue()
 
-        if @reference.viewPermitted()
+        if @reference.readPermitted()
             @primaryKey = "id"
 
             @dataSource = @reference.search ajaxOptions: data: owner: options.owner
@@ -1326,7 +1326,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         """<li class="item #{ className }" data-id="#{ item.id }">#{ item.title }</li>"""
 
     render: ->
-        if @reference.viewPermitted()
+        if @reference.readPermitted()
             @dispose()
 
             @$el.html @template()
@@ -2221,7 +2221,7 @@ class Cruddy.Fields.Base extends Cruddy.Attribute
     getLabel: -> @attributes.label
 
     # Get whether the field is editable for specified model
-    isEditable: (model) -> model.isSaveable() and @attributes.disabled isnt yes and @attributes.disabled isnt model.action()
+    isEditable: (model) -> model.canBeSaved() and @attributes.disabled isnt yes and @attributes.disabled isnt model.action()
 
     # Get whether field is required
     isRequired: (model) -> @attributes.required is yes or @attributes.required == model.action()
@@ -2358,7 +2358,7 @@ class Cruddy.Fields.Boolean extends Cruddy.Fields.Base
         return null
 class Cruddy.Fields.BaseRelation extends Cruddy.Fields.Base
 
-    isVisible: -> @getReference().viewPermitted() and super
+    isVisible: -> @getReference().readPermitted() and super
 
     # Get the referenced entity
     getReference: ->
@@ -2395,14 +2395,14 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         constraint: @attributes.constraint
         multiple: yes
 
-    isEditable: -> @getReference().viewPermitted() and super
+    isEditable: -> @getReference().readPermitted() and super
 
-    canFilter: -> @getReference().viewPermitted() and super
+    canFilter: -> @getReference().readPermitted() and super
 
     formatItem: (item) ->
         ref = @getReference()
 
-        return item.title unless ref.viewPermitted()
+        return item.title unless ref.readPermitted()
 
         """<a href="#{ ref.link item.id }">#{ _.escape item.title }</a>"""
 
@@ -2757,9 +2757,7 @@ class Cruddy.Fields.RelatedCollection extends Backbone.Collection
             field: @field
 
     serialize: ->
-        permit = @owner.entity.getPermissions()
-
-        models = @filter (model) -> model.isSaveable()
+        models = @filter (model) -> model.canBeSaved()
 
         data = {}
         data[item.cid] = item.serialize() for item in models
@@ -3144,13 +3142,13 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
     getPermissions: -> @permissions
 
+    readPermitted: -> @permissions.read
+
     updatePermitted: -> @permissions.update
 
     createPermitted: -> @permissions.create
 
     deletePermitted: -> @permissions.delete
-
-    viewPermitted: -> @permissions.view
 
     isSoftDeleting: -> @attributes.soft_deleting
 
@@ -3240,11 +3238,10 @@ class Cruddy.Entity.Instance extends Backbone.Model
     hasChangedSinceSync: -> return @entity.hasChangedSinceSync this
 
     # Get whether is allowed to save instance
-    isSaveable: ->
+    canBeSaved: ->
         isNew = @isNew()
-        permit = @entity.getPermissions()
 
-        return ((isNew and permit.create) or (not isNew and permit.update)) and (not @isDeleted or not isNew)
+        return ((isNew and @entity.createPermitted()) or (not isNew and @entity.updatePermitted())) and (not @isDeleted or not isNew)
 
     serialize: ->
         data = if @isDeleted then {} else @entity.prepareAttributes @attributes
@@ -3725,14 +3722,14 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         this
 
     updateModelState: ->
-        permit = @model.entity.getPermissions()
+        entity = @model.entity
         isNew = @model.isNew()
         isDeleted = @model.isDeleted or false
 
         @$el.toggleClass "destroyed", isDeleted
 
         @$btnSave.text if isNew then Cruddy.lang.create else Cruddy.lang.save
-        @$btnSave.toggle not isDeleted and if isNew then permit.create else permit.update
+        @$btnSave.toggle not isDeleted and if isNew then entity.createPermitted() else entity.updatePermitted()
 
         @updateModelMetaState()
 
@@ -4116,7 +4113,7 @@ class Router extends Backbone.Router
     resolveEntity: (id, callback) -> Cruddy.ready (app) ->
         entity = app.entity(id)
 
-        if entity.viewPermitted()
+        if entity.readPermitted()
             Cruddy.app.set "entity", entity
 
             callback.call this, entity if callback

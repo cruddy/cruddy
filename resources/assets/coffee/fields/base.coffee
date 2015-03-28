@@ -33,7 +33,7 @@ class Cruddy.Fields.Base extends Cruddy.Attribute
     getLabel: -> @attributes.label
 
     # Get whether the field is editable for specified model
-    isEditable: (model) -> model.isSaveable() and @attributes.disabled isnt yes and @attributes.disabled isnt model.action()
+    isEditable: (model) -> model.canBeSaved() and @attributes.disabled isnt yes and @attributes.disabled isnt model.action()
 
     # Get whether field is required
     isRequired: (model) -> @attributes.required is yes or @attributes.required == model.action()

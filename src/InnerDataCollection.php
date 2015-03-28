@@ -5,6 +5,7 @@ namespace Kalnoy\Cruddy;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Kalnoy\Cruddy\Contracts\InlineRelation;
+use Kalnoy\Cruddy\Contracts\Permissions;
 
 class InnerDataCollection {
 
@@ -82,7 +83,7 @@ class InnerDataCollection {
     {
         $ref = $this->relation->getReference();
 
-        if ($ref->isPermitted('delete'))
+        if ($ref->isPermitted(Entity::DELETE))
         {
             $ref->repository()->delete($this->getIdsToDelete());
         }

@@ -215,14 +215,14 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         this
 
     updateModelState: ->
-        permit = @model.entity.getPermissions()
+        entity = @model.entity
         isNew = @model.isNew()
         isDeleted = @model.isDeleted or false
 
         @$el.toggleClass "destroyed", isDeleted
 
         @$btnSave.text if isNew then Cruddy.lang.create else Cruddy.lang.save
-        @$btnSave.toggle not isDeleted and if isNew then permit.create else permit.update
+        @$btnSave.toggle not isDeleted and if isNew then entity.createPermitted() else entity.updatePermitted()
 
         @updateModelMetaState()
 

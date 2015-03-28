@@ -1719,7 +1719,7 @@
       this.allowCreate = ((_ref3 = options.allowCreate) != null ? _ref3 : true) && this.reference.createPermitted();
       this.attributesForNewModel = {};
       this.makeSelectedMap(this.getValue());
-      if (this.reference.viewPermitted()) {
+      if (this.reference.readPermitted()) {
         this.primaryKey = "id";
         this.dataSource = this.reference.search({
           ajaxOptions: {
@@ -1879,7 +1879,7 @@
     };
 
     EntitySelector.prototype.render = function() {
-      if (this.reference.viewPermitted()) {
+      if (this.reference.readPermitted()) {
         this.dispose();
         this.$el.html(this.template());
         this.items = this.$(".items");
@@ -3169,7 +3169,7 @@
     };
 
     Base.prototype.isEditable = function(model) {
-      return model.isSaveable() && this.attributes.disabled !== true && this.attributes.disabled !== model.action();
+      return model.canBeSaved() && this.attributes.disabled !== true && this.attributes.disabled !== model.action();
     };
 
     Base.prototype.isRequired = function(model) {
@@ -3480,7 +3480,7 @@
     }
 
     BaseRelation.prototype.isVisible = function() {
-      return this.getReference().viewPermitted() && BaseRelation.__super__.isVisible.apply(this, arguments);
+      return this.getReference().readPermitted() && BaseRelation.__super__.isVisible.apply(this, arguments);
     };
 
     BaseRelation.prototype.getReference = function() {
@@ -3553,17 +3553,17 @@
     };
 
     Relation.prototype.isEditable = function() {
-      return this.getReference().viewPermitted() && Relation.__super__.isEditable.apply(this, arguments);
+      return this.getReference().readPermitted() && Relation.__super__.isEditable.apply(this, arguments);
     };
 
     Relation.prototype.canFilter = function() {
-      return this.getReference().viewPermitted() && Relation.__super__.canFilter.apply(this, arguments);
+      return this.getReference().readPermitted() && Relation.__super__.canFilter.apply(this, arguments);
     };
 
     Relation.prototype.formatItem = function(item) {
       var ref;
       ref = this.getReference();
-      if (!ref.viewPermitted()) {
+      if (!ref.readPermitted()) {
         return item.title;
       }
       return "<a href=\"" + (ref.link(item.id)) + "\">" + (_.escape(item.title)) + "</a>";
@@ -4111,10 +4111,9 @@
     };
 
     RelatedCollection.prototype.serialize = function() {
-      var data, item, models, permit, _i, _len;
-      permit = this.owner.entity.getPermissions();
+      var data, item, models, _i, _len;
       models = this.filter(function(model) {
-        return model.isSaveable();
+        return model.canBeSaved();
       });
       data = {};
       for (_i = 0, _len = models.length; _i < _len; _i++) {
@@ -4817,6 +4816,10 @@
       return this.permissions;
     };
 
+    Entity.prototype.readPermitted = function() {
+      return this.permissions.read;
+    };
+
     Entity.prototype.updatePermitted = function() {
       return this.permissions.update;
     };
@@ -4827,10 +4830,6 @@
 
     Entity.prototype.deletePermitted = function() {
       return this.permissions["delete"];
-    };
-
-    Entity.prototype.viewPermitted = function() {
-      return this.permissions.view;
     };
 
     Entity.prototype.isSoftDeleting = function() {
@@ -4945,11 +4944,10 @@
       return this.entity.hasChangedSinceSync(this);
     };
 
-    Instance.prototype.isSaveable = function() {
-      var isNew, permit;
+    Instance.prototype.canBeSaved = function() {
+      var isNew;
       isNew = this.isNew();
-      permit = this.entity.getPermissions();
-      return ((isNew && permit.create) || (!isNew && permit.update)) && (!this.isDeleted || !isNew);
+      return ((isNew && this.entity.createPermitted()) || (!isNew && this.entity.updatePermitted())) && (!this.isDeleted || !isNew);
     };
 
     Instance.prototype.serialize = function() {
@@ -5564,13 +5562,13 @@
     };
 
     Form.prototype.updateModelState = function() {
-      var isDeleted, isNew, permit;
-      permit = this.model.entity.getPermissions();
+      var entity, isDeleted, isNew;
+      entity = this.model.entity;
       isNew = this.model.isNew();
       isDeleted = this.model.isDeleted || false;
       this.$el.toggleClass("destroyed", isDeleted);
       this.$btnSave.text(isNew ? Cruddy.lang.create : Cruddy.lang.save);
-      this.$btnSave.toggle(!isDeleted && (isNew ? permit.create : permit.update));
+      this.$btnSave.toggle(!isDeleted && (isNew ? entity.createPermitted() : entity.updatePermitted()));
       return this.updateModelMetaState();
     };
 
@@ -5964,7 +5962,7 @@
       return Cruddy.ready(function(app) {
         var entity;
         entity = app.entity(id);
-        if (entity.viewPermitted()) {
+        if (entity.readPermitted()) {
           Cruddy.app.set("entity", entity);
           if (callback) {
             callback.call(this, entity);

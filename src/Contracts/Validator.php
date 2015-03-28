@@ -12,16 +12,6 @@ namespace Kalnoy\Cruddy\Contracts;
 interface Validator {
 
     /**
-     * Create action.
-     */
-    const CREATE = 'create';
-
-    /**
-     * Update action.
-     */
-    const UPDATE = 'update';
-
-    /**
      * Validate an input for specific action which is either `create` or `update`.
      *
      * @param string $action

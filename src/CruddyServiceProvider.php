@@ -15,6 +15,7 @@ use Kalnoy\Cruddy\Service\Permissions\PermissionsManager;
 use Kalnoy\Cruddy\Console\MakeEntityCommand;
 use Kalnoy\Cruddy\Console\CompileCommand;
 use Kalnoy\Cruddy\Console\ClearCompiledCommand;
+use Kalnoy\Cruddy\Service\PermitsEverything;
 use Kalnoy\Cruddy\Service\ThumbnailFactory;
 use Intervention\Image\ImageManager;
 use Illuminate\Routing\Router;
@@ -131,7 +132,9 @@ class CruddyServiceProvider extends ServiceProvider {
     {
         $this->app->singleton('cruddy.permissions', function ($app)
         {
-            return new PermissionsManager($app);
+            $driver = $app['config']->get('cruddy.permissions');
+
+            return $driver ? $app[$driver] : new PermitsEverything;
         });
     }
 

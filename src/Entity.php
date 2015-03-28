@@ -726,7 +726,7 @@ class Entity implements Jsonable, Arrayable {
      */
     protected function getPermissionsDriver()
     {
-        return app('cruddy.permissions')->driver();
+        return app('cruddy.permissions');
     }
 
     /**

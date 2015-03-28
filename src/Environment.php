@@ -3,10 +3,7 @@
 namespace Kalnoy\Cruddy;
 
 use Illuminate\Config\Repository as Config;
-use Illuminate\Events\Dispatcher;
-use Kalnoy\Cruddy\Schema\Fields\Factory as FieldFactory;
-use Kalnoy\Cruddy\Schema\Columns\Factory as ColumnFactory;
-use Kalnoy\Cruddy\Service\Permissions\PermissionsManager;
+use Kalnoy\Cruddy\Contracts\Permissions;
 use RuntimeException;
 
 /**
@@ -24,7 +21,7 @@ class Environment {
     protected $entities;
 
     /**
-     * @var Service\Permissions\PermissionsManager
+     * @var Permissions
      */
     protected $permissions;
 
@@ -36,10 +33,10 @@ class Environment {
     /**
      * @param Config $config
      * @param Repository $entities
-     * @param PermissionsManager $permissions
+     * @param Permissions $permissions
      * @param Lang $lang
      */
-    public function __construct(Repository $entities, PermissionsManager $permissions, Lang $lang)
+    public function __construct(Repository $entities, Permissions $permissions, Lang $lang)
     {
         $this->entities = $entities;
         $this->permissions = $permissions;
@@ -91,7 +88,7 @@ class Environment {
     /**
      * Permissions object.
      *
-     * @return Service\Permissions\PermissionsManager
+     * @return Permissions
      */
     public function getPermissions()
     {

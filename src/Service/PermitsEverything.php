@@ -1,6 +1,6 @@
 <?php
 
-namespace Kalnoy\Cruddy\Service\Permissions;
+namespace Kalnoy\Cruddy\Service;
 
 use Kalnoy\Cruddy\Contracts\Permissions;
 use Kalnoy\Cruddy\Entity;
@@ -12,7 +12,7 @@ use Kalnoy\Cruddy\Entity;
  *
  * @since 1.0.0
  */
-class Stub implements Permissions {
+class PermitsEverything implements Permissions {
 
     /**
      * {@inheritdoc}

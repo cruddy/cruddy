@@ -13,8 +13,8 @@
     // The URI that is prefixed to all routes of Cruddy.
     'uri' => 'backend',
 
-    // The permissions driver.
-    'permissions' => 'stub',
+    // The class name of permissions driver.
+    'permissions' => 'Kalnoy\Cruddy\Service\PermitsEverything',
 
     // The middleware that wraps every request to Cruddy. Can be used for authentication.
     'middleware' => null,

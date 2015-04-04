@@ -2,19 +2,18 @@
 
 namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
+use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\Schema\ComputedTrait;
 use Kalnoy\Cruddy\Schema\Fields\BaseField;
-use Illuminate\Database\Eloquent\Model;
 
 /**
  * Computed field.
  *
- * @method $this eager($relations)
- *
- * @property array|string $eager
- *
  * @since 1.0.0
  */
 class Computed extends BaseField {
+
+    use ComputedTrait;
 
     /**
      * {@inheritdoc}
@@ -22,24 +21,15 @@ class Computed extends BaseField {
     protected $class = 'Cruddy.Fields.Computed';
 
     /**
-     * The accessor.
-     *
-     * @var string|\Closure
+     * @param Entity $entity
+     * @param string $id
+     * @param string $accessor
      */
-    public $accessor;
-
-    /**
-     * {@inheritdoc}
-     */
-    public function extract(Model $model)
+    public function __construct(Entity $entity, $id, $accessor = null)
     {
-        if ( ! $model->exists) return null;
+        parent::__construct($entity, $id);
 
-        if (is_string($this->accessor)) return $model->{$this->accessor}();
-
-        $accessor = $this->accessor;
-
-        return $accessor($model);
+        $this->accessor = $accessor;
     }
 
     /**
@@ -47,15 +37,7 @@ class Computed extends BaseField {
      */
     public function isDisabled($action)
     {
-        return true;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function isFillable()
-    {
-        return false;
+        return $action != Entity::WHEN_NEW or $this->default !== null;
     }
 
     /**
@@ -64,14 +46,6 @@ class Computed extends BaseField {
     public function keep($value)
     {
         return false;
-    }
-
-    /**
-     * @return array
-     */
-    public function eagerLoads()
-    {
-        return $this->get('eager', []);
     }
 
 }

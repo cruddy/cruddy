@@ -27,7 +27,7 @@ abstract class Attribute extends Entry implements AttributeContract {
     protected $canOrder = false;
 
     /**
-     * {@inheritdoc}
+     * @return array
      */
     public function eagerLoads()
     {

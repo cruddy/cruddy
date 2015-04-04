@@ -63,7 +63,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
     sync: (method, model, options) ->
         if method in ["update", "create"]
             # Form data will allow us to upload files via AJAX request
-            options.data = new AdvFormData(@entity.prepareAttributes options.attrs ? @attributes).original
+            options.data = new AdvFormData(@entity.prepareAttributes options.attrs ? @attributes, this).original
 
             # Set the content type to false to let browser handle it
             options.contentType = false
@@ -89,7 +89,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
         return ((isNew and @entity.createPermitted()) or (not isNew and @entity.updatePermitted())) and (not @isDeleted or not isNew)
 
     serialize: ->
-        data = if @isDeleted then {} else @entity.prepareAttributes @attributes
+        data = if @isDeleted then {} else @entity.prepareAttributes @attributes, this
 
         return $.extend data, { __id: @id, __d: @isDeleted }
 

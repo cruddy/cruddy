@@ -23,6 +23,7 @@ namespace Kalnoy\Cruddy\Schema\Fields;
  * @method Types\Slug       slug(string $id, string $refFieldId = null)
  * @method Types\Enum       enum(string $id, mixed $items)
  * @method Types\Computed   computed(string $id, mixed $accessor = null)
+ * @method Types\Computed   compute(string $id, mixed $accessor = null)
  *
  * @method \Kalnoy\Cruddy\CKEditor\CKEditor ckedit(string $id)
  * @method \Kalnoy\Cruddy\Ace\Markdown markdown(string $id)

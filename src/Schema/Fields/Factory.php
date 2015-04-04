@@ -31,6 +31,8 @@ class Factory extends BaseFactory {
         'image' => 'Kalnoy\Cruddy\Schema\Fields\Types\Image',
         'integer' => 'Kalnoy\Cruddy\Schema\Fields\Types\Integer',
         'float' => 'Kalnoy\Cruddy\Schema\Fields\Types\Float',
+        'compute' => 'Kalnoy\Cruddy\Schema\Fields\Types\Computed',
+        'computed' => 'Kalnoy\Cruddy\Schema\Fields\Types\Computed',
     ];
 
     /**
@@ -165,29 +167,4 @@ class Factory extends BaseFactory {
         return $instance;
     }
 
-    /**
-     * Create computed field.
-     *
-     * @param Entity $entity
-     * @param Collection            $collection
-     * @param string                $id
-     * @param string|\Closure       $accessor
-     *
-     * @return Types\Computed
-     */
-    public function computed($entity, $collection, $id, $accessor = null)
-    {
-        $instance = new Types\Computed($entity, $id);
-
-        if ($accessor === null)
-        {
-            $accessor = 'get'.camel_case($id);
-        }
-
-        $instance->accessor = $accessor;
-
-        $collection->add($instance);
-
-        return $instance;
-    }
 }

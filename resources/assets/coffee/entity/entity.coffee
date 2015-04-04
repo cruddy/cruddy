@@ -124,9 +124,9 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
     hasChangedSinceSync: (model) -> return yes for field in @fields.models when field.hasChangedSinceSync model
 
-    prepareAttributes: (attributes) ->
+    prepareAttributes: (attributes, model) ->
         result = {}
-        result[key] = field.prepareAttribute value for key, value of attributes when field = @getField key
+        result[key] = field.prepareAttribute value for key, value of attributes when (field = @getField(key)) and field.isEditable(model)
 
         return result
 

@@ -4380,7 +4380,7 @@
     };
 
     ViewButton.prototype.wrapWithActions = function(item, html) {
-      if (_.isEmpty(item.meta.presentationActions) && _.isEmpty(item.meta.actions)) {
+      if (_.isEmpty(item.meta.links) && _.isEmpty(item.meta.actions)) {
         return html;
       }
       html = "<div class=\"btn-group btn-group-xs auto-hide-target\">" + html;
@@ -4397,8 +4397,8 @@
     ViewButton.prototype.renderActions = function(model) {
       var action, html, noPresentationActions, _i, _len, _ref;
       html = "<ul class=\"dropdown-menu\" role=\"menu\">";
-      if (!(noPresentationActions = _.isEmpty(model.meta.presentationActions))) {
-        html += render_presentation_actions(model.meta.presentationActions);
+      if (!(noPresentationActions = _.isEmpty(model.meta.links))) {
+        html += render_presentation_actions(model.meta.links);
       }
       if (!_.isEmpty(model.meta.actions)) {
         if (!noPresentationActions) {
@@ -4764,12 +4764,12 @@
       }
     };
 
-    Entity.prototype.prepareAttributes = function(attributes) {
+    Entity.prototype.prepareAttributes = function(attributes, model) {
       var field, key, result, value;
       result = {};
       for (key in attributes) {
         value = attributes[key];
-        if (field = this.getField(key)) {
+        if ((field = this.getField(key)) && field.isEditable(model)) {
           result[key] = field.prepareAttribute(value);
         }
       }
@@ -4920,7 +4920,7 @@
     Instance.prototype.sync = function(method, model, options) {
       var _ref;
       if (method === "update" || method === "create") {
-        options.data = new AdvFormData(this.entity.prepareAttributes((_ref = options.attrs) != null ? _ref : this.attributes)).original;
+        options.data = new AdvFormData(this.entity.prepareAttributes((_ref = options.attrs) != null ? _ref : this.attributes, this)).original;
         options.contentType = false;
         options.processData = false;
       }
@@ -4952,7 +4952,7 @@
 
     Instance.prototype.serialize = function() {
       var data;
-      data = this.isDeleted ? {} : this.entity.prepareAttributes(this.attributes);
+      data = this.isDeleted ? {} : this.entity.prepareAttributes(this.attributes, this);
       return $.extend(data, {
         __id: this.id,
         __d: this.isDeleted
@@ -5600,7 +5600,7 @@
       var entity, html, isDeleted, items, model;
       entity = (model = this.model).entity;
       html = "";
-      if (!((isDeleted = model.isDeleted) || _.isEmpty(items = model.meta.presentationActions))) {
+      if (!((isDeleted = model.isDeleted) || _.isEmpty(items = model.meta.links))) {
         html += render_presentation_actions(items);
         html += render_divider();
       }

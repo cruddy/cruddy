@@ -11,4 +11,9 @@ use Kalnoy\Cruddy\Contracts\Attribute;
  */
 interface Column extends Attribute {
 
+    /**
+     * @return string
+     */
+    public function getDefaultOrderDirection();
+
 }

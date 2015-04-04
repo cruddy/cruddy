@@ -2,6 +2,7 @@
 
 namespace Kalnoy\Cruddy\Schema\Columns;
 
+use Kalnoy\Cruddy\Entity;
 use Kalnoy\Cruddy\Schema\BaseFactory;
 
 /**
@@ -14,34 +15,15 @@ class Factory extends BaseFactory {
     /**
      * @var array
      */
-    protected $macros =
-    [
+    protected $macros = [
         'states' => 'Kalnoy\Cruddy\Schema\Columns\Types\States',
+        'compute' => 'Kalnoy\Cruddy\Schema\Columns\Types\Computed',
     ];
-
-    /**
-     * Create computed column.
-     *
-     * @param \Kalnoy\Cruddy\Entity $entity
-     * @param Collection            $collection
-     * @param int                   $id
-     * @param \Closure              $value
-     *
-     * @return Types\Computed
-     */
-    public function compute($entity, $collection, $id, \Closure $value)
-    {
-        $instance = new Types\Computed($entity, $id, $value);
-
-        $collection->add($instance);
-
-        return $instance;
-    }
 
     /**
      * Create new proxy column.
      *
-     * @param \Kalnoy\Cruddy\Entity $entity
+     * @param Entity $entity
      * @param Collection $collection
      * @param string $id
      * @param string $fieldId
@@ -58,4 +40,24 @@ class Factory extends BaseFactory {
 
         return $instance;
     }
+
+    /**
+     * @param $entity
+     * @param $collection
+     * @param array $items
+     */
+    public function cols($entity, $collection, array $items)
+    {
+        foreach ($items as $id => $fieldId)
+        {
+            if (is_numeric($id))
+            {
+                $id = $fieldId;
+                $fieldId = null;
+            }
+
+            $this->col($entity, $collection, $id, $fieldId);
+        }
+    }
+
 }

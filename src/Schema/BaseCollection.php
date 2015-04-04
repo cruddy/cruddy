@@ -21,12 +21,13 @@ class BaseCollection extends Collection {
 
     /**
      * @param Entity $entity
+     * @param array $items
      */
     public function __construct(Entity $entity, array $items = [])
     {
-        $this->entity = $entity;
-
         parent::__construct($items);
+
+        $this->entity = $entity;
     }
 
     /**

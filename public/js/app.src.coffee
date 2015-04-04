@@ -2879,7 +2879,7 @@ class Cruddy.Columns.ViewButton extends Cruddy.Columns.Base
     """
 
     wrapWithActions: (item, html) ->
-        return html if _.isEmpty(item.meta.presentationActions) and _.isEmpty(item.meta.actions)
+        return html if _.isEmpty(item.meta.links) and _.isEmpty(item.meta.actions)
 
         html = """<div class="btn-group btn-group-xs auto-hide-target">""" + html
         html += @dropdownToggleTemplate()
@@ -2897,8 +2897,8 @@ class Cruddy.Columns.ViewButton extends Cruddy.Columns.Base
     renderActions: (model) ->
         html = """<ul class="dropdown-menu" role="menu">"""
 
-        unless noPresentationActions = _.isEmpty model.meta.presentationActions
-            html += render_presentation_actions model.meta.presentationActions
+        unless noPresentationActions = _.isEmpty model.meta.links
+            html += render_presentation_actions model.meta.links
 
         unless _.isEmpty model.meta.actions
             html += render_divider() unless noPresentationActions
@@ -3110,9 +3110,9 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
     hasChangedSinceSync: (model) -> return yes for field in @fields.models when field.hasChangedSinceSync model
 
-    prepareAttributes: (attributes) ->
+    prepareAttributes: (attributes, model) ->
         result = {}
-        result[key] = field.prepareAttribute value for key, value of attributes when field = @getField key
+        result[key] = field.prepareAttribute value for key, value of attributes when (field = @getField(key)) and field.isEditable(model)
 
         return result
 
@@ -3218,7 +3218,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
     sync: (method, model, options) ->
         if method in ["update", "create"]
             # Form data will allow us to upload files via AJAX request
-            options.data = new AdvFormData(@entity.prepareAttributes options.attrs ? @attributes).original
+            options.data = new AdvFormData(@entity.prepareAttributes options.attrs ? @attributes, this).original
 
             # Set the content type to false to let browser handle it
             options.contentType = false
@@ -3244,7 +3244,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
         return ((isNew and @entity.createPermitted()) or (not isNew and @entity.updatePermitted())) and (not @isDeleted or not isNew)
 
     serialize: ->
-        data = if @isDeleted then {} else @entity.prepareAttributes @attributes
+        data = if @isDeleted then {} else @entity.prepareAttributes @attributes, this
 
         return $.extend data, { __id: @id, __d: @isDeleted }
 
@@ -3784,7 +3784,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         html = ""
 
-        unless (isDeleted = model.isDeleted) or _.isEmpty items = model.meta.presentationActions
+        unless (isDeleted = model.isDeleted) or _.isEmpty items = model.meta.links
             html += render_presentation_actions items
             html += render_divider()
 

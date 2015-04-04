@@ -57,7 +57,11 @@ class BaseFactory {
 
         if (is_string($callback))
         {
-            $instance = new $callback($collection->getEntity(), reset($params));
+            $class = new \ReflectionClass($callback);
+
+            array_unshift($params, $collection->getEntity());
+
+            $instance = $class->newInstanceArgs($params);
 
             $collection->add($instance);
 

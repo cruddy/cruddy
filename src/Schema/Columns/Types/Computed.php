@@ -7,17 +7,17 @@ use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Query\Builder;
 use Kalnoy\Cruddy\Schema\Columns\BaseColumn;
 use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\Schema\ComputedTrait;
 
 /**
  * Computed column that extracts data using a closure.
  *
- * @method $this eager($relations)
- *
- * @property array|string $eager
  *
  * @since 1.0.0
  */
 class Computed extends BaseColumn {
+
+    use ComputedTrait;
 
     /**
      * @inheritdoc
@@ -25,13 +25,6 @@ class Computed extends BaseColumn {
      * @var string
      */
     protected $class = 'Cruddy.Columns.Computed';
-
-    /**
-     * The Closure that will receive a model to resolve a value.
-     *
-     * @var \Closure
-     */
-    protected $value;
 
     /**
      * An order clause to support sorting.
@@ -43,17 +36,17 @@ class Computed extends BaseColumn {
     public $columnClause;
 
     /**
-     * Init column.
+     * Init the column.
      *
-     * @param Entity   $entity
-     * @param string   $id
-     * @param \Closure $value
+     * @param Entity $entity
+     * @param string $id
+     * @param string|\Closure $accessor
      */
-    public function __construct(Entity $entity, $id, \Closure $value)
+    public function __construct(Entity $entity, $id, $accessor = null)
     {
         parent::__construct($entity, $id);
 
-        $this->value = $value;
+        $this->accessor = $accessor;
     }
 
     /**
@@ -68,16 +61,6 @@ class Computed extends BaseColumn {
         $this->columnClause = $value;
 
         return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function extract(Eloquent $model)
-    {
-        $method = $this->value;
-
-        return $method($model, $this->entity);
     }
 
     /**
@@ -99,13 +82,5 @@ class Computed extends BaseColumn {
     public function canOrder()
     {
         return isset($this->columnClause);
-    }
-
-    /**
-     * @return array
-     */
-    public function eagerLoads()
-    {
-        return $this->get('eager', []);
     }
 }

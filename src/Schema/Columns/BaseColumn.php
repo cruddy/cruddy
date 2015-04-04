@@ -77,6 +77,14 @@ abstract class BaseColumn extends Attribute implements Column {
     }
 
     /**
+     * @return string
+     */
+    public function getDefaultOrderDirection()
+    {
+        return $this->get('orderDir', 'asc');
+    }
+
+    /**
      * @inheritdoc
      *
      * @return array
@@ -86,7 +94,7 @@ abstract class BaseColumn extends Attribute implements Column {
         return [
             'width' => $this->get('width'),
             'header' => $this->getHeader(),
-            'order_dir' => $this->get('orderDir', 'asc'),
+            'order_dir' => $this->getDefaultOrderDirection(),
             'formatter' => $this->get('formatter'),
             'formatter_options' => $this->get('formatterOptions'),
 

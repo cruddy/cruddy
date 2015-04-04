@@ -275,7 +275,7 @@ abstract class Entity implements Jsonable, Arrayable {
      *
      * @return string
      */
-    protected function toUrl($model) {}
+    public function toUrl($model) {}
 
     /**
      * Find an item with given id.
@@ -667,7 +667,7 @@ abstract class Entity implements Jsonable, Arrayable {
      */
     public function createColumns()
     {
-        $collection = new Schema\Columns\Collection($this);
+        $collection = new Schema\Columns\Collection($this, $this->defaultOrder);
 
         $schema = new Schema\Columns\InstanceFactory($this->getColumnsFactory(), $collection);
 

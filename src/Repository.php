@@ -89,11 +89,11 @@ class Repository {
         }
 
         /**
-         * @var Contracts\Schema $schema
+         * @var Entity $schema
          */
-        $schema = $this->container->make($class);
+        $entity = $this->container->make($class);
 
-        $this->resolved[$id] = $entity = $schema->entity();
+        $this->resolved[$id] = $entity;
 
         $entity->setId($id);
         $entity->setEntitiesRepository($this);
@@ -179,7 +179,7 @@ class Repository {
         list($entityId, $fieldId) = explode('.', $id, 2);
 
         $entity = $this->resolve($entityId);
-        $field = $entity->fields()->get($fieldId);
+        $field = $entity->getFields()->get($fieldId);
 
         if ( ! $field)
         {

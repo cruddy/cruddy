@@ -2,10 +2,9 @@
 
 namespace {{namespace}};
 
-use Kalnoy\Cruddy\Schema\BaseSchema;
-use Kalnoy\Cruddy\Service\Validation\FluentValidator;
+use Kalnoy\Cruddy\Entity;
 
-class {{class}} extends BaseSchema {
+class {{class}} extends Entity {
 
     /**
      * @var string

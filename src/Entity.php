@@ -5,6 +5,7 @@ namespace Kalnoy\Cruddy;
 use Illuminate\Contracts\Events\Dispatcher;
 use Kalnoy\Cruddy\Contracts\Permissions;
 use Kalnoy\Cruddy\Contracts\SearchProcessor;
+use Kalnoy\Cruddy\Repo\Stub;
 use Kalnoy\Cruddy\Schema\AttributesCollection;
 use Illuminate\Support\Collection;
 use Illuminate\Contracts\Support\Jsonable;
@@ -13,13 +14,14 @@ use Illuminate\Database\Eloquent\Model;
 use Kalnoy\Cruddy\Contracts\Schema as SchemaContract;
 use Kalnoy\Cruddy\Schema\InstanceFactory;
 use Kalnoy\Cruddy\Repo\ChainedSearchProcessor;
+use Kalnoy\Cruddy\Service\Validation\FluentValidator;
 
 /**
  * The entity class that is responsible for operations on model.
  *
  * @since 1.0.0
  */
-class Entity implements Jsonable, Arrayable {
+abstract class Entity implements Jsonable, Arrayable {
 
     /**
      * Action for creating new items.
@@ -42,6 +44,16 @@ class Entity implements Jsonable, Arrayable {
     const DELETE = 'delete';
 
     /**
+     * The state of model when it is new.
+     */
+    const WHEN_NEW = self::CREATE;
+
+    /**
+     * The state of model when it is exists.
+     */
+    const WHEN_EXISTS = self::UPDATE;
+
+    /**
      * @var Dispatcher
      */
     protected static $dispatcher;
@@ -57,18 +69,16 @@ class Entity implements Jsonable, Arrayable {
     protected $lang;
 
     /**
-     * The schema.
-     *
-     * @var SchemaContract
-     */
-    protected $schema;
-
-    /**
      * The id.
      *
      * @var string
      */
     protected $id;
+
+    /**
+     * @var Schema\Actions\Collection
+     */
+    private $actions;
 
     /**
      * The field list.
@@ -87,36 +97,185 @@ class Entity implements Jsonable, Arrayable {
     /**
      * @var Schema\Filters\Collection
      */
-    private $filters;
+    private $filtersCollection;
 
     /**
-     * The repository.
-     *
-     * @var \Kalnoy\Cruddy\Contracts\Repository
+     * @var Contracts\Repository
      */
     private $repo;
 
     /**
-     * The validator.
-     *
      * @var Contracts\Validator
      */
     private $validator;
 
     /**
-     * @var array
+     * @var Schema\Layout\Layout
      */
-    public $eagerLoads = [];
+    private $layout;
 
     /**
-     * Init entity.
+     * The list of relations that will be eagerly loaded.
      *
-     * @param SchemaContract $schema
+     * @var array
      */
-    public function __construct(SchemaContract $schema)
+    protected $eagerLoads = [];
+
+    /**
+     * The model class name.
+     *
+     * @var string
+     */
+    protected $model;
+
+    /**
+     * The array of default attributes.
+     *
+     * @var array
+     */
+    protected $defaults = [];
+
+    /**
+     * The list of complex filters.
+     *
+     * @var array
+     */
+    protected $filters = [];
+
+    /**
+     * The attribute that is used to convert model to a string.
+     *
+     * @var string
+     */
+    protected $titleAttribute;
+
+    /**
+     * The id of column that will be ordered by default.
+     *
+     * @var string
+     */
+    protected $defaultOrder;
+
+    /**
+     * The number of items per page.
+     *
+     * Set this value to override default model's value.
+     *
+     * @var int
+     */
+    protected $perPage;
+
+    /**
+     * The path to the Backbone view class that will display the entity.
+     *
+     * @var string
+     */
+    protected $view = 'Cruddy.Entity.Page';
+
+    /**
+     * Specify the fields.
+     *
+     * @param Schema\Fields\InstanceFactory $schema
+     */
+    abstract protected function fields($schema);
+
+    /**
+     * Specify the columns.
+     *
+     * @param Schema\Columns\InstanceFactory $schema
+     */
+    protected function columns($schema) {}
+
+    /**
+     * Specify filters.
+     *
+     * @param Schema\Filters\InstanceFactory $schema
+     */
+    protected function filters($schema)
     {
-        $this->schema = $schema;
+        foreach ($this->filters as $field)
+        {
+            $schema->usingField($field);
+        }
     }
+
+    /**
+     * Get default attributes.
+     *
+     * @return array
+     */
+    protected function defaults()
+    {
+        return $this->defaults;
+    }
+
+    /**
+     * Specify what files repository uploads.
+     *
+     * @param Repo\BaseRepository $repo
+     */
+    protected function files($repo) {}
+
+    /**
+     * Set up validator.
+     *
+     * @param FluentValidator $validate
+     */
+    protected function rules($validate) {}
+
+    /**
+     * Set up actions.
+     *
+     * @param Schema\Actions\Collection $actions
+     */
+    protected function actions($actions) {}
+
+    /**
+     * Define the layout.
+     *
+     * @param Schema\Layout\Layout $l
+     */
+    protected function layout($l) {}
+
+    /**
+     * Get links for model that will be displayed in data table and form.
+     *
+     * @param Model $model
+     *
+     * @return array
+     */
+    protected function links($model)
+    {
+        $result = [];
+
+        if ($value = $this->toUrl($model))
+        {
+            $result[app('cruddy.lang')->translate('cruddy::js.view_external')] = $value;
+        }
+
+        return $result;
+    }
+
+    /**
+     * Convert the model to string.
+     *
+     * @param Model $model
+     *
+     * @return string
+     */
+    public function toString($model)
+    {
+        return $this->titleAttribute ? $model->getAttribute($this->titleAttribute) : $model->getKey();
+    }
+
+    /**
+     * Get the url to the model on main site.
+     *
+     * @param Model $model
+     *
+     * @return string
+     */
+    protected function toUrl($model) {}
 
     /**
      * Find an item with given id.
@@ -129,7 +288,7 @@ class Entity implements Jsonable, Arrayable {
      */
     public function find($id)
     {
-        $model = $this->repository()->find($id);
+        $model = $this->getRepository()->find($id);
 
         return $this->extract($model);
     }
@@ -138,6 +297,7 @@ class Entity implements Jsonable, Arrayable {
      * Extract model fields.
      *
      * @param array|Model $model
+     * @param AttributesCollection $collection
      *
      * @return array
      */
@@ -150,7 +310,7 @@ class Entity implements Jsonable, Arrayable {
             return $this->extractAll($model, $collection);
         }
 
-        if ($collection === null) $collection = $this->fields();
+        if ($collection === null) $collection = $this->getFields();
 
         $attributes = $collection->extract($model);
         $meta = $this->getMetaDataForModel($model);
@@ -207,7 +367,7 @@ class Entity implements Jsonable, Arrayable {
      */
     public function search(array $options)
     {
-        $results = $this->repository()->search($options, $this->getSearchProcessor($options));
+        $results = $this->getRepository()->search($options, $this->getSearchProcessor($options));
 
         if (array_get($options, 'simple'))
         {
@@ -215,7 +375,7 @@ class Entity implements Jsonable, Arrayable {
         }
         else
         {
-            $results['items'] = $this->extractAll($results['items'], $this->columns());
+            $results['items'] = $this->extractAll($results['items'], $this->getColumns());
         }
 
         return $results;
@@ -231,9 +391,9 @@ class Entity implements Jsonable, Arrayable {
     protected function getSearchProcessor(array $options)
     {
         $processor = new ChainedSearchProcessor([
-            $this->fields(),
-            $this->columns(),
-            $this->filters(),
+            $this->getFields(),
+            $this->getColumns(),
+            $this->getFilters(),
         ]);
 
         if (isset($options['owner']))
@@ -295,13 +455,22 @@ class Entity implements Jsonable, Arrayable {
      */
     public function getMetaDataForModel(Model $model, $simplified = false)
     {
-        $id = $model->getKey();
+        $meta['id'] = $model->getKey();
+        $meta['title'] = $this->toString($model);
 
-        return compact('id') + $this->schema->meta($model, $simplified);
+        if ( ! $simplified)
+        {
+            $meta['links'] = $this->links($model);
+            $meta['actions'] = $this->getActions()->export($model);
+        }
+
+        return $meta;
     }
 
     /**
-     * @param null $owner
+     * Get a list of eagerly loaded relations, optionally prefixed with owner relation.
+     *
+     * @param string|null $owner
      *
      * @return array
      */
@@ -317,13 +486,15 @@ class Entity implements Jsonable, Arrayable {
     }
 
     /**
+     * Get a list of relations of the model.
+     *
      * @param string $owner
      *
      * @return array
      */
     public function relations($owner = null)
     {
-        return $this->fields()->relations($owner);
+        return $this->getFields()->relations($owner);
     }
 
     /**
@@ -387,22 +558,6 @@ class Entity implements Jsonable, Arrayable {
     }
 
     /**
-     * @param Dispatcher $dispatcher
-     */
-    public static function setEventDispatcher(Dispatcher $dispatcher)
-    {
-        static::$dispatcher = $dispatcher;
-    }
-
-    /**
-     * @return Dispatcher
-     */
-    public static function getEventDispatcher()
-    {
-        return static::$dispatcher;
-    }
-
-    /**
      * Delete model or a set of models.
      *
      * @param int|array $ids
@@ -411,7 +566,7 @@ class Entity implements Jsonable, Arrayable {
      */
     public function delete($ids)
     {
-        return $this->repository()->delete($ids);
+        return $this->getRepository()->delete($ids);
     }
 
     /**
@@ -444,11 +599,33 @@ class Entity implements Jsonable, Arrayable {
     }
 
     /**
+     * @return Schema\Actions\Collection
+     */
+    public function getActions()
+    {
+        if ($this->actions === null) return $this->actions = $this->createActions();
+
+        return $this->actions;
+    }
+
+    /**
+     * @return Schema\Actions\Collection
+     */
+    protected function createActions()
+    {
+        $collection = new Schema\Actions\Collection;
+
+        $this->actions($collection);
+
+        return $collection;
+    }
+
+    /**
      * Get field collection.
      *
      * @return Schema\Fields\Collection
      */
-    public function fields()
+    public function getFields()
     {
         if ($this->fields === null) return $this->fields = $this->createFields();
 
@@ -464,9 +641,9 @@ class Entity implements Jsonable, Arrayable {
     {
         $collection = new Schema\Fields\Collection($this);
 
-        $schema = new InstanceFactory($this->getFieldsFactory(), $collection);
+        $schema = new Schema\Fields\InstanceFactory($this->getFieldsFactory(), $collection);
 
-        $this->schema->fields($schema);
+        $this->fields($schema);
 
         return $collection;
     }
@@ -476,7 +653,7 @@ class Entity implements Jsonable, Arrayable {
      *
      * @return Schema\Columns\Collection
      */
-    public function columns()
+    public function getColumns()
     {
         if ($this->columns === null) return $this->columns = $this->createColumns();
 
@@ -492,9 +669,9 @@ class Entity implements Jsonable, Arrayable {
     {
         $collection = new Schema\Columns\Collection($this);
 
-        $schema = new InstanceFactory($this->getColumnsFactory(), $collection);
+        $schema = new Schema\Columns\InstanceFactory($this->getColumnsFactory(), $collection);
 
-        $this->schema->columns($schema);
+        $this->columns($schema);
 
         return $collection;
     }
@@ -502,11 +679,11 @@ class Entity implements Jsonable, Arrayable {
     /**
      * @return Schema\Filters\Collection
      */
-    public function filters()
+    public function getFilters()
     {
-        if ($this->filters === null) return $this->filters = $this->createFilters();
+        if ($this->filtersCollection === null) return $this->filtersCollection = $this->createFilters();
 
-        return $this->filters;
+        return $this->filtersCollection;
     }
 
     /**
@@ -516,9 +693,9 @@ class Entity implements Jsonable, Arrayable {
     {
         $collection = new Schema\Filters\Collection($this);
 
-        $schema = new InstanceFactory($this->getFiltersFactory(), $collection);
+        $schema = new Schema\Filters\InstanceFactory($this->getFiltersFactory(), $collection);
 
-        $this->schema->filters($schema);
+        $this->filters($schema);
 
         return $collection;
     }
@@ -526,16 +703,30 @@ class Entity implements Jsonable, Arrayable {
     /**
      * Get the repository.
      *
-     * @return \Kalnoy\Cruddy\Contracts\Repository
+     * @return Contracts\Repository
      */
-    public function repository()
+    public function getRepository()
     {
         if ($this->repo === null)
         {
-            return $this->repo = $this->schema->repository();
+            return $this->repo = $this->createRepository();
         }
 
         return $this->repo;
+    }
+
+    /**
+     * @return Stub
+     */
+    public function createRepository()
+    {
+        $repo = new Stub($this->model, $this->defaults());
+
+        $repo->perPage = $this->perPage;
+
+        $this->files($repo);
+
+        return $repo;
     }
 
     /**
@@ -543,24 +734,48 @@ class Entity implements Jsonable, Arrayable {
      *
      * @return Contracts\Validator
      */
-    public function validator()
+    public function getValidator()
     {
         if ($this->validator === null)
         {
-            return $this->validator = $this->schema->validator();
+            return $this->validator = $this->createValidator();
         }
 
         return $this->validator;
     }
 
     /**
-     * Get entity's schema.
-     *
-     * @return SchemaContract
+     * @return FluentValidator
      */
-    public function getSchema()
+    public function createValidator()
     {
-        return $this->schema;
+        $validator = new FluentValidator;
+
+        $this->rules($validator);
+
+        return $validator;
+    }
+
+    /**
+     * @return Schema\Layout\Layout
+     */
+    public function getLayout()
+    {
+        if ($this->layout === null) return $this->layout = $this->createLayout();
+
+        return $this->layout;
+    }
+
+    /**
+     * @return Schema\Layout\Layout
+     */
+    protected function createLayout()
+    {
+        $layout = new Schema\Layout\Layout;
+
+        $this->layout($layout);
+
+        return $layout;
     }
 
     /**
@@ -669,28 +884,32 @@ class Entity implements Jsonable, Arrayable {
     }
 
     /**
-     * {@inheritdoc}
+     * @return array
      */
     public function toArray()
     {
-        $model = $this->repository()->newModel();
+        $model = $this->getRepository()->newModel();
 
         return [
             'id' => $this->id,
             'primary_key' => $model->getKeyName(),
             'soft_deleting' => false,
-            'defaults' => $this->fields()->extract($model),
+            'defaults' => $this->getFields()->extract($model),
             'title' => $this->getTitle(),
+            'order_by' => $this->defaultOrder,
+            'view' => $this->view,
 
-            'fields' => $this->fields()->export(),
-            'columns' => $this->columns()->export(),
-            'filters' => $this->filters()->export(),
-
-        ] + $this->schema->toArray() + [ 'view' => 'Cruddy.Entity.Page' ];
+            'fields' => $this->getFields()->export(),
+            'columns' => $this->getColumns()->export(),
+            'filters' => $this->getFilters()->export(),
+            'layout' => $this->getLayout()->isEmpty() ? null : $this->getLayout()->compile(),
+        ];
     }
 
     /**
-     * {@inheritdoc}
+     * @param int $options
+     *
+     * @return string
      */
     public function toJson($options = 0)
     {
@@ -759,6 +978,22 @@ class Entity implements Jsonable, Arrayable {
     public function getLang()
     {
         return $this->lang ?: app('cruddy.lang');
+    }
+
+    /**
+     * @param Dispatcher $dispatcher
+     */
+    public static function setEventDispatcher(Dispatcher $dispatcher)
+    {
+        static::$dispatcher = $dispatcher;
+    }
+
+    /**
+     * @return Dispatcher
+     */
+    public static function getEventDispatcher()
+    {
+        return static::$dispatcher;
     }
 
 }

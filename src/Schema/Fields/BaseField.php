@@ -82,7 +82,7 @@ abstract class BaseField extends Attribute implements Field {
 
         if ($required !== null) return $required;
 
-        return $this->entity->validator()->getRequiredState($this->id);
+        return $this->entity->getValidator()->getRequiredState($this->id);
     }
 
     /**
@@ -90,8 +90,7 @@ abstract class BaseField extends Attribute implements Field {
      */
     public function toArray()
     {
-        return
-        [
+        return [
             'required' => $this->isRequired(),
             'unique' => $this->get('unique'),
             'disabled' => $this->get('disable'),

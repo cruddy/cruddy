@@ -75,7 +75,7 @@ class Factory extends BaseFactory {
 
         $ref = $entity->getEntitiesRepository()->resolve($ref);
 
-        $model = $entity->repository()->newModel();
+        $model = $entity->getRepository()->newModel();
 
         if ( ! method_exists($model, $id))
         {

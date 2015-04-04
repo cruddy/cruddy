@@ -85,7 +85,7 @@ class InnerDataCollection {
 
         if ($ref->isPermitted(Entity::DELETE))
         {
-            $ref->repository()->delete($this->getIdsToDelete());
+            $ref->getRepository()->delete($this->getIdsToDelete());
         }
     }
 

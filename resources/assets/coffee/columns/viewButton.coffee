@@ -15,7 +15,7 @@ class Cruddy.Columns.ViewButton extends Cruddy.Columns.Base
     """
 
     wrapWithActions: (item, html) ->
-        return html if _.isEmpty(item.meta.presentationActions) and _.isEmpty(item.meta.actions)
+        return html if _.isEmpty(item.meta.links) and _.isEmpty(item.meta.actions)
 
         html = """<div class="btn-group btn-group-xs auto-hide-target">""" + html
         html += @dropdownToggleTemplate()
@@ -33,8 +33,8 @@ class Cruddy.Columns.ViewButton extends Cruddy.Columns.Base
     renderActions: (model) ->
         html = """<ul class="dropdown-menu" role="menu">"""
 
-        unless noPresentationActions = _.isEmpty model.meta.presentationActions
-            html += render_presentation_actions model.meta.presentationActions
+        unless noPresentationActions = _.isEmpty model.meta.links
+            html += render_presentation_actions model.meta.links
 
         unless _.isEmpty model.meta.actions
             html += render_divider() unless noPresentationActions

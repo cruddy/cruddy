@@ -127,7 +127,7 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessor {
      */
     protected function findField($entity, $fieldId)
     {
-        $field = $entity->fields()->get($fieldId);
+        $field = $entity->getFields()->get($fieldId);
 
         if ( ! $field)
         {

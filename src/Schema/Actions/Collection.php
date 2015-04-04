@@ -3,6 +3,7 @@
 namespace Kalnoy\Cruddy\Schema\Actions;
 
 use Illuminate\Database\Eloquent\Model;
+use Kalnoy\Cruddy\ActionException;
 use Kalnoy\Cruddy\Helpers;
 
 class Collection extends \Illuminate\Support\Collection {
@@ -40,7 +41,7 @@ class Collection extends \Illuminate\Support\Collection {
 
     /**
      * @param Model $model
-     * @param $action
+     * @param string $action
      *
      * @return mixed
      */
@@ -57,7 +58,14 @@ class Collection extends \Illuminate\Support\Collection {
             throw new \RuntimeException("The action [{$action}] cannot be executed.");
         }
 
-        return $action->execute($model);
+        $result = $action->execute($model);
+
+        if (is_string($result))
+        {
+            throw new ActionException($result);
+        }
+
+        return $result;
     }
 
     /**

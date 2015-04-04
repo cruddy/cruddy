@@ -30,8 +30,6 @@ class EntityController extends Controller {
      * Initialize the controller.
      *
      * @param Environment $environment
-     * @param Request $request
-     * @param Config $config
      */
     public function __construct(Environment $environment)
     {

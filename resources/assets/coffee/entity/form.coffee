@@ -277,7 +277,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         html = ""
 
-        unless (isDeleted = model.isDeleted) or _.isEmpty items = model.meta.presentationActions
+        unless (isDeleted = model.isDeleted) or _.isEmpty items = model.meta.links
             html += render_presentation_actions items
             html += render_divider()
 

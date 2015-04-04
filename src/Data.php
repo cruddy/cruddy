@@ -2,9 +2,7 @@
 
 namespace Kalnoy\Cruddy;
 
-use Eloquent;
 use Illuminate\Database\Eloquent\Model;
-use Kalnoy\Cruddy\Contracts\Permissions;
 use Kalnoy\Cruddy\Schema\Fields\InlineRelation;
 use Kalnoy\Cruddy\Service\Validation\ValidationException;
 use Symfony\Component\Finder\Exception\OperationNotPermitedException;
@@ -52,7 +50,7 @@ class Data {
     }
 
     /**
-     * Validate the input;
+     * Validate the input.
      *
      * @throws ValidationException
      */
@@ -70,8 +68,8 @@ class Data {
     public function getValidationErrors()
     {
         $result = [];
-        $labels = $this->entity->fields()->validationLabels();
-        $validator = $this->entity->validator();
+        $labels = $this->entity->getFields()->validationLabels();
+        $validator = $this->entity->getValidator();
 
         if ( ! $validator->validFor($this->getAction(), $this->input, $labels))
         {
@@ -99,7 +97,7 @@ class Data {
     {
         if ( ! $this->isPermitted()) return false;
 
-        $repo = $this->entity->repository();
+        $repo = $this->entity->getRepository();
 
         $model = $this->id ? $repo->find($this->id) : $repo->newModel();
 
@@ -146,7 +144,7 @@ class Data {
      */
     protected function process(array $data)
     {
-        $this->input = $this->entity->fields()->process($data);
+        $this->input = $this->entity->getFields()->process($data);
 
         $this->addInner($data);
     }
@@ -156,7 +154,7 @@ class Data {
      */
     protected function addInner(array $data)
     {
-        $fields = $this->entity->fields();
+        $fields = $this->entity->getFields();
 
         foreach ($data as $id => $item)
         {
@@ -188,7 +186,7 @@ class Data {
      */
     protected function getCleanedInput()
     {
-        return $this->entity->fields()->cleanInput($this->getAction(), $this->input);
+        return $this->entity->getFields()->cleanInput($this->getAction(), $this->input);
     }
 
     /**
@@ -235,12 +233,7 @@ class Data {
     {
         if ($this->customAction)
         {
-            $result = $this->entity->getSchema()->executeAction($model, $this->customAction);
-
-            if (is_string($result))
-            {
-                throw new ActionException($result);
-            }
+            $this->entity->getActions()->execute($model, $this->customAction);
         }
     }
 

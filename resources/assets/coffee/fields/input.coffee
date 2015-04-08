@@ -28,5 +28,7 @@ class Cruddy.Fields.Input extends Cruddy.Fields.Base
 
         return value
 
+    prepareAttribute: (value) -> if _.isArray value then value.join "," else value
+
     getType: -> "string"
 

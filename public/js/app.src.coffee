@@ -649,7 +649,9 @@ class FilterList extends Backbone.View
         @items = @$ ".filter-list-container"
 
         for filter in @availableFilters.models
-            @filters.push input = filter.createFilterInput @filterModel
+            continue unless input = filter.createFilterInput @filterModel
+
+            @filters.push input
             @items.append input.render().el
             input.$el.wrap("""<div class="form-group #{ filter.getClass() }"></div>""").parent().before "<label>#{ filter.getLabel() }</label>"
 
@@ -755,7 +757,7 @@ class Cruddy.Inputs.BaseText extends Cruddy.Inputs.Base
 
         this
 
-    change: -> @setValue @el.value
+    change: -> @setValue @$el.val()
 
     applyChanges: (data, external) ->
         @$el.val data if external
@@ -766,7 +768,7 @@ class Cruddy.Inputs.BaseText extends Cruddy.Inputs.Base
         @el.focus()
 
         this
-        
+
 # Renders an <input> value of which is bound to a model's attribute.
 class Cruddy.Inputs.Text extends Cruddy.Inputs.BaseText
     tagName: "input"
@@ -1653,34 +1655,18 @@ class Cruddy.Inputs.Slug extends Backbone.View
             <button type="button" tabindex="-1" class="btn btn-default" title="#{ Cruddy.lang.slug_sync }"><span class="glyphicon glyphicon-link"></span></button>
         </div>
         """
-class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
+class Cruddy.Inputs.Select extends Cruddy.Inputs.BaseText
     tagName: "select"
 
     initialize: (options) ->
         @items = options.items ? {}
         @prompt = options.prompt ? null
         @required = options.required ? no
+        @multiple = options.multiple ? no
+
+        @$el.attr "multiple", "multiple" if @multiple
 
         super
-
-    applyChanges: (data, external) ->
-        @$(":nth-child(#{ @optionIndex data })").prop "selected", yes if external
-
-        this
-
-    optionIndex: (value) ->
-        return 1 if not value?
-
-        index = if @hasPrompt() then 2 else 1
-
-        value = value.toString()
-
-        for data, label of @items
-            break if value == data.toString()
-
-            index++
-
-        index
 
     render: ->
         @$el.html @template()
@@ -1698,7 +1684,7 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
     optionTemplate: (value, title, disabled = no) ->
         """<option value="#{ _.escape value }"#{ if disabled then " disabled" else ""}>#{ _.escape title }</option>"""
 
-    hasPrompt: -> not @required or @prompt?
+    hasPrompt: -> not @multiple and (not @required or @prompt)
 class Cruddy.Inputs.NumberFilter extends Cruddy.Inputs.Base
     className: "input-group number-filter"
 
@@ -2273,6 +2259,8 @@ class Cruddy.Fields.Input extends Cruddy.Fields.Base
 
         return value
 
+    prepareAttribute: (value) -> if _.isArray value then value.join "," else value
+
     getType: -> "string"
 
 
@@ -2513,6 +2501,7 @@ class Cruddy.Fields.Enum extends Cruddy.Fields.Input
         prompt: @attributes.prompt
         items: @attributes.items
         required: @attributes.required
+        multiple: @attributes.multiple
         attributes:
             id: inputId
 
@@ -2521,11 +2510,16 @@ class Cruddy.Fields.Enum extends Cruddy.Fields.Input
         key: @id
         prompt: Cruddy.lang.any_value
         items: @attributes.items
+        multiple: yes
 
     format: (value) ->
         items = @attributes.items
 
-        if value of items then items[value] else NOT_AVAILABLE
+        value = [ value ] unless _.isArray value
+
+        labels = ((if key of items then items[key] else key) for key in value)
+
+        labels.join ", "
 
     getType: -> "enum"
 class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView

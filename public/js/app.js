@@ -991,7 +991,10 @@
       _ref = this.availableFilters.models;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         filter = _ref[_i];
-        this.filters.push(input = filter.createFilterInput(this.filterModel));
+        if (!(input = filter.createFilterInput(this.filterModel))) {
+          continue;
+        }
+        this.filters.push(input);
         this.items.append(input.render().el);
         input.$el.wrap("<div class=\"form-group " + (filter.getClass()) + "\"></div>").parent().before("<label>" + (filter.getLabel()) + "</label>");
       }
@@ -1147,7 +1150,7 @@
     };
 
     BaseText.prototype.change = function() {
-      return this.setValue(this.el.value);
+      return this.setValue(this.$el.val());
     };
 
     BaseText.prototype.applyChanges = function(data, external) {
@@ -2313,36 +2316,15 @@
     Select.prototype.tagName = "select";
 
     Select.prototype.initialize = function(options) {
-      var _ref, _ref1, _ref2;
+      var _ref, _ref1, _ref2, _ref3;
       this.items = (_ref = options.items) != null ? _ref : {};
       this.prompt = (_ref1 = options.prompt) != null ? _ref1 : null;
       this.required = (_ref2 = options.required) != null ? _ref2 : false;
+      this.multiple = (_ref3 = options.multiple) != null ? _ref3 : false;
+      if (this.multiple) {
+        this.$el.attr("multiple", "multiple");
+      }
       return Select.__super__.initialize.apply(this, arguments);
-    };
-
-    Select.prototype.applyChanges = function(data, external) {
-      if (external) {
-        this.$(":nth-child(" + (this.optionIndex(data)) + ")").prop("selected", true);
-      }
-      return this;
-    };
-
-    Select.prototype.optionIndex = function(value) {
-      var data, index, label, _ref;
-      if (value == null) {
-        return 1;
-      }
-      index = this.hasPrompt() ? 2 : 1;
-      value = value.toString();
-      _ref = this.items;
-      for (data in _ref) {
-        label = _ref[data];
-        if (value === data.toString()) {
-          break;
-        }
-        index++;
-      }
-      return index;
     };
 
     Select.prototype.render = function() {
@@ -2375,12 +2357,12 @@
     };
 
     Select.prototype.hasPrompt = function() {
-      return !this.required || (this.prompt != null);
+      return !this.multiple && (!this.required || this.prompt);
     };
 
     return Select;
 
-  })(Cruddy.Inputs.Text);
+  })(Cruddy.Inputs.BaseText);
 
   Cruddy.Inputs.NumberFilter = (function(_super) {
     __extends(NumberFilter, _super);
@@ -3261,6 +3243,14 @@
       return value;
     };
 
+    Input.prototype.prepareAttribute = function(value) {
+      if (_.isArray(value)) {
+        return value.join(",");
+      } else {
+        return value;
+      }
+    };
+
     Input.prototype.getType = function() {
       return "string";
     };
@@ -3769,6 +3759,7 @@
         prompt: this.attributes.prompt,
         items: this.attributes.items,
         required: this.attributes.required,
+        multiple: this.attributes.multiple,
         attributes: {
           id: inputId
         }
@@ -3780,18 +3771,27 @@
         model: model,
         key: this.id,
         prompt: Cruddy.lang.any_value,
-        items: this.attributes.items
+        items: this.attributes.items,
+        multiple: true
       });
     };
 
     Enum.prototype.format = function(value) {
-      var items;
+      var items, key, labels;
       items = this.attributes.items;
-      if (value in items) {
-        return items[value];
-      } else {
-        return NOT_AVAILABLE;
+      if (!_.isArray(value)) {
+        value = [value];
       }
+      labels = (function() {
+        var _i, _len, _results;
+        _results = [];
+        for (_i = 0, _len = value.length; _i < _len; _i++) {
+          key = value[_i];
+          _results.push(key in items ? items[key] : key);
+        }
+        return _results;
+      })();
+      return labels.join(", ");
     };
 
     Enum.prototype.getType = function() {

@@ -66,7 +66,9 @@ class FilterList extends Backbone.View
         @items = @$ ".filter-list-container"
 
         for filter in @availableFilters.models
-            @filters.push input = filter.createFilterInput @filterModel
+            continue unless input = filter.createFilterInput @filterModel
+
+            @filters.push input
             @items.append input.render().el
             input.$el.wrap("""<div class="form-group #{ filter.getClass() }"></div>""").parent().before "<label>#{ filter.getLabel() }</label>"
 

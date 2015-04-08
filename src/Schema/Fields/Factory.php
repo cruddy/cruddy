@@ -34,6 +34,7 @@ class Factory extends BaseFactory {
         'compute' => 'Kalnoy\Cruddy\Schema\Fields\Types\Computed',
         'computed' => 'Kalnoy\Cruddy\Schema\Fields\Types\Computed',
         'enum' => 'Kalnoy\Cruddy\Schema\Fields\Types\Enum',
+        'slug' => 'Kalnoy\Cruddy\Schema\Fields\Types\Slug',
     ];
 
     /**

@@ -12,6 +12,9 @@ use Kalnoy\Cruddy\Schema\Fields\BaseInput;
  * @property string $prompt
  * @method $this prompt(string $value)
  *
+ * @property bool $multiple
+ * @method $this multiple(bool $value = true)
+ *
  * @since 1.0.0
  */
 class Enum extends BaseInput implements Filter {
@@ -48,11 +51,15 @@ class Enum extends BaseInput implements Filter {
      */
     public function process($value)
     {
-        $items = $this->getItems();
+        $items = array_keys($this->getItems());
 
-        if ( ! isset($items[$value])) return null;
+        if (is_string($value)) $value = explode(',', $value);
 
-        return $value;
+        if (empty($value)) return $this->multiple ? [] : null;
+
+        $value = array_intersect($items, (array)$value);
+
+        return $this->multiple ? array_values($value) : reset($value);
     }
 
     /**
@@ -60,8 +67,18 @@ class Enum extends BaseInput implements Filter {
      */
     public function applyFilterConstraint(Builder $query, $data)
     {
-        $query->where($this->id, '=', $data);
+        if ($this->multiple or ! ($data = $this->process($data))) return;
+
+        $query->whereNested(function ($inner) use ($data)
+        {
+            foreach ($data as $key)
+            {
+                $inner->orWhere($this->id, '=', $key);
+            }
+        });
     }
+
+
 
     /**
      * Translate items if possible.
@@ -87,7 +104,8 @@ class Enum extends BaseInput implements Filter {
     {
         return [
             'prompt' => Helpers::tryTranslate($this->get('prompt')),
-            'items' => $this->translateItems(value($this->items)),
+            'items' => $this->translateItems($this->getItems()),
+            'multiple' => $this->get('multiple', false),
 
         ] + parent::toArray();
     }

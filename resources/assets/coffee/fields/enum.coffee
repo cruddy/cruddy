@@ -6,6 +6,7 @@ class Cruddy.Fields.Enum extends Cruddy.Fields.Input
         prompt: @attributes.prompt
         items: @attributes.items
         required: @attributes.required
+        multiple: @attributes.multiple
         attributes:
             id: inputId
 
@@ -14,10 +15,15 @@ class Cruddy.Fields.Enum extends Cruddy.Fields.Input
         key: @id
         prompt: Cruddy.lang.any_value
         items: @attributes.items
+        multiple: yes
 
     format: (value) ->
         items = @attributes.items
 
-        if value of items then items[value] else NOT_AVAILABLE
+        value = [ value ] unless _.isArray value
+
+        labels = ((if key of items then items[key] else key) for key in value)
+
+        labels.join ", "
 
     getType: -> "enum"

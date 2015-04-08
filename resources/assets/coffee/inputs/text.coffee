@@ -21,7 +21,7 @@ class Cruddy.Inputs.BaseText extends Cruddy.Inputs.Base
 
         this
 
-    change: -> @setValue @el.value
+    change: -> @setValue @$el.val()
 
     applyChanges: (data, external) ->
         @$el.val data if external
@@ -32,7 +32,7 @@ class Cruddy.Inputs.BaseText extends Cruddy.Inputs.Base
         @el.focus()
 
         this
-        
+
 # Renders an <input> value of which is bound to a model's attribute.
 class Cruddy.Inputs.Text extends Cruddy.Inputs.BaseText
     tagName: "input"

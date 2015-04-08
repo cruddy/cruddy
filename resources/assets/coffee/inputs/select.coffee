@@ -1,31 +1,15 @@
-class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
+class Cruddy.Inputs.Select extends Cruddy.Inputs.BaseText
     tagName: "select"
 
     initialize: (options) ->
         @items = options.items ? {}
         @prompt = options.prompt ? null
         @required = options.required ? no
+        @multiple = options.multiple ? no
+
+        @$el.attr "multiple", "multiple" if @multiple
 
         super
-
-    applyChanges: (data, external) ->
-        @$(":nth-child(#{ @optionIndex data })").prop "selected", yes if external
-
-        this
-
-    optionIndex: (value) ->
-        return 1 if not value?
-
-        index = if @hasPrompt() then 2 else 1
-
-        value = value.toString()
-
-        for data, label of @items
-            break if value == data.toString()
-
-            index++
-
-        index
 
     render: ->
         @$el.html @template()
@@ -43,4 +27,4 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.Text
     optionTemplate: (value, title, disabled = no) ->
         """<option value="#{ _.escape value }"#{ if disabled then " disabled" else ""}>#{ _.escape title }</option>"""
 
-    hasPrompt: -> not @required or @prompt?
+    hasPrompt: -> not @multiple and (not @required or @prompt)

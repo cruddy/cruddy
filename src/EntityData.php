@@ -4,25 +4,14 @@ namespace Kalnoy\Cruddy;
 
 use Illuminate\Database\Eloquent\Model;
 use Kalnoy\Cruddy\Schema\Fields\InlineRelation;
-use Kalnoy\Cruddy\Service\Validation\ValidationException;
 use Symfony\Component\Finder\Exception\OperationNotPermitedException;
 
-class Data {
-
-    /**
-     * @var Entity
-     */
-    protected $entity;
+class EntityData extends BaseFormData {
 
     /**
      * @var string
      */
     protected $id;
-
-    /**
-     * @var array
-     */
-    protected $input;
 
     /**
      * @var array
@@ -35,46 +24,11 @@ class Data {
     protected $customAction;
 
     /**
-     * @param Entity $entity
-     * @param array $data
-     * @param string $id
-     * @param string $cid
-     */
-    public function __construct(Entity $entity, array $data, $id = null, $cid = null)
-    {
-        $this->entity = $entity;
-        $this->id = $id;
-        $this->cid = $cid;
-
-        $this->process($data);
-    }
-
-    /**
-     * Validate the input.
-     *
-     * @throws ValidationException
-     */
-    public function validate()
-    {
-        if ($errors = $this->getValidationErrors())
-        {
-            throw new ValidationException($errors);
-        }
-    }
-
-    /**
      * @return array
      */
     public function getValidationErrors()
     {
-        $result = [];
-        $labels = $this->entity->getFields()->validationLabels();
-        $validator = $this->entity->getValidator();
-
-        if ( ! $validator->validFor($this->getAction(), $this->input, $labels))
-        {
-            $result = $validator->errors();
-        }
+        $result = parent::getValidationErrors();
 
         /** @var InnerDataCollection $item */
         foreach ($this->inner as $id => $item)
@@ -95,7 +49,7 @@ class Data {
      */
     public function save()
     {
-        if ( ! $this->isPermitted()) return false;
+        if ( ! $this->isPermitted()) throw new AccessDeniedException;
 
         $repo = $this->entity->getRepository();
 
@@ -126,7 +80,12 @@ class Data {
         /** @var InnerDataCollection $collection */
         foreach ($this->inner as $collection)
         {
-            $collection->save($parent);
+            try
+            {
+                $collection->save($parent);
+            }
+
+            catch (AccessDeniedException $e) {}
         }
     }
 
@@ -144,7 +103,7 @@ class Data {
      */
     protected function process(array $data)
     {
-        $this->input = $this->entity->getFields()->process($data);
+        parent::process($data);
 
         $this->addInner($data);
     }
@@ -171,6 +130,14 @@ class Data {
     public function getAction()
     {
         return $this->id ? Entity::UPDATE : Entity::CREATE;
+    }
+
+    /**
+     * @param mixed $value
+     */
+    public function setId($value)
+    {
+        $this->id = $value;
     }
 
     /**
@@ -244,4 +211,5 @@ class Data {
     {
         return $this->entity->isPermitted($this->getAction());
     }
+
 }

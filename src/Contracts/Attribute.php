@@ -2,10 +2,7 @@
 
 namespace Kalnoy\Cruddy\Contracts;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
-use Illuminate\Support\Contracts\ArrayableInterface;
 
 /**
  * Base attribute interface.
@@ -19,11 +16,11 @@ interface Attribute extends Entry {
     /**
      * Get model's corresponding value.
      *
-     * @param Eloquent $model
+     * @param mixed $model
      *
      * @return mixed
      */
-    public function extract(Eloquent $model);
+    public function extract($model);
 
     /**
      * Get a list of relations that should be eagerly loaded.

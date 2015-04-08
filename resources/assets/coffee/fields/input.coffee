@@ -28,3 +28,5 @@ class Cruddy.Fields.Input extends Cruddy.Fields.Base
 
         return value
 
+    getType: -> "string"
+

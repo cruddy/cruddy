@@ -2,8 +2,8 @@
 
 namespace Kalnoy\Cruddy\Schema\Actions;
 
-use Illuminate\Database\Eloquent\Model;
 use Kalnoy\Cruddy\ActionException;
+use Kalnoy\Cruddy\Contracts\Action;
 use Kalnoy\Cruddy\Helpers;
 
 class Collection extends \Illuminate\Support\Collection {
@@ -22,15 +22,15 @@ class Collection extends \Illuminate\Support\Collection {
     }
 
     /**
-     * @param Model $model
+     * @param mixed $model
      *
      * @return array
      */
-    public function export(Model $model)
+    public function export($model)
     {
         $result = [];
 
-        /** @var FluentAction $action */
+        /** @var Action $action */
         foreach ($this->items as $action)
         {
             if ( ! $action->isHidden($model)) $result[] = $this->exportAction($action, $model);
@@ -40,14 +40,14 @@ class Collection extends \Illuminate\Support\Collection {
     }
 
     /**
-     * @param Model $model
+     * @param mixed $model
      * @param string $action
      *
      * @return mixed
      */
-    public function execute(Model $model, $action)
+    public function execute($model, $action)
     {
-        /** @var FluentAction $action */
+        /** @var Action $action */
         if ( ! $action = $this->get($action))
         {
             throw new \RuntimeException("The action [{$action}] is not defined.");
@@ -70,11 +70,11 @@ class Collection extends \Illuminate\Support\Collection {
 
     /**
      * @param Action $action
-     * @param Model $model
+     * @param mixed $model
      *
      * @return array
      */
-    protected function exportAction(Action $action, Model $model)
+    protected function exportAction(Action $action, $model)
     {
         $id = $action->getId();
         $title = Helpers::tryTranslate($action->getTitle($model));
@@ -98,7 +98,7 @@ class Collection extends \Illuminate\Support\Collection {
 
         if ($this->has($id = $action->getId()))
         {
-            throw new \RuntimeException("The action [{$id}] already defined.");
+            throw new \RuntimeException("The action [{$id}] is already defined.");
         }
 
         $this->put($id, $action);

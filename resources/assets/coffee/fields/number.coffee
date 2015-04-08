@@ -26,3 +26,5 @@ class Cruddy.Fields.Number extends Cruddy.Fields.Input
             val = value
 
         return op: op, val: val
+
+    getType: -> "number"

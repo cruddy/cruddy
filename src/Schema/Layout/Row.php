@@ -10,25 +10,38 @@ class Row extends Container {
     const MAX_SPAN = 12;
 
     /**
-     * {@inheritdoc}
-     */
-    protected $class = 'Row';
-
-    /**
      * Init a row.
      *
      * @param array|\Closure $items
      */
-    public function __construct($items)
+    public function __construct($items = null)
     {
         if ($items instanceof \Closure)
         {
             $items($this);
         }
-        else
+        elseif ($items)
         {
             $this->field($items);
         }
+    }
+
+    /**
+     * @return string
+     */
+    public function modelClass()
+    {
+        return 'Cruddy.Layout.Row';
+    }
+
+    /**
+     * @param Element $item
+     *
+     * @return bool
+     */
+    protected function canBeAdded(Element $item)
+    {
+        return $item instanceof Col;
     }
 
     /**
@@ -51,7 +64,7 @@ class Row extends Container {
                 $span = array_shift($item);
            }
 
-           $this->col($span, $item);
+           $this->col($item, $span);
         }
 
         return $this;
@@ -60,14 +73,14 @@ class Row extends Container {
     /**
      * Define a column.
      *
-     * @param int $span
      * @param string|array|\Closure $items
+     * @param int $span
      *
      * @return $this
      */
-    public function col($span, $items)
+    public function col($items, $span = null)
     {
-        return $this->add(new Col($span, $items));
+        return $this->add(new Col($items, $span));
     }
 
     /**
@@ -106,7 +119,7 @@ class Row extends Container {
     }
 
     /**
-     * Make sure that total span doesn't exceeds max columns.
+     * Make sure that total span does'nt exceeds max columns.
      *
      * @return $this
      */
@@ -132,11 +145,11 @@ class Row extends Container {
     /**
      * {@inheritdoc}
      */
-    public function compile()
+    public function toArray()
     {
         $this->fillSpan();
 
-        return parent::compile();
+        return parent::toArray();
     }
 
 }

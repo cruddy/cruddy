@@ -11,10 +11,10 @@ class Cruddy.Layout.Container extends Cruddy.Layout.Element
         return this
 
     create: (options) ->
-        constructor = Cruddy.Layout[options.class]
+        constructor = get options.class
 
         if not constructor or not _.isFunction constructor
-            console.error "Couldn't resolve element of type ", method 
+            console.error "Couldn't resolve element of type ", options.class
 
             return
 

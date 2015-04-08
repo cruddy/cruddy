@@ -10,12 +10,11 @@ namespace Kalnoy\Cruddy\Schema\Fields\Types;
 class Time extends DateTime {
 
     /**
-     * {@inheritdoc}
+     * @return string
      */
-    protected $type = 'time';
+    protected function modelClass()
+    {
+        return 'Cruddy.Fields.Time';
+    }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected $class = 'Cruddy.Fields.Time';
 }

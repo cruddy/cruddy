@@ -3,15 +3,16 @@
 namespace Kalnoy\Cruddy\Schema;
 
 use Illuminate\Support\Contracts\ArrayableInterface;
+use Kalnoy\Cruddy\BaseForm;
 use Kalnoy\Cruddy\Entity;
 use Kalnoy\Cruddy\Helpers;
 
-class Entry implements \Kalnoy\Cruddy\Contracts\Entry {
+abstract class Entry implements \Kalnoy\Cruddy\Contracts\Entry {
 
     /**
      * The entity.
      *
-     * @var Entity
+     * @var BaseForm
      */
     protected $entity;
 
@@ -28,33 +29,23 @@ class Entry implements \Kalnoy\Cruddy\Contracts\Entry {
     protected $attributes = [];
 
     /**
-     * The JavaScript class.
-     *
-     * @var string
-     */
-    protected $class;
-
-    /**
-     * The attribute type.
-     *
-     * It's used to distinguish fields by type so it is possible to differentiate
-     * styling.
-     *
-     * @var string
-     */
-    protected $type;
-
-    /**
      * Init attribute.
      *
-     * @param Entity $entity
+     * @param BaseForm $entity
      * @param string $id
      */
-    public function __construct(Entity $entity, $id)
+    public function __construct(BaseForm $entity, $id)
     {
         $this->entity = $entity;
         $this->id = $id;
     }
+
+    /**
+     * The name of the JavaScript class that is used to render this field.
+     *
+     * @return string
+     */
+    abstract protected function modelClass();
 
     /**
      * Set the value of the attribute.
@@ -152,7 +143,7 @@ class Entry implements \Kalnoy\Cruddy\Contracts\Entry {
     /**
      * Get an owning entity.
      *
-     * @return Entity
+     * @return BaseForm
      */
     public function getEntity()
     {
@@ -165,9 +156,8 @@ class Entry implements \Kalnoy\Cruddy\Contracts\Entry {
     public function toArray()
     {
         return [
-            'class' => $this->class,
+            'class' => $this->modelClass(),
             'id' => $this->id,
-            'type' => $this->type,
             'hide' => $this->get('hide', false),
             'help' => $this->getHelp(),
         ];

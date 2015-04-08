@@ -14,27 +14,27 @@ use Kalnoy\Cruddy\Schema\Fields\AbstractField;
 class Image extends File {
 
     /**
-     * {@inheritdoc}
+     * @return string
      */
-    protected $class = 'Cruddy.Fields.Image';
+    protected function modelClass()
+    {
+        return 'Cruddy.Fields.Image';
+    }
 
     /**
-     * {@inheritdoc}
+     * @return string
      */
-    protected $type = 'image';
-
-    /**
-     * {@inheritdoc}
-     */
-    protected static $defaultAccepts = 'image/*,image/jpeg';
+    protected function defaultAccepts()
+    {
+        return 'image/*,image/jpeg';
+    }
 
     /**
      * {@inheritdoc}
      */
     public function toArray()
     {
-        return
-        [
+        return [
             'width' => $this->get('width', null),
             'height' => $this->get('height', 80),
 
@@ -86,4 +86,5 @@ class Image extends File {
 
         return $this;
     }
+
 }

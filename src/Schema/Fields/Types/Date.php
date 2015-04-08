@@ -10,12 +10,12 @@ namespace Kalnoy\Cruddy\Schema\Fields\Types;
 class Date extends DateTime {
 
     /**
-     * {@inheritdoc}
+     * The name of the JavaScript class that is used to render this field.
+     *
+     * @return string
      */
-    protected $type = 'date';
-
-    /**
-     * {@inheritdoc}
-     */
-    protected $class = 'Cruddy.Fields.Date';
+    protected function modelClass()
+    {
+        return 'Cruddy.Fields.Date';
+    }
 }

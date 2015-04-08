@@ -4,18 +4,17 @@ use Kalnoy\Cruddy\Schema\Fields\BaseTextField;
 
 /**
  * Email input field.
- * 
+ *
  * @since 1.0.0
  */
 class Email extends BaseTextField {
 
     /**
-     * {@inheritdoc}
+     * @return string
      */
-    protected $type = 'email';
+    protected function inputType()
+    {
+        return 'email';
+    }
 
-    /**
-     * {@inheritdoc}
-     */
-    protected $inputType = 'email';
 }

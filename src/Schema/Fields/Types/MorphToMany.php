@@ -12,6 +12,11 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 class MorphToMany extends BelongsToMany {
 
     /**
+     * @var \Illuminate\Database\Eloquent\Relations\MorphToMany
+     */
+    protected $relation;
+
+    /**
      * {@inheritdoc}
      */
     protected function initNestedQuery(QueryBuilder $query, array $ids)

@@ -24,14 +24,14 @@ class Proxy extends BaseColumn {
     protected $field;
 
     /**
-     * {@inheritdoc}
+     * The name of the JavaScript class that is used to render this field.
+     *
+     * @return string
      */
-    protected $class = 'Cruddy.Columns.Proxy';
-
-    /**
-     * {@inheritdoc}
-     */
-    protected $type = 'proxy';
+    protected function modelClass()
+    {
+        return 'Cruddy.Columns.Proxy';
+    }
 
     /**
      * Init column.
@@ -50,7 +50,7 @@ class Proxy extends BaseColumn {
     /**
      * {@inheritdoc}
      */
-    public function extract(Eloquent $model)
+    public function extract($model)
     {
         return $this->field->extractForColumn($model);
     }

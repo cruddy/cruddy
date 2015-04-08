@@ -4,6 +4,7 @@ namespace Kalnoy\Cruddy\Schema\Actions;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Fluent;
+use Kalnoy\Cruddy\Contracts\Action;
 use Kalnoy\Cruddy\Helpers;
 
 /**
@@ -19,53 +20,53 @@ use Kalnoy\Cruddy\Helpers;
 class FluentAction extends Fluent implements Action {
 
     /**
-     * @param Model $model
+     * @param mixed $model
      *
      * @return string
      */
-    public function getTitle(Model $model)
+    public function getTitle($model)
     {
         return $this->evaluate('title', $model) ?: Helpers::labelFromId($this->get('id'));
     }
 
     /**
-     * @param Model $model
+     * @param mixed $model
      *
      * @return mixed
      */
-    public function getState(Model $model)
+    public function getState($model)
     {
         return $this->evaluate('state', $model, 'default');
     }
 
     /**
-     * @param Model $model
+     * @param mixed $model
      *
      * @return bool
      */
-    public function isDisabled(Model $model)
+    public function isDisabled($model)
     {
         return (bool)$this->evaluate('disable', $model, false);
     }
 
     /**
-     * @param Model $model
+     * @param mixed $model
      *
      * @return bool
      */
-    public function isHidden(Model $model)
+    public function isHidden($model)
     {
         return (bool)$this->evaluate('hide', $model, false);
     }
 
     /**
      * @param string $property
-     * @param Model $model
+     * @param mixed $model
      * @param mixed $default
      *
      * @return mixed
      */
-    protected function evaluate($property, Model $model, $default = null)
+    protected function evaluate($property, $model, $default = null)
     {
         $value = $this->get($property, $default);
 
@@ -75,11 +76,11 @@ class FluentAction extends Fluent implements Action {
     }
 
     /**
-     * @param Model $model
+     * @param mixed $model
      *
      * @return mixed
      */
-    public function execute(Model $model)
+    public function execute($model)
     {
         $callback = $this->get('callback');
 

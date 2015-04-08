@@ -14,14 +14,19 @@ use Kalnoy\Cruddy\Schema\Fields\BasicRelation;
 class BelongsTo extends BasicRelation implements Filter {
 
     /**
-     * {@inheritdoc}
+     * @var \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
-    protected $multiple = false;
+    protected $relation;
 
     /**
-     * {@inheritdoc}
+     * Get whether the relations works with a collection of models.
+     *
+     * @return bool
      */
-    protected $filterType = self::FILTER_COMPLEX;
+    public function isMultiple()
+    {
+        return false;
+    }
 
     /**
      * @param QueryBuilder $builder

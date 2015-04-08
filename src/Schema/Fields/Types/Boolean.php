@@ -15,29 +15,27 @@ use Kalnoy\Cruddy\Schema\Fields\BaseField;
 class Boolean extends BaseField implements Filter {
 
     /**
-     * {@inheritdoc}
+     * @return bool
      */
-    protected $class = 'Cruddy.Fields.Boolean';
+    public function canOrder()
+    {
+        return true;
+    }
+
+    /**
+     * The name of the JavaScript class that is used to render this field.
+     *
+     * @return string
+     */
+    protected function modelClass()
+    {
+        return 'Cruddy.Fields.Boolean';
+    }
 
     /**
      * {@inheritdoc}
      */
-    protected $type = 'bool';
-
-    /**
-     * {@inheritdoc}
-     */
-    protected $canOrder = true;
-
-    /**
-     * {@inheritdoc}
-     */
-    protected $filterType = self::FILTER_COMPLEX;
-
-    /**
-     * {@inheritdoc}
-     */
-    public function extract(Eloquent $model)
+    public function extract($model)
     {
         return (bool)parent::extract($model);
     }

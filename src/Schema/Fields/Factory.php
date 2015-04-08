@@ -125,46 +125,4 @@ class Factory extends BaseFactory {
         return $this->relates($entity, $collection, $id, $ref, true);
     }
 
-    /**
-     * Create slug field.
-     *
-     * @param Entity $entity
-     * @param Collection            $collection
-     * @param string                $id
-     * @param array|string          $ref
-     *
-     * @return Types\Slug
-     */
-    public function slug($entity, $collection, $id, $ref = null)
-    {
-        $instance = new Types\Slug($entity, $id);
-
-        $instance->ref = $ref;
-
-        $collection->add($instance);
-
-        return $instance;
-    }
-
-    /**
-     * Create enum field.
-     *
-     * @param Entity $entity
-     * @param Collection            $collection
-     * @param string                $id
-     * @param array|\Closure        $items
-     *
-     * @return Types\Enum
-     */
-    public function enum($entity, $collection, $id, $items)
-    {
-        $instance = new Types\Enum($entity, $id);
-
-        $instance->items = $items;
-
-        $collection->add($instance);
-
-        return $instance;
-    }
-
 }

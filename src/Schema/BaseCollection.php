@@ -4,6 +4,7 @@ namespace Kalnoy\Cruddy\Schema;
 
 use Illuminate\Support\Collection;
 use Illuminate\Support\Contracts\ArrayableInterface;
+use Kalnoy\Cruddy\BaseForm;
 use Kalnoy\Cruddy\Contracts\Entry;
 use Kalnoy\Cruddy\Entity;
 
@@ -15,15 +16,15 @@ use Kalnoy\Cruddy\Entity;
 class BaseCollection extends Collection {
 
     /**
-     * @var Entity
+     * @var BaseForm
      */
     protected $entity;
 
     /**
-     * @param Entity $entity
+     * @param BaseForm $entity
      * @param array $items
      */
-    public function __construct(Entity $entity, array $items = [])
+    public function __construct(BaseForm $entity, array $items = [])
     {
         parent::__construct($items);
 
@@ -63,13 +64,13 @@ class BaseCollection extends Collection {
     /**
      * @return array
      */
-    public function export()
+    public function toArray()
     {
-        return array_values($this->toArray());
+        return array_values(parent::toArray());
     }
 
     /**
-     * @return Entity
+     * @return BaseForm
      */
     public function getEntity()
     {

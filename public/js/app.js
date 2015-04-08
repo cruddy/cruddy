@@ -312,7 +312,7 @@
     };
 
     Attribute.prototype.getType = function() {
-      return this.attributes.type;
+      return "attribute";
     };
 
     Attribute.prototype.getHelp = function() {
@@ -2210,7 +2210,7 @@
       this.regexp = new RegExp("[^" + chars + "]+", "g");
       this.separator = (_ref1 = options.separator) != null ? _ref1 : "-";
       this.key = options.key;
-      this.ref = _.isArray(options.ref) ? options.ref : options.ref ? [options.ref] : void 0;
+      this.ref = _.isArray(options.field) ? options.field : options.field ? [options.field] : void 0;
       return Slug.__super__.initialize.apply(this, arguments);
     };
 
@@ -2565,9 +2565,9 @@
 
     Container.prototype.create = function(options) {
       var constructor;
-      constructor = Cruddy.Layout[options["class"]];
+      constructor = get(options["class"]);
       if (!constructor || !_.isFunction(constructor)) {
-        console.error("Couldn't resolve element of type ", method);
+        console.error("Couldn't resolve element of type ", options["class"]);
         return;
       }
       return this.append(new constructor(options, this));
@@ -2651,28 +2651,28 @@
 
   })(Cruddy.Layout.Container);
 
-  Cruddy.Layout.Fieldset = (function(_super) {
-    __extends(Fieldset, _super);
+  Cruddy.Layout.FieldSet = (function(_super) {
+    __extends(FieldSet, _super);
 
-    function Fieldset() {
-      return Fieldset.__super__.constructor.apply(this, arguments);
+    function FieldSet() {
+      return FieldSet.__super__.constructor.apply(this, arguments);
     }
 
-    Fieldset.prototype.tagName = "fieldset";
+    FieldSet.prototype.tagName = "fieldset";
 
-    Fieldset.prototype.render = function() {
+    FieldSet.prototype.render = function() {
       this.$el.html(this.template());
       this.$container = this.$component("body");
-      return Fieldset.__super__.render.apply(this, arguments);
+      return FieldSet.__super__.render.apply(this, arguments);
     };
 
-    Fieldset.prototype.template = function() {
+    FieldSet.prototype.template = function() {
       var html;
       html = this.title ? "<legend>" + _.escape(this.title) + "</legend>" : "";
       return html + "<div id='" + this.componentId("body") + "'></div>";
     };
 
-    return Fieldset;
+    return FieldSet;
 
   })(Cruddy.Layout.BaseFieldContainer);
 
@@ -2901,10 +2901,9 @@
       _ref = this.entity.fields.models;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         field = _ref[_i];
-        this.create({
-          "class": "Field",
+        this.append(new Cruddy.Layout.Field({
           field: field.id
-        });
+        }, this));
       }
       return this;
     };
@@ -3262,6 +3261,10 @@
       return value;
     };
 
+    Input.prototype.getType = function() {
+      return "string";
+    };
+
     return Input;
 
   })(Cruddy.Fields.Base);
@@ -3325,6 +3328,10 @@
       }
     };
 
+    Text.prototype.getType = function() {
+      return "text";
+    };
+
     return Text;
 
   })(Cruddy.Fields.Base);
@@ -3362,6 +3369,10 @@
       } else {
         return this.formatDate(value);
       }
+    };
+
+    BaseDateTime.prototype.getType = function() {
+      return "datetime";
     };
 
     return BaseDateTime;
@@ -3468,6 +3479,10 @@
       return null;
     };
 
+    Boolean.prototype.getType = function() {
+      return "bool";
+    };
+
     return Boolean;
 
   })(Cruddy.Fields.Base);
@@ -3511,6 +3526,10 @@
       } else {
         return this.formatItem(value);
       }
+    };
+
+    BaseRelation.prototype.getType = function() {
+      return "relation";
     };
 
     return BaseRelation;
@@ -3632,6 +3651,10 @@
       }
     };
 
+    File.prototype.getType = function() {
+      return "file";
+    };
+
     return File;
 
   })(Cruddy.Fields.Base);
@@ -3663,6 +3686,10 @@
           height: this.attributes.height
         })
       });
+    };
+
+    Image.prototype.getType = function() {
+      return "image";
     };
 
     return Image;
@@ -3712,12 +3739,16 @@
         model: model,
         key: this.id,
         chars: this.attributes.chars,
-        ref: this.attributes.ref,
+        field: this.attributes.field,
         separator: this.attributes.separator,
         attributes: {
           placeholder: this.attributes.placeholder
         }
       });
+    };
+
+    Slug.prototype.getType = function() {
+      return "slug";
     };
 
     return Slug;
@@ -3761,6 +3792,10 @@
       } else {
         return NOT_AVAILABLE;
       }
+    };
+
+    Enum.prototype.getType = function() {
+      return "enum";
     };
 
     return Enum;
@@ -4193,6 +4228,10 @@
       return true;
     };
 
+    Embedded.prototype.getType = function() {
+      return "inline-relation";
+    };
+
     return Embedded;
 
   })(Cruddy.Fields.BaseRelation);
@@ -4240,6 +4279,10 @@
       };
     };
 
+    Number.prototype.getType = function() {
+      return "number";
+    };
+
     return Number;
 
   })(Cruddy.Fields.Input);
@@ -4261,6 +4304,10 @@
 
     Computed.prototype.isEditable = function() {
       return false;
+    };
+
+    Computed.prototype.getType = function() {
+      return "computed";
     };
 
     return Computed;
@@ -4332,7 +4379,7 @@
     };
 
     Proxy.prototype.getClass = function() {
-      return Proxy.__super__.getClass.apply(this, arguments) + " col__" + this.field.get("type");
+      return Proxy.__super__.getClass.apply(this, arguments) + " col__" + this.field.getType();
     };
 
     return Proxy;
@@ -4793,13 +4840,13 @@
       }
     };
 
-    Entity.prototype.createView = function() {
-      var pageClass;
-      pageClass = get(this.attributes.view);
-      if (!pageClass) {
+    Entity.prototype.createController = function() {
+      var controllerClass;
+      controllerClass = get(this.attributes.controller_class) || Cruddy.Entity.Page;
+      if (!controllerClass) {
         throw "Failed to resolve page class " + this.attributes.view;
       }
-      return new pageClass({
+      return new controllerClass({
         model: this
       });
     };
@@ -5738,10 +5785,11 @@
       });
       req.done((function(_this) {
         return function(resp) {
-          var entity, _i, _len;
+          var entity, modelClass, _i, _len;
           for (_i = 0, _len = resp.length; _i < _len; _i++) {
             entity = resp[_i];
-            _this.entities[entity.id] = new Cruddy.Entity.Entity(entity);
+            modelClass = get(entity.model_class) || Cruddy.Entity.Entity;
+            _this.entities[entity.id] = new modelClass(entity);
           }
           _this.dfd.resolve(_this);
           $(document).trigger("started.cruddy", _this);
@@ -5760,7 +5808,7 @@
       this.dispose();
       this.mainContent.hide();
       if (entity) {
-        this.container.append((this.entityView = entity.createView()).render().el);
+        this.container.append((this.entityView = entity.createController()).render().el);
       }
       return this.updateTitle();
     };

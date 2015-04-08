@@ -4,8 +4,10 @@ class Cruddy.Fields.Slug extends Cruddy.Fields.Base
         model: model
         key: @id
         chars: @attributes.chars
-        ref: @attributes.ref
+        field: @attributes.field
         separator: @attributes.separator
-        
+
         attributes:
             placeholder: @attributes.placeholder
+
+    getType: -> "slug"

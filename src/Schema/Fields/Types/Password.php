@@ -19,19 +19,9 @@ class Password extends BaseTextField {
     /**
      * {@inheritdoc}
      */
-    protected $type = 'password';
-
-    /**
-     * {@inheritdoc}
-     */
-    protected $inputType = 'password';
-
-    /**
-     * {@inheritdoc}
-     */
-    public function extract(Eloquent $model)
+    public function extract($model)
     {
-        return '';
+        return null;
     }
 
     /**

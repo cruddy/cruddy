@@ -3,7 +3,6 @@
 namespace Kalnoy\Cruddy\Schema;
 
 use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
 class AttributesCollection extends BaseCollection {
@@ -11,11 +10,11 @@ class AttributesCollection extends BaseCollection {
     /**
      * Extract data from an item or a set of items.
      *
-     * @param Model $model
+     * @param mixed $model
      *
      * @return array
      */
-    public function extract(Model $model)
+    public function extract($model)
     {
         $data = [];
 

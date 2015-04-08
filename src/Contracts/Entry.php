@@ -21,7 +21,7 @@ interface Entry extends Arrayable {
     /**
      * Get an owning entity.
      *
-     * @return \Kalnoy\Cruddy\Entity
+     * @return \Kalnoy\Cruddy\BaseForm
      */
     public function getEntity();
 

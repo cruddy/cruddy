@@ -1,4 +1,4 @@
-class Cruddy.Layout.Fieldset extends Cruddy.Layout.BaseFieldContainer
+class Cruddy.Layout.FieldSet extends Cruddy.Layout.BaseFieldContainer
     tagName: "fieldset"
 
     render: ->

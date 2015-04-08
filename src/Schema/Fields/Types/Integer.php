@@ -12,11 +12,6 @@ use Kalnoy\Cruddy\Schema\Fields\BaseNumber;
 class Integer extends BaseNumber {
 
     /**
-     * @var string
-     */
-    protected $type = 'integer';
-
-    /**
      * {@inheritdoc}
      *
      * @return int

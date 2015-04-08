@@ -18,7 +18,7 @@ class Cruddy.Inputs.Slug extends Backbone.View
         @separator = options.separator ? "-"
 
         @key = options.key
-        @ref = if _.isArray(options.ref) then options.ref else [options.ref] if options.ref
+        @ref = if _.isArray(options.field) then options.field else [options.field] if options.field
 
         super
 

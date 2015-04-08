@@ -18,6 +18,14 @@ class Layout extends Container {
     private $defaultTab;
 
     /**
+     * @return string
+     */
+    public function modelClass()
+    {
+        return 'Cruddy.Layout.Layout';
+    }
+
+    /**
      * Add a tab.
      *
      * @param string $title
@@ -28,6 +36,16 @@ class Layout extends Container {
     public function tab($title, $items)
     {
         return $this->add(new TabPane($title, $items));
+    }
+
+    /**
+     * @param Element $item
+     *
+     * @return bool
+     */
+    protected function canBeAdded(Element $item)
+    {
+        return $item instanceof TabPane;
     }
 
     /**
@@ -55,6 +73,14 @@ class Layout extends Container {
         call_user_func_array([ $this->getDefaultTab(), $method ], $parameters);
 
         return $this;
+    }
+
+    /**
+     * @return array
+     */
+    public function toArray()
+    {
+        return $this->itemsToArray();
     }
 
 }

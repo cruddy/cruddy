@@ -12,10 +12,6 @@ use Kalnoy\Cruddy\Entity;
  */
 class States extends Attribute implements Column {
 
-    /**
-     * {@inheritdoc}
-     */
-    protected $class = 'Cruddy.Columns.Computed';
 
     /**
      * The list of states of the row.
@@ -23,6 +19,16 @@ class States extends Attribute implements Column {
      * @var array|\Closure
      */
     protected $states;
+
+    /**
+     * The name of the JavaScript class that is used to render this field.
+     *
+     * @return string
+     */
+    protected function modelClass()
+    {
+        return 'Cruddy.Columns.Computed';
+    }
 
     /**
      * @param Entity $entity
@@ -38,7 +44,7 @@ class States extends Attribute implements Column {
     /**
      * {@inheritdoc}
      */
-    public function extract(Eloquent $model)
+    public function extract($model)
     {
         if ($this->states instanceof \Closure)
         {
@@ -60,16 +66,16 @@ class States extends Attribute implements Column {
     /**
      * Get whether model has specified state.
      *
-     * @param Eloquent $model
-     * @param string   $state
+     * @param mixed $model
+     * @param string $state
      *
      * @return bool
      */
-    protected function hasState(Eloquent $model, $state)
+    protected function hasState($model, $state)
     {
         if ($state instanceof \Closure) return $state($model);
 
-        $state = 'is'.str_camel($state);
+        $state = 'is'.camel_case($state);
 
         return $model->{$state}();
     }
@@ -83,6 +89,14 @@ class States extends Attribute implements Column {
             'hide' => true,
 
         ] + parent::toArray();
+    }
+
+    /**
+     * @return string
+     */
+    public function getDefaultOrderDirection()
+    {
+        return null;
     }
 
 }

@@ -16,3 +16,5 @@ class Cruddy.Fields.BaseRelation extends Cruddy.Fields.Base
         return NOT_AVAILABLE if _.isEmpty value
 
         if @attributes.multiple then _.map(value, (item) => @formatItem item).join ", " else @formatItem value
+
+    getType: -> "relation"

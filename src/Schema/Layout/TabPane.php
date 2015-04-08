@@ -2,12 +2,15 @@
 
 namespace Kalnoy\Cruddy\Schema\Layout;
 
-class TabPane extends Fieldset {
+class TabPane extends FieldSet {
 
     /**
-     * {@inheritdoc}
+     * @return string
      */
-    protected $class = 'TabPane';
+    public function modelClass()
+    {
+        return 'Cruddy.Layout.TabPane';
+    }
 
     /**
      * Add a fieldset.
@@ -19,7 +22,7 @@ class TabPane extends Fieldset {
      */
     public function fieldset($title, $items)
     {
-        return $this->add(new Fieldset($title, $items));
+        return $this->add(new FieldSet($title, $items));
     }
 
 }

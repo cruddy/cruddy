@@ -6,7 +6,7 @@ class Cruddy.Attribute extends Backbone.Model
         this
 
     # Get field's type (i.e. css class name)
-    getType: -> @attributes.type
+    getType: -> "attribute"
 
     # Get field's help
     getHelp: -> @attributes.help

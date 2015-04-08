@@ -2,6 +2,7 @@
 
 namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
+use Kalnoy\Cruddy\BaseForm;
 use Kalnoy\Cruddy\Schema\Fields\BaseField;
 
 /**
@@ -9,69 +10,43 @@ use Kalnoy\Cruddy\Schema\Fields\BaseField;
  *
  * The slug uses other field's value to generate own value.
  *
+ * @property string $chars
+ * @method $this chars(string $value)
+ *
+ * @property string $separator
+ * @method $this separator(string $char)
+ *
  * @since 1.0.0
  */
 class Slug extends BaseField {
-
-    /**
-     * {@inheritdoc}
-     */
-    protected $class = 'Cruddy.Fields.Slug';
-
-    /**
-     * {@inheritdoc}
-     */
-    protected $type = 'slug';
-
-    /**
-     * Allowed characters. This will be a part of JavaScript regexp.
-     *
-     * Default value: a-z0-9\-_
-     *
-     * @var string
-     */
-    public $chars;
 
     /**
      * The id or array of reference field with which slug will be linked.
      *
      * @var string|array
      */
-    public $ref;
+    protected $field;
 
     /**
-     * The separator of the words. Default is dash.
-     *
-     * @var string
+     * @param BaseForm $entity
+     * @param string $id
+     * @param string|array|null $field
      */
-    public $separator;
-
-    /**
-     * Set allowed charachters.
-     *
-     * @param string $value
-     *
-     * @return $this
-     */
-    public function chars($value)
+    public function __construct(BaseForm $entity, $id, $field = null)
     {
-        $this->chars = $value;
+        parent::__construct($entity, $id);
 
-        return $this;
+        $this->field = $field ?: $id;
     }
 
     /**
-     * Set separator.
+     * The name of the JavaScript class that is used to render this field.
      *
-     * @param string $value
-     *
-     * @return $this
+     * @return string
      */
-    public function separator($value)
+    protected function modelClass()
     {
-        $this->separator = $value;
-
-        return $this;
+        return 'Cruddy.Fields.Slug';
     }
 
     /**
@@ -79,10 +54,9 @@ class Slug extends BaseField {
      */
     public function toArray()
     {
-        return
-        [
+        return [
             'chars' => $this->chars,
-            'ref' => $this->ref,
+            'field' => $this->field,
             'separator' => $this->separator,
 
         ] + parent::toArray();

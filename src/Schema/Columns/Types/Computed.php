@@ -20,13 +20,6 @@ class Computed extends BaseColumn {
     use ComputedTrait;
 
     /**
-     * @inheritdoc
-     *
-     * @var string
-     */
-    protected $class = 'Cruddy.Columns.Computed';
-
-    /**
      * An order clause to support sorting.
      *
      * It might be a column name or an SQL expression like DB::raw('...').
@@ -34,6 +27,16 @@ class Computed extends BaseColumn {
      * @var mixed
      */
     public $columnClause;
+
+    /**
+     * The name of the JavaScript class that is used to render this field.
+     *
+     * @return string
+     */
+    protected function modelClass()
+    {
+        return 'Cruddy.Columns.Computed';
+    }
 
     /**
      * Init the column.

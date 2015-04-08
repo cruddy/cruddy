@@ -2,12 +2,7 @@
 
 namespace Kalnoy\Cruddy\Schema\Layout;
 
-class Col extends BaseFieldset {
-
-    /**
-     * {@inheritdoc}
-     */
-    protected $class = 'Col';
+class Col extends BaseFieldSet {
 
     /**
      * Column span.
@@ -22,7 +17,7 @@ class Col extends BaseFieldset {
      * @param int $span
      * @param string|array|\Closure $items
      */
-    public function __construct($span, $items)
+    public function __construct($items, $span = null)
     {
         parent::__construct($items);
 
@@ -30,11 +25,19 @@ class Col extends BaseFieldset {
     }
 
     /**
-     * {@inheritdoc}
+     * @return string
      */
-    public function compile()
+    public function modelClass()
     {
-        return [ 'span' => $this->span ] + parent::compile();
+        return 'Cruddy.Layout.Col';
+    }
+
+    /**
+     * @return string
+     */
+    public function toArray()
+    {
+        return [ 'span' => $this->span ] + parent::toArray();
     }
 
 }

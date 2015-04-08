@@ -19,3 +19,5 @@ class Cruddy.Fields.Enum extends Cruddy.Fields.Input
         items = @attributes.items
 
         if value of items then items[value] else NOT_AVAILABLE
+
+    getType: -> "enum"

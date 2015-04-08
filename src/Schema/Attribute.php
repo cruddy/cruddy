@@ -20,13 +20,6 @@ use Kalnoy\Cruddy\Entity;
 abstract class Attribute extends Entry implements AttributeContract {
 
     /**
-     * Whether this field can order data.
-     *
-     * @var bool
-     */
-    protected $canOrder = false;
-
-    /**
      * @return array
      */
     public function eagerLoads()
@@ -49,7 +42,7 @@ abstract class Attribute extends Entry implements AttributeContract {
      */
     public function canOrder()
     {
-        return $this->canOrder;
+        return false;
     }
 
     /**

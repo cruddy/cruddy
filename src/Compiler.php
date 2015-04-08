@@ -72,7 +72,7 @@ class Compiler {
 
         if ($locale !== null) $this->lang->setLocale($locale);
 
-        $data = array_map(function ($item)
+        $data = array_map(function (BaseForm $item)
         {
             return $item->toArray();
 

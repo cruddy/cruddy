@@ -11,19 +11,19 @@ use Kalnoy\Cruddy\Contracts\Field;
 class Proxy extends BaseFilter {
 
     /**
-     * @var string
-     */
-    protected $class = 'Cruddy.Filters.Proxy';
-
-    /**
-     * @var string
-     */
-    protected $type = 'proxy';
-
-    /**
      * @var Filter|Field
      */
     protected $field;
+
+    /**
+     * The name of the JavaScript class that is used to render this field.
+     *
+     * @return string
+     */
+    protected function modelClass()
+    {
+        return 'Cruddy.Filters.Proxy';
+    }
 
     /**
      * @param Entity $entity

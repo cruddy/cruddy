@@ -35,9 +35,9 @@ abstract class BaseRelation extends BaseField {
     /**
      * Init field.
      *
-     * @param Entity   $entity
-     * @param string   $id
-     * @param Entity   $reference
+     * @param Entity $entity
+     * @param string $id
+     * @param Entity $reference
      * @param Relation $relation
      */
     public function __construct(Entity $entity, $id, Entity $reference, Relation $relation)
@@ -49,9 +49,16 @@ abstract class BaseRelation extends BaseField {
     }
 
     /**
+     * Get whether the relations works with a collection of models.
+     *
+     * @return bool
+     */
+    abstract public function isMultiple();
+
+    /**
      * {@inheritdoc}
      */
-    public function extract(Eloquent $model)
+    public function extract($model)
     {
         if ( ! $this->reference->isPermitted(Entity::READ))
         {
@@ -156,21 +163,11 @@ abstract class BaseRelation extends BaseField {
 
     /**
      * {@inheritdoc}
-     *
-     * Relational fields are always fillable since they are not actual attribute
-     * on the model.
-     */
-    public function isFillable()
-    {
-        return true;
-    }
-
-    /**
-     * {@inheritdoc}
      */
     public function toArray()
     {
         return [
+            'multiple' => $this->isMultiple(),
             'reference' => $this->reference->getId(),
 
         ] + parent::toArray();

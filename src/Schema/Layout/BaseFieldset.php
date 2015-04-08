@@ -2,7 +2,7 @@
 
 namespace Kalnoy\Cruddy\Schema\Layout;
 
-class BaseFieldset extends Container {
+abstract class BaseFieldSet extends Container {
 
     /**
      * Init the container.
@@ -47,7 +47,7 @@ class BaseFieldset extends Container {
      *
      * @return $this
      */
-    public function row($items)
+    public function row($items = null)
     {
         return $this->add(new Row($items));
     }

@@ -19,16 +19,24 @@ use Kalnoy\Cruddy\Helpers;
 abstract class BaseTextField extends BaseInput implements KeywordsFilter {
 
     /**
-     * {@inheritdoc}
+     * The name of the JavaScript class that is used to render this field.
+     *
+     * @return string
      */
-    protected $class = 'Cruddy.Fields.Input';
+    protected function modelClass()
+    {
+        return 'Cruddy.Fields.Input';
+    }
 
     /**
-     * The HTML <input> type attribute value.
+     * Get the type of the <input> tag.
      *
-     * @var string
+     * @return string
      */
-    protected $inputType = 'text';
+    protected function inputType()
+    {
+        return 'text';
+    }
 
     /**
      * {@inheritdoc}
@@ -69,9 +77,8 @@ abstract class BaseTextField extends BaseInput implements KeywordsFilter {
      */
     public function toArray()
     {
-        return
-        [
-            'input_type' => $this->inputType,
+        return [
+            'input_type' => $this->inputType(),
             'placeholder' => Helpers::tryTranslate($this->get('placeholder')),
 
         ] + parent::toArray();

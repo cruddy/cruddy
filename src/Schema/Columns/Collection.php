@@ -24,6 +24,11 @@ class Collection extends AttributesCollection implements SearchProcessor {
     protected $defaultOrder;
 
     /**
+     * @var Entity
+     */
+    protected $entity;
+
+    /**
      * @param Entity $entity
      * @param string|array $defaultOrder
      */

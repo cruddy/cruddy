@@ -10,7 +10,7 @@ use Illuminate\Http\Response;
 use Kalnoy\Cruddy\ActionException;
 use Kalnoy\Cruddy\EntityNotFoundException;
 use Kalnoy\Cruddy\ModelNotFoundException;
-use Kalnoy\Cruddy\OperationNotPermittedException;
+use Kalnoy\Cruddy\AccessDeniedException;
 use Kalnoy\Cruddy\Service\Validation\ValidationException;
 
 class ExceptionsHandler {
@@ -41,7 +41,7 @@ class ExceptionsHandler {
             return $this->responseError('Specified model not found.', Response::HTTP_NOT_FOUND);
         }
 
-        catch (OperationNotPermittedException $e)
+        catch (AccessDeniedException $e)
         {
             return $this->responseError($e->getMessage(), Response::HTTP_FORBIDDEN);
         }

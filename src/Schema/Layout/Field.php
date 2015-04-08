@@ -5,14 +5,9 @@ namespace Kalnoy\Cruddy\Schema\Layout;
 class Field extends Element {
 
     /**
-     * {@inheritdoc}
-     */
-    protected $class = 'Field';
-
-    /**
      * The id of the field.
      */
-    protected $id;    
+    protected $id;
 
     /**
      * Init a field.
@@ -25,11 +20,19 @@ class Field extends Element {
     }
 
     /**
+     * @return string
+     */
+    public function modelClass()
+    {
+        return 'Cruddy.Layout.Field';
+    }
+
+    /**
      * {@inheritdoc}
      */
-    public function compile()
+    public function toArray()
     {
-        return [ 'field' => $this->id ] + parent::compile();
+        return [ 'field' => $this->id ] + parent::toArray();
     }
 
 }

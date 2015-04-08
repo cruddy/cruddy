@@ -17,19 +17,11 @@ use Kalnoy\Cruddy\Schema\Fields\BaseTextField;
 class String extends BaseTextField {
 
     /**
-     * @inheritdoc
-     *
-     * @var string
-     */
-    protected $type = 'string';
-
-    /**
      * {@inheritdoc}
      */
     public function toArray()
     {
-        return
-        [
+        return [
             'mask' => $this->get('mask'),
 
         ] + parent::toArray();

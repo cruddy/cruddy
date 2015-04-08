@@ -2,14 +2,15 @@
 
 namespace Kalnoy\Cruddy\Http\Controllers;
 
-use Illuminate\Config\Repository as Config;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
-use Kalnoy\Cruddy\Data;
+use Kalnoy\Cruddy\BaseForm;
+use Kalnoy\Cruddy\BaseFormData;
 use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\EntityData;
 use Kalnoy\Cruddy\Environment;
-use Kalnoy\Cruddy\OperationNotPermittedException;
+use Kalnoy\Cruddy\AccessDeniedException;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -55,7 +56,7 @@ class EntityController extends Controller {
 
         $options = $this->prepareSearchOptions($input->all());
 
-        return new JsonResponse($entity->search($options));
+        return new JsonResponse($entity->index($options));
     }
 
     /**
@@ -93,6 +94,8 @@ class EntityController extends Controller {
             return redirect()->route('cruddy.index', [ $entity->getId(), 'id' => $id ]);
         }
 
+        $this->assertEntity($entity);
+
         return new JsonResponse($entity->find($id));
     }
 
@@ -100,32 +103,32 @@ class EntityController extends Controller {
      * Create an entity instance.
      *
      * @param Request $input
-     * @param string $entity
+     * @param string $form
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    public function store(Request $input, $entity)
+    public function store(Request $input, $form)
     {
-        $entity = $this->resolve($entity, Entity::CREATE);
+        $form = $this->resolve($form, Entity::CREATE);
 
-        $data = new Data($entity, $input->all());
+        $data = $form->processInput($input->all());
 
-        return $this->validateAndSave($entity, $data);
+        return $this->validateAndSave($form, $data);
     }
 
     /**
-     * @param Entity $entity
-     * @param Data $data
+     * @param BaseForm $form
+     * @param BaseFormData $data
      *
      * @return \Illuminate\Http\JsonResponse
      */
-    protected function validateAndSave(Entity $entity, Data $data)
+    protected function validateAndSave(BaseForm $form, BaseFormData $data)
     {
         $data->validate();
 
         $model = $data->save();
 
-        return new JsonResponse($entity->extract($model));
+        return new JsonResponse($form->extract($model));
     }
 
     /**
@@ -142,8 +145,11 @@ class EntityController extends Controller {
     {
         $entity = $this->resolve($entity, Entity::UPDATE);
 
-        $data = new Data($entity, $input->all(), $id);
+        $this->assertEntity($entity);
 
+        $data = $entity->processInput($input->all());
+
+        $data->setId($id);
         $data->setCustomAction($action);
 
         return $this->validateAndSave($entity, $data);
@@ -162,8 +168,11 @@ class EntityController extends Controller {
     {
         $entity = $this->resolve($entity, Entity::UPDATE);
 
-        $data = new Data($entity, [], $id);
+        $this->assertEntity($entity);
 
+        $data = new EntityData($entity, []);
+
+        $data->setId($id);
         $data->setCustomAction($action);
 
         $data->save();
@@ -183,6 +192,8 @@ class EntityController extends Controller {
     {
         $entity = $this->resolve($entity, Entity::DELETE);
 
+        $this->assertEntity($entity);
+
         return new JsonResponse(null, $entity->delete($id) ? Response::HTTP_OK : Response::HTTP_NOT_FOUND);
     }
 
@@ -192,7 +203,7 @@ class EntityController extends Controller {
      * @param string $id
      * @param string $action
      *
-     * @return \Kalnoy\Cruddy\Entity
+     * @return \Kalnoy\Cruddy\BaseForm
      */
     protected function resolve($id, $action)
     {
@@ -202,7 +213,7 @@ class EntityController extends Controller {
         {
             $message = trans("cruddy::app.forbidden.{$action}", [ 'entity' => $id ]);
 
-            throw new OperationNotPermittedException($message);
+            throw new AccessDeniedException($message);
         }
 
         return $entity;
@@ -216,4 +227,11 @@ class EntityController extends Controller {
         return view('cruddy::loading');
     }
 
+    /**
+     * @param $entity
+     */
+    protected function assertEntity($entity)
+    {
+        if ( ! $entity instanceof Entity) throw new \RuntimeException;
+    }
 }

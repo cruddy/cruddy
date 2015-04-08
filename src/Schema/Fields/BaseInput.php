@@ -16,17 +16,19 @@ use Kalnoy\Cruddy\Helpers;
 abstract class BaseInput extends BaseField {
 
     /**
-     * {@inheritdoc}
+     * @return bool
      */
-    protected $canOrder = true;
+    public function canOrder()
+    {
+        return true;
+    }
 
     /**
      * {@inheritdoc}
      */
     public function toArray()
     {
-        return
-        [
+        return [
             'append' => Helpers::tryTranslate($this->get('append')),
             'prepend' => Helpers::tryTranslate($this->get('prepend')),
 

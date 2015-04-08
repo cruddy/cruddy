@@ -2,7 +2,7 @@
 
 namespace Kalnoy\Cruddy\Schema\Layout;
 
-class Container extends Element {
+abstract class Container extends Element implements \Countable, \IteratorAggregate {
 
     /**
      * Inner items.
@@ -16,11 +16,11 @@ class Container extends Element {
      *
      * @return array
      */
-    public function compileItems()
+    public function itemsToArray()
     {
         return array_map(function (Element $item)
         {
-            return $item->compile();
+            return $item->toArray();
 
         }, $this->items);
     }
@@ -34,9 +34,27 @@ class Container extends Element {
      */
     public function add(Element $item)
     {
+        if ( ! $this->canBeAdded($item))
+        {
+            throw new \RuntimeException(
+                'The element of type ['.get_class($item).'] cannot be added to '.
+                'container of type ['.get_class($this).'].'
+            );
+        }
+
         $this->items[] = $item;
 
         return $this;
+    }
+
+    /**
+     * @param Element $item
+     *
+     * @return bool
+     */
+    protected function canBeAdded(Element $item)
+    {
+        return ! $item instanceof Layout;
     }
 
     /**
@@ -48,11 +66,27 @@ class Container extends Element {
     }
 
     /**
+     * @return int
+     */
+    public function count()
+    {
+        return count($this->items);
+    }
+
+    /**
      * {@inheritdoc}
      */
-    public function compile()
+    public function toArray()
     {
-        return [ 'items' => $this->compileItems() ] + parent::compile();
+        return [ 'items' => $this->itemsToArray() ] + parent::toArray();
+    }
+
+    /**
+     * @return \ArrayIterator
+     */
+    public function getIterator()
+    {
+        return new \ArrayIterator($this->items);
     }
 
 }

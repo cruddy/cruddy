@@ -170,7 +170,7 @@ class Cruddy.Attribute extends Backbone.Model
         this
 
     # Get field's type (i.e. css class name)
-    getType: -> @attributes.type
+    getType: -> "attribute"
 
     # Get field's help
     getHelp: -> @attributes.help
@@ -1588,7 +1588,7 @@ class Cruddy.Inputs.Slug extends Backbone.View
         @separator = options.separator ? "-"
 
         @key = options.key
-        @ref = if _.isArray(options.ref) then options.ref else [options.ref] if options.ref
+        @ref = if _.isArray(options.field) then options.field else [options.field] if options.field
 
         super
 
@@ -1836,10 +1836,10 @@ class Cruddy.Layout.Container extends Cruddy.Layout.Element
         return this
 
     create: (options) ->
-        constructor = Cruddy.Layout[options.class]
+        constructor = get options.class
 
         if not constructor or not _.isFunction constructor
-            console.error "Couldn't resolve element of type ", method 
+            console.error "Couldn't resolve element of type ", options.class
 
             return
 
@@ -1884,7 +1884,7 @@ class Cruddy.Layout.BaseFieldContainer extends Cruddy.Layout.Container
         @title = options.title ? null
 
         super
-class Cruddy.Layout.Fieldset extends Cruddy.Layout.BaseFieldContainer
+class Cruddy.Layout.FieldSet extends Cruddy.Layout.BaseFieldContainer
     tagName: "fieldset"
 
     render: ->
@@ -2025,8 +2025,7 @@ class FieldList extends Cruddy.Layout.BaseFieldContainer
     initialize: ->
         super
 
-        for field in @entity.fields.models
-            @create { class: "Field", field: field.id }
+        @append new Cruddy.Layout.Field { field: field.id }, this for field in @entity.fields.models
 
         return this
 class Cruddy.Layout.Layout extends Cruddy.Layout.Container
@@ -2274,6 +2273,8 @@ class Cruddy.Fields.Input extends Cruddy.Fields.Base
 
         return value
 
+    getType: -> "string"
+
 
 class Cruddy.Fields.Input.PrependAppendWrapper extends Cruddy.View
     className: "input-group"
@@ -2300,6 +2301,8 @@ class Cruddy.Fields.Text extends Cruddy.Fields.Base
             rows: @attributes.rows
 
     format: (value) -> if value then """<pre class="limit-height">#{ value }</pre>""" else NOT_AVAILABLE
+
+    getType: -> "text"
 class Cruddy.Fields.BaseDateTime extends Cruddy.Fields.Base
 
     inputFormat: null
@@ -2316,6 +2319,8 @@ class Cruddy.Fields.BaseDateTime extends Cruddy.Fields.Base
     formatDate: (value) -> moment.unix(value).format @inputFormat
 
     format: (value) -> if value is null then NOT_AVAILABLE else @formatDate value
+
+    getType: -> "datetime"
 
 class Cruddy.Fields.Date extends Cruddy.Fields.BaseDateTime
     inputFormat: "YYYY-MM-DD"
@@ -2356,6 +2361,8 @@ class Cruddy.Fields.Boolean extends Cruddy.Fields.Base
         return false if value is 0
 
         return null
+
+    getType: -> "bool"
 class Cruddy.Fields.BaseRelation extends Cruddy.Fields.Base
 
     isVisible: -> @getReference().readPermitted() and super
@@ -2374,6 +2381,8 @@ class Cruddy.Fields.BaseRelation extends Cruddy.Fields.Base
         return NOT_AVAILABLE if _.isEmpty value
 
         if @attributes.multiple then _.map(value, (item) => @formatItem item).join ", " else @formatItem value
+
+    getType: -> "relation"
 class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
 
     createInput: (model, inputId, forceDisable = no) -> new Cruddy.Inputs.EntityDropdown
@@ -2437,6 +2446,8 @@ class Cruddy.Fields.File extends Cruddy.Fields.Base
         accepts: @attributes.accepts
 
     format: (value) -> if value instanceof File then value.name else value
+
+    getType: -> "file"
 class Cruddy.Fields.Image extends Cruddy.Fields.File
 
     createEditableInput: (model) -> new Cruddy.Inputs.ImageList
@@ -2453,6 +2464,8 @@ class Cruddy.Fields.Image extends Cruddy.Fields.File
         formatter: new Cruddy.Fields.Image.Formatter
             width: @attributes.width
             height: @attributes.height
+
+    getType: -> "image"
 class Cruddy.Fields.Image.Formatter
 
     constructor: (options) ->
@@ -2485,11 +2498,13 @@ class Cruddy.Fields.Slug extends Cruddy.Fields.Base
         model: model
         key: @id
         chars: @attributes.chars
-        ref: @attributes.ref
+        field: @attributes.field
         separator: @attributes.separator
-        
+
         attributes:
             placeholder: @attributes.placeholder
+
+    getType: -> "slug"
 class Cruddy.Fields.Enum extends Cruddy.Fields.Input
 
     createBaseInput: (model, inputId) -> new Cruddy.Inputs.Select
@@ -2511,6 +2526,8 @@ class Cruddy.Fields.Enum extends Cruddy.Fields.Input
         items = @attributes.items
 
         if value of items then items[value] else NOT_AVAILABLE
+
+    getType: -> "enum"
 class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
     className: "has-many-view"
 
@@ -2797,6 +2814,8 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
     prepareAttribute: (value) -> if value then value.serialize() else value
 
     isCopyable: -> yes
+
+    getType: -> "inline-relation"
 class Cruddy.Fields.Number extends Cruddy.Fields.Input
 
     createFilterInput: (model) -> new Cruddy.Inputs.NumberFilter
@@ -2825,10 +2844,14 @@ class Cruddy.Fields.Number extends Cruddy.Fields.Input
             val = value
 
         return op: op, val: val
+
+    getType: -> "number"
 class Cruddy.Fields.Computed extends Cruddy.Fields.Base
     createInput: (model) -> new Cruddy.Inputs.Static { model: model, key: @id, formatter: this }
 
     isEditable: -> false
+
+    getType: -> "computed"
 class Cruddy.Columns.Base extends Cruddy.Attribute
 
     initialize: (attributes) ->
@@ -2859,7 +2882,7 @@ class Cruddy.Columns.Proxy extends Cruddy.Columns.Base
 
     format: (value) -> if @formatter? then @formatter.format value else @field.format value
 
-    getClass: -> super + " col__" + @field.get "type"
+    getClass: -> super + " col__" + @field.getType()
 class Cruddy.Columns.Computed extends Cruddy.Columns.Base
     getClass: -> super + " col__computed"
 class Cruddy.Columns.ViewButton extends Cruddy.Columns.Base
@@ -3127,12 +3150,12 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
         return if id then link + "?id=" + id else link
 
-    createView: ->
-        pageClass = get @attributes.view
+    createController: ->
+        controllerClass = get(@attributes.controller_class) or Cruddy.Entity.Page
 
-        throw "Failed to resolve page class #{ @attributes.view }" unless pageClass
+        throw "Failed to resolve page class #{ @attributes.view }" unless controllerClass
 
-        return new pageClass model: this
+        return new controllerClass model: this
 
     # Get title in plural form
     getPluralTitle: -> @attributes.title.plural
@@ -3932,7 +3955,10 @@ class App extends Backbone.Model
             displayLoading: yes
 
         req.done (resp) =>
-            @entities[entity.id] = new Cruddy.Entity.Entity entity for entity in resp
+            for entity in resp
+                modelClass = get(entity.model_class) or Cruddy.Entity.Entity
+
+                @entities[entity.id] = new modelClass entity
 
             @dfd.resolve @
 
@@ -3954,7 +3980,7 @@ class App extends Backbone.Model
 
         @mainContent.hide()
 
-        @container.append (@entityView = entity.createView()).render().el if entity
+        @container.append (@entityView = entity.createController()).render().el if entity
 
         @updateTitle()
 

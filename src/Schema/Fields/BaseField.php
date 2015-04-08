@@ -27,15 +27,15 @@ abstract class BaseField extends Attribute implements Field {
     /**
      * {@inheritdoc}
      */
-    public function extract(Eloquent $model)
+    public function extract($model)
     {
-        return $model->getAttribute($this->id);
+        return $model->{$this->id};
     }
 
     /**
      * {@inheritdoc}
      */
-    public function extractForColumn(Eloquent $model)
+    public function extractForColumn($model)
     {
         return $this->extract($model);
     }

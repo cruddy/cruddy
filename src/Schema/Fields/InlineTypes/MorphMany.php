@@ -10,8 +10,13 @@ namespace Kalnoy\Cruddy\Schema\Fields\InlineTypes;
 class MorphMany extends MorphOne {
 
     /**
-     * {@inheritdoc}
+     * Get whether the relations works with a collection of models.
+     *
+     * @return bool
      */
-    protected $multiple = true;
+    public function isMultiple()
+    {
+        return true;
+    }
 
 }

@@ -9,3 +9,5 @@ class Cruddy.Fields.Text extends Cruddy.Fields.Base
             rows: @attributes.rows
 
     format: (value) -> if value then """<pre class="limit-height">#{ value }</pre>""" else NOT_AVAILABLE
+
+    getType: -> "text"

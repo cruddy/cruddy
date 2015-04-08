@@ -15,19 +15,22 @@ use Carbon\Carbon;
 class DateTime extends BaseField {
 
     /**
-     * {@inheritdoc}
+     * @return bool
      */
-    protected $class = 'Cruddy.Fields.DateTime';
+    public function canOrder()
+    {
+        return true;
+    }
 
     /**
-     * {@inheritdoc}
+     * The name of the JavaScript class that is used to render this field.
+     *
+     * @return string
      */
-    protected $type = 'datetime';
-
-    /**
-     * @var bool
-     */
-    protected $canOrder = true;
+    protected function modelClass()
+    {
+        return 'Cruddy.Fields.DateTime';
+    }
 
     /**
      * {@inheritdoc}
@@ -44,7 +47,7 @@ class DateTime extends BaseField {
      *
      * @return int
      */
-    public function extract(Eloquent $model)
+    public function extract($model)
     {
         $value = parent::extract($model);
 

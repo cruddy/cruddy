@@ -141,12 +141,12 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
         return if id then link + "?id=" + id else link
 
-    createView: ->
-        pageClass = get @attributes.view
+    createController: ->
+        controllerClass = get(@attributes.controller_class) or Cruddy.Entity.Page
 
-        throw "Failed to resolve page class #{ @attributes.view }" unless pageClass
+        throw "Failed to resolve page class #{ @attributes.view }" unless controllerClass
 
-        return new pageClass model: this
+        return new controllerClass model: this
 
     # Get title in plural form
     getPluralTitle: -> @attributes.title.plural

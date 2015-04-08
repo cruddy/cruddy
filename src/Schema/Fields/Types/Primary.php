@@ -11,11 +11,6 @@ use Kalnoy\Cruddy\Entity;
 class Primary extends String {
 
     /**
-     * {@inheritdoc}
-     */
-    protected $type = 'primary';
-
-    /**
      * @param Entity $entity
      * @param string $id
      */

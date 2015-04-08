@@ -42,7 +42,10 @@ class App extends Backbone.Model
             displayLoading: yes
 
         req.done (resp) =>
-            @entities[entity.id] = new Cruddy.Entity.Entity entity for entity in resp
+            for entity in resp
+                modelClass = get(entity.model_class) or Cruddy.Entity.Entity
+
+                @entities[entity.id] = new modelClass entity
 
             @dfd.resolve @
 
@@ -64,7 +67,7 @@ class App extends Backbone.Model
 
         @mainContent.hide()
 
-        @container.append (@entityView = entity.createView()).render().el if entity
+        @container.append (@entityView = entity.createController()).render().el if entity
 
         @updateTitle()
 

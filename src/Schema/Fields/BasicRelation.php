@@ -2,6 +2,7 @@
 
 namespace Kalnoy\Cruddy\Schema\Fields;
 
+use Kalnoy\Cruddy\BaseForm;
 use Kalnoy\Cruddy\Contracts\Filter;
 use RuntimeException;
 use Illuminate\Database\Eloquent\Builder;
@@ -17,23 +18,6 @@ use Kalnoy\Cruddy\Contracts\Field;
 abstract class BasicRelation extends BaseRelation implements SearchProcessor {
 
     /**
-     * {@inheritdoc}
-     */
-    protected $class = 'Cruddy.Fields.Relation';
-
-    /**
-     * {@inheritdoc}
-     */
-    protected $type = 'relation';
-
-    /**
-     * Whether the relation will return collection rather than a single model.
-     *
-     * @var bool
-     */
-    protected $multiple;
-
-    /**
      * The constraint with other field.
      *
      * @var array
@@ -46,6 +30,16 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessor {
      * @var mixed
      */
     public $filter;
+
+    /**
+     * The name of the JavaScript class that is used to render this field.
+     *
+     * @return string
+     */
+    protected function modelClass()
+    {
+        return 'Cruddy.Fields.Relation';
+    }
 
     /**
      * Set the query filter.
@@ -70,7 +64,7 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessor {
     {
         $value = $this->parseData($value);
 
-        return $this->multiple ? $value : reset($value);
+        return $this->isMultiple() ? $value : reset($value);
     }
 
     /**
@@ -120,8 +114,8 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessor {
     /**
      * Get a field of given entity.
      *
-     * @param \Kalnoy\Cruddy\Entity $entity
-     * @param string                $fieldId
+     * @param BaseForm $entity
+     * @param string $fieldId
      *
      * @return \Kalnoy\Cruddy\Contracts\Field
      */
@@ -140,16 +134,16 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessor {
     /**
      * {@inheritdoc}
      */
-    public function extract(Eloquent $model)
+    public function extract($model)
     {
         // Strange, but relations are still resolved even when model doesn't
         // really exists, so wee need to handle this case.
         if ( ! $model->exists)
         {
-            return $this->multiple ? [] : null;
+            return $this->isMultiple() ? [] : null;
         }
 
-        $data = $model->{$this->id};
+        $data = parent::extract($model);
 
         return $data ? $this->reference->simplify($data) : null;
     }
@@ -189,9 +183,7 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessor {
     {
         $this->validateConstraint();
 
-        return
-        [
-            'multiple' => $this->multiple,
+        return [
             'constraint' => $this->constraint,
 
         ] + parent::toArray();

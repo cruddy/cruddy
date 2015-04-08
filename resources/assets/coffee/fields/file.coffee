@@ -7,3 +7,5 @@ class Cruddy.Fields.File extends Cruddy.Fields.Base
         accepts: @attributes.accepts
 
     format: (value) -> if value instanceof File then value.name else value
+
+    getType: -> "file"

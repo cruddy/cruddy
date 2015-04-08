@@ -32,3 +32,5 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
     prepareAttribute: (value) -> if value then value.serialize() else value
 
     isCopyable: -> yes
+
+    getType: -> "inline-relation"

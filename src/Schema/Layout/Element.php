@@ -2,21 +2,23 @@
 
 namespace Kalnoy\Cruddy\Schema\Layout;
 
-class Element {
+use Illuminate\Contracts\Support\Arrayable;
+
+abstract class Element implements Arrayable {
 
     /**
-     * The element class.
+     * @return string
      */
-    protected $class;
+    abstract public function modelClass();
 
     /**
      * Compile an element.
      *
      * @return array
      */
-    public function compile()
+    public function toArray()
     {
-        return [ 'class' => $this->class ];
+        return [ 'class' => $this->modelClass() ];
     }
 
 }

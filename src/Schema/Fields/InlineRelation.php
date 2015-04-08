@@ -14,28 +14,21 @@ use Kalnoy\Cruddy\Service\Validation\ValidationException;
 abstract class InlineRelation extends BaseRelation implements InlineRelationContract {
 
     /**
-     * {@inheritdoc}
-     */
-    protected $class = 'Cruddy.Fields.Embedded';
-
-    /**
-     * {@inheritdoc}
-     */
-    protected $type = 'inline-relation';
-
-    /**
-     * Whether the model relates to many items.
-     *
-     * @var bool
-     */
-    protected $multiple = false;
-
-    /**
      * Extra attributes that will be set on model.
      *
      * @var array|\Closure
      */
     public $extra = [];
+
+    /**
+     * The name of the JavaScript class that is used to render this field.
+     *
+     * @return string
+     */
+    protected function modelClass()
+    {
+        return 'Cruddy.Fields.Embedded';
+    }
 
     /**
      * Set an extra attributes that will be set on model.
@@ -98,7 +91,7 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationCont
     /**
      * {@inheritdoc}
      */
-    public function extract(Model $model)
+    public function extract($model)
     {
         $items = parent::extract($model);
 
@@ -124,7 +117,7 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationCont
     /**
      * {@inheritdoc}
      */
-    public function extractForColumn(Model $model)
+    public function extractForColumn($model)
     {
         return $this->reference->simplify(parent::extract($model));
     }
@@ -150,18 +143,7 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationCont
     {
         if ($label = $this->translate('fields')) return $label;
 
-        return $this->multiple ? $this->reference->getPluralTitle() : $this->reference->getSingularTitle();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function toArray()
-    {
-        return [
-            'multiple' => $this->multiple,
-
-        ] + parent::toArray();
+        return $this->isMultiple() ? $this->reference->getPluralTitle() : $this->reference->getSingularTitle();
     }
 
 }

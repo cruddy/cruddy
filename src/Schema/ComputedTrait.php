@@ -27,9 +27,11 @@ trait ComputedTrait {
     protected $accessor;
 
     /**
-     * {@inheritdoc}
+     * @param mixed $model
+     *
+     * @return mixed
      */
-    public function extract(Model $model)
+    public function extract($model)
     {
         if ( ! $model->exists) return null;
 

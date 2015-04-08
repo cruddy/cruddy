@@ -18,16 +18,14 @@ use Kalnoy\Cruddy\Contracts\Filter;
 abstract class BaseNumber extends BaseInput implements Filter {
 
     /**
-     * {@inheritdoc}
-     */
-    protected $class = 'Cruddy.Fields.Number';
-
-    /**
-     * Whether the number is decimal.
+     * The name of the JavaScript class that is used to render this field.
      *
-     * @var bool
+     * @return string
      */
-    protected $isDecimal = false;
+    protected function modelClass()
+    {
+        return 'Cruddy.Fields.Number';
+    }
 
     /**
      * {@inheritdoc}
@@ -44,7 +42,7 @@ abstract class BaseNumber extends BaseInput implements Filter {
     /**
      * {@inheritdoc}
      */
-    public function extract(Eloquent $model)
+    public function extract($model)
     {
         $value = parent::extract($model);
 
@@ -89,18 +87,6 @@ abstract class BaseNumber extends BaseInput implements Filter {
         }
 
         if ($value and $operator) $builder->where($this->id, $operator, $value);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function toArray()
-    {
-        return
-        [
-            'is_decimal' => $this->isDecimal,
-
-        ] + parent::toArray();
     }
 
 }

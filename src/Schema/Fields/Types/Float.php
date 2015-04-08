@@ -12,11 +12,6 @@ use Kalnoy\Cruddy\Schema\Fields\BaseNumber;
 class Float extends BaseNumber {
 
     /**
-     * @var string
-     */
-    protected $type = 'float';
-
-    /**
      * {@inheritdoc}
      *
      * @return float

@@ -2,10 +2,6 @@
 
 namespace Kalnoy\Cruddy\Contracts;
 
-use Illuminate\Database\Eloquent\Model as Eloquent;
-use Illuminate\Database\Query\Builder as QueryBuilder;
-use Kalnoy\Cruddy\Contracts\Attribute;
-
 /**
  * Base interface for all fields.
  *
@@ -31,11 +27,11 @@ interface Field extends Attribute {
     /**
      * Extract data from a model for column.
      *
-     * @param Eloquent $model
+     * @param mixed $model
      *
      * @return mixed
      */
-    public function extractForColumn(Eloquent $model);
+    public function extractForColumn($model);
 
     /**
      * Process a value and convert it to a format consumable by a validator

@@ -1,7 +1,6 @@
 <?php
 
 namespace Kalnoy\Cruddy\Schema\Fields\InlineTypes;
-use Kalnoy\Cruddy\Schema\Fields\InlineTypes\HasOne;
 
 /**
  * Field to edit many inline models.
@@ -11,7 +10,13 @@ use Kalnoy\Cruddy\Schema\Fields\InlineTypes\HasOne;
 class HasMany extends HasOne {
 
     /**
-     * {@inheritdoc}
+     * Get whether the relations works with a collection of models.
+     *
+     * @return bool
      */
-    protected $multiple = true;
+    public function isMultiple()
+    {
+        return true;
+    }
+
 }

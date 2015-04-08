@@ -2,9 +2,7 @@
 
 namespace Kalnoy\Cruddy\Schema\Filters;
 
-use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
-use Kalnoy\Cruddy\Contracts\Filter;
 use Kalnoy\Cruddy\Contracts\SearchProcessor;
 use Kalnoy\Cruddy\Schema\BaseCollection;
 

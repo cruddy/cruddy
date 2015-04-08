@@ -15,6 +15,8 @@ class Cruddy.Fields.BaseDateTime extends Cruddy.Fields.Base
 
     format: (value) -> if value is null then NOT_AVAILABLE else @formatDate value
 
+    getType: -> "datetime"
+
 class Cruddy.Fields.Date extends Cruddy.Fields.BaseDateTime
     inputFormat: "YYYY-MM-DD"
     mask: "9999-99-99"

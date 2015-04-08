@@ -16,11 +16,6 @@ class Computed extends BaseField {
     use ComputedTrait;
 
     /**
-     * {@inheritdoc}
-     */
-    protected $class = 'Cruddy.Fields.Computed';
-
-    /**
      * @param Entity $entity
      * @param string $id
      * @param string $accessor
@@ -33,11 +28,13 @@ class Computed extends BaseField {
     }
 
     /**
-     * {@inheritdoc}
+     * The name of the JavaScript class that is used to render this field.
+     *
+     * @return string
      */
-    public function isDisabled($action)
+    protected function modelClass()
     {
-        return $action != Entity::WHEN_NEW or $this->default !== null;
+        return 'Cruddy.Fields.Computed';
     }
 
     /**

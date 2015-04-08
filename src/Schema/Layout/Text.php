@@ -7,11 +7,6 @@ use Kalnoy\Cruddy\Helpers;
 class Text extends Element {
 
     /**
-     * {@inheritdoc}
-     */
-    protected $class = 'Text';
-
-    /**
      * The contents.
      *
      * @var string
@@ -27,11 +22,19 @@ class Text extends Element {
     }
 
     /**
+     * @return string
+     */
+    public function modelClass()
+    {
+        return 'Cruddy.Layout.Text';
+    }
+
+    /**
      * {@inheritdoc}
      */
-    public function compile()
+    public function toArray()
     {
-        return [ 'contents' => Helpers::tryTranslate($this->contents) ] + parent::compile();
+        return [ 'contents' => Helpers::tryTranslate($this->contents) ] + parent::toArray();
     }
 
 }

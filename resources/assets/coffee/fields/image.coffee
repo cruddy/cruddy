@@ -14,3 +14,5 @@ class Cruddy.Fields.Image extends Cruddy.Fields.File
         formatter: new Cruddy.Fields.Image.Formatter
             width: @attributes.width
             height: @attributes.height
+
+    getType: -> "image"

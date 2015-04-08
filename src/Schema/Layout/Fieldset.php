@@ -4,12 +4,7 @@ namespace Kalnoy\Cruddy\Schema\Layout;
 
 use Kalnoy\Cruddy\Helpers;
 
-class Fieldset extends BaseFieldset {
-
-    /**
-     * {@inheritdoc}
-     */
-    protected $class = 'Fieldset';
+class FieldSet extends BaseFieldSet {
 
     /**
      * The title.
@@ -19,9 +14,10 @@ class Fieldset extends BaseFieldset {
     public $title;
 
     /**
-     * Init the fieldset.
+     * Init the field set.
      *
      * @param string $title
+     * @param mixed $items
      */
     public function __construct($title = null, $items = null)
     {
@@ -31,11 +27,19 @@ class Fieldset extends BaseFieldset {
     }
 
     /**
+     * @return string
+     */
+    public function modelClass()
+    {
+        return 'Cruddy.Layout.FieldSet';
+    }
+
+    /**
      * {@inheritdoc}
      */
-    public function compile()
+    public function toArray()
     {
-        return [ 'title' => Helpers::tryTranslate($this->title) ] + parent::compile();
+        return [ 'title' => Helpers::tryTranslate($this->title) ] + parent::toArray();
     }
 
 }

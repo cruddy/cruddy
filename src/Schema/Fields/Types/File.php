@@ -9,38 +9,37 @@ use Kalnoy\Cruddy\Schema\Fields\BaseField;
  * @property string $accepts
  * @method $this accepts(string $value)
  *
+ * @property bool $many
+ * @method $this many(bool $value = true)
+ *
  * @since 1.0.0
  */
 class File extends BaseField {
 
     /**
-     * {@inheritdoc}
-     */
-    protected $class = 'Cruddy.Fields.File';
-
-    /**
-     * {@inheritdoc}
-     */
-    protected $type = 'file';
-
-    /**
-     * The default value for "accepts".
-     */
-    protected static $defaultAccepts;
-
-    /**
-     * Whether there going to be a few files.
+     * The name of the JavaScript class that is used to render this field.
      *
-     * @var bool
+     * @return string
      */
-    public $multiple = false;
+    protected function modelClass()
+    {
+        return 'Cruddy.Fields.File';
+    }
+
+    /**
+     * @return string
+     */
+    protected function defaultAccepts()
+    {
+        return null;
+    }
 
     /**
      * {@inheritdoc}
      *
      * @return string[]|string
      */
-    public function extract(Eloquent $model)
+    public function extract($model)
     {
         $value = parent::extract($model);
 
@@ -62,28 +61,13 @@ class File extends BaseField {
     }
 
     /**
-     * Set multiple value.
-     *
-     * @param bool $value
-     *
-     * @return $this
-     */
-    public function many($value = true)
-    {
-        $this->multiple = $value;
-
-        return $this;
-    }
-
-    /**
      * {@inheritdoc}
      */
     public function toArray()
     {
-        return
-        [
-            'multiple' => $this->multiple,
-            'accepts' => $this->get('accepts', static::$defaultAccepts),
+        return [
+            'multiple' => $this->many,
+            'accepts' => $this->get('accepts', $this->defaultAccepts()),
             'unique' => true,
 
         ] + parent::toArray();

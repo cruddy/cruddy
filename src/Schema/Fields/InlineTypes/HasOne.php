@@ -13,6 +13,21 @@ use Kalnoy\Cruddy\Schema\Fields\InlineRelation;
 class HasOne extends InlineRelation {
 
     /**
+     * @var \Illuminate\Database\Eloquent\Relations\HasOne
+     */
+    protected $relation;
+
+    /**
+     * Get whether the relations works with a collection of models.
+     *
+     * @return bool
+     */
+    public function isMultiple()
+    {
+        return false;
+    }
+
+    /**
      * @param Model $model
      * @param Model $parent
      */

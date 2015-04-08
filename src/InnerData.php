@@ -5,7 +5,7 @@ namespace Kalnoy\Cruddy;
 use Illuminate\Database\Eloquent\Model;
 use Kalnoy\Cruddy\Contracts\InlineRelation;
 
-class InnerData extends Data {
+class InnerData extends EntityDataBase {
 
     /**
      * @var null|string

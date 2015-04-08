@@ -24,3 +24,5 @@ class Cruddy.Fields.Boolean extends Cruddy.Fields.Base
         return false if value is 0
 
         return null
+
+    getType: -> "bool"

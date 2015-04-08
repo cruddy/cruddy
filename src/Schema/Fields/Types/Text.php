@@ -15,14 +15,14 @@ use Kalnoy\Cruddy\Schema\Fields\BaseField;
 class Text extends BaseField {
 
     /**
-     * {@inheritdoc}
+     * The name of the JavaScript class that is used to render this field.
+     *
+     * @return string
      */
-    protected $type = 'text';
-
-    /**
-     * {@inheritdoc}
-     */
-    protected $class = 'Cruddy.Fields.Text';
+    protected function modelClass()
+    {
+        return 'Cruddy.Fields.Text';
+    }
 
     /**
      * {@inheritdoc}

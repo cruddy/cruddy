@@ -1,6 +1,7 @@
 <?php namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
 use Illuminate\Database\Query\Builder;
+use Kalnoy\Cruddy\BaseForm;
 use Kalnoy\Cruddy\Contracts\Filter;
 use Kalnoy\Cruddy\Helpers;
 use Kalnoy\Cruddy\Schema\Fields\BaseInput;
@@ -16,31 +17,38 @@ use Kalnoy\Cruddy\Schema\Fields\BaseInput;
 class Enum extends BaseInput implements Filter {
 
     /**
-     * {@inheritdoc}
+     * @var mixed
      */
-    protected $class = 'Cruddy.Fields.Enum';
+    protected $items;
 
     /**
-     * {@inheritdoc}
+     * @param BaseForm $entity
+     * @param string $id
+     * @param $items
      */
-    protected $type = 'enum';
+    public function __construct(BaseForm $entity, $id, $items)
+    {
+        parent::__construct($entity, $id);
+
+        $this->items = $items;
+    }
 
     /**
-     * {@inheritdoc}
+     * The name of the JavaScript class that is used to render this field.
+     *
+     * @return string
      */
-    protected $filterType = self::FILTER_COMPLEX;
-
-    /**
-     * @var array|Callable
-     */
-    public $items;
+    protected function modelClass()
+    {
+        return 'Cruddy.Fields.Enum';
+    }
 
     /**
      * {@inheritdoc}
      */
     public function process($value)
     {
-        $items = value($this->items);
+        $items = $this->getItems();
 
         if ( ! isset($items[$value])) return null;
 
@@ -52,7 +60,7 @@ class Enum extends BaseInput implements Filter {
      */
     public function applyFilterConstraint(Builder $query, $data)
     {
-        $query->where($this->id, $data);
+        $query->where($this->id, '=', $data);
     }
 
     /**
@@ -77,11 +85,20 @@ class Enum extends BaseInput implements Filter {
      */
     public function toArray()
     {
-        return
-        [
+        return [
             'prompt' => Helpers::tryTranslate($this->get('prompt')),
             'items' => $this->translateItems(value($this->items)),
 
         ] + parent::toArray();
+    }
+
+    /**
+     * @return array
+     */
+    protected function getItems()
+    {
+        if ($this->items instanceof \Closure) $this->items = value($this->items);
+
+        return $this->items;
     }
 }

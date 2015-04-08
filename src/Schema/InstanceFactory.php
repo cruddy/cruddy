@@ -29,8 +29,7 @@ class InstanceFactory {
     /**
      * Init instance factory.
      *
-     * @param BaseFactory    $factory
-     * @param Entity         $entity
+     * @param BaseFactory $factory
      * @param BaseCollection $collection
      */
     public function __construct(BaseFactory $factory, BaseCollection $collection)

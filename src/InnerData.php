@@ -5,7 +5,7 @@ namespace Kalnoy\Cruddy;
 use Illuminate\Database\Eloquent\Model;
 use Kalnoy\Cruddy\Contracts\InlineRelation;
 
-class InnerData extends EntityDataBase {
+class InnerData extends EntityData {
 
     /**
      * @var null|string
@@ -35,10 +35,9 @@ class InnerData extends EntityDataBase {
     public function __construct(InlineRelation $relation, $cid, array $data)
     {
         $this->relation = $relation;
-        $this->entity = $relation->getReference();
         $this->cid = $cid;
 
-        $this->process($data);
+        parent::__construct($relation->getReference(), $data);
     }
 
     /**

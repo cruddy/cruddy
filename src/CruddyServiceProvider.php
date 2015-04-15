@@ -118,6 +118,7 @@ class CruddyServiceProvider extends ServiceProvider {
 
             $builder->setUrlGenerator($app->make('url'));
             $builder->setTranslator($app->make('translator'));
+            $builder->setContainer($app);
 
             return $builder;
         });

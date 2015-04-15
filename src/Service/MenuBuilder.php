@@ -2,6 +2,7 @@
 
 namespace Kalnoy\Cruddy\Service;
 
+use Illuminate\Contracts\Container\Container;
 use Illuminate\Html\HtmlBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Routing\UrlGenerator;
@@ -22,6 +23,11 @@ class MenuBuilder extends \Illuminate\Html\MenuBuilder {
      * @var Environment
      */
     protected $env;
+
+    /**
+     * @var Container
+     */
+    protected $container;
 
     /**
      * Initialize menu.
@@ -116,4 +122,54 @@ class MenuBuilder extends \Illuminate\Html\MenuBuilder {
 
         return $label;
     }
+
+    /**
+     * @param $items
+     *
+     * @return mixed
+     */
+    protected function getArrayable($items)
+    {
+        if (is_string($items))
+        {
+            $callable = $this->getCallable($items);
+
+            return $this->getArrayable(call_user_func($callable));
+        }
+
+        return parent::getArrayable($items);
+    }
+
+    /**
+     * @param $items
+     *
+     * @return array
+     */
+    protected function getCallable($items)
+    {
+        $segments = explode('@', $items, 2);
+
+        return [ $this->resolveClass($segments[0]), isset($segments[1]) ? $segments[1] : 'menu' ];
+    }
+
+    /**
+     * @param $name
+     *
+     * @return mixed
+     */
+    protected function resolveClass($name)
+    {
+        if ($this->container) return $this->container->make($name);
+
+        return $name;
+    }
+
+    /**
+     * @param Container $container
+     */
+    public function setContainer(Container $container)
+    {
+        $this->container = $container;
+    }
+
 }

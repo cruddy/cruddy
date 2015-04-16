@@ -126,7 +126,7 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
     prepareAttributes: (attributes, model) ->
         result = {}
-        result[key] = field.prepareAttribute value for key, value of attributes when (field = @getField(key)) and field.isEditable(model)
+        result[key] = field.prepareAttribute value for key, value of attributes when field = @getField(key)
 
         return result
 

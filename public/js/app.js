@@ -4816,7 +4816,7 @@
       result = {};
       for (key in attributes) {
         value = attributes[key];
-        if ((field = this.getField(key)) && field.isEditable(model)) {
+        if (field = this.getField(key)) {
           result[key] = field.prepareAttribute(value);
         }
       }

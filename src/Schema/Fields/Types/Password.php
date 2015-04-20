@@ -17,6 +17,14 @@ use Kalnoy\Cruddy\Schema\Fields\BaseTextField;
 class Password extends BaseTextField {
 
     /**
+     * @return string
+     */
+    protected function inputType()
+    {
+        return 'password';
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function extract($model)

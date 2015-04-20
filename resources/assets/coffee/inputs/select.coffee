@@ -18,6 +18,21 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.BaseText
 
         super
 
+    applyChanges: (data, external) ->
+        @$el.val @_transformValue data if external
+
+        this
+
+    _transformValue: (value) ->
+        return @emptyValue() if _.isEmpty value
+
+        if _.isArray value
+            if @multiple then value else value[0]
+        else
+            if @multiple then [ value ] else value
+
+    emptyValue: -> if @multiple then [] else null
+
     template: ->
         html = ""
         html += @optionTemplate "", @prompt ? Cruddy.lang.not_selected, @required if @hasPrompt()

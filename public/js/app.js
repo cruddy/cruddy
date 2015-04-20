@@ -2335,6 +2335,40 @@
       return Select.__super__.render.apply(this, arguments);
     };
 
+    Select.prototype.applyChanges = function(data, external) {
+      if (external) {
+        this.$el.val(this._transformValue(data));
+      }
+      return this;
+    };
+
+    Select.prototype._transformValue = function(value) {
+      if (_.isEmpty(value)) {
+        return this.emptyValue();
+      }
+      if (_.isArray(value)) {
+        if (this.multiple) {
+          return value;
+        } else {
+          return value[0];
+        }
+      } else {
+        if (this.multiple) {
+          return [value];
+        } else {
+          return value;
+        }
+      }
+    };
+
+    Select.prototype.emptyValue = function() {
+      if (this.multiple) {
+        return [];
+      } else {
+        return null;
+      }
+    };
+
     Select.prototype.template = function() {
       var html, key, value, _ref, _ref1;
       html = "";
@@ -3792,6 +3826,14 @@
         return _results;
       })();
       return labels.join(", ");
+    };
+
+    Enum.prototype.parseFilterData = function(value) {
+      if (_.isString(value)) {
+        return value.split(",");
+      } else {
+        return null;
+      }
     };
 
     Enum.prototype.getType = function() {

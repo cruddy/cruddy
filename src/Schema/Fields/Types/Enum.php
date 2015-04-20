@@ -51,15 +51,9 @@ class Enum extends BaseInput implements Filter {
      */
     public function process($value)
     {
-        $items = array_keys($this->getItems());
+        $value = $this->parse($value);
 
-        if (is_string($value)) $value = explode(',', $value);
-
-        if (empty($value)) return $this->multiple ? [] : null;
-
-        $value = array_intersect($items, (array)$value);
-
-        return $this->multiple ? array_values($value) : reset($value);
+        return $this->multiple ? $value : reset($value);
     }
 
     /**
@@ -67,7 +61,7 @@ class Enum extends BaseInput implements Filter {
      */
     public function applyFilterConstraint(Builder $query, $data)
     {
-        if ($this->multiple or ! ($data = $this->process($data))) return;
+        if ($this->multiple or ! ($data = $this->parse($data))) return;
 
         $query->whereNested(function ($inner) use ($data)
         {
@@ -77,8 +71,6 @@ class Enum extends BaseInput implements Filter {
             }
         });
     }
-
-
 
     /**
      * Translate items if possible.
@@ -119,4 +111,23 @@ class Enum extends BaseInput implements Filter {
 
         return $this->items;
     }
+
+    /**
+     * Parse value and return array of valid items.
+     *
+     * @param $value
+     *
+     * @return array
+     */
+    protected function parse($value)
+    {
+        if (empty($value)) return [];
+
+        if (is_string($value)) $value = explode(',', $value);
+
+        $items = array_keys($this->getItems());
+
+        return array_values(array_intersect($items, (array)$value));
+    }
+
 }

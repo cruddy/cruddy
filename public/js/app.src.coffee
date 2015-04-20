@@ -1675,6 +1675,21 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.BaseText
 
         super
 
+    applyChanges: (data, external) ->
+        @$el.val @_transformValue data if external
+
+        this
+
+    _transformValue: (value) ->
+        return @emptyValue() if _.isEmpty value
+
+        if _.isArray value
+            if @multiple then value else value[0]
+        else
+            if @multiple then [ value ] else value
+
+    emptyValue: -> if @multiple then [] else null
+
     template: ->
         html = ""
         html += @optionTemplate "", @prompt ? Cruddy.lang.not_selected, @required if @hasPrompt()
@@ -2413,7 +2428,7 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
     prepareFilterData: (value) ->
         value = super
 
-        return if _.isEmpty value then null else value
+        if _.isEmpty value then null else value
 
     parseFilterData: (value) ->
         return null unless _.isString(value) or _.isNumber(value)
@@ -2520,6 +2535,8 @@ class Cruddy.Fields.Enum extends Cruddy.Fields.Input
         labels = ((if key of items then items[key] else key) for key in value)
 
         labels.join ", "
+
+    parseFilterData: (value) -> if _.isString value then value.split "," else null
 
     getType: -> "enum"
 class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView

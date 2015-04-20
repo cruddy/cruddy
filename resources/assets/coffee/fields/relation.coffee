@@ -40,7 +40,7 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
     prepareFilterData: (value) ->
         value = super
 
-        return if _.isEmpty value then null else value
+        if _.isEmpty value then null else value
 
     parseFilterData: (value) ->
         return null unless _.isString(value) or _.isNumber(value)

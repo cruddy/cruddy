@@ -26,4 +26,6 @@ class Cruddy.Fields.Enum extends Cruddy.Fields.Input
 
         labels.join ", "
 
+    parseFilterData: (value) -> if _.isString value then value.split "," else null
+
     getType: -> "enum"

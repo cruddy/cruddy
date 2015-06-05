@@ -25,7 +25,7 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
         e.preventDefault()
         e.stopPropagation()
 
-        @collection.add @field.getReference().createInstance(), focus: yes
+        @collection.add @field.getReferencedEntity().createInstance(), focus: yes
 
         this
 
@@ -83,7 +83,7 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
         <div class="body" id="#{ @componentId "body" }"></div>
         """
 
-    canCreate: -> @isEditable and @field.getReference().createPermitted()
+    canCreate: -> @isEditable and @field.getReferencedEntity().createPermitted()
 
     dispose: ->
         view.remove() for cid, view of @views

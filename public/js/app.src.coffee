@@ -2368,15 +2368,15 @@ class Cruddy.Fields.Boolean extends Cruddy.Fields.Base
     getType: -> "bool"
 class Cruddy.Fields.BaseRelation extends Cruddy.Fields.Base
 
-    isVisible: -> @getReference().readPermitted() and super
+    isVisible: -> @getReferencedEntity().readPermitted() and super
 
     # Get the referenced entity
-    getReference: ->
+    getReferencedEntity: ->
         @reference = Cruddy.app.entity @attributes.reference if not @reference
 
         @reference
 
-    getFilterLabel: -> @getReference().getSingularTitle()
+    getFilterLabel: -> @getReferencedEntity().getSingularTitle()
 
     formatItem: (item) -> item.title
 
@@ -2392,7 +2392,7 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         model: model
         key: @id
         multiple: @attributes.multiple
-        reference: @getReference()
+        reference: @getReferencedEntity()
         owner: @entity.id + "." + @id
         constraint: @attributes.constraint
         enabled: not forceDisable and @isEditable(model)
@@ -2400,19 +2400,19 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
     createFilterInput: (model) -> new Cruddy.Inputs.EntityDropdown
         model: model
         key: @id
-        reference: @getReference()
+        reference: @getReferencedEntity()
         allowEdit: no
         placeholder: Cruddy.lang.any_value
         owner: @entity.id + "." + @id
         constraint: @attributes.constraint
         multiple: yes
 
-    isEditable: -> @getReference().readPermitted() and super
+    isEditable: -> @getReferencedEntity().readPermitted() and super
 
-    canFilter: -> @getReference().readPermitted() and super
+    canFilter: -> @getReferencedEntity().readPermitted() and super
 
     formatItem: (item) ->
-        ref = @getReference()
+        ref = @getReferencedEntity()
 
         return item.title unless ref.readPermitted()
 
@@ -2566,7 +2566,7 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
         e.preventDefault()
         e.stopPropagation()
 
-        @collection.add @field.getReference().createInstance(), focus: yes
+        @collection.add @field.getReferencedEntity().createInstance(), focus: yes
 
         this
 
@@ -2624,7 +2624,7 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
         <div class="body" id="#{ @componentId "body" }"></div>
         """
 
-    canCreate: -> @isEditable and @field.getReference().createPermitted()
+    canCreate: -> @isEditable and @field.getReferencedEntity().createPermitted()
 
     dispose: ->
         view.remove() for cid, view of @views
@@ -2798,11 +2798,12 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
     parse: (model, items) ->
         return items if items instanceof Cruddy.Fields.RelatedCollection
 
-        unless @attributes.multiple
-            items = if items or @isRequired(model) then [ items ] else []
+        # create default item if no data is available and field is required
+        items = [ {} ] if _.isEmpty(items) and @isRequired(model)
 
-        ref = @getReference()
-        items = (ref.createInstance item for item in items)
+        ref = @getReferencedEntity()
+
+        items = (ref.createInstance item for item in items or [])
 
         if collection = model.get @id
             collection.reset items
@@ -2822,7 +2823,7 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
 
     copyAttribute: (model, copy) -> model.get(@id).copy(copy)
 
-    prepareAttribute: (value) -> if value then value.serialize() else value
+    prepareAttribute: (value) -> if value then value.serialize() else null
 
     isCopyable: -> yes
 

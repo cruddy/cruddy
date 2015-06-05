@@ -1,14 +1,14 @@
 class Cruddy.Fields.BaseRelation extends Cruddy.Fields.Base
 
-    isVisible: -> @getReference().readPermitted() and super
+    isVisible: -> @getReferencedEntity().readPermitted() and super
 
     # Get the referenced entity
-    getReference: ->
+    getReferencedEntity: ->
         @reference = Cruddy.app.entity @attributes.reference if not @reference
 
         @reference
 
-    getFilterLabel: -> @getReference().getSingularTitle()
+    getFilterLabel: -> @getReferencedEntity().getSingularTitle()
 
     formatItem: (item) -> item.title
 

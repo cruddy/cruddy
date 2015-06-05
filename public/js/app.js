@@ -3519,10 +3519,10 @@
     }
 
     BaseRelation.prototype.isVisible = function() {
-      return this.getReference().readPermitted() && BaseRelation.__super__.isVisible.apply(this, arguments);
+      return this.getReferencedEntity().readPermitted() && BaseRelation.__super__.isVisible.apply(this, arguments);
     };
 
-    BaseRelation.prototype.getReference = function() {
+    BaseRelation.prototype.getReferencedEntity = function() {
       if (!this.reference) {
         this.reference = Cruddy.app.entity(this.attributes.reference);
       }
@@ -3530,7 +3530,7 @@
     };
 
     BaseRelation.prototype.getFilterLabel = function() {
-      return this.getReference().getSingularTitle();
+      return this.getReferencedEntity().getSingularTitle();
     };
 
     BaseRelation.prototype.formatItem = function(item) {
@@ -3575,7 +3575,7 @@
         model: model,
         key: this.id,
         multiple: this.attributes.multiple,
-        reference: this.getReference(),
+        reference: this.getReferencedEntity(),
         owner: this.entity.id + "." + this.id,
         constraint: this.attributes.constraint,
         enabled: !forceDisable && this.isEditable(model)
@@ -3586,7 +3586,7 @@
       return new Cruddy.Inputs.EntityDropdown({
         model: model,
         key: this.id,
-        reference: this.getReference(),
+        reference: this.getReferencedEntity(),
         allowEdit: false,
         placeholder: Cruddy.lang.any_value,
         owner: this.entity.id + "." + this.id,
@@ -3596,16 +3596,16 @@
     };
 
     Relation.prototype.isEditable = function() {
-      return this.getReference().readPermitted() && Relation.__super__.isEditable.apply(this, arguments);
+      return this.getReferencedEntity().readPermitted() && Relation.__super__.isEditable.apply(this, arguments);
     };
 
     Relation.prototype.canFilter = function() {
-      return this.getReference().readPermitted() && Relation.__super__.canFilter.apply(this, arguments);
+      return this.getReferencedEntity().readPermitted() && Relation.__super__.canFilter.apply(this, arguments);
     };
 
     Relation.prototype.formatItem = function(item) {
       var ref;
-      ref = this.getReference();
+      ref = this.getReferencedEntity();
       if (!ref.readPermitted()) {
         return item.title;
       }
@@ -3878,7 +3878,7 @@
     EmbeddedView.prototype.create = function(e) {
       e.preventDefault();
       e.stopPropagation();
-      this.collection.add(this.field.getReference().createInstance(), {
+      this.collection.add(this.field.getReferencedEntity().createInstance(), {
         focus: true
       });
       return this;
@@ -3941,7 +3941,7 @@
     };
 
     EmbeddedView.prototype.canCreate = function() {
-      return this.isEditable && this.field.getReference().createPermitted();
+      return this.isEditable && this.field.getReferencedEntity().createPermitted();
     };
 
     EmbeddedView.prototype.dispose = function() {
@@ -4218,15 +4218,16 @@
       if (items instanceof Cruddy.Fields.RelatedCollection) {
         return items;
       }
-      if (!this.attributes.multiple) {
-        items = items || this.isRequired(model) ? [items] : [];
+      if (_.isEmpty(items) && this.isRequired(model)) {
+        items = [{}];
       }
-      ref = this.getReference();
+      ref = this.getReferencedEntity();
       items = (function() {
-        var _i, _len, _results;
+        var _i, _len, _ref, _results;
+        _ref = items || [];
         _results = [];
-        for (_i = 0, _len = items.length; _i < _len; _i++) {
-          item = items[_i];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          item = _ref[_i];
           _results.push(ref.createInstance(item));
         }
         return _results;
@@ -4262,7 +4263,7 @@
       if (value) {
         return value.serialize();
       } else {
-        return value;
+        return null;
       }
     };
 

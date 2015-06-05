@@ -5,11 +5,12 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
     parse: (model, items) ->
         return items if items instanceof Cruddy.Fields.RelatedCollection
 
-        unless @attributes.multiple
-            items = if items or @isRequired(model) then [ items ] else []
+        # create default item if no data is available and field is required
+        items = [ {} ] if _.isEmpty(items) and @isRequired(model)
 
-        ref = @getReference()
-        items = (ref.createInstance item for item in items)
+        ref = @getReferencedEntity()
+
+        items = (ref.createInstance item for item in items or [])
 
         if collection = model.get @id
             collection.reset items
@@ -29,7 +30,7 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
 
     copyAttribute: (model, copy) -> model.get(@id).copy(copy)
 
-    prepareAttribute: (value) -> if value then value.serialize() else value
+    prepareAttribute: (value) -> if value then value.serialize() else null
 
     isCopyable: -> yes
 

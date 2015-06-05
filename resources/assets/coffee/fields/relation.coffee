@@ -4,7 +4,7 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         model: model
         key: @id
         multiple: @attributes.multiple
-        reference: @getReference()
+        reference: @getReferencedEntity()
         owner: @entity.id + "." + @id
         constraint: @attributes.constraint
         enabled: not forceDisable and @isEditable(model)
@@ -12,19 +12,19 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
     createFilterInput: (model) -> new Cruddy.Inputs.EntityDropdown
         model: model
         key: @id
-        reference: @getReference()
+        reference: @getReferencedEntity()
         allowEdit: no
         placeholder: Cruddy.lang.any_value
         owner: @entity.id + "." + @id
         constraint: @attributes.constraint
         multiple: yes
 
-    isEditable: -> @getReference().readPermitted() and super
+    isEditable: -> @getReferencedEntity().readPermitted() and super
 
-    canFilter: -> @getReference().readPermitted() and super
+    canFilter: -> @getReferencedEntity().readPermitted() and super
 
     formatItem: (item) ->
-        ref = @getReference()
+        ref = @getReferencedEntity()
 
         return item.title unless ref.readPermitted()
 

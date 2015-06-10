@@ -5,16 +5,10 @@ namespace Kalnoy\Cruddy;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Contracts\Routing\Registrar;
 use Illuminate\Contracts\Routing\UrlGenerator;
-use Illuminate\Html\HtmlBuilder;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\View\Factory;
 use Kalnoy\Cruddy\Service\MenuBuilder;
-use Kalnoy\Cruddy\Repo\BaseRepository;
-use Kalnoy\Cruddy\Service\Permissions\PermissionsManager;
-use Kalnoy\Cruddy\Console\MakeEntityCommand;
-use Kalnoy\Cruddy\Console\CompileCommand;
-use Kalnoy\Cruddy\Console\ClearCompiledCommand;
 use Kalnoy\Cruddy\Service\PermitsEverything;
 use Kalnoy\Cruddy\Service\ThumbnailFactory;
 use Intervention\Image\ImageManager;
@@ -57,16 +51,17 @@ class CruddyServiceProvider extends ServiceProvider {
         $this->publishes([
            __DIR__.'/../public' => public_path('cruddy'),
 
-        ], 'cruddy');
+        ], 'public');
 
         $this->publishes([
             __DIR__.'/../resources/views' => base_path('resources/views/vendor/cruddy'),
 
-        ], 'cruddy.views');
+        ], 'views');
 
         $this->publishes([
            __DIR__.'/../config/cruddy.php' => config_path('cruddy.php'),
-        ]);
+
+        ], 'config');
 
         $this->registerRoutes($this->app['router'], $this->app['config']);
 

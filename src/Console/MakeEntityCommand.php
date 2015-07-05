@@ -67,7 +67,7 @@ class MakeEntityCommand extends GeneratorCommand {
      */
     protected function replaceModel($stub, $name)
     {
-        $rootNamespace = $this->laravel->getNamespace();
+        $rootNamespace = trim($this->laravel->getNamespace(), '\\');
 
         return str_replace('DummyModel', $rootNamespace.'\\'.class_basename($name), $stub);
     }

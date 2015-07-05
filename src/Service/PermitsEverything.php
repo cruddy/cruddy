@@ -2,8 +2,8 @@
 
 namespace Kalnoy\Cruddy\Service;
 
+use Kalnoy\Cruddy\BaseForm;
 use Kalnoy\Cruddy\Contracts\Permissions;
-use Kalnoy\Cruddy\Entity;
 
 /**
  * Stub permissions.
@@ -17,7 +17,7 @@ class PermitsEverything implements Permissions {
     /**
      * {@inheritdoc}
      */
-    public function isPermitted($action, Entity $entity)
+    public function isPermitted($action, BaseForm $entity)
     {
         return true;
     }

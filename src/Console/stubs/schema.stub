@@ -1,15 +1,15 @@
 <?php
 
-namespace {{namespace}};
+namespace DummyNamespace;
 
 use Kalnoy\Cruddy\Entity;
 
-class {{class}} extends Entity {
+class DummyClass extends Entity {
 
     /**
      * @var string
      */
-    protected $model = '{{model}}';
+    protected $model = 'DummyModel';
 
     /**
      * The name of the column that is used to convert a model to a string.

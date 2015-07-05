@@ -15,13 +15,6 @@ use Illuminate\Database\Eloquent\Model;
  */
 interface Repository {
 
-    /**
-     * Get new eloquent model.
-     *
-     * @return Model
-     */
-    public function newModel();
-
    /**
     * Get an item by given id.
     *

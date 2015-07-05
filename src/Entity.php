@@ -144,9 +144,13 @@ abstract class Entity extends BaseForm {
      *
      * @return array
      */
-    protected function defaults()
+    protected function defaultAttributes()
     {
-        return $this->defaults;
+        $model = $this->newModel();
+
+        $model->setRawAttributes($this->defaults);
+
+        return $this->getFields()->extract($model);
     }
 
     /**
@@ -537,7 +541,7 @@ abstract class Entity extends BaseForm {
      */
     public function createRepository()
     {
-        $repo = new Stub($this->model, $this->defaults());
+        $repo = new Stub($this->model);
 
         $repo->perPage = $this->perPage;
 
@@ -632,6 +636,14 @@ abstract class Entity extends BaseForm {
     }
 
     /**
+     * @return mixed
+     */
+    public function newModel()
+    {
+        return new $this->model;
+    }
+
+    /**
      * @return string
      */
     protected function modelClass()
@@ -655,7 +667,7 @@ abstract class Entity extends BaseForm {
         $model = new $this->model;
 
         return [
-            'defaults' => $this->getFields()->extract($model),
+            'defaults' => $this->defaultAttributes(),
 
             'primary_key' => $model->getKeyName(),
             'soft_deleting' => false,

@@ -203,7 +203,7 @@ class EntityController extends Controller {
      * @param string $id
      * @param string $action
      *
-     * @return \Kalnoy\Cruddy\BaseForm
+     * @return \Kalnoy\Cruddy\Entity
      */
     protected function resolve($id, $action)
     {

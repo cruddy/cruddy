@@ -24,6 +24,20 @@ class EntityData extends BaseFormData {
     protected $customAction;
 
     /**
+     * @var Entity
+     */
+    protected $form;
+
+    /**
+     * @param Entity $entity
+     * @param array $data
+     */
+    public function __construct(Entity $entity, array $data)
+    {
+        parent::__construct($entity, $data);
+    }
+
+    /**
      * @return array
      */
     public function getValidationErrors()
@@ -51,9 +65,9 @@ class EntityData extends BaseFormData {
     {
         if ( ! $this->isPermitted()) throw new AccessDeniedException;
 
-        $repo = $this->entity->getRepository();
+        $repo = $this->form->getRepository();
 
-        $model = $this->id ? $repo->find($this->id) : $repo->newModel();
+        $model = $this->id ? $repo->find($this->id) : $this->form->newModel();
 
         $repo->save($model, $this->getCleanedInput(), function ($model)
         {
@@ -113,7 +127,7 @@ class EntityData extends BaseFormData {
      */
     protected function addInner(array $data)
     {
-        $fields = $this->entity->getFields();
+        $fields = $this->form->getFields();
 
         foreach ($data as $id => $item)
         {
@@ -153,7 +167,7 @@ class EntityData extends BaseFormData {
      */
     protected function getCleanedInput()
     {
-        return $this->entity->getFields()->cleanInput($this->getAction(), $this->input);
+        return $this->form->getFields()->cleanInput($this->getAction(), $this->input);
     }
 
     /**
@@ -161,7 +175,7 @@ class EntityData extends BaseFormData {
      */
     protected function fireSavingEvent(Model $model)
     {
-        $eventResult = $this->entity->fireEvent('saving', [ $model ]);
+        $eventResult = $this->form->fireEvent('saving', [ $model ]);
 
         if ( ! is_null($eventResult))
         {
@@ -174,7 +188,7 @@ class EntityData extends BaseFormData {
      */
     public function fireSavedEvent(Model $model)
     {
-        $this->entity->fireEvent('saved', [ $model ]);
+        $this->form->fireEvent('saved', [ $model ]);
     }
 
     /**
@@ -200,7 +214,7 @@ class EntityData extends BaseFormData {
     {
         if ($this->customAction)
         {
-            $this->entity->getActions()->execute($model, $this->customAction);
+            $this->form->getActions()->execute($model, $this->customAction);
         }
     }
 
@@ -209,7 +223,7 @@ class EntityData extends BaseFormData {
      */
     protected function isPermitted()
     {
-        return $this->entity->isPermitted($this->getAction());
+        return $this->form->isPermitted($this->getAction());
     }
 
 }

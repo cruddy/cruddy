@@ -7,9 +7,9 @@ use Kalnoy\Cruddy\Service\Validation\ValidationException;
 abstract class BaseFormData {
 
     /**
-     * @var Entity
+     * @var BaseForm
      */
-    protected $entity;
+    protected $form;
 
     /**
      * @var array
@@ -17,12 +17,12 @@ abstract class BaseFormData {
     protected $input;
 
     /**
-     * @param Entity $entity
+     * @param BaseForm $form
      * @param array $data
      */
-    public function __construct(Entity $entity, array $data)
+    public function __construct(BaseForm $form, array $data)
     {
-        $this->entity = $entity;
+        $this->form = $form;
 
         $this->process($data);
     }
@@ -46,8 +46,8 @@ abstract class BaseFormData {
     public function getValidationErrors()
     {
         $result = [];
-        $labels = $this->entity->getFields()->validationLabels();
-        $validator = $this->entity->getValidator();
+        $labels = $this->form->getFields()->validationLabels();
+        $validator = $this->form->getValidator();
 
         if ( ! $validator->validFor($this->getAction(), $this->input, $labels))
         {
@@ -69,7 +69,7 @@ abstract class BaseFormData {
      */
     protected function process(array $data)
     {
-        $this->input = $this->entity->getFields()->process($data);
+        $this->input = $this->form->getFields()->process($data);
     }
 
     /**

@@ -19,13 +19,6 @@ class Stub extends BaseRepository {
     protected $className;
 
     /**
-     * Default attributes.
-     *
-     * @var array
-     */
-    protected $defaults;
-
-    /**
      * Override the per page value.
      *
      * @var int
@@ -38,10 +31,9 @@ class Stub extends BaseRepository {
      * @param string $className
      * @param array  $defaults
      */
-    public function __construct($className, array $defaults = [])
+    public function __construct($className)
     {
         $this->className = $className;
-        $this->defaults = $defaults;
 
         parent::__construct();
     }
@@ -59,13 +51,7 @@ class Stub extends BaseRepository {
      */
     public function newModel()
     {
-        $instance = new $this->className;
-
-        // We will set raw attributes to prevent exceptions when model is
-        // totally guarded.
-        $instance->setRawAttributes($this->defaults, true);
-
-        return $instance;
+        return new $this->className;
     }
 
 }

@@ -24,8 +24,8 @@ class SearchDataSource extends Backbone.Model
 
                 @data.push item for item in resp.items
 
-                @page = resp.current_page
-                @more = resp.current_page < resp.last_page
+                @page = resp.page
+                @more = resp.page < resp.lastPage
                 @request = null
 
                 @trigger "data", @, @data

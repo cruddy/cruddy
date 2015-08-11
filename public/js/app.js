@@ -511,8 +511,8 @@
               item = _ref[_i];
               _this.data.push(item);
             }
-            _this.page = resp.current_page;
-            _this.more = resp.current_page < resp.last_page;
+            _this.page = resp.page;
+            _this.more = resp.page < resp.lastPage;
             _this.request = null;
             _this.trigger("data", _this, _this.data);
             return _this;

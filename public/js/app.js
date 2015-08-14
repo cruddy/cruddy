@@ -3111,7 +3111,10 @@
     };
 
     InputView.prototype.focus = function() {
-      this.input.focus();
+      var _ref;
+      if ((_ref = this.input) != null) {
+        _ref.focus();
+      }
       return this;
     };
 

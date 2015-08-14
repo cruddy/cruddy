@@ -47,7 +47,7 @@ class Cruddy.Fields.InputView extends Cruddy.Fields.BaseView
 
     # Focus the input that this field view holds.
     focus: ->
-        @input.focus()
+        @input?.focus()
 
         this
 

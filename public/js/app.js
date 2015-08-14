@@ -1753,7 +1753,9 @@
     };
 
     EntitySelector.prototype.maybeLoadMore = function() {
-      if ((this.$more != null) && this.items.parent().height() + 50 > this.$more.position().top) {
+      var height;
+      height = this.items.parent().height();
+      if ((this.$more != null) && height > 0 && height + 50 > this.$more.position().top) {
         this.loadMore();
       }
       return this;

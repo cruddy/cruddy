@@ -42,7 +42,9 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         this
 
     maybeLoadMore: ->
-        @loadMore() if @$more? and @items.parent().height() + 50 > @$more.position().top
+        height = @items.parent().height()
+
+        @loadMore() if @$more? and height > 0 and height + 50 > @$more.position().top
 
         this
 

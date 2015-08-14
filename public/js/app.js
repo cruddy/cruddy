@@ -505,6 +505,7 @@
             var item, _i, _len, _ref;
             if (_this.resetData) {
               _this.data = [];
+              _this.resetData = false;
             }
             _ref = resp.items;
             for (_i = 0, _len = _ref.length; _i < _len; _i++) {

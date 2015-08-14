@@ -21,6 +21,7 @@ class SearchDataSource extends Backbone.Model
             success: (resp) =>
                 if @resetData
                     @data = []
+                    @resetData = no
 
                 @data.push item for item in resp.items
 

@@ -64,7 +64,7 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessor {
     {
         $value = $this->parseData($value);
 
-        return $this->isMultiple() ? $value : reset($value);
+        return $this->isMultiple() ? $value : (empty($value) ? null : reset($value));
     }
 
     /**

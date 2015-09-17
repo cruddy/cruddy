@@ -59,6 +59,7 @@ class FluentValidator extends Fluent implements ValidatorContract {
         if ($rules = $this->resolveRules($action))
         {
             $rules    = $this->processRules($rules, $input);
+
             $messages = $this->get('messages', []);
             $labels   = $this->get('customAttributes', []) + $labels;
 
@@ -102,6 +103,9 @@ class FluentValidator extends Fluent implements ValidatorContract {
      */
     public function mergeRules(array $defaultRules, array $rules)
     {
+        $defaultRules = $this->explodeRules($defaultRules);
+        $rules = $this->explodeRules($rules);
+
         foreach ($rules as $k => $rule)
         {
             if (isset($defaultRules[$k]))
@@ -113,6 +117,21 @@ class FluentValidator extends Fluent implements ValidatorContract {
         }
 
         return $defaultRules;
+    }
+
+    /**
+     * @param array $rules
+     *
+     * @return array
+     */
+    protected function explodeRules(array $rules)
+    {
+        foreach ($rules as &$rule)
+        {
+            if (is_string($rule)) $rule = explode('|', $rule);
+        }
+
+        return $rules;
     }
 
     /**
@@ -136,7 +155,7 @@ class FluentValidator extends Fluent implements ValidatorContract {
     }
 
     /**
-     * Process single rule.
+     * Process a single rule.
      *
      * @param string $rule
      * @param array  $input
@@ -145,9 +164,19 @@ class FluentValidator extends Fluent implements ValidatorContract {
      */
     public function processRule($rule, array $input)
     {
+        if (is_array($rule))
+        {
+            foreach ($rule as &$part)
+            {
+                $part = $this->processRule($part, $input);
+            }
+
+            return $rule;
+        }
+
         return preg_replace_callback('/\{([a-z_][a-z0-9_\.]*)\}/i', function ($matches) use ($input)
         {
-            return \array_get($input, $matches[1], '');
+            return \array_get($input, $matches[1], 'NULL');
 
         }, $rule);
     }

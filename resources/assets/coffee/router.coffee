@@ -12,7 +12,7 @@ class Router extends Backbone.Router
         root = Cruddy.baseUrl
         history = Backbone.history
 
-        $(document.body).on "click", "a", (e) =>
+        $(document).on "click", "a", (e) =>
             return if e.isDefaultPrevented()
 
             fragment = e.currentTarget.href

@@ -5960,7 +5960,7 @@
       this.addRoute("index", entities);
       root = Cruddy.baseUrl;
       history = Backbone.history;
-      $(document.body).on("click", "a", (function(_this) {
+      $(document).on("click", "a", (function(_this) {
         return function(e) {
           var fragment, handler, _i, _len, _ref;
           if (e.isDefaultPrevented()) {

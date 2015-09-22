@@ -106,14 +106,14 @@ class FluentValidator extends Fluent implements ValidatorContract {
         $defaultRules = $this->explodeRules($defaultRules);
         $rules = $this->explodeRules($rules);
 
-        foreach ($rules as $k => $rule)
+        foreach ($rules as $attr => $rule)
         {
-            if (isset($defaultRules[$k]))
+            if (isset($defaultRules[$attr]))
             {
-                $rule = $defaultRules[$k] . '|' . $rule;
+                $rule = array_merge($defaultRules[$attr], $rule);
             }
 
-            $defaultRules[$k] = $rule;
+            $defaultRules[$attr] = $rule;
         }
 
         return $defaultRules;

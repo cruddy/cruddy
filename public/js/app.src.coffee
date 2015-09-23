@@ -1684,7 +1684,7 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.BaseText
         this
 
     _transformValue: (value) ->
-        return @emptyValue() if _.isEmpty value
+        return @emptyValue() if (_.isString(value) or _.isArray(value)) and not value.length
 
         if _.isArray value
             if @multiple then value else value[0]

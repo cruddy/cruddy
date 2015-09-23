@@ -2346,7 +2346,7 @@
     };
 
     Select.prototype._transformValue = function(value) {
-      if (_.isEmpty(value)) {
+      if ((_.isString(value) || _.isArray(value)) && !value.length) {
         return this.emptyValue();
       }
       if (_.isArray(value)) {

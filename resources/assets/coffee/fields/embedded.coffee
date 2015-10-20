@@ -18,7 +18,7 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
             return collection
 
         return new Cruddy.Fields.RelatedCollection items,
-            entity: @entity
+            entity: @getReferencedEntity()
             owner: model
             field: this
             maxItems: if @isMultiple() then null else 1

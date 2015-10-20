@@ -4248,7 +4248,7 @@
         return collection;
       }
       return new Cruddy.Fields.RelatedCollection(items, {
-        entity: this.entity,
+        entity: this.getReferencedEntity(),
         owner: model,
         field: this,
         maxItems: this.isMultiple() ? null : 1

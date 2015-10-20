@@ -5,8 +5,11 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
     parse: (model, items) ->
         return items if items instanceof Cruddy.Fields.RelatedCollection
 
-        # create default item if no data is available and field is required
-        items = [ {} ] if _.isEmpty(items) and @isRequired(model)
+        if _.isObject items
+            items = [ items ]
+        else
+            # create default item if no data is available and field is required
+            items = [ {} ] if _.isEmpty(items) and @isRequired(model)
 
         ref = @getReferencedEntity()
 
@@ -18,7 +21,7 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
             return collection
 
         return new Cruddy.Fields.RelatedCollection items,
-            entity: @getReferencedEntity()
+            entity: ref
             owner: model
             field: this
             maxItems: if @isMultiple() then null else 1

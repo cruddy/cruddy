@@ -4229,8 +4229,12 @@
       if (items instanceof Cruddy.Fields.RelatedCollection) {
         return items;
       }
-      if (_.isEmpty(items) && this.isRequired(model)) {
-        items = [{}];
+      if (_.isObject(items)) {
+        items = [items];
+      } else {
+        if (_.isEmpty(items) && this.isRequired(model)) {
+          items = [{}];
+        }
       }
       ref = this.getReferencedEntity();
       items = (function() {
@@ -4248,7 +4252,7 @@
         return collection;
       }
       return new Cruddy.Fields.RelatedCollection(items, {
-        entity: this.getReferencedEntity(),
+        entity: ref,
         owner: model,
         field: this,
         maxItems: this.isMultiple() ? null : 1

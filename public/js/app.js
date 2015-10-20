@@ -4063,6 +4063,7 @@
     }
 
     RelatedCollection.prototype.initialize = function(items, options) {
+      this.entity = options.entity;
       this.owner = options.owner;
       this.field = options.field;
       this.maxItems = options.maxItems;
@@ -4206,6 +4207,10 @@
       return data;
     };
 
+    RelatedCollection.prototype.modelId = function() {
+      return this.entity.getPrimaryKey();
+    };
+
     return RelatedCollection;
 
   })(Backbone.Collection);
@@ -4243,6 +4248,7 @@
         return collection;
       }
       return new Cruddy.Fields.RelatedCollection(items, {
+        entity: this.entity,
         owner: model,
         field: this,
         maxItems: this.isMultiple() ? null : 1

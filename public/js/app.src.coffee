@@ -2705,6 +2705,7 @@ class Cruddy.Fields.EmbeddedItemView extends Cruddy.Layout.Layout
 class Cruddy.Fields.RelatedCollection extends Backbone.Collection
 
     initialize: (items, options) ->
+        @entity = options.entity
         @owner = options.owner
         @field = options.field
         @maxItems = options.maxItems
@@ -2794,6 +2795,8 @@ class Cruddy.Fields.RelatedCollection extends Backbone.Collection
         data[item.cid] = item.serialize() for item in models
 
         return data
+
+    modelId: -> @entity.getPrimaryKey()
 class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
 
     viewConstructor: Cruddy.Fields.EmbeddedView
@@ -2814,6 +2817,7 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
             return collection
 
         return new Cruddy.Fields.RelatedCollection items,
+            entity: @entity
             owner: model
             field: this
             maxItems: if @isMultiple() then null else 1

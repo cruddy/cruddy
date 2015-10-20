@@ -18,7 +18,7 @@
         "php": ">=5.4.0",
         "laravel/framework": "5.1.*",
         "intervention/image": "~2.0",
-        "kalnoy/illuminate-menu": "~1.1.0"
+        "kalnoy/illuminate-menu": "~1.1"
     },
 
     "autoload": {

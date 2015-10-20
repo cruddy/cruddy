@@ -1,6 +1,7 @@
 class Cruddy.Fields.RelatedCollection extends Backbone.Collection
 
     initialize: (items, options) ->
+        @entity = options.entity
         @owner = options.owner
         @field = options.field
         @maxItems = options.maxItems
@@ -90,3 +91,5 @@ class Cruddy.Fields.RelatedCollection extends Backbone.Collection
         data[item.cid] = item.serialize() for item in models
 
         return data
+
+    modelId: -> @entity.getPrimaryKey()

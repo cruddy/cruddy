@@ -4229,20 +4229,19 @@
       if (items instanceof Cruddy.Fields.RelatedCollection) {
         return items;
       }
-      if (_.isObject(items)) {
+      if (items && !_.isArray(items)) {
         items = [items];
-      } else {
-        if (_.isEmpty(items) && this.isRequired(model)) {
-          items = [{}];
-        }
+      }
+      items = items || [];
+      if (_.isEmpty(items) && this.isRequired(model)) {
+        items.push({});
       }
       ref = this.getReferencedEntity();
       items = (function() {
-        var _i, _len, _ref, _results;
-        _ref = items || [];
+        var _i, _len, _results;
         _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          item = _ref[_i];
+        for (_i = 0, _len = items.length; _i < _len; _i++) {
+          item = items[_i];
           _results.push(ref.createInstance(item));
         }
         return _results;

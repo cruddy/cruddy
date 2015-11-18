@@ -46,22 +46,6 @@ class BaseCollection extends Collection {
     }
 
     /**
-     * Get new collection that contains only items specified in an array.
-     *
-     * @param array $columns
-     *
-     * @return BaseCollection
-     */
-    public function only(array $columns)
-    {
-        if ($columns == array('*')) return $this;
-
-        $columns = array_combine($columns, $columns);
-
-        return new static($this->entity, array_intersect_key($this->items, $columns));
-    }
-
-    /**
      * @return array
      */
     public function toArray()

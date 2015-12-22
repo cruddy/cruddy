@@ -31,7 +31,7 @@ class Cruddy.Inputs.Search extends Cruddy.View
         @$el.append @$btns = $ """<div class="input-group-btn"></div>"""
 
         @appendButton """
-            <button type="button" class="btn btn-default btn-search">
+            <button type="button" class="btn btn-default btn-search" title="#{ Cruddy.lang.find }">
                 <span class="glyphicon glyphicon-search"></span>
             </button>
         """

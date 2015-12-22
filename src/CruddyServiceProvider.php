@@ -213,7 +213,9 @@ class CruddyServiceProvider extends ServiceProvider
      */
     protected function getJsFiles($baseDir)
     {
-        return $this->assets($baseDir.'/js', [ 'vendor.min.js', 'app.min.js' ]);
+        $ext = config('app.debug') ? '.min.js' : '.js';
+
+        return $this->assets($baseDir.'/js', [ 'vendor'.$ext, 'app'.$ext ]);
     }
 
     /**

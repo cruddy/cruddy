@@ -55,4 +55,9 @@
 
     'filter_apply' => 'Apply',
     'filter_reset' => 'Reset',
+
+    'reset' => 'Reset',
+    'edit' => 'Edit',
+    'find' => 'Find',
+    'list_show' => 'Show list',
 ];

@@ -1342,13 +1342,7 @@
         return this;
       },
       "hide.bs.dropdown": function(e) {
-        if (this.executingFirstAction) {
-          e.preventDefault();
-        }
-      },
-      "hidden.bs.dropdown": function() {
         this.opened = false;
-        return this;
       }
     };
 
@@ -1425,7 +1419,7 @@
           var form;
           _this.editingForm = form = Cruddy.Entity.Form.display(instance);
           form.once("saved", function(model) {
-            btn.parent().siblings("input").val(model.getTitle());
+            btn.parent().siblings(".form-control").text(model.getTitle());
             return form.remove();
           });
           form.once("destroyed", function(model) {
@@ -1447,7 +1441,9 @@
 
     EntityDropdown.prototype.searchKeydown = function(e) {
       if (e.keyCode === 27) {
-        this.$el.dropdown("toggle");
+        if (this.selector) {
+          this.selector.$el.dropdown("toggle");
+        }
         return false;
       }
     };
@@ -1594,7 +1590,7 @@
     };
 
     EntityDropdown.prototype.renderSingle = function() {
-      this.$el.html(this.itemTemplate("", "0"));
+      this.$el.html(this.itemTemplate(this.placeholder, "0"));
       this.itemTitle = this.$(".form-control");
       this.itemDelete = this.$(".btn-remove");
       this.itemEdit = this.$(".btn-edit");
@@ -1604,7 +1600,7 @@
     EntityDropdown.prototype.updateItem = function() {
       var value;
       value = this.getValue();
-      this.itemTitle.val(value ? this.itemToString(value) : "");
+      this.itemTitle.text(value ? this.itemToString(value) : this.placeholder);
       this.itemDelete.toggle(!!value);
       this.itemEdit.toggle(!!value);
       return this;
@@ -1631,7 +1627,7 @@
       if (key == null) {
         key = null;
       }
-      html = "<div class=\"input-group ed-item " + (!this.multiple ? "ed-dropdown-toggle" : "") + "\" data-key=\"" + key + "\">\n    <input type=\"text\" class=\"form-control\" " + (this.multiple ? "tab-index='-1'" : "placeholder='" + this.placeholder + "'") + " value=\"" + (_.escape(value)) + "\" readonly>";
+      html = "<div class=\"input-group ed-item " + (!this.multiple ? "ed-dropdown-toggle" : "") + "\" data-key=\"" + key + "\">\n    <div class=\"form-control\">" + (_.escape(value)) + "</div>";
       if (!_.isEmpty(buttons = this.buttonsTemplate())) {
         html += "<div class=\"input-group-btn\">\n    " + buttons + "\n</div>";
       }
@@ -1642,13 +1638,13 @@
       var html;
       html = "";
       if (this.enabled) {
-        html += "<button type=\"button\" class=\"btn btn-default btn-remove\" tabindex=\"-1\">\n    <span class=\"glyphicon glyphicon-remove\"></span>\n</button>";
+        html += "<button type=\"button\" class=\"btn btn-default btn-remove\" tabindex=\"-1\" title=\"" + Cruddy.lang.reset + "\">\n    <span class=\"glyphicon glyphicon-remove\"></span>\n</button>";
       }
       if (this.allowEdit) {
-        html += "<button type=\"button\" class=\"btn btn-default btn-edit\" tabindex=\"-1\">\n    <span class=\"glyphicon glyphicon-pencil\"></span>\n</button>";
+        html += "<button type=\"button\" class=\"btn btn-default btn-edit\" tabindex=\"-1\" title=\"" + Cruddy.lang.edit + "\">\n    <span class=\"glyphicon glyphicon-pencil\"></span>\n</button>";
       }
       if (!this.multiple) {
-        html += "<button type=\"button\" class=\"btn btn-default btn-dropdown dropdown-toggle\" data-toggle=\"dropdown\" id=\"" + this.cid + "-dropdown\" data-target=\"#" + this.cid + "\" tab-index=\"1\">\n    <span class=\"glyphicon glyphicon-search\"></span>\n</button>";
+        html += "<button type=\"button\" class=\"btn btn-default btn-dropdown dropdown-toggle\" data-toggle=\"dropdown\" id=\"" + this.cid + "-dropdown\" data-target=\"#" + this.cid + "\" tab-index=\"1\" title=\"" + Cruddy.lang.list_show + "\">\n    <span class=\"glyphicon glyphicon-search\"></span>\n</button>";
       }
       return html;
     };
@@ -1910,9 +1906,9 @@
       });
       this.$el.prepend(this.searchInput.render().$el);
       this.searchInput.$el.wrap("<div class=search-input-container></div>");
-      this.searchInput.appendButton("<button type=\"button\" class=\"btn btn-default btn-refresh\" tabindex=\"-1\">\n    <span class=\"glyphicon glyphicon-refresh\"></span>\n</button>");
+      this.searchInput.appendButton("<button type=\"button\" class=\"btn btn-default btn-refresh\" tabindex=\"-1\" title=\"" + Cruddy.lang.refresh + "\">\n    <span class=\"glyphicon glyphicon-refresh\"></span>\n</button>");
       if (this.allowCreate) {
-        this.searchInput.appendButton("<button type=\"button\" class='btn btn-default btn-add' tabindex='-1'>\n    <span class='glyphicon glyphicon-plus'></span>\n</button>");
+        this.searchInput.appendButton("<button type=\"button\" class='btn btn-default btn-add' tabindex='-1' title=\"" + Cruddy.lang.model_new_record + "\">\n    <span class='glyphicon glyphicon-plus'></span>\n</button>");
       }
       return this;
     };
@@ -2179,7 +2175,7 @@
     Search.prototype.render = function() {
       this.$el.append(this.input.render().$el);
       this.$el.append(this.$btns = $("<div class=\"input-group-btn\"></div>"));
-      this.appendButton("<button type=\"button\" class=\"btn btn-default btn-search\">\n    <span class=\"glyphicon glyphicon-search\"></span>\n</button>");
+      this.appendButton("<button type=\"button\" class=\"btn btn-default btn-search\" title=\"" + Cruddy.lang.find + "\">\n    <span class=\"glyphicon glyphicon-search\"></span>\n</button>");
       return this;
     };
 

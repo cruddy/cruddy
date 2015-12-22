@@ -1,5 +1,5 @@
 .entity-selector {
-    @item-height: 25px;
+    @item-height: 24px;
 
     .error {
         display: block;
@@ -23,27 +23,25 @@
         margin: 0;
         padding: 0;
         font-size: @font-size-small;
-        line-height: @item-height;
+        line-height: 1.3;
 
         > .item {
             cursor: pointer;
             color: @dropdown-link-color;
-            padding: 0 @padding-small-horizontal;
+            padding: 5px @padding-small-horizontal;
+            padding-left: 20px;
 
             &:hover {
                 color: @dropdown-link-hover-color;
                 background: @dropdown-link-hover-bg;
             }
 
-            &:before {
+            &.selected:before {
                 .glyphicon();
 
-                width: 1.5em;
-                content: '';
-            }
-
-            &.selected:before {
+                width: 16px;
                 content: "\e013";
+                margin-left: -16px;
             }
         }
 

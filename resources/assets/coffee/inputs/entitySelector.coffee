@@ -179,13 +179,13 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         @searchInput.$el.wrap "<div class=search-input-container></div>"
 
         @searchInput.appendButton """
-            <button type="button" class="btn btn-default btn-refresh" tabindex="-1">
+            <button type="button" class="btn btn-default btn-refresh" tabindex="-1" title="#{ Cruddy.lang.refresh }">
                 <span class="glyphicon glyphicon-refresh"></span>
             </button>
         """
 
         @searchInput.appendButton """
-            <button type="button" class='btn btn-default btn-add' tabindex='-1'>
+            <button type="button" class='btn btn-default btn-add' tabindex='-1' title="#{ Cruddy.lang.model_new_record }">
                 <span class='glyphicon glyphicon-plus'></span>
             </button>
         """ if @allowCreate

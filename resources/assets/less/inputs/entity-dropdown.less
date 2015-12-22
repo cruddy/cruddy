@@ -2,13 +2,18 @@
     position: relative;
 
     .ed-item {
-        .form-control {
+        > .form-control {
             cursor: pointer;
             background: @input-bg;
+            height: auto;
 
-            &:disabled {
+            &.disabled {
                 cursor: default;
             }
+        }
+
+        > .input-group-btn {
+            vertical-align: top;
         }
 
         .input-group-btn .btn {
@@ -109,7 +114,7 @@
 
         .entity-selector {
             top: 100%;
-            border-top: none;
+            margin-top: -1px;
             .border-bottom-radius(@border-radius-small);
             padding-bottom: @border-radius-small;
         }
@@ -123,7 +128,7 @@
         }
 
         .entity-selector {
-            bottom: 26px;
+            bottom: 100%;
             border-bottom: none;
             .border-top-radius(@border-radius-small);
         }

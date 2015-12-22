@@ -192,6 +192,13 @@ module.exports = function(grunt) {
                 cwd: 'public/js',
                 src: '*',
                 dest: '<%= dist %>/js'
+            },
+
+            dist_styles: {
+                expand: true,
+                cwd: 'public/css',
+                src: '*',
+                dest: '<%= dist %>/css'
             }
         },
 
@@ -199,7 +206,7 @@ module.exports = function(grunt) {
 
             styles: {
                 files: '<%= less_src %>/**/*.less',
-                tasks: [ 'less:styles' ]
+                tasks: [ 'less:styles', 'copy:dist_styles' ]
             },
 
             coffee: {

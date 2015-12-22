@@ -15,14 +15,9 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
             this
 
         "hide.bs.dropdown": (e) ->
-            e.preventDefault() if @executingFirstAction
-
-            return
-
-        "hidden.bs.dropdown": ->
             @opened = no
 
-            this
+            return
 
     initialize: (options) ->
         @multiple = options.multiple if options.multiple?
@@ -90,7 +85,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
             @editingForm = form = Cruddy.Entity.Form.display instance
 
             form.once "saved", (model) =>
-                btn.parent().siblings("input").val model.getTitle()
+                btn.parent().siblings(".form-control").text model.getTitle()
                 form.remove()
 
             form.once "destroyed", (model) => @removeItem e
@@ -104,7 +99,8 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
     searchKeydown: (e) ->
         if (e.keyCode is 27)
-            @$el.dropdown "toggle"
+            @selector.$el.dropdown "toggle" if @selector
+
             return false
 
         return
@@ -235,7 +231,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
         this
 
     renderSingle: ->
-        @$el.html @itemTemplate "", "0"
+        @$el.html @itemTemplate @placeholder, "0"
 
         @itemTitle = @$ ".form-control"
         @itemDelete = @$ ".btn-remove"
@@ -246,7 +242,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     updateItem: ->
         value = @getValue()
 
-        @itemTitle.val if value then @itemToString(value) else ""
+        @itemTitle.text if value then @itemToString(value) else @placeholder
 
         @itemDelete.toggle !!value
         @itemEdit.toggle !!value
@@ -265,7 +261,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     itemTemplate: (value, key = null) ->
         html = """
             <div class="input-group ed-item #{ if not @multiple then "ed-dropdown-toggle" else "" }" data-key="#{ key }">
-                <input type="text" class="form-control" #{ if @multiple then "tab-index='-1'" else "placeholder='#{ @placeholder }'" } value="#{ _.escape value }" readonly>
+                <div class="form-control">#{ _.escape value }</div>
             """
 
         html += """
@@ -280,19 +276,19 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
         html = ""
 
         html += """
-            <button type="button" class="btn btn-default btn-remove" tabindex="-1">
+            <button type="button" class="btn btn-default btn-remove" tabindex="-1" title="#{ Cruddy.lang.reset }">
                 <span class="glyphicon glyphicon-remove"></span>
             </button>
             """ if @enabled
 
         html += """
-            <button type="button" class="btn btn-default btn-edit" tabindex="-1">
+            <button type="button" class="btn btn-default btn-edit" tabindex="-1" title="#{ Cruddy.lang.edit }">
                 <span class="glyphicon glyphicon-pencil"></span>
             </button>
             """ if @allowEdit
 
         html += """
-            <button type="button" class="btn btn-default btn-dropdown dropdown-toggle" data-toggle="dropdown" id="#{ @cid }-dropdown" data-target="##{ @cid }" tab-index="1">
+            <button type="button" class="btn btn-default btn-dropdown dropdown-toggle" data-toggle="dropdown" id="#{ @cid }-dropdown" data-target="##{ @cid }" tab-index="1" title="#{ Cruddy.lang.list_show }">
                 <span class="glyphicon glyphicon-search"></span>
             </button>
             """ if not @multiple

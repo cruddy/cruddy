@@ -7,8 +7,8 @@ use Illuminate\Routing\UrlGenerator;
 use Illuminate\View\View;
 use Kalnoy\Cruddy\Service\MenuBuilder;
 
-class LayoutComposer {
-
+class LayoutComposer
+{
     /**
      * @var Environment
      */
@@ -41,9 +41,10 @@ class LayoutComposer {
      * @param MenuBuilder $menuBuilder
      * @param Assets $assets
      */
-    public function __construct(Environment $cruddy, UrlGenerator $url, Request $request, MenuBuilder $menuBuilder,
-                                Assets $assets)
-    {
+    public function __construct(Environment $cruddy, UrlGenerator $url,
+                                Request $request, MenuBuilder $menuBuilder,
+                                Assets $assets
+    ) {
         $this->cruddy = $cruddy;
         $this->url = $url;
         $this->request = $request;

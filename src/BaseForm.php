@@ -7,8 +7,8 @@ use Kalnoy\Cruddy\Schema\AttributesCollection;
 use Kalnoy\Cruddy\Service\Validation\FluentValidator;
 use Illuminate\Contracts\Events\Dispatcher;
 
-abstract class BaseForm implements Arrayable {
-
+abstract class BaseForm implements Arrayable
+{
     /**
      * @var Dispatcher
      */
@@ -60,14 +60,18 @@ abstract class BaseForm implements Arrayable {
      *
      * @param FluentValidator $validate
      */
-    protected function rules($validate) {}
+    protected function rules($validate)
+    {
+    }
 
     /**
      * Define the layout.
      *
      * @param Schema\Layout\Layout $l
      */
-    protected function layout($l) {}
+    protected function layout($l)
+    {
+    }
 
     /**
      * @param array $input
@@ -135,8 +139,7 @@ abstract class BaseForm implements Arrayable {
     {
         $lang = $this->getLang();
 
-        if (false !== $pos = strpos($key, '::'))
-        {
+        if (false !== $pos = strpos($key, '::')) {
             if ($pos === 0) $key = substr($key, 2);
 
             return $lang->translate($key, $default);
@@ -184,8 +187,7 @@ abstract class BaseForm implements Arrayable {
      */
     public function getValidator()
     {
-        if ($this->validator === null)
-        {
+        if ($this->validator === null) {
             return $this->validator = $this->createValidator();
         }
 
@@ -209,7 +211,9 @@ abstract class BaseForm implements Arrayable {
      */
     public function getLayout()
     {
-        if ($this->layout === null) return $this->layout = $this->createLayout();
+        if ($this->layout === null) {
+            return $this->layout = $this->createLayout();
+        }
 
         return $this->layout;
     }
@@ -272,8 +276,8 @@ abstract class BaseForm implements Arrayable {
      * Fire entity event.
      *
      * @param string $event
-     * @param array  $payload
-     * @param bool   $halt
+     * @param array $payload
+     * @param bool $halt
      *
      * @return mixed
      */
@@ -334,7 +338,8 @@ abstract class BaseForm implements Arrayable {
             'title' => $this->getTitle(),
 
             'fields' => $this->getFields()->toArray(),
-            'layout' => $this->getLayout()->isEmpty() ? null : $this->getLayout()->toArray(),
+            'layout' => $this->getLayout()
+                             ->isEmpty() ? null : $this->getLayout()->toArray(),
         ];
     }
 

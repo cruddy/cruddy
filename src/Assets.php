@@ -5,21 +5,21 @@ namespace Kalnoy\Cruddy;
 /**
  * Assets manager.
  */
-class Assets {
-
+class Assets
+{
     /**
      * The list of css files.
      *
      * @var array
      */
-    protected $css = [];
+    protected $css = [ ];
 
     /**
      * The list of js files.
      *
      * @var array
      */
-    protected $js = [];
+    protected $js = [ ];
 
     /**
      * Add extra css files.
@@ -60,10 +60,8 @@ class Assets {
      */
     public function scripts()
     {
-        return implode("\r\n", array_map(function ($uri)
-        {
+        return implode("\r\n", array_map(function ($uri) {
             return "<script src='{$uri}'></script>";
-
         }, $this->js));
     }
 
@@ -74,10 +72,8 @@ class Assets {
      */
     public function styles()
     {
-        return implode("\r\n", array_map(function ($uri)
-        {
+        return implode("\r\n", array_map(function ($uri) {
             return "<link rel='stylesheet' href='{$uri}'>";
-
         }, $this->css));
     }
 

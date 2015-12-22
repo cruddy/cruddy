@@ -7,8 +7,8 @@ use Illuminate\Support\Collection;
 use Kalnoy\Cruddy\Contracts\InlineRelation;
 use Kalnoy\Cruddy\Contracts\Permissions;
 
-class InnerDataCollection {
-
+class InnerEntityDataCollection
+{
     /**
      * @var InlineRelation
      */
@@ -16,9 +16,9 @@ class InnerDataCollection {
 
     /**
      * @param InlineRelation $relation
-     * @param InnerData[] $items
+     * @param InnerEntityData[] $items
      */
-    public function __construct(InlineRelation $relation, array $items = [])
+    public function __construct(InlineRelation $relation, array $items = [ ])
     {
         $this->relation = $relation;
         $this->items = $items;
@@ -32,11 +32,10 @@ class InnerDataCollection {
      */
     public static function make(InlineRelation $relation, array $data)
     {
-        $items = [];
+        $items = [ ];
 
-        foreach ($data as $cid => $item)
-        {
-            $items[$cid] = new InnerData($relation, $cid, $item);
+        foreach ($data as $cid => $item) {
+            $items[$cid] = new InnerEntityData($relation, $cid, $item);
         }
 
         return new static($relation, $items);
@@ -47,10 +46,8 @@ class InnerDataCollection {
      */
     public function save(Model $parent)
     {
-        foreach ($this->items as $item)
-        {
-            if ( ! $item->isDeleted())
-            {
+        foreach ($this->items as $item) {
+            if ( ! $item->isDeleted()) {
                 $item->setParent($parent);
                 $item->save();
             }
@@ -64,15 +61,12 @@ class InnerDataCollection {
      */
     protected function getIdsToDelete()
     {
-        $items = array_filter($this->items, function (InnerData $item)
-        {
+        $items = array_filter($this->items, function (InnerEntityData $item) {
             return $item->isDeleted();
         });
 
-        return array_map(function (InnerData $item)
-        {
+        return array_map(function (InnerEntityData $item) {
             return $item->getId();
-
         }, $items);
     }
 
@@ -83,8 +77,7 @@ class InnerDataCollection {
     {
         $ref = $this->relation->getReference();
 
-        if ($ref->isPermitted(Entity::DELETE))
-        {
+        if ($ref->isPermitted(Entity::DELETE)) {
             $ref->getRepository()->delete($this->getIdsToDelete());
         }
     }
@@ -94,12 +87,10 @@ class InnerDataCollection {
      */
     public function getValidationErrors()
     {
-        $result = [];
+        $result = [ ];
 
-        foreach ($this->items as $cid => $item)
-        {
-            if ($errors = $item->getValidationErrors())
-            {
+        foreach ($this->items as $cid => $item) {
+            if ($errors = $item->getValidationErrors()) {
                 $result[$cid] = $errors;
             }
         }

@@ -11,8 +11,8 @@ use RuntimeException;
  *
  * @since 1.0.0
  */
-class Environment {
-
+class Environment
+{
     /**
      * The entities repository.
      *
@@ -36,8 +36,9 @@ class Environment {
      * @param Permissions $permissions
      * @param Lang $lang
      */
-    public function __construct(Repository $entities, Permissions $permissions, Lang $lang)
-    {
+    public function __construct(Repository $entities, Permissions $permissions,
+                                Lang $lang
+    ) {
         $this->entities = $entities;
         $this->permissions = $permissions;
         $this->lang = $lang;
@@ -112,10 +113,9 @@ class Environment {
      */
     public function permissions()
     {
-        $data = [];
+        $data = [ ];
 
-        foreach ($this->entities->resolveAll() as $entity)
-        {
+        foreach ($this->entities->resolveAll() as $entity) {
             $data[$entity->getId()] = $entity->getPermissions();
         }
 

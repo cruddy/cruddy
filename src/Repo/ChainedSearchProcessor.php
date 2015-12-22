@@ -10,8 +10,8 @@ use Kalnoy\Cruddy\Contracts\SearchProcessor;
  *
  * @since 1.0.0
  */
-class ChainedSearchProcessor implements SearchProcessor {
-
+class ChainedSearchProcessor implements SearchProcessor
+{
     /**
      * The list of processors.
      *
@@ -24,7 +24,7 @@ class ChainedSearchProcessor implements SearchProcessor {
      *
      * @param array $processors
      */
-    public function __construct(array $processors = [])
+    public function __construct(array $processors = [ ])
     {
         $this->processors = $processors;
     }
@@ -44,8 +44,7 @@ class ChainedSearchProcessor implements SearchProcessor {
      */
     public function constraintBuilder(Builder $query, array $options)
     {
-        foreach ($this->processors as $processor)
-        {
+        foreach ($this->processors as $processor) {
             $processor->constraintBuilder($query, $options);
         }
     }

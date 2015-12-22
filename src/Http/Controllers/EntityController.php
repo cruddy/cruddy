@@ -11,6 +11,7 @@ use Kalnoy\Cruddy\Entity;
 use Kalnoy\Cruddy\EntityData;
 use Kalnoy\Cruddy\Environment;
 use Kalnoy\Cruddy\AccessDeniedException;
+use Kalnoy\Cruddy\Http\Middleware\HandleCruddyExceptions;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -36,8 +37,7 @@ class EntityController extends Controller {
     {
         $this->environment = $environment;
 
-        $this->middleware('cruddy.exceptions');
-        $this->middleware('cruddy.transaction', [ 'except' => [ 'show', 'index' ]]);
+        $this->middleware(HandleCruddyExceptions::class);
     }
 
     /**

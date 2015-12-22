@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Kalnoy\Cruddy\Schema\Fields\InlineRelation;
 use Symfony\Component\Finder\Exception\OperationNotPermitedException;
 
-class EntityData extends BaseFormData {
-
+class EntityData extends BaseFormData
+{
     /**
      * @var string
      */
@@ -16,7 +16,7 @@ class EntityData extends BaseFormData {
     /**
      * @var array
      */
-    protected $inner = [];
+    protected $inner = [ ];
 
     /**
      * @var string
@@ -42,18 +42,16 @@ class EntityData extends BaseFormData {
      */
     public function getValidationErrors()
     {
-        $result = parent::getValidationErrors();
+        $errors = parent::getValidationErrors();
 
-        /** @var InnerDataCollection $item */
-        foreach ($this->inner as $id => $item)
-        {
-            if ($errors = $item->getValidationErrors())
-            {
-                $result[$id] = $errors;
+        /** @var InnerEntityDataCollection $item */
+        foreach ($this->inner as $id => $item) {
+            if ($errors = $item->getValidationErrors()) {
+                $errors[$id] = $errors;
             }
         }
 
-        return $result;
+        return $errors;
     }
 
     /**
@@ -63,14 +61,17 @@ class EntityData extends BaseFormData {
      */
     public function save()
     {
-        if ( ! $this->isPermitted()) throw new AccessDeniedException;
+        if ( ! $this->isPermitted()) {
+            throw new AccessDeniedException;
+        }
 
         $repo = $this->form->getRepository();
 
-        $model = $this->id ? $repo->find($this->id) : $this->form->newModel();
+        $repo->startTransaction();
 
-        $repo->save($model, $this->getCleanedInput(), function ($model)
-        {
+        $model = $this->isExists() ? $repo->find($this->id) : $this->form->newModel();
+
+        $repo->save($model, $this->getCleanedInput(), function ($model) {
             $this->fillModel($model);
 
             $this->executeCustomAction($model);
@@ -83,6 +84,8 @@ class EntityData extends BaseFormData {
 
         $this->fireSavedEvent($model);
 
+        $repo->commitTransaction();
+
         return $model;
     }
 
@@ -91,15 +94,14 @@ class EntityData extends BaseFormData {
      */
     protected function saveInner(Model $parent)
     {
-        /** @var InnerDataCollection $collection */
-        foreach ($this->inner as $collection)
-        {
-            try
-            {
+        /** @var InnerEntityDataCollection $collection */
+        foreach ($this->inner as $collection) {
+            try {
                 $collection->save($parent);
             }
 
-            catch (AccessDeniedException $e) {}
+            catch (AccessDeniedException $e) {
+            }
         }
     }
 
@@ -109,6 +111,14 @@ class EntityData extends BaseFormData {
      * @param Model $model
      */
     protected function fillModel(Model $model) {}
+
+    /**
+     * @return bool
+     */
+    public function isExists()
+    {
+        return $this->id != null;
+    }
 
     /**
      * Process the data.
@@ -129,11 +139,9 @@ class EntityData extends BaseFormData {
     {
         $fields = $this->form->getFields();
 
-        foreach ($data as $id => $item)
-        {
-            if ($item and ($relation = $fields->get($id)) and $relation instanceof InlineRelation)
-            {
-                $this->inner[$relation->getId()] = InnerDataCollection::make($relation, $item);
+        foreach ($data as $id => $item) {
+            if ($item && ($relation = $fields->get($id)) && $relation instanceof InlineRelation) {
+                $this->inner[$relation->getId()] = InnerEntityDataCollection::make($relation, $item);
             }
         }
     }
@@ -143,7 +151,7 @@ class EntityData extends BaseFormData {
      */
     public function getAction()
     {
-        return $this->id ? Entity::UPDATE : Entity::CREATE;
+        return $this->isExists() ? Entity::UPDATE : Entity::CREATE;
     }
 
     /**
@@ -167,7 +175,8 @@ class EntityData extends BaseFormData {
      */
     protected function getCleanedInput()
     {
-        return $this->form->getFields()->cleanInput($this->getAction(), $this->input);
+        return $this->form->getFields()
+                          ->cleanInput($this->getAction(), $this->input);
     }
 
     /**
@@ -177,8 +186,7 @@ class EntityData extends BaseFormData {
     {
         $eventResult = $this->form->fireEvent('saving', [ $model ]);
 
-        if ( ! is_null($eventResult))
-        {
+        if ( ! is_null($eventResult)) {
             throw new ModelNotSavedException($eventResult);
         }
     }
@@ -212,8 +220,7 @@ class EntityData extends BaseFormData {
      */
     protected function executeCustomAction(Model $model)
     {
-        if ($this->customAction)
-        {
+        if ($this->customAction) {
             $this->form->getActions()->execute($model, $this->customAction);
         }
     }

@@ -2,8 +2,8 @@
 
 namespace Kalnoy\Cruddy;
 
-class Helpers {
-
+class Helpers
+{
     /**
      * @param string $value
      *
@@ -37,7 +37,7 @@ class Helpers {
     {
         $char = mb_strtoupper(mb_substr($str, 0, 1));
 
-        return $char . mb_substr($str, 1);
+        return $char.mb_substr($str, 1);
     }
 
     /**

@@ -4,8 +4,8 @@ namespace Kalnoy\Cruddy;
 
 use Illuminate\Filesystem\Filesystem;
 
-class Compiler {
-
+class Compiler
+{
     /**
      * @var Repository
      */
@@ -32,8 +32,9 @@ class Compiler {
      * @param Lang $lang
      * @param $basePath
      */
-    public function __construct(Repository $entities, Filesystem $file, Lang $lang, $basePath)
-    {
+    public function __construct(Repository $entities, Filesystem $file,
+                                Lang $lang, $basePath
+    ) {
         $this->entities = $entities;
         $this->file = $file;
         $this->lang = $lang;
@@ -51,8 +52,7 @@ class Compiler {
     {
         $filename = $this->filename();
 
-        if ($this->file->exists($filename))
-        {
+        if ($this->file->exists($filename)) {
             return unserialize($this->file->get($filename));
         }
 
@@ -72,10 +72,8 @@ class Compiler {
 
         if ($locale !== null) $this->lang->setLocale($locale);
 
-        $data = array_map(function (BaseForm $item)
-        {
+        $data = array_map(function (BaseForm $item) {
             return $item->toArray();
-
         }, $this->entities->resolveAll());
 
         if ($locale !== null) $this->lang->setLocale($currentLocale);
@@ -94,8 +92,7 @@ class Compiler {
 
         if (empty($locales)) $locales = [ $this->lang->getLocale() ];
 
-        foreach ($locales as $locale)
-        {
+        foreach ($locales as $locale) {
             $filename = $this->filename($locale);
 
             $this->file->put($filename, serialize($this->fresh($locale)));
@@ -109,8 +106,7 @@ class Compiler {
      */
     public function clearCompiled()
     {
-        if ($this->file->isDirectory($this->basePath))
-        {
+        if ($this->file->isDirectory($this->basePath)) {
             $this->file->cleanDirectory($this->basePath);
         }
     }
@@ -134,8 +130,7 @@ class Compiler {
      */
     protected function ensureDirectory()
     {
-        if ( ! $this->file->isDirectory($this->basePath))
-        {
+        if ( ! $this->file->isDirectory($this->basePath)) {
             $this->file->makeDirectory($this->basePath);
         }
     }

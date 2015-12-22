@@ -10,14 +10,14 @@ use Kalnoy\Cruddy\Schema\BaseFactory;
  *
  * @since 1.0.0
  */
-class Factory extends BaseFactory {
-
+class Factory extends BaseFactory
+{
     /**
      * @var array
      */
     protected $macros = [
-        'states' => 'Kalnoy\Cruddy\Schema\Columns\Types\States',
-        'compute' => 'Kalnoy\Cruddy\Schema\Columns\Types\Computed',
+        'states' => Types\States::class,
+        'compute' => Types\Computed::class,
     ];
 
     /**
@@ -48,10 +48,8 @@ class Factory extends BaseFactory {
      */
     public function cols($entity, $collection, array $items)
     {
-        foreach ($items as $id => $fieldId)
-        {
-            if (is_numeric($id))
-            {
+        foreach ($items as $id => $fieldId) {
+            if (is_numeric($id)) {
                 $id = $fieldId;
                 $fieldId = null;
             }

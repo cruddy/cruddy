@@ -3,7 +3,7 @@
 namespace Kalnoy\Cruddy;
 
 use Kalnoy\Cruddy\Contracts\SearchProcessor;
-use Kalnoy\Cruddy\Repo\Stub;
+use Kalnoy\Cruddy\Repo\BasicEloquentRepository;
 use Kalnoy\Cruddy\Schema\AttributesCollection;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -14,8 +14,8 @@ use Kalnoy\Cruddy\Repo\ChainedSearchProcessor;
  *
  * @since 1.0.0
  */
-abstract class Entity extends BaseForm {
-
+abstract class Entity extends BaseForm
+{
     /**
      * Action for creating new items.
      */
@@ -73,7 +73,7 @@ abstract class Entity extends BaseForm {
      *
      * @var array
      */
-    protected $eagerLoads = [];
+    protected $eagerLoads = [ ];
 
     /**
      * The model class name.
@@ -87,14 +87,14 @@ abstract class Entity extends BaseForm {
      *
      * @var array
      */
-    protected $defaults = [];
+    protected $defaults = [ ];
 
     /**
      * The list of complex filters.
      *
      * @var array
      */
-    protected $filters = [];
+    protected $filters = [ ];
 
     /**
      * The attribute that is used to convert model to a string.
@@ -124,7 +124,9 @@ abstract class Entity extends BaseForm {
      *
      * @param Schema\Columns\InstanceFactory $schema
      */
-    protected function columns($schema) {}
+    protected function columns($schema)
+    {
+    }
 
     /**
      * Specify filters.
@@ -133,8 +135,7 @@ abstract class Entity extends BaseForm {
      */
     protected function filters($schema)
     {
-        foreach ($this->filters as $field)
-        {
+        foreach ($this->filters as $field) {
             $schema->usingField($field);
         }
     }
@@ -156,16 +157,20 @@ abstract class Entity extends BaseForm {
     /**
      * Specify what files repository uploads.
      *
-     * @param Repo\BaseRepository $repo
+     * @param Repo\AbstractEloquentRepository $repo
      */
-    protected function files($repo) {}
+    protected function files($repo)
+    {
+    }
 
     /**
      * Set up actions.
      *
      * @param Schema\Actions\Collection $actions
      */
-    protected function actions($actions) {}
+    protected function actions($actions)
+    {
+    }
 
     /**
      * Get links for model that will be displayed in data table and form.
@@ -176,10 +181,9 @@ abstract class Entity extends BaseForm {
      */
     protected function links($model)
     {
-        $result = [];
+        $result = [ ];
 
-        if ($value = $this->toUrl($model))
-        {
+        if ($value = $this->toUrl($model)) {
             $result[app('cruddy.lang')->translate('cruddy::js.view_external')] = $value;
         }
 
@@ -195,7 +199,9 @@ abstract class Entity extends BaseForm {
      */
     public function toString($model)
     {
-        return $this->titleAttribute ? $model->getAttribute($this->titleAttribute) : $model->getKey();
+        return $this->titleAttribute
+            ? $model->getAttribute($this->titleAttribute)
+            : $model->getKey();
     }
 
     /**
@@ -205,7 +211,9 @@ abstract class Entity extends BaseForm {
      *
      * @return string
      */
-    public function toUrl($model) {}
+    public function toUrl($model)
+    {
+    }
 
     /**
      * @param array $input
@@ -245,8 +253,7 @@ abstract class Entity extends BaseForm {
     {
         if ( ! $model) return null;
 
-        if (is_array($model) or $model instanceof Collection)
-        {
+        if (is_array($model) or $model instanceof Collection) {
             return $this->extractAll($model, $collection);
         }
 
@@ -266,15 +273,12 @@ abstract class Entity extends BaseForm {
      */
     public function extractAll($items, AttributesCollection $collection = null)
     {
-        if ($items instanceof Collection)
-        {
+        if ($items instanceof Collection) {
             $items = $items->all();
         }
 
-        return array_map(function ($model) use ($collection)
-        {
+        return array_map(function ($model) use ($collection) {
             return $this->extract($model, $collection);
-
         }, $items);
     }
 
@@ -305,15 +309,14 @@ abstract class Entity extends BaseForm {
      */
     public function index(array $options)
     {
-        $results = $this->getRepository()->search($options, $this->getSearchProcessor($options));
+        $results = $this->getRepository()
+                        ->search($options, $this->getSearchProcessor($options));
 
-        if (array_get($options, 'simple'))
-        {
+        if (array_get($options, 'simple')) {
             $results['items'] = $this->simplifyAll($results['items']);
-        }
-        else
-        {
-            $results['items'] = $this->extractAll($results['items'], $this->getColumns());
+        } else {
+            $results['items'] = $this->extractAll($results['items'],
+                                                  $this->getColumns());
         }
 
         return $results;
@@ -329,17 +332,15 @@ abstract class Entity extends BaseForm {
     protected function getSearchProcessor(array $options)
     {
         $processor = new ChainedSearchProcessor([
-            $this->getFields(),
-            $this->getColumns(),
-            $this->getFilters(),
-        ]);
+                                                    $this->getFields(),
+                                                    $this->getColumns(),
+                                                    $this->getFilters(),
+                                                ]);
 
-        if (isset($options['owner']))
-        {
+        if (isset($options['owner'])) {
             $field = $this->entities->field($options['owner']);
 
-            if ( ! $field instanceof SearchProcessor)
-            {
+            if ( ! $field instanceof SearchProcessor) {
                 throw new \RuntimeException("Cannot use field [{$options['owner']}] as owner.");
             }
 
@@ -358,12 +359,11 @@ abstract class Entity extends BaseForm {
      */
     public function simplifyAll($items)
     {
-        if ($items instanceof Collection)
-        {
+        if ($items instanceof Collection) {
             $items = $items->all();
         }
 
-        return array_map([$this, 'simplify'], $items);
+        return array_map([ $this, 'simplify' ], $items);
     }
 
     /**
@@ -377,8 +377,7 @@ abstract class Entity extends BaseForm {
     {
         if ( ! $model) return null;
 
-        if (is_array($model) or $model instanceof Collection)
-        {
+        if (is_array($model) or $model instanceof Collection) {
             return $this->simplifyAll($model);
         }
 
@@ -396,8 +395,7 @@ abstract class Entity extends BaseForm {
         $meta['id'] = $model->getKey();
         $meta['title'] = $this->toString($model);
 
-        if ( ! $simplified)
-        {
+        if ( ! $simplified) {
             $meta['links'] = $this->links($model);
             $meta['actions'] = $this->getActions()->export($model);
         }
@@ -416,10 +414,8 @@ abstract class Entity extends BaseForm {
     {
         if (is_null($owner)) return $this->eagerLoads;
 
-        return array_map(function ($item) use ($owner)
-        {
+        return array_map(function ($item) use ($owner) {
             return $owner.'.'.$item;
-
         }, $this->eagerLoads);
     }
 
@@ -490,7 +486,8 @@ abstract class Entity extends BaseForm {
     {
         $collection = new Schema\Columns\Collection($this, $this->defaultOrder);
 
-        $schema = new Schema\Columns\InstanceFactory($this->getColumnsFactory(), $collection);
+        $schema = new Schema\Columns\InstanceFactory($this->getColumnsFactory(),
+                                                     $collection);
 
         $this->columns($schema);
 
@@ -502,7 +499,9 @@ abstract class Entity extends BaseForm {
      */
     public function getFilters()
     {
-        if ($this->filtersCollection === null) return $this->filtersCollection = $this->createFilters();
+        if ($this->filtersCollection === null) {
+            return $this->filtersCollection = $this->createFilters();
+        }
 
         return $this->filtersCollection;
     }
@@ -514,7 +513,8 @@ abstract class Entity extends BaseForm {
     {
         $collection = new Schema\Filters\Collection($this);
 
-        $schema = new Schema\Filters\InstanceFactory($this->getFiltersFactory(), $collection);
+        $schema = new Schema\Filters\InstanceFactory($this->getFiltersFactory(),
+                                                     $collection);
 
         $this->filters($schema);
 
@@ -528,8 +528,7 @@ abstract class Entity extends BaseForm {
      */
     public function getRepository()
     {
-        if ($this->repo === null)
-        {
+        if ($this->repo === null) {
             return $this->repo = $this->createRepository();
         }
 
@@ -537,11 +536,11 @@ abstract class Entity extends BaseForm {
     }
 
     /**
-     * @return Stub
+     * @return BasicEloquentRepository
      */
     public function createRepository()
     {
-        $repo = new Stub($this->model);
+        $repo = new BasicEloquentRepository($this->model);
 
         $repo->perPage = $this->perPage;
 
@@ -616,10 +615,8 @@ abstract class Entity extends BaseForm {
 
         $keys = [ self::CREATE, self::READ, self::UPDATE, self::DELETE ];
 
-        $values = array_map(function ($key) use ($permissions)
-        {
+        $values = array_map(function ($key) use ($permissions) {
             return $permissions->isPermitted($key, $this);
-
         }, $keys);
 
         return array_combine($keys, $values);

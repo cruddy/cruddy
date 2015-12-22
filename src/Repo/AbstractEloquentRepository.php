@@ -20,19 +20,19 @@ use Exception;
  *
  * @since 1.0.0
  */
-abstract class BaseRepository implements Repository {
-
+abstract class AbstractEloquentRepository implements Repository
+{
     /**
      * @var FileUploader[]
      */
-    protected $files = [];
+    protected $files = [ ];
 
     /**
      * The handlers that are called after the model is saved.
      *
      * @var \Callable[]
      */
-    protected $postSave = [];
+    protected $postSave = [ ];
 
     /**
      * The mode instance.
@@ -50,6 +50,11 @@ abstract class BaseRepository implements Repository {
     }
 
     /**
+     * @return Model
+     */
+    abstract public function newModel();
+
+    /**
      * Fill the model attributes.
      *
      * @param Model $model
@@ -59,10 +64,8 @@ abstract class BaseRepository implements Repository {
      */
     protected function fill(Model $model, array $input)
     {
-        foreach ($input as $key => $value)
-        {
-            if ($this->isFillable($key))
-            {
+        foreach ($input as $key => $value) {
+            if ($this->isFillable($key)) {
                 $model->setAttribute($key, $this->transform($key, $value));
             }
         }
@@ -74,13 +77,15 @@ abstract class BaseRepository implements Repository {
      * Transform given attribute before setting it on model.
      *
      * @param string $key
-     * @param mixed  $value
+     * @param mixed $value
      *
      * @return mixed
      */
     protected function transform($key, $value)
     {
-        if ($this->isFile($key)) return $this->upload($key, $value);
+        if ($this->isFile($key)) {
+            return $this->upload($key, $value);
+        }
 
         return $value;
     }
@@ -112,9 +117,11 @@ abstract class BaseRepository implements Repository {
      */
     public function find($id)
     {
-        $model = $this->newQuery(false)->find($id);
+        $model = $this->newQuery()->find($id);
 
-        if ($model === null) throw new ModelNotFoundException;
+        if ($model === null) {
+            throw new ModelNotFoundException;
+        }
 
         return $model;
     }
@@ -126,7 +133,9 @@ abstract class BaseRepository implements Repository {
     {
         $builder = $this->newQuery();
 
-        if ($processor) $processor->constraintBuilder($builder, $options);
+        if ($processor) {
+            $processor->constraintBuilder($builder, $options);
+        }
 
         return $this->paginate($builder, $options);
     }
@@ -155,24 +164,21 @@ abstract class BaseRepository implements Repository {
     {
         $this->resetPostSaveCallbacks();
 
-        $this->syncRelations($instance, $input);
+        $this->setRelations($instance, $input);
 
-        try
-        {
+        try {
             $this->fill($instance, $input);
 
             if ($extra) $extra($instance);
 
-            if (false === $instance->save())
-            {
+            if (false === $instance->save()) {
                 $className = get_class($instance);
 
                 throw new ModelNotSavedException("Could not save an instance of [{$className}].");
             }
         }
 
-        catch (Exception $e)
-        {
+        catch (Exception $e) {
             $this->cancelUploads();
 
             throw $e;
@@ -189,17 +195,15 @@ abstract class BaseRepository implements Repository {
      * Sync relationships.
      *
      * @param Model $instance
-     * @param array    $input
+     * @param array $input
      *
      * @return $this
      */
-    protected function syncRelations(Model $instance, array $input)
+    protected function setRelations(Model $instance, array $input)
     {
-        foreach ($input as $key => $value)
-        {
-            if ($relation = $this->getRelation($instance, $key))
-            {
-                $this->syncRelation($instance, $relation, $key, $value);
+        foreach ($input as $key => $value) {
+            if ($relation = $this->getRelationObject($instance, $key)) {
+                $this->setRelation($instance, $relation, $key, $value);
             }
         }
 
@@ -210,11 +214,11 @@ abstract class BaseRepository implements Repository {
      * Get relationship query.
      *
      * @param Model $instance
-     * @param string   $key
+     * @param string $key
      *
-     * @return null|\Illuminate\Database\\Relations\Relation
+     * @return null|\Illuminate\Database\Eloquent\Relations\Relation
      */
-    protected function getRelation(Model $instance, $key)
+    protected function getRelationObject(Model $instance, $key)
     {
         if ( ! method_exists($instance, $key)) return null;
 
@@ -234,23 +238,23 @@ abstract class BaseRepository implements Repository {
      */
     protected function isRelation($key)
     {
-        return $this->getRelation($this->model, $key) !== null;
+        return $this->getRelationObject($this->model, $key) !== null;
     }
 
     /**
      * Sync one given relationship.
      *
-     * @param Model                                         $instance
+     * @param Model $instance
      * @param \Illuminate\Database\\Relations\Relation $relation
-     * @param string                                           $key
-     * @param array                                            $data
+     * @param string $key
+     * @param array $data
      */
-    protected function syncRelation(Model $instance, Relation $relation, $key, $data)
-    {
-        $method = 'sync'.class_basename($relation);
+    protected function setRelation(Model $instance, Relation $relation, $key,
+                                   $data
+    ) {
+        $method = 'set'.class_basename($relation);
 
-        if (method_exists($this, $method))
-        {
+        if (method_exists($this, $method)) {
             $this->$method($instance, $key, $data);
         }
     }
@@ -259,17 +263,17 @@ abstract class BaseRepository implements Repository {
      * Sync BelongsToMany relationship.
      *
      * @param Model $instance
-     * @param string   $key
-     * @param array    $data
+     * @param string $key
+     * @param array $data
      *
      * @return $this
      */
-    protected function syncBelongsToMany(Model $instance, $key, $data)
+    protected function setBelongsToMany(Model $instance, $key, $data)
     {
-        $data = is_array($data) ? $data : [];
+        $data = is_array($data) ? $data : [ ];
 
-        return $this->addPostSaveCallback(function ($instance) use ($key, $data)
-        {
+        return $this->addPostSaveCallback(function ($instance) use ($key, $data
+        ) {
             $instance->$key()->sync($data);
 
             // We'll unset the relation since it might be outdated
@@ -281,26 +285,26 @@ abstract class BaseRepository implements Repository {
      * Sync MorphToMany relationship.
      *
      * @param Model $instance
-     * @param string   $key
-     * @param array    $data
+     * @param string $key
+     * @param array $data
      *
      * @return  $this
      */
-    protected function syncMorphToMany(Model $instance, $key, $data)
+    protected function setMorphToMany(Model $instance, $key, $data)
     {
-        return $this->syncBelongsToMany($instance, $key, $data);
+        return $this->setBelongsToMany($instance, $key, $data);
     }
 
     /**
      * Sync BelongsTo relationship.
      *
      * @param Model $instance
-     * @param string   $key
-     * @param int      $data
+     * @param string $key
+     * @param int $data
      *
      * @return $this
      */
-    protected function syncBelongsTo(Model $instance, $key, $data)
+    protected function setBelongsTo(Model $instance, $key, $data)
     {
         $foreignKey = $instance->$key()->getForeignKey();
 
@@ -334,8 +338,7 @@ abstract class BaseRepository implements Repository {
      */
     protected function firePostSaveCallbacks(Model $instance)
     {
-        foreach ($this->postSave as $callback)
-        {
+        foreach ($this->postSave as $callback) {
             $callback($instance);
         }
     }
@@ -347,7 +350,7 @@ abstract class BaseRepository implements Repository {
      */
     protected function resetPostSaveCallbacks()
     {
-        $this->postSave = [];
+        $this->postSave = [ ];
     }
 
     /**
@@ -359,7 +362,7 @@ abstract class BaseRepository implements Repository {
      */
     public function uploads($attribute)
     {
-        return $this->files[$attribute] = app('Kalnoy\Cruddy\Service\FileUploader');
+        return $this->files[$attribute] = app(FileUploader::class);
     }
 
     /**
@@ -394,8 +397,7 @@ abstract class BaseRepository implements Repository {
      */
     protected function cancelUploads()
     {
-        foreach ($this->files as $uploader)
-        {
+        foreach ($this->files as $uploader) {
             $uploader->cancel();
         }
 
@@ -415,8 +417,7 @@ abstract class BaseRepository implements Repository {
 
         $count = 0;
 
-        foreach ($this->newQuery()->whereIn($key, $ids)->get() as $item)
-        {
+        foreach ($this->newQuery()->whereIn($key, $ids)->get() as $item) {
             if ($item->delete()) $count++;
         }
 
@@ -447,6 +448,22 @@ abstract class BaseRepository implements Repository {
         $to = $from + $items->count() - 1;
 
         return compact('total', 'page', 'perPage', 'lastPage', 'from', 'to', 'items');
+    }
+
+    /**
+     * @return void
+     */
+    public function startTransaction()
+    {
+        $this->newModel()->getConnection()->beginTransaction();
+    }
+
+    /**
+     * @return void
+     */
+    public function commitTransaction()
+    {
+        $this->newModel()->getConnection()->commit();
     }
 
 }

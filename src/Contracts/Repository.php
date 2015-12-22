@@ -61,4 +61,14 @@ interface Repository {
      */
     public function delete($ids);
 
+    /**
+     * @return void
+     */
+    public function startTransaction();
+
+    /**
+     * @return void
+     */
+    public function commitTransaction();
+
 }

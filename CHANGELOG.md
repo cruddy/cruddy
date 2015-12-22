@@ -1,3 +1,11 @@
+v0.5.0
+======
+
+*   Support Laravel 5.2
+*   A lot refactoring done
+*   Fixed many issues
+*   `code` and `markdown` fields moved to `cruddy/ace` package
+
 v0.4.0
 ======
 

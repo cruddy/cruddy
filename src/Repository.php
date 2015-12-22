@@ -9,8 +9,8 @@ use Illuminate\Container\Container;
 /**
  * The entity repository.
  */
-class Repository {
-
+class Repository
+{
     /**
      * The container.
      *
@@ -28,9 +28,9 @@ class Repository {
     /**
      * The list of resolved entities.
      *
-     * @var \Kalnoy\Cruddy\Contracts\Schema[]
+     * @var BaseForm[]
      */
-    protected $resolved = [];
+    protected $resolved = [ ];
 
     /**
      * Available entities.
@@ -43,7 +43,7 @@ class Repository {
      * Init repository.
      *
      * @param \Illuminate\Container\Container $container
-     * @param array                           $classes
+     * @param array $classes
      */
     public function __construct(Container $container, array $classes)
     {
@@ -60,10 +60,11 @@ class Repository {
      */
     public function resolve($id)
     {
-        if (array_key_exists($id, $this->resolved)) return $this->resolved[$id];
+        if (array_key_exists($id, $this->resolved)) {
+            return $this->resolved[$id];
+        }
 
-        if ( ! isset($this->classes[$id]))
-        {
+        if ( ! isset($this->classes[$id])) {
             throw new EntityNotFoundException(
                 "Failed to resolve: the [{$id}] entity is not defined. Please, check your configuration."
             );
@@ -83,8 +84,7 @@ class Repository {
     {
         $class = $this->classes[$id];
 
-        if ( ! $this->classExists($class))
-        {
+        if ( ! $this->classExists($class)) {
             throw new RuntimeException("Failed to resolve: the target class [{$class}] is not bound.");
         }
 
@@ -108,8 +108,7 @@ class Repository {
      */
     public function resolveAll()
     {
-        foreach ($this->classes as $key => $value)
-        {
+        foreach ($this->classes as $key => $value) {
             $this->resolveEntity($key);
         }
 
@@ -139,7 +138,7 @@ class Repository {
      */
     protected function classExists($class)
     {
-        return $this->container->bound($class) or class_exists($class);
+        return $this->container->bound($class) || class_exists($class);
     }
 
     /**
@@ -159,8 +158,7 @@ class Repository {
      */
     public function available()
     {
-        if ($this->available === null)
-        {
+        if ($this->available === null) {
             return $this->available = implode('|', array_keys($this->classes));
         }
 
@@ -181,8 +179,7 @@ class Repository {
         $entity = $this->resolve($entityId);
         $field = $entity->getFields()->get($fieldId);
 
-        if ( ! $field)
-        {
+        if ( ! $field) {
             throw new RuntimeException("The field [{$fieldId}] of [{$entityId}] entity is not found.");
         }
 

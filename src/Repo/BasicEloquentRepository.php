@@ -9,8 +9,8 @@ namespace Kalnoy\Cruddy\Repo;
  *
  * @since 1.0.0
  */
-class Stub extends BaseRepository {
-
+class BasicEloquentRepository extends AbstractEloquentRepository
+{
     /**
      * The model class name.
      *
@@ -29,7 +29,7 @@ class Stub extends BaseRepository {
      * Init repo.
      *
      * @param string $className
-     * @param array  $defaults
+     * @param array $defaults
      */
     public function __construct($className)
     {
@@ -39,7 +39,7 @@ class Stub extends BaseRepository {
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getPerPage()
     {
@@ -47,7 +47,7 @@ class Stub extends BaseRepository {
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function newModel()
     {

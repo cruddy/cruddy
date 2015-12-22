@@ -4,8 +4,8 @@ namespace Kalnoy\Cruddy;
 
 use Kalnoy\Cruddy\Service\Validation\ValidationException;
 
-abstract class BaseFormData {
-
+abstract class BaseFormData
+{
     /**
      * @var BaseForm
      */
@@ -34,8 +34,7 @@ abstract class BaseFormData {
      */
     public function validate()
     {
-        if ($errors = $this->getValidationErrors())
-        {
+        if ($errors = $this->getValidationErrors()) {
             throw new ValidationException($errors);
         }
     }
@@ -45,16 +44,14 @@ abstract class BaseFormData {
      */
     public function getValidationErrors()
     {
-        $result = [];
         $labels = $this->form->getFields()->validationLabels();
         $validator = $this->form->getValidator();
 
-        if ( ! $validator->validFor($this->getAction(), $this->input, $labels))
-        {
-            $result = $validator->errors();
+        if ($validator->validFor($this->getAction(), $this->input, $labels)) {
+            return [];
         }
 
-        return $result;
+        return $validator->errors();
     }
 
     /**

@@ -7,8 +7,8 @@ use Symfony\Component\Translation\TranslatorInterface;
 /**
  * A class that manages translations.
  */
-class Lang {
-
+class Lang
+{
     /**
      * The translator.
      *
@@ -21,7 +21,7 @@ class Lang {
      *
      * @var array
      */
-    protected $lang = [];
+    protected $lang = [ ];
 
     /**
      * Init lang.
@@ -69,10 +69,8 @@ class Lang {
      */
     public function lang(array $items)
     {
-        $this->lang += array_map(function ($string)
-        {
+        $this->lang += array_map(function ($string) {
             return $this->tryTranslate($string);
-
         }, $items);
 
         return $this;
@@ -87,10 +85,8 @@ class Lang {
     {
         $keys = array_keys(include __DIR__.'/../resources/lang/en/js.php');
 
-        $strings = array_map(function ($key)
-        {
+        $strings = array_map(function ($key) {
             return $this->translator->trans("cruddy::js.{$key}");
-
         }, $keys);
 
         return array_combine($keys, $strings);

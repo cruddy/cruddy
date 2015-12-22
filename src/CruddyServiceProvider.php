@@ -14,14 +14,15 @@ use Kalnoy\Cruddy\Service\ThumbnailFactory;
 use Intervention\Image\ImageManager;
 use Illuminate\Routing\Router;
 
-class CruddyServiceProvider extends ServiceProvider {
+class CruddyServiceProvider extends ServiceProvider
+{
 
-	/**
-	 * Indicates if loading of the provider is deferred.
-	 *
-	 * @var bool
-	 */
-	protected $defer = false;
+    /**
+     * Indicates if loading of the provider is deferred.
+     *
+     * @var bool
+     */
+    protected $defer = false;
 
     /**
      * Assets build number.
@@ -31,49 +32,32 @@ class CruddyServiceProvider extends ServiceProvider {
     protected $build = 26;
 
     /**
-     * @var array
+     * Bootstrap the application events.
+     *
+     * @return void
      */
-    protected $middleware = [
-        'cruddy.transaction' => 'Kalnoy\Cruddy\Http\Middleware\RunInTransaction',
-        'cruddy.exceptions' => 'Kalnoy\Cruddy\Http\Middleware\ExceptionsHandler',
-    ];
-
-	/**
-	 * Bootstrap the application events.
-	 *
-	 * @return void
-	 */
-	public function boot()
-	{
-		$this->loadViewsFrom(__DIR__.'/../resources/views', 'cruddy');
+    public function boot()
+    {
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'cruddy');
         $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'cruddy');
 
-        $this->publishes([
-           __DIR__.'/../public' => public_path('cruddy'),
+        $this->publishes([  __DIR__.'/../public' => public_path('cruddy') ], 'public');
 
-        ], 'public');
+        $this->publishes([ __DIR__.'/../resources/views' => base_path('resources/views/vendor/cruddy') ], 'views');
 
-        $this->publishes([
-            __DIR__.'/../resources/views' => base_path('resources/views/vendor/cruddy'),
-
-        ], 'views');
-
-        $this->publishes([
-           __DIR__.'/../config/cruddy.php' => config_path('cruddy.php'),
-
-        ], 'config');
+        $this->publishes([ __DIR__.'/../config/cruddy.php' => config_path('cruddy.php') ], 'config');
 
         $this->registerRoutes($this->app['router'], $this->app['config']);
 
         Entity::setEventDispatcher($this->app->make('events'));
-	}
+    }
 
-	/**
-	 * Register the service provider.
-	 *
-	 * @return void
-	 */
-	public function register()
+    /**
+     * Register the service provider.
+     *
+     * @return void
+     */
+    public function register()
     {
         $this->registerAssets();
         $this->registerLang();
@@ -94,8 +78,7 @@ class CruddyServiceProvider extends ServiceProvider {
      */
     protected function registerLang()
     {
-        $this->app->singleton('cruddy.lang', function (Container $app)
-        {
+        $this->app->singleton('cruddy.lang', function (Container $app) {
             return new Lang($app->make('translator'));
         });
     }
@@ -107,8 +90,7 @@ class CruddyServiceProvider extends ServiceProvider {
      */
     public function registerMenu()
     {
-        $this->app->singleton('cruddy.menu', function (Container $app)
-        {
+        $this->app->singleton('cruddy.menu', function (Container $app) {
             $builder = new MenuBuilder($app->make('cruddy'), $app->make('request'));
 
             $builder->setUrlGenerator($app->make('url'));
@@ -126,8 +108,7 @@ class CruddyServiceProvider extends ServiceProvider {
      */
     public function registerPermissions()
     {
-        $this->app->singleton('cruddy.permissions', function ($app)
-        {
+        $this->app->singleton('cruddy.permissions', function ($app) {
             $driver = $app['config']->get('cruddy.permissions');
 
             return $driver ? $app[$driver] : new PermitsEverything;
@@ -139,9 +120,9 @@ class CruddyServiceProvider extends ServiceProvider {
      */
     protected function registerFactories()
     {
-        $this->app->singleton('cruddy.fields', 'Kalnoy\Cruddy\Schema\Fields\Factory');
-        $this->app->singleton('cruddy.columns', 'Kalnoy\Cruddy\Schema\Columns\Factory');
-        $this->app->singleton('cruddy.filters', 'Kalnoy\Cruddy\Schema\Filters\Factory');
+        $this->app->singleton('cruddy.fields', Schema\Fields\Factory::class);
+        $this->app->singleton('cruddy.columns', Schema\Columns\Factory::class);
+        $this->app->singleton('cruddy.filters', Schema\Filters\Factory::class);
     }
 
     /**
@@ -149,11 +130,10 @@ class CruddyServiceProvider extends ServiceProvider {
      */
     public function registerRepository()
     {
-        $this->app->singleton('cruddy.repository', function (Container $app)
-        {
+        $this->app->singleton('cruddy.repository', function (Container $app) {
             $config = $app->make('config');
 
-            return new Repository($app, $config->get('cruddy.entities', []));
+            return new Repository($app, $config->get('cruddy.entities', [ ]));
         });
     }
 
@@ -164,8 +144,7 @@ class CruddyServiceProvider extends ServiceProvider {
      */
     protected function registerCruddy()
     {
-        $this->app->singleton('cruddy', function (Container $app)
-        {
+        $this->app->singleton('cruddy', function (Container $app) {
             $permissions = $app->make('cruddy.permissions');
             $repository = $app->make('cruddy.repository');
             $lang = $app->make('cruddy.lang');
@@ -179,8 +158,7 @@ class CruddyServiceProvider extends ServiceProvider {
      */
     protected function registerAssets()
     {
-        $this->app->singleton('cruddy.assets', function ($app)
-        {
+        $this->app->singleton('cruddy.assets', function ($app) {
             $baseDir = 'cruddy';
 
             $assets = new Assets;
@@ -190,14 +168,13 @@ class CruddyServiceProvider extends ServiceProvider {
 
             return $assets;
         });
-
     }
 
     /**
      * Resolve asset paths.
      *
      * @param string $baseDir
-     * @param array  $items
+     * @param array $items
      *
      * @return array
      */
@@ -206,10 +183,8 @@ class CruddyServiceProvider extends ServiceProvider {
         /** @var UrlGenerator $url */
         $url = $this->app->make('url');
 
-        return array_map(function ($item) use ($url, $baseDir)
-        {
+        return array_map(function ($item) use ($url, $baseDir) {
             return $url->asset("{$baseDir}/{$item}").'?v='.$this->build;
-
         }, $items);
     }
 
@@ -245,10 +220,10 @@ class CruddyServiceProvider extends ServiceProvider {
     protected function registerCommands()
     {
         $this->commands([
-            'Kalnoy\Cruddy\Console\MakeEntityCommand',
-            'Kalnoy\Cruddy\Console\CompileCommand',
-            'Kalnoy\Cruddy\Console\ClearCompiledCommand'
-        ]);
+                            Console\MakeEntityCommand::class,
+                            Console\CompileCommand::class,
+                            Console\ClearCompiledCommand::class,
+                        ]);
     }
 
     /**
@@ -256,13 +231,14 @@ class CruddyServiceProvider extends ServiceProvider {
      */
     protected function registerCompiler()
     {
-        $this->app->singleton('cruddy.compiler', function (Container $app)
-        {
+        $this->app->singleton('cruddy.compiler', function (Container $app) {
             $basePath = storage_path('cruddy');
 
             $repository = $app->make('cruddy.repository');
+            $files = $app->make('files');
+            $lang = $app->make('cruddy.lang');
 
-            return new Compiler($repository, $app->make('files'), $app->make('cruddy.lang'), $basePath);
+            return new Compiler($repository, $files, $lang, $basePath);
         });
     }
 
@@ -271,9 +247,9 @@ class CruddyServiceProvider extends ServiceProvider {
      */
     protected function registerThumbnailFactory()
     {
-        $this->app->singleton('cruddy.thumbs', function (Container $app)
-        {
-            return new ThumbnailFactory(new ImageManager, $app->make('cache')->driver());
+        $this->app->singleton('cruddy.thumbs', function (Container $app) {
+            return new ThumbnailFactory(new ImageManager, $app->make('cache')
+                                                              ->driver());
         });
     }
 
@@ -282,22 +258,19 @@ class CruddyServiceProvider extends ServiceProvider {
      */
     protected function registerAliases()
     {
-        $baseNamespace = 'Kalnoy\Cruddy\\';
-
         $aliases = [
-            'cruddy' => 'Environment',
-            'cruddy.compiler' => 'Compiler',
-            'cruddy.lang' => 'Lang',
-            'cruddy.thumbs' => 'Service\ThumbnailFactory',
-            'cruddy.repository' => 'Repository',
-            'cruddy.permissions' => 'Service\Permissions\PermissionsManager',
-            'cruddy.menu' => 'Service\MenuBuilder',
-            'cruddy.assets' => 'Assets',
+            'cruddy' => Environment::class,
+            'cruddy.compiler' => Compiler::class,
+            'cruddy.lang' => Lang::class,
+            'cruddy.thumbs' => Service\ThumbnailFactory::class,
+            'cruddy.repository' => Repository::class,
+            'cruddy.permissions' => Contracts\Permissions::class,
+            'cruddy.menu' => Service\MenuBuilder::class,
+            'cruddy.assets' => Assets::class,
         ];
 
-        foreach ($aliases as $key => $alias)
-        {
-            $this->app->alias($key, $baseNamespace.$alias);
+        foreach ($aliases as $key => $alias) {
+            $this->app->alias($key, $alias);
         }
     }
 
@@ -308,14 +281,14 @@ class CruddyServiceProvider extends ServiceProvider {
     protected function registerRoutes(Router $router, Config $config)
     {
         $this->applyRoutingPattern($router);
-        $this->registerMiddleware($router);
 
-        $middleware = $config->get('cruddy.middleware');
-        $prefix = $config->get('cruddy.uri', 'backend');
-        $namespace = 'Kalnoy\Cruddy\Http\Controllers';
+        $group = [
+            'middleware' => $config->get('cruddy.middleware'),
+            'prefix' => $config->get('cruddy.uri', 'backend'),
+            'namespace' => 'Kalnoy\Cruddy\Http\Controllers',
+        ];
 
-        $router->group(compact('middleware', 'prefix', 'namespace'), function (Router $router)
-        {
+        $router->group($group, function (Router $router) {
             require __DIR__.'/Http/routes.php';
         });
     }
@@ -337,20 +310,9 @@ class CruddyServiceProvider extends ServiceProvider {
      */
     protected function registerViewComposer()
     {
-        $this->app->resolving('view', function (Factory $viewFactory)
-        {
-            $viewFactory->composer('cruddy::layout', 'Kalnoy\Cruddy\LayoutComposer');
+        $this->app->resolving('view', function (Factory $viewFactory) {
+            $viewFactory->composer('cruddy::layout', LayoutComposer::class);
         });
     }
 
-    /**
-     * @param Router $router
-     */
-    protected function registerMiddleware(Router $router)
-    {
-        foreach ($this->middleware as $name => $class)
-        {
-            $router->middleware($name, $class);
-        }
-    }
 }

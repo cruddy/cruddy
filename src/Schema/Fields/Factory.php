@@ -11,30 +11,30 @@ use Kalnoy\Cruddy\Entity;
  *
  * @since 1.0.0
  */
-class Factory extends BaseFactory {
-
+class Factory extends BaseFactory
+{
     /**
      * @var array
      */
     protected $macros = [
-        'increments' => 'Kalnoy\Cruddy\Schema\Fields\Types\Primary',
-        'string' => 'Kalnoy\Cruddy\Schema\Fields\Types\String',
-        'text' => 'Kalnoy\Cruddy\Schema\Fields\Types\Text',
-        'email' => 'Kalnoy\Cruddy\Schema\Fields\Types\Email',
-        'password' => 'Kalnoy\Cruddy\Schema\Fields\Types\Password',
-        'datetime' => 'Kalnoy\Cruddy\Schema\Fields\Types\DateTime',
-        'time' => 'Kalnoy\Cruddy\Schema\Fields\Types\Time',
-        'date' => 'Kalnoy\Cruddy\Schema\Fields\Types\Date',
-        'boolean' => 'Kalnoy\Cruddy\Schema\Fields\Types\Boolean',
-        'bool' => 'Kalnoy\Cruddy\Schema\Fields\Types\Boolean',
-        'file' => 'Kalnoy\Cruddy\Schema\Fields\Types\File',
-        'image' => 'Kalnoy\Cruddy\Schema\Fields\Types\Image',
-        'integer' => 'Kalnoy\Cruddy\Schema\Fields\Types\Integer',
-        'float' => 'Kalnoy\Cruddy\Schema\Fields\Types\Float',
-        'compute' => 'Kalnoy\Cruddy\Schema\Fields\Types\Computed',
-        'computed' => 'Kalnoy\Cruddy\Schema\Fields\Types\Computed',
-        'enum' => 'Kalnoy\Cruddy\Schema\Fields\Types\Enum',
-        'slug' => 'Kalnoy\Cruddy\Schema\Fields\Types\Slug',
+        'increments' => Types\Primary::class,
+        'string' => Types\String::class,
+        'text' => Types\Text::class,
+        'email' => Types\Email::class,
+        'password' => Types\Password::class,
+        'datetime' => Types\DateTime::class,
+        'time' => Types\Time::class,
+        'date' => Types\Date::class,
+        'boolean' => Types\Boolean::class,
+        'bool' => Types\Boolean::class,
+        'file' => Types\File::class,
+        'image' => Types\Image::class,
+        'integer' => Types\Integer::class,
+        'float' => Types\Float::class,
+        'compute' => Types\Computed::class,
+        'computed' => Types\Computed::class,
+        'enum' => Types\Enum::class,
+        'slug' => Types\Slug::class,
     ];
 
     /**
@@ -43,46 +43,47 @@ class Factory extends BaseFactory {
      * They are disabled by default.
      *
      * @param Entity $entity
-     * @param Collection            $collection
-     * @param bool                  $hide
-     * @param bool                  $disable
+     * @param Collection $collection
+     * @param bool $hide
+     * @param bool $disable
      *
      * @return void
      */
-    public function timestamps($entity, $collection, $hide = false, $disable = null)
-    {
+    public function timestamps($entity, $collection, $hide = false,
+                               $disable = null
+    ) {
         $this->resolve('datetime', $collection, [ 'created_at' ])
-            ->unique()
-            ->hide($hide)
-            ->disable($disable ? true : Entity::CREATE);
+             ->unique()
+             ->hide($hide)
+             ->disable($disable ? true : Entity::CREATE);
 
         $this->resolve('datetime', $collection, [ 'updated_at' ])
-            ->unique()
-            ->hide($hide)
-            ->disable($disable !== false);
+             ->unique()
+             ->hide($hide)
+             ->disable($disable !== false);
     }
 
     /**
      * Add relation field type.
      *
      * @param Entity $entity
-     * @param Collection            $collection
-     * @param string                $id
-     * @param string                $ref
-     * @param bool                  $inline
+     * @param Collection $collection
+     * @param string $id
+     * @param string $ref
+     * @param bool $inline
      *
      * @return BasicRelation
      */
-    public function relates($entity, $collection, $id, $ref = null, $inline = false)
-    {
+    public function relates($entity, $collection, $id, $ref = null,
+                            $inline = false
+    ) {
         if ($ref === null) $ref = str_plural($id);
 
         $ref = $entity->getEntitiesRepository()->resolve($ref);
 
         $model = $entity->newModel();
 
-        if ( ! method_exists($model, $id))
-        {
+        if ( ! method_exists($model, $id)) {
             $className = get_class($model);
 
             throw new \RuntimeException("The target model [{$className}] doesn't have relation [{$id}] defined.");
@@ -90,8 +91,7 @@ class Factory extends BaseFactory {
 
         $relation = $model->$id();
 
-        if ( ! $relation instanceof Relation)
-        {
+        if ( ! $relation instanceof Relation) {
             $className = get_class($model);
 
             throw new \RuntimeException("The method [{$id}] of model [{$className}] did not return valid relation.");
@@ -100,8 +100,7 @@ class Factory extends BaseFactory {
         $relationClassName = class_basename($relation);
         $className = __NAMESPACE__.'\\'.($inline ? 'InlineTypes' : 'Types').'\\'.$relationClassName;
 
-        if ( ! class_exists($className))
-        {
+        if ( ! class_exists($className)) {
             throw new \RuntimeException("Cruddy does not know how to handle [{$relationClassName}] relation.");
         }
 
@@ -116,9 +115,9 @@ class Factory extends BaseFactory {
      * Create inline relation field.
      *
      * @param Entity $entity
-     * @param Collection            $collection
-     * @param string                $id
-     * @param string                $ref
+     * @param Collection $collection
+     * @param string $id
+     * @param string $ref
      *
      * @return InlineRelation
      */

@@ -46,8 +46,8 @@ class EntityData extends BaseFormData
 
         /** @var InnerEntityDataCollection $item */
         foreach ($this->inner as $id => $item) {
-            if ($errors = $item->getValidationErrors()) {
-                $errors[$id] = $errors;
+            if ($innerErrors = $item->getValidationErrors()) {
+                $errors[$id] = $innerErrors;
             }
         }
 

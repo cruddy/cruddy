@@ -5,6 +5,7 @@ namespace Kalnoy\Cruddy;
 use Illuminate\Contracts\Container\Container;
 use Illuminate\Contracts\Routing\Registrar;
 use Illuminate\Contracts\Routing\UrlGenerator;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\View\Factory;
@@ -90,12 +91,15 @@ class CruddyServiceProvider extends ServiceProvider
      */
     public function registerMenu()
     {
-        $this->app->singleton('cruddy.menu', function (Container $app) {
-            $builder = new MenuBuilder($app->make('cruddy'), $app->make('request'));
+        $this->app->singleton('cruddy.menu', function (Application $app) {
+            $builder = new MenuBuilder($app->make('cruddy'));
 
             $builder->setUrlGenerator($app->make('url'));
             $builder->setTranslator($app->make('translator'));
             $builder->setContainer($app);
+            $builder->setRequest($app->rebinding('request', function ($request) use ($builder) {
+                $builder->setRequest($request);
+            }));
 
             return $builder;
         });

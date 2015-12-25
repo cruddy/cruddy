@@ -10,16 +10,13 @@ use Kalnoy\Cruddy\Schema\Fields\BaseField;
  *
  * The slug uses other field's value to generate own value.
  *
- * @property string $chars
- * @method $this chars(string $value)
- *
  * @property string $separator
- * @method $this separator(string $char)
+ * @method $this separator(StringField $char)
  *
  * @since 1.0.0
  */
-class Slug extends BaseField {
-
+class Slug extends BaseField
+{
     /**
      * The id or array of reference field with which slug will be linked.
      *
@@ -36,7 +33,17 @@ class Slug extends BaseField {
     {
         parent::__construct($entity, $id);
 
-        $this->field = $field ?: $id;
+        $this->field = $field;
+    }
+
+    /**
+     * @param string $value
+     *
+     * @return string
+     */
+    public function process($value)
+    {
+        return empty($value) ? null : str_slug($value);
     }
 
     /**
@@ -55,9 +62,7 @@ class Slug extends BaseField {
     public function toArray()
     {
         return [
-            'chars' => $this->chars,
             'field' => $this->field,
-            'separator' => $this->separator,
 
         ] + parent::toArray();
     }

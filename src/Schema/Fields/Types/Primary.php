@@ -8,7 +8,7 @@ use Kalnoy\Cruddy\Entity;
  *
  * @since 1.0.0
  */
-class Primary extends String {
+class Primary extends StringField {
 
     /**
      * @param Entity $entity

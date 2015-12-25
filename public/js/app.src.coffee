@@ -1583,13 +1583,13 @@ class Cruddy.Inputs.Slug extends Backbone.View
         super
 
     initialize: (options) ->
-        chars = options.chars ? "a-z0-9\-_"
-
-        @regexp = new RegExp "[^#{ chars }]+", "g"
-        @separator = options.separator ? "-"
-
         @key = options.key
         @ref = if _.isArray(options.field) then options.field else [options.field] if options.field
+
+        @$el.removeClass("input-group") unless @ref
+
+        @listenTo @model, "change:" + @key, =>
+            @unlink() unless @linkable()
 
         super
 
@@ -1599,7 +1599,7 @@ class Cruddy.Inputs.Slug extends Backbone.View
         this
 
     link: ->
-        return if not @ref
+        return unless @ref
 
         @listenTo @model, "change:" + @ref.join(" change:"), @sync
         @syncButton.addClass "active"
@@ -1616,25 +1616,23 @@ class Cruddy.Inputs.Slug extends Backbone.View
 
     linkable: ->
         modelValue = @model.get @key
-        value = @getValue()
+        value = @getSlug()
 
-        value == modelValue or modelValue is null and value is ""
-
-    convert: (value) -> if value then value.toLocaleLowerCase().replace(/\s+/g, @separator).replace(@regexp, "") else value
+        return value == modelValue or modelValue is null and value is ""
 
     sync: ->
-        @model.set @key, @getValue()
+        @model.set @key, @getSlug()
 
         this
 
-    getValue: ->
+    getSlug: ->
         components = []
 
         for key in @ref
             refValue = @model.get key
             components.push refValue if refValue
 
-        if components.length then @convert components.join @separator else ""
+        if components.length then components.join " " else ""
 
     render: ->
         @$el.html @template()
@@ -2499,9 +2497,7 @@ class Cruddy.Fields.Slug extends Cruddy.Fields.Base
     createEditableInput: (model) -> new Cruddy.Inputs.Slug
         model: model
         key: @id
-        chars: @attributes.chars
         field: @attributes.field
-        separator: @attributes.separator
 
         attributes:
             placeholder: @attributes.placeholder

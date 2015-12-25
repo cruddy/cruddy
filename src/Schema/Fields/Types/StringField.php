@@ -10,11 +10,11 @@ use Kalnoy\Cruddy\Schema\Fields\BaseTextField;
  * @link http://digitalbush.com/projects/masked-input-plugin
  *
  * @property string $mask
- * @method $this mask(string $value)
+ * @method $this mask(StringField $value)
  *
  * @since 1.0.0
  */
-class String extends BaseTextField {
+class StringField extends BaseTextField {
 
     /**
      * {@inheritdoc}

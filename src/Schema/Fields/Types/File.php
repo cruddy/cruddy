@@ -7,7 +7,7 @@ use Kalnoy\Cruddy\Schema\Fields\BaseField;
  * File input field.
  *
  * @property string $accepts
- * @method $this accepts(string $value)
+ * @method $this accepts(StringField $value)
  *
  * @property bool $many
  * @method $this many(bool $value = true)

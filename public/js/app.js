@@ -2207,12 +2207,18 @@
     }
 
     Slug.prototype.initialize = function(options) {
-      var chars, _ref, _ref1;
-      chars = (_ref = options.chars) != null ? _ref : "a-z0-9\-_";
-      this.regexp = new RegExp("[^" + chars + "]+", "g");
-      this.separator = (_ref1 = options.separator) != null ? _ref1 : "-";
       this.key = options.key;
       this.ref = _.isArray(options.field) ? options.field : options.field ? [options.field] : void 0;
+      if (!this.ref) {
+        this.$el.removeClass("input-group");
+      }
+      this.listenTo(this.model, "change:" + this.key, (function(_this) {
+        return function() {
+          if (!_this.linkable()) {
+            return _this.unlink();
+          }
+        };
+      })(this));
       return Slug.__super__.initialize.apply(this, arguments);
     };
 
@@ -2247,24 +2253,16 @@
     Slug.prototype.linkable = function() {
       var modelValue, value;
       modelValue = this.model.get(this.key);
-      value = this.getValue();
+      value = this.getSlug();
       return value === modelValue || modelValue === null && value === "";
     };
 
-    Slug.prototype.convert = function(value) {
-      if (value) {
-        return value.toLocaleLowerCase().replace(/\s+/g, this.separator).replace(this.regexp, "");
-      } else {
-        return value;
-      }
-    };
-
     Slug.prototype.sync = function() {
-      this.model.set(this.key, this.getValue());
+      this.model.set(this.key, this.getSlug());
       return this;
     };
 
-    Slug.prototype.getValue = function() {
+    Slug.prototype.getSlug = function() {
       var components, key, refValue, _i, _len, _ref;
       components = [];
       _ref = this.ref;
@@ -2276,7 +2274,7 @@
         }
       }
       if (components.length) {
-        return this.convert(components.join(this.separator));
+        return components.join(" ");
       } else {
         return "";
       }
@@ -3764,9 +3762,7 @@
       return new Cruddy.Inputs.Slug({
         model: model,
         key: this.id,
-        chars: this.attributes.chars,
         field: this.attributes.field,
-        separator: this.attributes.separator,
         attributes: {
           placeholder: this.attributes.placeholder
         }

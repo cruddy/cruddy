@@ -10,7 +10,7 @@ use Kalnoy\Cruddy\Schema\Fields\BaseInput;
  * The field for displaying select box.
  *
  * @property string $prompt
- * @method $this prompt(string $value)
+ * @method $this prompt(StringField $value)
  *
  * @property bool $multiple
  * @method $this multiple(bool $value = true)

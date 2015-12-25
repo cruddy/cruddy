@@ -18,7 +18,7 @@ class Factory extends BaseFactory
      */
     protected $macros = [
         'increments' => Types\Primary::class,
-        'string' => Types\String::class,
+        'string' => Types\StringField::class,
         'text' => Types\Text::class,
         'email' => Types\Email::class,
         'password' => Types\Password::class,
@@ -30,7 +30,7 @@ class Factory extends BaseFactory
         'file' => Types\File::class,
         'image' => Types\Image::class,
         'integer' => Types\Integer::class,
-        'float' => Types\Float::class,
+        'float' => Types\FloatField::class,
         'compute' => Types\Computed::class,
         'computed' => Types\Computed::class,
         'enum' => Types\Enum::class,

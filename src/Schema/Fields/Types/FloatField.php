@@ -5,11 +5,11 @@ namespace Kalnoy\Cruddy\Schema\Fields\Types;
 use Kalnoy\Cruddy\Schema\Fields\BaseNumber;
 
 /**
- * Float field.
+ * FloatField field.
  *
  * @since 1.0.0
  */
-class Float extends BaseNumber {
+class FloatField extends BaseNumber {
 
     /**
      * {@inheritdoc}

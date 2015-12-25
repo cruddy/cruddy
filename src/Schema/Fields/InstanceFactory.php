@@ -4,7 +4,7 @@ namespace Kalnoy\Cruddy\Schema\Fields;
 
 /**
  * @method Types\Primary    increments(string $id)
- * @method Types\String     string(string $id)
+ * @method Types\StringField string(string $id)
  * @method Types\Text       text(string $id)
  * @method Types\Email      email(string $id)
  * @method Types\Password   password(string $id)
@@ -16,7 +16,7 @@ namespace Kalnoy\Cruddy\Schema\Fields;
  * @method Types\File       file(string $id)
  * @method Types\Image      image(string $id)
  * @method Types\Integer    integer(string $id)
- * @method Types\Float      float(string $id)
+ * @method Types\FloatField float(string $id)
  * @method void             timestamps(bool $hide = false, bool $disableCreatedAt = null)
  * @method BasicRelation    relates(string $id, string $entityId = null)
  * @method InlineRelation   embed(string $id, string $entityId = null)

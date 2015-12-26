@@ -2,43 +2,45 @@
 
 namespace Kalnoy\Cruddy\Schema;
 
+use Illuminate\Contracts\Support\Arrayable as ArrayableContract;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Contracts\ArrayableInterface;
-use Kalnoy\Cruddy\BaseForm;
 use Kalnoy\Cruddy\Contracts\Entry;
-use Kalnoy\Cruddy\Entity;
 
 /**
  * Base collection for any kind of attributes.
  *
  * @since 1.0.0
  */
-class BaseCollection extends Collection {
+class BaseCollection implements ArrayableContract
+{
+    /**
+     * @var array
+     */
+    protected $items = [];
 
     /**
-     * @var BaseForm
+     * @var mixed
      */
-    protected $entity;
+    protected $container;
 
     /**
-     * @param BaseForm $entity
-     * @param array $items
+     * BaseCollection constructor.
+     *
+     * @param $container
      */
-    public function __construct(BaseForm $entity, array $items = [])
+    public function __construct($container)
     {
-        parent::__construct($items);
-
-        $this->entity = $entity;
+        $this->container = $container;
     }
 
     /**
-     * Add attribute to the collection.
+     * Add entry.
      *
      * @param Entry $item
      *
      * @return $this
      */
-    public function add(Entry $item)
+    public function push(Entry $item)
     {
         $this->items[$item->getId()] = $item;
 
@@ -46,19 +48,42 @@ class BaseCollection extends Collection {
     }
 
     /**
+     * @param $id
+     *
+     * @return bool
+     */
+    public function has($id)
+    {
+        return isset($this->items[$id]);
+    }
+
+    /**
+     * Get an entry by id.
+     *
+     * @param string $id
+     *
+     * @return null|Entry
+     */
+    public function get($id)
+    {
+        return $this->has($id) ? $this->items[$id] : null;
+    }
+
+    /**
      * @return array
      */
     public function toArray()
     {
-        return array_values(parent::toArray());
+        return array_values(array_map(function (Entry $entry) {
+            return $entry->toArray();
+        }, $this->items));
     }
 
     /**
-     * @return BaseForm
+     * @return mixed
      */
-    public function getEntity()
+    public function getContainer()
     {
-        return $this->entity;
+        return $this->container;
     }
-
 }

@@ -8,7 +8,8 @@ use Kalnoy\Cruddy\Entity;
  *
  * @since 1.0.0
  */
-class Primary extends StringField {
+class Primary extends StringField
+{
 
     /**
      * @param Entity $entity
@@ -28,10 +29,8 @@ class Primary extends StringField {
      */
     public function applyKeywordsFilter(Builder $builder, array $keywords)
     {
-        foreach ($keywords as $keyword)
-        {
-            if (is_numeric($keyword))
-            {
+        foreach ($keywords as $keyword) {
+            if (is_numeric($keyword)) {
                 $builder->orWhere($this->id, '=', $keyword);
             }
         }

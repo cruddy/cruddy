@@ -36,7 +36,7 @@ class Factory extends BaseFactory
 
         $instance = new Types\Proxy($entity, $id, $field);
 
-        $collection->add($instance);
+        $collection->push($instance);
 
         return $instance;
     }

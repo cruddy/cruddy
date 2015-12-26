@@ -25,6 +25,8 @@ interface Attribute extends Entry {
     /**
      * Get a list of relations that should be eagerly loaded.
      *
+     * TODO: should not be here
+     *
      * @return array
      */
     public function eagerLoads();

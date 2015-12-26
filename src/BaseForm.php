@@ -173,9 +173,10 @@ abstract class BaseForm implements Arrayable
     {
         $collection = new Schema\Fields\Collection($this);
 
-        $schema = new Schema\Fields\InstanceFactory($this->getFieldsFactory(), $collection);
+        $factory = new Schema\Fields\InstanceFactory($this->getFieldsFactory(),
+                                                     $collection);
 
-        $this->fields($schema);
+        $this->fields($factory);
 
         return $collection;
     }

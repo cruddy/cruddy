@@ -97,6 +97,13 @@ abstract class Entity extends BaseForm
     protected $filters = [ ];
 
     /**
+     * The list of searchable fields.
+     *
+     * @var array
+     */
+    protected $searchable;
+
+    /**
      * The attribute that is used to convert model to a string.
      *
      * @var string
@@ -331,11 +338,9 @@ abstract class Entity extends BaseForm
      */
     protected function getSearchProcessor(array $options)
     {
-        $processor = new ChainedSearchProcessor([
-                                                    $this->getFields(),
-                                                    $this->getColumns(),
-                                                    $this->getFilters(),
-                                                ]);
+        $processor = new ChainedSearchProcessor(
+            [ $this->getFields(), $this->getColumns(), $this->getFilters() ]
+        );
 
         if (isset($options['owner'])) {
             $field = $this->entities->field($options['owner']);
@@ -348,6 +353,18 @@ abstract class Entity extends BaseForm
         }
 
         return $processor;
+    }
+
+    /**
+     * @return Schema\Fields\Collection
+     */
+    protected function createFields()
+    {
+        $collection = parent::createFields();
+
+        $collection->setSearchableFields($this->searchable);
+
+        return $collection;
     }
 
     /**

@@ -106,7 +106,7 @@ class Factory extends BaseFactory
 
         $instance = new $className($entity, $id, $ref, $relation);
 
-        $collection->add($instance);
+        $collection->push($instance);
 
         return $instance;
     }

@@ -4,6 +4,7 @@ namespace Kalnoy\Cruddy\Schema\Fields;
 
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Support\Arr;
 use Kalnoy\Cruddy\Contracts\Filter;
 use Kalnoy\Cruddy\Contracts\KeywordsFilter;
 use Kalnoy\Cruddy\Schema\AttributesCollection;
@@ -15,7 +16,12 @@ use Kalnoy\Cruddy\Contracts\SearchProcessor;
  *
  * @since 1.0.0
  */
-class Collection extends AttributesCollection implements SearchProcessor {
+class Collection extends AttributesCollection implements SearchProcessor
+{
+    /**
+     * @var null|array
+     */
+    protected $searchable;
 
     /**
      * Process input before validation.
@@ -26,15 +32,13 @@ class Collection extends AttributesCollection implements SearchProcessor {
      */
     public function process(array $input)
     {
-        $result = [];
+        $result = [ ];
 
         /**
          * @var Field $field
          */
-        foreach ($input as $key => $value)
-        {
-            if (($field = $this->get($key)) and $field->keep($value))
-            {
+        foreach ($input as $key => $value) {
+            if (($field = $this->get($key)) && $field->keep($value)) {
                 $result[$key] = $field->process($value);
             }
         }
@@ -46,18 +50,16 @@ class Collection extends AttributesCollection implements SearchProcessor {
      * Clean input from disabled fields.
      *
      * @param string $action
-     * @param array  $input
+     * @param array $input
      *
      * @return array
      */
     public function cleanInput($action, array $input)
     {
-        $result = [];
+        $result = [ ];
 
-        foreach ($input as $key => $value)
-        {
-            if ( ! $this->get($key)->isDisabled($action))
-            {
+        foreach ($input as $key => $value) {
+            if ( ! $this->get($key)->isDisabled($action)) {
                 $result[$key] = $value;
             }
         }
@@ -72,10 +74,8 @@ class Collection extends AttributesCollection implements SearchProcessor {
      */
     public function validationLabels()
     {
-        return array_map(function (Field $item)
-        {
+        return array_map(function (Field $item) {
             return mb_strtolower($item->getLabel());
-
         }, $this->items);
     }
 
@@ -87,19 +87,12 @@ class Collection extends AttributesCollection implements SearchProcessor {
      *
      * @return void
      */
-    protected function applyKeywordsFilter(QueryBuilder $builder, array $keywords)
-    {
-        $builder->whereNested(function ($q) use ($keywords)
-        {
-            /**
-             * @var KeywordsFilter $item
-             */
-            foreach ($this->items as $item)
-            {
-                if ($item instanceof KeywordsFilter)
-                {
-                    $item->applyKeywordsFilter($q, $keywords);
-                }
+    protected function applyKeywordsFilter(QueryBuilder $builder,
+                                           array $keywords
+    ) {
+        $builder->whereNested(function ($q) use ($keywords) {
+            foreach ($this->searchable() as $item) {
+                $item->applyKeywordsFilter($q, $keywords);
             }
         });
     }
@@ -109,9 +102,10 @@ class Collection extends AttributesCollection implements SearchProcessor {
      */
     public function constraintBuilder(EloquentBuilder $builder, array $options)
     {
-        if ($value = array_get($options, 'keywords'))
-        {
-            $this->applyKeywordsFilter($builder->getQuery(), $this->processKeywords($value));
+        if ($keywords = array_get($options, 'keywords')) {
+            $keywords = $this->processKeywords($keywords);
+
+            $this->applyKeywordsFilter($builder->getQuery(), $keywords);
         }
     }
 
@@ -134,13 +128,38 @@ class Collection extends AttributesCollection implements SearchProcessor {
      */
     public function relations($owner = null)
     {
-        $data = [];
+        $data = [ ];
 
-        foreach ($this->items as $field)
-        {
-            if ($field instanceof BaseRelation) $data = array_merge($data, $field->relations($owner));
+        foreach ($this->items as $field) {
+            if ($field instanceof BaseRelation) {
+                $data = array_merge($data, $field->relations($owner));
+            }
         }
 
         return $data;
+    }
+
+    /**
+     * @param array|null $value
+     */
+    public function setSearchableFields($value)
+    {
+        $this->searchable = $value;
+    }
+
+    /**
+     * Get searchable fields collection.
+     *
+     * @return KeywordsFilter[]|array
+     */
+    protected function searchable()
+    {
+        $items = $this->searchable
+            ? Arr::only($this->items, $this->searchable)
+            : $this->items;
+
+        return array_filter($items, function ($item) {
+            return $item instanceof KeywordsFilter;
+        });
     }
 }

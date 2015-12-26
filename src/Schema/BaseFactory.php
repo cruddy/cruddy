@@ -2,6 +2,7 @@
 
 namespace Kalnoy\Cruddy\Schema;
 
+use Kalnoy\Cruddy\BaseForm;
 use Kalnoy\Cruddy\Contracts\Attribute;
 use Kalnoy\Cruddy\Entity;
 
@@ -10,17 +11,17 @@ use Kalnoy\Cruddy\Entity;
  *
  * @since 1.0.0
  */
-class BaseFactory {
-
+class BaseFactory
+{
     /**
      * @var array
      */
-    protected $macros = [];
+    protected $macros = [ ];
 
     /**
      * Register new type.
      *
-     * @param string          $type
+     * @param string $type
      * @param string|Callable $callback
      *
      * @return $this
@@ -41,34 +42,31 @@ class BaseFactory {
      *
      * @return Attribute
      */
-    public function resolve($macro, BaseCollection $collection, array $params)
+    public function resolve($macro, $collection, array $params)
     {
-        if (method_exists($this, $macro))
-        {
+        if (method_exists($this, $macro)) {
             return $this->evaluate([ $this, $macro ], $collection, $params);
         }
 
-        if ( ! isset($this->macros[$macro]))
-        {
+        if ( ! isset($this->macros[$macro])) {
             throw new \RuntimeException("Macro [{$macro}] is not registered.");
         }
 
         $callback = $this->macros[$macro];
 
-        if (is_string($callback))
-        {
-            $class = new \ReflectionClass($callback);
-
-            array_unshift($params, $collection->getEntity());
-
-            $instance = $class->newInstanceArgs($params);
-
-            $collection->add($instance);
-
-            return $instance;
+        if ( ! is_string($callback)) {
+            return $this->evaluate($callback, $collection, $params);
         }
 
-        return $this->evaluate($callback, $collection, $params);
+        $class = new \ReflectionClass($callback);
+
+        array_unshift($params, $collection->getContainer());
+
+        $instance = $class->newInstanceArgs($params);
+
+        $collection->push($instance);
+
+        return $instance;
     }
 
     /**
@@ -80,28 +78,25 @@ class BaseFactory {
      *
      * @return Entry
      */
-    protected function evaluate($callback, BaseCollection $collection, array $params)
+    protected function evaluate($callback, $collection, array $params)
     {
-        $entity = $collection->getEntity();
-
-        array_unshift($params, $entity, $collection);
+        array_unshift($params, $collection->getContainer(), $collection);
 
         return call_user_func_array($callback, $params);
     }
 
     /**
-     * @param Entity $entity
+     * @param BaseForm $container
      * @param $id
      *
      * @return \Kalnoy\Cruddy\Contracts\Field
      */
-    protected function resolveField(Entity $entity, $id)
+    protected function resolveField($container, $id)
     {
-        $field = $entity->getFields()->get($id);
+        $field = $container->getFields()->get($id);
 
-        if ($field === null)
-        {
-            throw new \RuntimeException("The field [{$entity->getId()}.{$id}] is not found.");
+        if ($field === null) {
+            throw new \RuntimeException("The field [{$container->getId()}.{$id}] is not found.");
         }
 
         return $field;

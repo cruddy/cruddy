@@ -32,7 +32,7 @@ class InstanceFactory {
      * @param BaseFactory $factory
      * @param BaseCollection $collection
      */
-    public function __construct(BaseFactory $factory, BaseCollection $collection)
+    public function __construct($factory, $collection)
     {
         $this->factory = $factory;
         $this->collection = $collection;

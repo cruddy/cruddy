@@ -5,8 +5,8 @@ namespace Kalnoy\Cruddy\Schema;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Collection;
 
-class AttributesCollection extends BaseCollection {
-
+class AttributesCollection extends BaseCollection
+{
     /**
      * Extract data from an item or a set of items.
      *
@@ -16,19 +16,15 @@ class AttributesCollection extends BaseCollection {
      */
     public function extract($model)
     {
-        $data = [];
+        $data = [ ];
 
         /** @var Attribute $attribute */
-        foreach ($this->items as $key => $attribute)
-        {
+        foreach ($this->items as $key => $attribute) {
             $value = $attribute->extract($model);
 
-            if ($value instanceof Arrayable)
-            {
+            if ($value instanceof Arrayable) {
                 $value = $value->toArray();
-            }
-            elseif (is_object($value))
-            {
+            } elseif (is_object($value)) {
                 $value = (string)$value;
             }
 
@@ -47,12 +43,11 @@ class AttributesCollection extends BaseCollection {
      */
     public function extractAll($items)
     {
-        if ($items instanceof BaseCollection)
-        {
+        if ($items instanceof Collection) {
             $items = $items->all();
         }
 
-        return array_map(array($this, 'extract'), $items);
+        return array_map(array( $this, 'extract' ), $items);
     }
 
 }

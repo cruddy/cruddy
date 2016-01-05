@@ -14,8 +14,8 @@ use Kalnoy\Cruddy\Schema\Fields\BaseField;
  *
  * @since 1.0.0
  */
-class File extends BaseField {
-
+class File extends BaseField
+{
     /**
      * The name of the JavaScript class that is used to render this field.
      *
@@ -43,9 +43,11 @@ class File extends BaseField {
     {
         $value = parent::extract($model);
 
-        if ($this->multiple) return is_array($value) ? $value : [];
+        if ($this->isMultiple()) {
+            return is_array($value) ? $value : [ ];
+        }
 
-        return $value === null ? '' : $value;
+        return $value;
     }
 
     /**
@@ -57,7 +59,7 @@ class File extends BaseField {
     {
         if (empty($value)) $value = null;
 
-        return $this->multiple ? (array)$value : $value;
+        return $this->isMultiple() ? (array)$value : $value;
     }
 
     /**
@@ -66,10 +68,18 @@ class File extends BaseField {
     public function toArray()
     {
         return [
-            'multiple' => $this->many,
+            'multiple' => $this->isMultiple(),
             'accepts' => $this->get('accepts', $this->defaultAccepts()),
             'unique' => true,
 
         ] + parent::toArray();
+    }
+
+    /**
+     * @return bool
+     */
+    public function isMultiple()
+    {
+        return $this->get('many', false);
     }
 }

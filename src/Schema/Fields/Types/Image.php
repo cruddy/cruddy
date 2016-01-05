@@ -1,4 +1,4 @@
-<?php  namespace Kalnoy\Cruddy\Schema\Fields\Types;
+<?php namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Kalnoy\Cruddy\Schema\Fields\AbstractField;
@@ -11,8 +11,8 @@ use Kalnoy\Cruddy\Schema\Fields\AbstractField;
  * @property int $width
  * @property int $height
  */
-class Image extends File {
-
+class Image extends File
+{
     /**
      * @return string
      */

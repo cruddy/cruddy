@@ -43,7 +43,7 @@ class Slug extends BaseField
      */
     public function process($value)
     {
-        return empty($value) ? null : str_slug($value);
+        return empty($value) ? null : str_slug($value, $this->getSeparator());
     }
 
     /**
@@ -65,5 +65,13 @@ class Slug extends BaseField
             'field' => $this->field,
 
         ] + parent::toArray();
+    }
+
+    /**
+     * @return string
+     */
+    public function getSeparator()
+    {
+        return $this->get('separator', '-');
     }
 }

@@ -272,8 +272,7 @@ abstract class AbstractEloquentRepository implements Repository
     {
         $data = is_array($data) ? $data : [ ];
 
-        return $this->addPostSaveCallback(function ($instance) use ($key, $data
-        ) {
+        return $this->addPostSaveCallback(function ($instance) use ($key, $data) {
             $instance->$key()->sync($data);
 
             // We'll unset the relation since it might be outdated

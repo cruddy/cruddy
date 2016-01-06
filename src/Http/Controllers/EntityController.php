@@ -11,7 +11,6 @@ use Kalnoy\Cruddy\AccessDeniedException;
 use Kalnoy\Cruddy\BaseForm;
 use Kalnoy\Cruddy\BaseFormData;
 use Kalnoy\Cruddy\Entity;
-use Kalnoy\Cruddy\EntityData;
 use Kalnoy\Cruddy\EntityNotFoundException;
 use Kalnoy\Cruddy\Environment;
 use Kalnoy\Cruddy\ModelNotFoundException;
@@ -108,28 +107,36 @@ class EntityController extends Controller
      *
      * @return JsonResponse
      */
-    public function store(Request $input, $form)
+    public function store(Request $input, $form, $action = null)
     {
         $form = $this->resolve($form, Entity::CREATE);
 
         $data = $form->processInput($input->all());
 
-        return $this->validateAndSave($form, $data);
+        return $this->validateAndSave($form, $data, $action);
     }
 
     /**
      * @param BaseForm $form
      * @param BaseFormData $data
+     * @param string $action
      *
      * @return JsonResponse
      */
-    protected function validateAndSave(BaseForm $form, BaseFormData $data)
-    {
+    protected function validateAndSave(BaseForm $form, BaseFormData $data,
+                                       $action = null
+    ) {
         $data->validate();
 
         $model = $data->save();
 
-        return new JsonResponse($form->extract($model));
+        if ($form instanceof Entity && $action) {
+            $actionResult = $this->executeActionOnModel($form, $action, $model);
+        }
+
+        $model = $form->extract($model);
+
+        return new JsonResponse(compact('actionResult', 'model'));
     }
 
     /**
@@ -151,9 +158,8 @@ class EntityController extends Controller
         $data = $entity->processInput($input->all());
 
         $data->setId($id);
-        $data->setCustomAction($action);
 
-        return $this->validateAndSave($entity, $data);
+        return $this->validateAndSave($entity, $data, $action);
     }
 
     /**
@@ -165,20 +171,15 @@ class EntityController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function executeCustomAction($entity, $id, $action = null)
+    public function executeCustomAction($entity, $id, $action)
     {
         $entity = $this->resolve($entity, Entity::UPDATE);
 
         $this->assertIsEntity($entity);
 
-        $data = new EntityData($entity, [ ]);
+        $model = $entity->getRepository()->find($id);
 
-        $data->setId($id);
-        $data->setCustomAction($action);
-
-        $data->save();
-
-        return new JsonResponse;
+        return $this->executeActionOnModel($entity, $action, $model);
     }
 
     /**
@@ -240,6 +241,18 @@ class EntityController extends Controller
         if ( ! $entity instanceof Entity) {
             throw new \RuntimeException;
         }
+    }
+
+    /**
+     * @param Entity $form
+     * @param $action
+     * @param $model
+     *
+     * @return mixed
+     */
+    protected function executeActionOnModel(Entity $form, $action, $model)
+    {
+        return $form->getActions()->execute($model, $action);
     }
 
     /**

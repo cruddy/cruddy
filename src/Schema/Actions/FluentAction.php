@@ -17,8 +17,8 @@ use Kalnoy\Cruddy\Helpers;
  *
  * @package Kalnoy\Cruddy\Schema\Actions
  */
-class FluentAction extends Fluent implements Action {
-
+class FluentAction extends Fluent implements Action
+{
     /**
      * @param mixed $model
      *
@@ -26,7 +26,8 @@ class FluentAction extends Fluent implements Action {
      */
     public function getTitle($model)
     {
-        return $this->evaluate('title', $model) ?: Helpers::labelFromId($this->get('id'));
+        return $this->evaluate('title', $model)
+                ?: Helpers::labelFromId($this->get('id'));
     }
 
     /**
@@ -84,16 +85,17 @@ class FluentAction extends Fluent implements Action {
     {
         $callback = $this->get('callback');
 
-        if (is_string($callback))
-        {
+        if (is_string($callback)) {
             $obj = app($callback);
 
             return $obj->execute($model);
         }
 
-        if ($callback instanceof \Closure) return $callback($model);
+        if ($callback instanceof \Closure) {
+            return $callback($model);
+        }
 
-        throw new \RuntimeException("Unknown type of callback for action.");
+        return Response::failure('Unknown type of callback for action.');
     }
 
     /**

@@ -19,11 +19,6 @@ class EntityData extends BaseFormData
     protected $inner = [ ];
 
     /**
-     * @var string
-     */
-    protected $customAction;
-
-    /**
      * @var Entity
      */
     protected $form;
@@ -69,12 +64,12 @@ class EntityData extends BaseFormData
 
         $repo->startTransaction();
 
-        $model = $this->isExists() ? $repo->find($this->id) : $this->form->newModel();
+        $model = $this->isExists()
+            ? $repo->find($this->id)
+            : $this->form->newModel();
 
         $repo->save($model, $this->getCleanedInput(), function ($model) {
             $this->fillModel($model);
-
-            $this->executeCustomAction($model);
 
             // The event is fired when every field is filled
             $this->fireSavingEvent($model);
@@ -140,8 +135,12 @@ class EntityData extends BaseFormData
         $fields = $this->form->getFields();
 
         foreach ($data as $id => $item) {
-            if ($item && ($relation = $fields->get($id)) && $relation instanceof InlineRelation) {
-                $this->inner[$relation->getId()] = InnerEntityDataCollection::make($relation, $item);
+            if ($item && ($field = $fields->get($id)) &&
+                $field instanceof InlineRelation
+            ) {
+                $data = InnerEntityDataCollection::make($field, $item);
+
+                $this->inner[$field->getId()] = $data;
             }
         }
     }
@@ -197,32 +196,6 @@ class EntityData extends BaseFormData
     public function fireSavedEvent(Model $model)
     {
         $this->form->fireEvent('saved', [ $model ]);
-    }
-
-    /**
-     * @param string $action
-     */
-    public function setCustomAction($action)
-    {
-        $this->customAction = $action;
-    }
-
-    /**
-     * @return string
-     */
-    public function getCustomAction()
-    {
-        return $this->customAction;
-    }
-
-    /**
-     * @param Model $model
-     */
-    protected function executeCustomAction(Model $model)
-    {
-        if ($this->customAction) {
-            $this->form->getActions()->execute($model, $this->customAction);
-        }
     }
 
     /**

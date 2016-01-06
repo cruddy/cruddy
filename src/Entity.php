@@ -494,7 +494,9 @@ abstract class Entity extends BaseForm
      */
     public function getActions()
     {
-        if ($this->actions === null) return $this->actions = $this->createActions();
+        if ($this->actions === null) {
+            return $this->actions = $this->createActions();
+        }
 
         return $this->actions;
     }

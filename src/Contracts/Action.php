@@ -6,8 +6,8 @@ namespace Kalnoy\Cruddy\Contracts;
  *
  * @package Kalnoy\Cruddy\Schema\Actions
  */
-interface Action {
-
+interface Action
+{
     /**
      * @return string
      */

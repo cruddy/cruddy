@@ -21,7 +21,11 @@ class HandleCruddyExceptions
     public function handle(Request $request, Closure $next)
     {
         try {
-            return $next($request);
+            $n = $next($request);
+            if(property_exists($n, 'exception') && $n->exception instanceof Exception){
+                throw $n->exception;
+            }
+            return $n;
         }
 
         catch (ValidationException $e) {

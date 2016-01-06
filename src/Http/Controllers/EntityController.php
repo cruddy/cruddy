@@ -2,16 +2,20 @@
 
 namespace Kalnoy\Cruddy\Http\Controllers;
 
+use Exception;
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
+use Kalnoy\Cruddy\AccessDeniedException;
 use Kalnoy\Cruddy\BaseForm;
 use Kalnoy\Cruddy\BaseFormData;
 use Kalnoy\Cruddy\Entity;
 use Kalnoy\Cruddy\EntityData;
+use Kalnoy\Cruddy\EntityNotFoundException;
 use Kalnoy\Cruddy\Environment;
-use Kalnoy\Cruddy\AccessDeniedException;
-use Kalnoy\Cruddy\Http\Middleware\HandleCruddyExceptions;
+use Kalnoy\Cruddy\ModelNotFoundException;
+use Kalnoy\Cruddy\Service\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -19,8 +23,8 @@ use Symfony\Component\HttpFoundation\Response;
  *
  * @since 1.0.0
  */
-class EntityController extends Controller {
-
+class EntityController extends Controller
+{
     /**
      * The cruddy environment.
      *
@@ -36,8 +40,6 @@ class EntityController extends Controller {
     public function __construct(Environment $environment)
     {
         $this->environment = $environment;
-
-        $this->middleware(HandleCruddyExceptions::class);
     }
 
     /**
@@ -68,9 +70,8 @@ class EntityController extends Controller {
      */
     protected function prepareSearchOptions(array $options)
     {
-        if (isset($options['order_by']) && isset($options['order_dir']))
-        {
-            $options['order'] = [$options['order_by'] => $options['order_dir']];
+        if (isset($options['order_by']) && isset($options['order_dir'])) {
+            $options['order'] = [ $options['order_by'] => $options['order_dir'] ];
         }
 
         return $options;
@@ -83,18 +84,18 @@ class EntityController extends Controller {
      * @param string $entity
      * @param int $id
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function show(Request $input, $entity, $id)
     {
         $entity = $this->resolve($entity, Entity::READ);
 
-        if ( ! $input->ajax())
-        {
-            return redirect()->route('cruddy.index', [ $entity->getId(), 'id' => $id ]);
+        if ( ! $input->ajax()) {
+            return redirect()->route('cruddy.index', [ $entity->getId(),
+                                                       'id' => $id ]);
         }
 
-        $this->assertEntity($entity);
+        $this->assertIsEntity($entity);
 
         return new JsonResponse($entity->find($id));
     }
@@ -105,7 +106,7 @@ class EntityController extends Controller {
      * @param Request $input
      * @param string $form
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     public function store(Request $input, $form)
     {
@@ -120,7 +121,7 @@ class EntityController extends Controller {
      * @param BaseForm $form
      * @param BaseFormData $data
      *
-     * @return \Illuminate\Http\JsonResponse
+     * @return JsonResponse
      */
     protected function validateAndSave(BaseForm $form, BaseFormData $data)
     {
@@ -145,7 +146,7 @@ class EntityController extends Controller {
     {
         $entity = $this->resolve($entity, Entity::UPDATE);
 
-        $this->assertEntity($entity);
+        $this->assertIsEntity($entity);
 
         $data = $entity->processInput($input->all());
 
@@ -168,9 +169,9 @@ class EntityController extends Controller {
     {
         $entity = $this->resolve($entity, Entity::UPDATE);
 
-        $this->assertEntity($entity);
+        $this->assertIsEntity($entity);
 
-        $data = new EntityData($entity, []);
+        $data = new EntityData($entity, [ ]);
 
         $data->setId($id);
         $data->setCustomAction($action);
@@ -192,9 +193,13 @@ class EntityController extends Controller {
     {
         $entity = $this->resolve($entity, Entity::DELETE);
 
-        $this->assertEntity($entity);
+        $this->assertIsEntity($entity);
 
-        return new JsonResponse(null, $entity->delete($id) ? Response::HTTP_OK : Response::HTTP_NOT_FOUND);
+        $status = $entity->delete($id)
+            ? Response::HTTP_OK
+            : Response::HTTP_NOT_FOUND;
+
+        return new JsonResponse(null, $status);
     }
 
     /**
@@ -209,9 +214,9 @@ class EntityController extends Controller {
     {
         $entity = $this->environment->entity($id);
 
-        if ( ! $entity->isPermitted($action))
-        {
-            $message = trans("cruddy::app.forbidden.{$action}", [ 'entity' => $id ]);
+        if ( ! $entity->isPermitted($action)) {
+            $message = trans("cruddy::app.forbidden.{$action}",
+                             [ 'entity' => $id ]);
 
             throw new AccessDeniedException($message);
         }
@@ -230,8 +235,81 @@ class EntityController extends Controller {
     /**
      * @param $entity
      */
-    protected function assertEntity($entity)
+    protected function assertIsEntity($entity)
     {
-        if ( ! $entity instanceof Entity) throw new \RuntimeException;
+        if ( ! $entity instanceof Entity) {
+            throw new \RuntimeException;
+        }
     }
+
+    /**
+     * @param string $method
+     * @param array $parameters
+     *
+     * @return Response
+     */
+    public function callAction($method, $parameters)
+    {
+        try {
+            return parent::callAction($method, $parameters);
+        }
+
+        catch (ValidationException $e) {
+            return response($e->getErrors(),
+                            Response::HTTP_UNPROCESSABLE_ENTITY);
+        }
+
+        catch (EntityNotFoundException $e) {
+            return $this->responseError($e->getMessage(),
+                                        Response::HTTP_NOT_FOUND);
+        }
+
+        catch (ModelNotFoundException $e) {
+            return $this->responseError('Specified model not found.',
+                                        Response::HTTP_NOT_FOUND);
+        }
+
+        catch (AccessDeniedException $e) {
+            return $this->responseError($e->getMessage(),
+                                        Response::HTTP_FORBIDDEN);
+        }
+
+        catch (Exception $e) {
+            $this->reportException($e);
+
+            return $this->responseError($this->convertException($e));
+        }
+    }
+
+    /**
+     * @param $error
+     * @param $status
+     *
+     * @return JsonResponse
+     */
+    protected function responseError($error, $status = 500)
+    {
+        return new JsonResponse(compact('error'), $status);
+    }
+
+    /**
+     * @param Exception $e
+     *
+     * @return string
+     */
+    protected function convertException($e)
+    {
+        return class_basename($e).': '.$e->getMessage();
+    }
+
+    /**
+     * @param $e
+     */
+    protected function reportException($e)
+    {
+        if ($handler = app(ExceptionHandler::class)) {
+            $handler->report($e);
+        }
+    }
+
 }

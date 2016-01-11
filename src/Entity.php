@@ -364,7 +364,7 @@ abstract class Entity extends BaseForm
                 throw new \RuntimeException("Cannot use field [{$options['owner']}] as owner.");
             }
 
-            $processor->add($field);
+            $processor->append($field);
         }
 
         return $processor;

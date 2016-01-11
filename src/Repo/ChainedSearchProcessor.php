@@ -33,10 +33,26 @@ class ChainedSearchProcessor implements SearchProcessor
      * Add a processor to the queue.
      *
      * @param SearchProcessor $processor
+     *
+     * @return $this
      */
-    public function add(SearchProcessor $processor)
+    public function append(SearchProcessor $processor)
     {
         $this->processors[] = $processor;
+
+        return $this;
+    }
+
+    /**
+     * @param SearchProcessor $processor
+     *
+     * @return $this
+     */
+    public function prepend(SearchProcessor $processor)
+    {
+        array_unshift($this->processors, $processor);
+
+        return $this;
     }
 
     /**
@@ -47,5 +63,13 @@ class ChainedSearchProcessor implements SearchProcessor
         foreach ($this->processors as $processor) {
             $processor->constraintBuilder($query, $options);
         }
+    }
+
+    /**
+     * @return array
+     */
+    public function getProcessors()
+    {
+        return $this->processors;
     }
 }

@@ -100,7 +100,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         form.once "remove", => @newModelForm = null
 
         form.once "created", (model, resp) =>
-            @selectItem model.meta
+            @selectItem model.meta.simplified
 
             form.remove()
 
@@ -147,7 +147,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
     renderItem: (item) ->
         className = if item.id of @selected then "selected" else ""
 
-        """<li class="item #{ className }" data-id="#{ item.id }">#{ item.title }</li>"""
+        """<li class="item #{ className }" data-id="#{ item.id }">#{ item.body }</li>"""
 
     render: ->
         if @reference.readPermitted()

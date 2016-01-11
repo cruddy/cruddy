@@ -26,9 +26,9 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
     formatItem: (item) ->
         ref = @getReferencedEntity()
 
-        return item.title unless ref.readPermitted()
+        return item.body unless ref.readPermitted()
 
-        """<a href="#{ ref.link item.id }">#{ _.escape item.title }</a>"""
+        """<a href="#{ ref.link item.id }">#{ item.body }</a>"""
 
     prepareAttribute: (value) ->
         return null unless value?

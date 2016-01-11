@@ -1,3 +1,13 @@
+v0.5.6
+======
+
+*   `slug` field type now accepts any value and converts it using `str_slug`
+    before validation is done
+*   Added `$searchable` property to entity for specifying fields that are searchable
+    using search-anything feature
+*   Added `toHTML` method that allows html tags for simplified representation
+    (used by drop downs and grid)
+
 v0.5.0
 ======
 

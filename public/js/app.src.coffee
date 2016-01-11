@@ -1082,7 +1082,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
     renderItems: ->
         html = ""
-        html += @itemTemplate @itemToString(value), key for value, key in @getValue()
+        html += @itemTemplate @itemBody(value), key for value, key in @getValue()
         @items.html html
         @items.toggleClass "has-items", html isnt ""
 
@@ -1100,26 +1100,27 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     updateItem: ->
         value = @getValue()
 
-        @itemTitle.text if value then @itemToString(value) else @placeholder
+        @itemTitle.html if value then @itemBody(value) else @placeholder
 
         @itemDelete.toggle !!value
         @itemEdit.toggle !!value
 
         this
 
-    itemToString: (item) ->
-        return item.title if item.title?
+    itemBody: (item) ->
+        unless item.body
+            data = @selector.dataSource.getById item.id
 
-        return item.id unless @selector?
+            item = data if data
 
-        data = @selector.dataSource.getById item.id
+        return item.body if item.body
 
-        return if data? then data.title else item.id
+        return item.id
 
     itemTemplate: (value, key = null) ->
         html = """
             <div class="input-group ed-item #{ if not @multiple then "ed-dropdown-toggle" else "" }" data-key="#{ key }">
-                <div class="form-control">#{ _.escape value }</div>
+                <div class="form-control">#{ value }</div>
             """
 
         html += """
@@ -1147,7 +1148,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         html += """
             <button type="button" class="btn btn-default btn-dropdown dropdown-toggle" data-toggle="dropdown" id="#{ @cid }-dropdown" data-target="##{ @cid }" tab-index="1" title="#{ Cruddy.lang.list_show }">
-                <span class="glyphicon glyphicon-search"></span>
+                <span class="glyphicon"></span>
             </button>
             """ if not @multiple
 
@@ -1277,7 +1278,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         form.once "remove", => @newModelForm = null
 
         form.once "created", (model, resp) =>
-            @selectItem model.meta
+            @selectItem model.meta.simplified
 
             form.remove()
 
@@ -1324,7 +1325,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
     renderItem: (item) ->
         className = if item.id of @selected then "selected" else ""
 
-        """<li class="item #{ className }" data-id="#{ item.id }">#{ item.title }</li>"""
+        """<li class="item #{ className }" data-id="#{ item.id }">#{ item.body }</li>"""
 
     render: ->
         if @reference.readPermitted()
@@ -2375,7 +2376,7 @@ class Cruddy.Fields.BaseRelation extends Cruddy.Fields.Base
 
     getFilterLabel: -> @getReferencedEntity().getSingularTitle()
 
-    formatItem: (item) -> item.title
+    formatItem: (item) -> item.body
 
     format: (value) ->
         return NOT_AVAILABLE if _.isEmpty value
@@ -2411,9 +2412,9 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
     formatItem: (item) ->
         ref = @getReferencedEntity()
 
-        return item.title unless ref.readPermitted()
+        return item.body unless ref.readPermitted()
 
-        """<a href="#{ ref.link item.id }">#{ _.escape item.title }</a>"""
+        """<a href="#{ ref.link item.id }">#{ item.body }</a>"""
 
     prepareAttribute: (value) ->
         return null unless value?
@@ -3011,7 +3012,7 @@ class Cruddy.formatters.Image extends BaseFormatter
     format: (value) ->
         return "" if _.isEmpty value
         value = value[0] if _.isArray value
-        value = value.title if _.isObject value
+        value = value.body if _.isObject value
 
         """
         <a href="#{ Cruddy.root + "/" + value }" data-trigger="fancybox">

@@ -200,6 +200,9 @@ abstract class Entity extends BaseForm
     /**
      * Convert the model to string.
      *
+     * This method should return only text without any HTML tags.
+     * Use `toHtml` if you need to specify markup.
+     *
      * @param Model $model
      *
      * @return string
@@ -209,6 +212,18 @@ abstract class Entity extends BaseForm
         return $this->titleAttribute
             ? $model->getAttribute($this->titleAttribute)
             : $model->getKey();
+    }
+
+    /**
+     * Get HTML representation for the simplified view (i.e. drop down).
+     *
+     * @param Model $model
+     *
+     * @return string
+     */
+    protected function toHTML($model)
+    {
+        return $this->toString($model);
     }
 
     /**
@@ -260,7 +275,7 @@ abstract class Entity extends BaseForm
     {
         if ( ! $model) return null;
 
-        if (is_array($model) or $model instanceof Collection) {
+        if (is_array($model) || $model instanceof Collection) {
             return $this->extractAll($model, $collection);
         }
 
@@ -394,30 +409,44 @@ abstract class Entity extends BaseForm
     {
         if ( ! $model) return null;
 
-        if (is_array($model) or $model instanceof Collection) {
+        if (is_array($model) || $model instanceof Collection) {
             return $this->simplifyAll($model);
         }
 
-        return $this->getMetaDataForModel($model, true);
+        return $this->getSimplifiedModel($model);
+    }
+
+    /**
+     * Get simplified representation for the model.
+     *
+     * Used by drop downs, grid.
+     *
+     * @param Model $model
+     *
+     * @return array
+     */
+    public function getSimplifiedModel(Model $model)
+    {
+        return [
+            'id' => $model->getKey(),
+            'body' => $this->toHTML($model),
+        ];
     }
 
     /**
      * @param Model $model
-     * @param bool $simplified
      *
      * @return array
      */
-    public function getMetaDataForModel(Model $model, $simplified = false)
+    public function getMetaDataForModel(Model $model)
     {
-        $meta['id'] = $model->getKey();
-        $meta['title'] = $this->toString($model);
-
-        if ( ! $simplified) {
-            $meta['links'] = $this->links($model);
-            $meta['actions'] = $this->getActions()->export($model);
-        }
-
-        return $meta;
+        return [
+            'id' => $model->getKey(),
+            'title' => $this->toString($model),
+            'links' => $this->links($model),
+            'actions' => $this->getActions()->export($model),
+            'simplified' => $this->getSimplifiedModel($model),
+        ];
     }
 
     /**

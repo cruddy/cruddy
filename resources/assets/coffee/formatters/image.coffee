@@ -6,7 +6,7 @@ class Cruddy.formatters.Image extends BaseFormatter
     format: (value) ->
         return "" if _.isEmpty value
         value = value[0] if _.isArray value
-        value = value.title if _.isObject value
+        value = value.body if _.isObject value
 
         """
         <a href="#{ Cruddy.root + "/" + value }" data-trigger="fancybox">

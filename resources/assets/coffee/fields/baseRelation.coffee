@@ -10,7 +10,7 @@ class Cruddy.Fields.BaseRelation extends Cruddy.Fields.Base
 
     getFilterLabel: -> @getReferencedEntity().getSingularTitle()
 
-    formatItem: (item) -> item.title
+    formatItem: (item) -> item.body
 
     format: (value) ->
         return NOT_AVAILABLE if _.isEmpty value

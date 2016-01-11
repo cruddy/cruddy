@@ -79,12 +79,20 @@
         margin-top: -1px;
     }
 
-    .btn.dropdown-toggle {
+    .btn-dropdown {
         position: relative;
 
         &:hover {
             z-index: 2;
         }
+
+        > .glyphicon:before {
+            content: "\e114";
+        }
+    }
+
+    &.open .btn-dropdown > .glyphicon:before {
+        content: "\e113";
     }
 
     .entity-selector {

@@ -1582,7 +1582,7 @@
       _ref = this.getValue();
       for (key = _i = 0, _len = _ref.length; _i < _len; key = ++_i) {
         value = _ref[key];
-        html += this.itemTemplate(this.itemToString(value), key);
+        html += this.itemTemplate(this.itemBody(value), key);
       }
       this.items.html(html);
       this.items.toggleClass("has-items", html !== "");
@@ -1600,26 +1600,24 @@
     EntityDropdown.prototype.updateItem = function() {
       var value;
       value = this.getValue();
-      this.itemTitle.text(value ? this.itemToString(value) : this.placeholder);
+      this.itemTitle.html(value ? this.itemBody(value) : this.placeholder);
       this.itemDelete.toggle(!!value);
       this.itemEdit.toggle(!!value);
       return this;
     };
 
-    EntityDropdown.prototype.itemToString = function(item) {
+    EntityDropdown.prototype.itemBody = function(item) {
       var data;
-      if (item.title != null) {
-        return item.title;
+      if (!item.body) {
+        data = this.selector.dataSource.getById(item.id);
+        if (data) {
+          item = data;
+        }
       }
-      if (this.selector == null) {
-        return item.id;
+      if (item.body) {
+        return item.body;
       }
-      data = this.selector.dataSource.getById(item.id);
-      if (data != null) {
-        return data.title;
-      } else {
-        return item.id;
-      }
+      return item.id;
     };
 
     EntityDropdown.prototype.itemTemplate = function(value, key) {
@@ -1627,7 +1625,7 @@
       if (key == null) {
         key = null;
       }
-      html = "<div class=\"input-group ed-item " + (!this.multiple ? "ed-dropdown-toggle" : "") + "\" data-key=\"" + key + "\">\n    <div class=\"form-control\">" + (_.escape(value)) + "</div>";
+      html = "<div class=\"input-group ed-item " + (!this.multiple ? "ed-dropdown-toggle" : "") + "\" data-key=\"" + key + "\">\n    <div class=\"form-control\">" + value + "</div>";
       if (!_.isEmpty(buttons = this.buttonsTemplate())) {
         html += "<div class=\"input-group-btn\">\n    " + buttons + "\n</div>";
       }
@@ -1644,7 +1642,7 @@
         html += "<button type=\"button\" class=\"btn btn-default btn-edit\" tabindex=\"-1\" title=\"" + Cruddy.lang.edit + "\">\n    <span class=\"glyphicon glyphicon-pencil\"></span>\n</button>";
       }
       if (!this.multiple) {
-        html += "<button type=\"button\" class=\"btn btn-default btn-dropdown dropdown-toggle\" data-toggle=\"dropdown\" id=\"" + this.cid + "-dropdown\" data-target=\"#" + this.cid + "\" tab-index=\"1\" title=\"" + Cruddy.lang.list_show + "\">\n    <span class=\"glyphicon glyphicon-search\"></span>\n</button>";
+        html += "<button type=\"button\" class=\"btn btn-default btn-dropdown dropdown-toggle\" data-toggle=\"dropdown\" id=\"" + this.cid + "-dropdown\" data-target=\"#" + this.cid + "\" tab-index=\"1\" title=\"" + Cruddy.lang.list_show + "\">\n    <span class=\"glyphicon\"></span>\n</button>";
       }
       return html;
     };
@@ -1819,7 +1817,7 @@
       })(this));
       form.once("created", (function(_this) {
         return function(model, resp) {
-          _this.selectItem(model.meta);
+          _this.selectItem(model.meta.simplified);
           form.remove();
         };
       })(this));
@@ -1877,7 +1875,7 @@
     EntitySelector.prototype.renderItem = function(item) {
       var className;
       className = item.id in this.selected ? "selected" : "";
-      return "<li class=\"item " + className + "\" data-id=\"" + item.id + "\">" + item.title + "</li>";
+      return "<li class=\"item " + className + "\" data-id=\"" + item.id + "\">" + item.body + "</li>";
     };
 
     EntitySelector.prototype.render = function() {
@@ -3534,7 +3532,7 @@
     };
 
     BaseRelation.prototype.formatItem = function(item) {
-      return item.title;
+      return item.body;
     };
 
     BaseRelation.prototype.format = function(value) {
@@ -3607,9 +3605,9 @@
       var ref;
       ref = this.getReferencedEntity();
       if (!ref.readPermitted()) {
-        return item.title;
+        return item.body;
       }
-      return "<a href=\"" + (ref.link(item.id)) + "\">" + (_.escape(item.title)) + "</a>";
+      return "<a href=\"" + (ref.link(item.id)) + "\">" + item.body + "</a>";
     };
 
     Relation.prototype.prepareAttribute = function(value) {
@@ -4652,7 +4650,7 @@
         value = value[0];
       }
       if (_.isObject(value)) {
-        value = value.title;
+        value = value.body;
       }
       return "<a href=\"" + (Cruddy.root + "/" + value) + "\" data-trigger=\"fancybox\">\n    <img src=\"" + (thumb(value, this.options.width, this.options.height)) + "\" " + (this.options.width ? " width=" + this.options.width : "") + " " + (this.options.height ? " height=" + this.options.height : "") + " alt=\"" + (_.escape(value)) + "\">\n</a>";
     };

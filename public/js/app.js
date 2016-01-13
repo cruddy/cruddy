@@ -1419,7 +1419,7 @@
           var form;
           _this.editingForm = form = Cruddy.Entity.Form.display(instance);
           form.once("saved", function(model) {
-            btn.parent().siblings(".form-control").text(model.getTitle());
+            btn.parent().siblings(".form-control").html(_this.itemBody(model.meta.simplified));
             return form.remove();
           });
           form.once("destroyed", function(model) {

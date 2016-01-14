@@ -489,7 +489,6 @@
 
     SearchDataSource.prototype.initialize = function(attributes, options) {
       this.resetData = false;
-      this.needsRefresh = false;
       this.data = [];
       this.page = null;
       this.more = true;
@@ -1419,8 +1418,10 @@
           var form;
           _this.editingForm = form = Cruddy.Entity.Form.display(instance);
           form.once("saved", function(model) {
+            var _ref, _ref1;
             btn.parent().siblings(".form-control").html(_this.itemBody(model.meta.simplified));
-            return form.remove();
+            form.remove();
+            return (_ref = _this.selector) != null ? (_ref1 = _ref.dataSource) != null ? _ref1.refresh() : void 0 : void 0;
           });
           form.once("destroyed", function(model) {
             return _this.removeItem(e);
@@ -1817,8 +1818,12 @@
       })(this));
       form.once("created", (function(_this) {
         return function(model, resp) {
+          var _ref;
           _this.selectItem(model.meta.simplified);
           form.remove();
+          if ((_ref = _this.dataSource) != null) {
+            _ref.refresh();
+          }
         };
       })(this));
       return this;

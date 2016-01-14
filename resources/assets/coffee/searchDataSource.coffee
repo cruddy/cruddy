@@ -5,7 +5,6 @@ class SearchDataSource extends Backbone.Model
 
     initialize: (attributes, options) ->
         @resetData = no
-        @needsRefresh = no
         @data = []
         @page = null
         @more = yes

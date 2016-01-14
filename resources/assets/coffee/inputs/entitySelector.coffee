@@ -104,6 +104,8 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
             form.remove()
 
+            @dataSource?.refresh()
+
             return
 
         this

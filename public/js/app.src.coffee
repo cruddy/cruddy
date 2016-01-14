@@ -262,7 +262,6 @@ class SearchDataSource extends Backbone.Model
 
     initialize: (attributes, options) ->
         @resetData = no
-        @needsRefresh = no
         @data = []
         @page = null
         @more = yes
@@ -946,6 +945,8 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
                 btn.parent().siblings(".form-control").html @itemBody model.meta.simplified
                 form.remove()
 
+                @selector?.dataSource?.refresh()
+
             form.once "destroyed", (model) => @removeItem e
             form.once "remove", => @editingForm = null
 
@@ -1281,6 +1282,8 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
             @selectItem model.meta.simplified
 
             form.remove()
+
+            @dataSource?.refresh()
 
             return
 

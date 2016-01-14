@@ -88,6 +88,8 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
                 btn.parent().siblings(".form-control").html @itemBody model.meta.simplified
                 form.remove()
 
+                @selector?.dataSource?.refresh()
+
             form.once "destroyed", (model) => @removeItem e
             form.once "remove", => @editingForm = null
 

@@ -4970,7 +4970,9 @@
 
     Instance.prototype.handleSyncEvent = function(model, resp) {
       this.syncOriginalAttributes();
-      this.setMetaFromResponse(resp);
+      if ((resp != null ? resp.model : void 0) != null) {
+        this.setMetaFromResponse(resp.model);
+      }
       return this;
     };
 
@@ -5028,7 +5030,7 @@
     };
 
     Instance.prototype.parse = function(resp) {
-      return resp.attributes;
+      return resp.model.attributes;
     };
 
     Instance.prototype.copy = function() {
@@ -5381,8 +5383,11 @@
       if (el && !$(el).parent().is("disabled")) {
         this.model.executeAction(modelId, actionId, {
           success: (function(_this) {
-            return function() {
-              return _this.dataSource.fetch();
+            return function(resp) {
+              if (resp.successful) {
+                _this.dataSource.fetch();
+              }
+              return Cruddy.getApp().displayActionResult(resp);
             };
           })(this)
         });
@@ -5480,18 +5485,23 @@
       return this;
     };
 
-    Form.prototype.displaySuccess = function() {
-      return this.displayAlert(Cruddy.lang.success, "success", 3000);
+    Form.prototype.displaySuccess = function(resp) {
+      this.displayAlert(Cruddy.lang.form_saved, "success", 3000);
+      if (resp.actionResult) {
+        Cruddy.getApp().displayActionResult(resp.actionResult);
+      }
+      return this;
     };
 
     Form.prototype.displayError = function(xhr) {
       if (xhr.status !== VALIDATION_FAILED_CODE) {
-        return this.displayAlert(Cruddy.lang.failure, "danger", 5000);
+        this.displayAlert(Cruddy.lang.form_failed, "danger", 5000);
       }
+      return this;
     };
 
     Form.prototype.handleModelInvalidEvent = function() {
-      return this.displayAlert(Cruddy.lang.invalid, "warning", 5000);
+      return this.displayAlert(Cruddy.lang.form_invalid, "warning", 5000);
     };
 
     Form.prototype.handleModelDestroyEvent = function() {
@@ -5869,6 +5879,17 @@
     App.prototype.displayError = function(error) {
       this.dispose();
       this.mainContent.html("<p class='alert alert-danger'>" + error + "</p>").show();
+      return this;
+    };
+
+    App.prototype.displayActionResult = function(result) {
+      var message;
+      console.log(result);
+      message = result.message;
+      if (!message) {
+        message = result.successful ? Cruddy.lang.action_applied : Cruddy.lang.action_failed;
+      }
+      alert(message);
       return this;
     };
 

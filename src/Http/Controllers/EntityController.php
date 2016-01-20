@@ -113,7 +113,7 @@ class EntityController extends Controller
 
         $data = $form->processInput($input->all());
 
-        return $this->validateAndSave($form, $data, $action);
+        return $this->validateAndSave($form, $data, $ac);
     }
 
     /**

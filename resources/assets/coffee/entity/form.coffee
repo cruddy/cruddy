@@ -69,11 +69,20 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         this
 
-    displaySuccess: -> @displayAlert Cruddy.lang.success, "success", 3000
+    displaySuccess: (resp) ->
+        @displayAlert Cruddy.lang.form_saved, "success", 3000
 
-    displayError: (xhr) -> @displayAlert Cruddy.lang.failure, "danger", 5000 unless xhr.status is VALIDATION_FAILED_CODE
+        Cruddy.getApp().displayActionResult resp.actionResult if resp.actionResult
 
-    handleModelInvalidEvent: -> @displayAlert Cruddy.lang.invalid, "warning", 5000
+        return this
+
+    displayError: (xhr) ->
+        unless xhr.status is VALIDATION_FAILED_CODE
+            @displayAlert Cruddy.lang.form_failed, "danger", 5000
+
+        return this
+
+    handleModelInvalidEvent: -> @displayAlert Cruddy.lang.form_invalid, "warning", 5000
 
     handleModelDestroyEvent: ->
         @updateModelState()

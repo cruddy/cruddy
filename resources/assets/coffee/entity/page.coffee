@@ -242,7 +242,10 @@ class Cruddy.Entity.Page extends Cruddy.View
 
     executeCustomAction: (actionId, modelId, el) ->
         if el and not $(el).parent().is "disabled"
-            @model.executeAction modelId, actionId, success: => @dataSource.fetch()
+            @model.executeAction modelId, actionId, success: (resp) =>
+                @dataSource.fetch() if resp.successful
+
+                Cruddy.getApp().displayActionResult resp
 
         return this
 

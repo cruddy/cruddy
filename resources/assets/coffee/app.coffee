@@ -77,6 +77,21 @@ class App extends Backbone.Model
 
         this
 
+    displayActionResult: (result) ->
+        console.log result
+
+        message = result.message
+
+        unless message
+            message = if result.successful then Cruddy.lang.action_applied else Cruddy.lang.action_failed
+
+        #method = if result.actionResponse.successful then "success" else "error"
+
+        #@popup[method].call message
+        alert message
+
+        return this
+
     handleAjaxError: (xhr) ->
         return if xhr.status is VALIDATION_FAILED_CODE
 

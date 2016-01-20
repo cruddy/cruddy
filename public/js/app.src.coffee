@@ -3222,7 +3222,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
     handleSyncEvent: (model, resp) ->
         @syncOriginalAttributes()
 
-        @setMetaFromResponse resp
+        @setMetaFromResponse resp.model if resp?.model?
 
         this
 
@@ -3268,7 +3268,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
         super
 
-    parse: (resp) -> resp.attributes
+    parse: (resp) -> resp.model.attributes
 
     copy: ->
         copy = @entity.createInstance()
@@ -3542,7 +3542,10 @@ class Cruddy.Entity.Page extends Cruddy.View
 
     executeCustomAction: (actionId, modelId, el) ->
         if el and not $(el).parent().is "disabled"
-            @model.executeAction modelId, actionId, success: => @dataSource.fetch()
+            @model.executeAction modelId, actionId, success: (resp) =>
+                @dataSource.fetch() if resp.successful
+
+                Cruddy.getApp().displayActionResult resp
 
         return this
 
@@ -3618,11 +3621,20 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         this
 
-    displaySuccess: -> @displayAlert Cruddy.lang.success, "success", 3000
+    displaySuccess: (resp) ->
+        @displayAlert Cruddy.lang.form_saved, "success", 3000
 
-    displayError: (xhr) -> @displayAlert Cruddy.lang.failure, "danger", 5000 unless xhr.status is VALIDATION_FAILED_CODE
+        Cruddy.getApp().displayActionResult resp.actionResult if resp.actionResult
 
-    handleModelInvalidEvent: -> @displayAlert Cruddy.lang.invalid, "warning", 5000
+        return this
+
+    displayError: (xhr) ->
+        unless xhr.status is VALIDATION_FAILED_CODE
+            @displayAlert Cruddy.lang.form_failed, "danger", 5000
+
+        return this
+
+    handleModelInvalidEvent: -> @displayAlert Cruddy.lang.form_invalid, "warning", 5000
 
     handleModelDestroyEvent: ->
         @updateModelState()
@@ -4008,6 +4020,21 @@ class App extends Backbone.Model
         @mainContent.html("<p class='alert alert-danger'>#{ error }</p>").show()
 
         this
+
+    displayActionResult: (result) ->
+        console.log result
+
+        message = result.message
+
+        unless message
+            message = if result.successful then Cruddy.lang.action_applied else Cruddy.lang.action_failed
+
+        #method = if result.actionResponse.successful then "success" else "error"
+
+        #@popup[method].call message
+        alert message
+
+        return this
 
     handleAjaxError: (xhr) ->
         return if xhr.status is VALIDATION_FAILED_CODE

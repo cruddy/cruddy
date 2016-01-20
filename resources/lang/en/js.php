@@ -29,6 +29,10 @@
     'invalid' => 'Validation failed...',
     'forbidden' => 'Forbidden',
 
+    'form_saved' => 'Saved!',
+    'form_failed' => 'Failure.',
+    'form_invalid' => 'Validation failed...',
+
     'prev' => 'Prev',
     'next' => 'Next',
 
@@ -60,4 +64,7 @@
     'edit' => 'Edit',
     'find' => 'Find',
     'list_show' => 'Show list',
+
+    'action_applied' => 'Action executed successfully.',
+    'action_failed' => 'Action failed to execute.',
 ];

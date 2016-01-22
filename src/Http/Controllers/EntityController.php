@@ -104,6 +104,7 @@ class EntityController extends Controller
      *
      * @param Request $input
      * @param string $form
+     * @param null|string $action
      *
      * @return JsonResponse
      */
@@ -113,7 +114,7 @@ class EntityController extends Controller
 
         $data = $form->processInput($input->all());
 
-        return $this->validateAndSave($form, $data, $ac);
+        return $this->validateAndSave($form, $data, $action);
     }
 
     /**

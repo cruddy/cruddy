@@ -29,7 +29,7 @@ $router->get('{cruddy_entity}/{id}', [
     'uses' => 'EntityController@show',
 ]);
 
-$router->post('{cruddy_entity}', [
+$router->post('{cruddy_entity}/{action?}', [
     'as' => 'cruddy.store',
     'uses' => 'EntityController@store',
 ]);

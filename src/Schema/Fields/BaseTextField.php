@@ -53,7 +53,7 @@ abstract class BaseTextField extends BaseInput implements KeywordsFilter {
      */
     public function order(Builder $builder, $direction)
     {
-        $builder->orderBy($this->id, $direction);
+        $builder->orderBy($this->getFullyQualifiedId(), $direction);
 
         return $this;
     }
@@ -68,7 +68,7 @@ abstract class BaseTextField extends BaseInput implements KeywordsFilter {
     {
         foreach ($keywords as $keyword)
         {
-            $builder->orWhere($this->id, 'like', '%'.$keyword.'%');
+            $builder->orWhere($this->getFullyQualifiedId(), 'like', '%'.$keyword.'%');
         }
     }
 

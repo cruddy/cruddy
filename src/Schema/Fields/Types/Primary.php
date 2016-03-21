@@ -31,7 +31,7 @@ class Primary extends StringField
     {
         foreach ($keywords as $keyword) {
             if (is_numeric($keyword)) {
-                $builder->orWhere($this->id, '=', $keyword);
+                $builder->orWhere($this->getFullyQualifiedId(), '=', $keyword);
             }
         }
     }

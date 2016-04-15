@@ -7,12 +7,12 @@ namespace Kalnoy\Cruddy\Schema\Fields\Types;
  *
  * @since 1.0.0
  */
-class Time extends DateTime {
-
+class Time extends DateTime
+{
     /**
      * @return string
      */
-    protected function modelClass()
+    protected function getModelClass()
     {
         return 'Cruddy.Fields.Time';
     }

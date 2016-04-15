@@ -28,43 +28,39 @@ class Collection extends AttributesCollection implements SearchProcessor
      *
      * @param array $input
      *
-     * @return array
+     * @return $this
      */
-    public function process(array $input)
+    public function parseInput(array &$input)
     {
-        $result = [ ];
-
-        /**
-         * @var Field $field
-         */
-        foreach ($input as $key => $value) {
-            if (($field = $this->get($key)) && $field->keep($value)) {
-                $result[$key] = $field->process($value);
+        array_walk($input, function (&$value, $key) {
+            if ($this->has($key)) {
+                $value = $this->get($key)->parseInputValue($value);
             }
-        }
+        });
 
-        return $result;
+        return $this;
     }
 
     /**
-     * Clean input from disabled fields.
-     *
-     * @param string $action
+     * @param $mode
+     * @param $model
      * @param array $input
      *
-     * @return array
+     * @return $this
      */
-    public function cleanInput($action, array $input)
+    public function fillModel($mode, $model, array $input)
     {
-        $result = [ ];
-
-        foreach ($input as $key => $value) {
-            if ( ! $this->get($key)->isDisabled($action)) {
-                $result[$key] = $value;
+        /** @var Field $field */
+        foreach ($this->items as $key => $field) {
+            if ($field->getSettingMode() == $mode &&
+                array_key_exists($key, $input) &&
+                ! $field->isDisabled($model)
+            ) {
+                $field->setModelValue($model, $input[$key]);
             }
         }
 
-        return $result;
+        return $this;
     }
 
     /**
@@ -72,7 +68,7 @@ class Collection extends AttributesCollection implements SearchProcessor
      *
      * @return array
      */
-    public function validationLabels()
+    public function getValidationLabels()
     {
         return array_map(function (Field $item) {
             return mb_strtolower($item->getLabel());
@@ -87,9 +83,7 @@ class Collection extends AttributesCollection implements SearchProcessor
      *
      * @return void
      */
-    protected function applyKeywordsFilter(QueryBuilder $builder,
-                                           array $keywords
-    ) {
+    protected function applyKeywordsFilter($builder, array $keywords) {
         $builder->whereNested(function ($q) use ($keywords) {
             foreach ($this->searchable() as $item) {
                 $item->applyKeywordsFilter($q, $keywords);
@@ -102,41 +96,9 @@ class Collection extends AttributesCollection implements SearchProcessor
      */
     public function constraintBuilder(EloquentBuilder $builder, array $options)
     {
-        if ($keywords = array_get($options, 'keywords')) {
-            $keywords = $this->processKeywords($keywords);
-
-            $this->applyKeywordsFilter($builder->getQuery(), $keywords);
+        if ($keywords = Arr::get($options, 'keywords')) {
+            $this->applyKeywordsFilter($builder->getQuery(), (array)$keywords);
         }
-    }
-
-    /**
-     * @param $keywords
-     *
-     * @return array
-     */
-    protected function processKeywords($keywords)
-    {
-        return preg_split('/\s/', $keywords, -1, PREG_SPLIT_NO_EMPTY);
-    }
-
-    /**
-     * Get a list of relations.
-     *
-     * @param string $owner
-     *
-     * @return array
-     */
-    public function relations($owner = null)
-    {
-        $data = [ ];
-
-        foreach ($this->items as $field) {
-            if ($field instanceof BaseRelation) {
-                $data = array_merge($data, $field->relations($owner));
-            }
-        }
-
-        return $data;
     }
 
     /**
@@ -154,12 +116,35 @@ class Collection extends AttributesCollection implements SearchProcessor
      */
     protected function searchable()
     {
-        $items = $this->searchable
-            ? Arr::only($this->items, $this->searchable)
-            : $this->items;
+        $fields = $this->items;
 
-        return array_filter($items, function ($item) {
+        if ($this->searchable) {
+            $fields = Arr::only($fields, $this->searchable);
+        }
+
+        return array_filter($fields, function ($item) {
             return $item instanceof KeywordsFilter;
         });
+    }
+
+    /**
+     * Validates an input and returns errors if any.
+     *
+     * @param array $input
+     *
+     * @return array
+     */
+    public function validate(array $input)
+    {
+        $result = [];
+
+        /** @var Field $field */
+        foreach ($this->items as $key => $field) {
+            if ($errors = $field->validate(Arr::get($input, $key))) {
+                $result[$key] = $errors;
+            }
+        }
+
+        return $result;
     }
 }

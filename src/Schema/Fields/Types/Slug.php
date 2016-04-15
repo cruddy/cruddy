@@ -25,13 +25,13 @@ class Slug extends BaseField
     protected $field;
 
     /**
-     * @param BaseForm $entity
+     * @param BaseForm $form
      * @param string $id
      * @param string|array|null $field
      */
-    public function __construct(BaseForm $entity, $id, $field = null)
+    public function __construct(BaseForm $form, $id, $field = null)
     {
-        parent::__construct($entity, $id);
+        parent::__construct($form, $id);
 
         $this->field = $field;
     }
@@ -41,7 +41,7 @@ class Slug extends BaseField
      *
      * @return string
      */
-    public function process($value)
+    public function parseInputValue($value)
     {
         return empty($value) ? null : str_slug($value, $this->getSeparator());
     }
@@ -51,7 +51,7 @@ class Slug extends BaseField
      *
      * @return string
      */
-    protected function modelClass()
+    protected function getModelClass()
     {
         return 'Cruddy.Fields.Slug';
     }

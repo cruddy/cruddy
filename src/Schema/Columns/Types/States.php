@@ -25,18 +25,18 @@ class States extends Attribute implements Column {
      *
      * @return string
      */
-    protected function modelClass()
+    protected function getModelClass()
     {
         return 'Cruddy.Columns.Computed';
     }
 
     /**
-     * @param Entity $entity
+     * @param Entity $form
      * @param string $states
      */
-    public function __construct(Entity $entity, $states)
+    public function __construct(Entity $form, $states)
     {
-        parent::__construct($entity, '_states');
+        parent::__construct($form, '_states');
 
         $this->states = $states;
     }
@@ -44,7 +44,7 @@ class States extends Attribute implements Column {
     /**
      * {@inheritdoc}
      */
-    public function extract($model)
+    public function getModelValue($model)
     {
         if ($this->states instanceof \Closure)
         {

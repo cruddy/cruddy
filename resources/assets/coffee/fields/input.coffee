@@ -20,6 +20,8 @@ class Cruddy.Fields.Input extends Cruddy.Fields.Base
             id: inputId
             type: @attributes.input_type or "input"
 
+    createFilterInput: (model) -> @createBaseInput model
+
     format: (value) ->
         return NOT_AVAILABLE if value is null or value is ""
 

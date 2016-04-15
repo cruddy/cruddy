@@ -9,14 +9,14 @@ use Kalnoy\Cruddy\Schema\Fields\BaseNumber;
  *
  * @since 1.0.0
  */
-class FloatField extends BaseNumber {
-
+class FloatField extends BaseNumber
+{
     /**
      * {@inheritdoc}
      *
      * @return float
      */
-    protected function cast($value)
+    public function cast($value)
     {
         return (float)$value;
     }

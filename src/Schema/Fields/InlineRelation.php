@@ -3,7 +3,10 @@
 namespace Kalnoy\Cruddy\Schema\Fields;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Arr;
 use Kalnoy\Cruddy\Contracts\InlineRelation as InlineRelationContract;
+use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\Helpers;
 use Kalnoy\Cruddy\Service\Validation\ValidationException;
 
 /**
@@ -11,115 +14,114 @@ use Kalnoy\Cruddy\Service\Validation\ValidationException;
  *
  * @since 1.0.0
  */
-abstract class InlineRelation extends BaseRelation implements InlineRelationContract {
-
+abstract class InlineRelation extends BaseRelation
+{
     /**
-     * Extra attributes that will be set on model.
-     *
-     * @var array|\Closure
+     * The name of the property where id is stored.
      */
-    public $extra = [];
+    const ID_PROPERTY = '__id';
 
     /**
      * The name of the JavaScript class that is used to render this field.
      *
      * @return string
      */
-    protected function modelClass()
+    protected function getModelClass()
     {
         return 'Cruddy.Fields.Embedded';
     }
 
     /**
-     * Set an extra attributes that will be set on model.
-     *
-     * Note that this attributes will not overwrite request data.
-     *
-     * @param array $value
-     *
-     * @return $this
+     * @inheritDoc
      */
-    public function extra($value)
+    public function validate($value)
     {
-        $this->extra = $value;
+        if (empty($value)) return [];
 
-        return $this;
-    }
+        if ( ! $this->isMultiple()) {
+            $action = $this->getActionFromInput($value);
 
-    /**
-     * {@inheritdoc}
-     *
-     * Returns just the number of items so we could validate it.
-     */
-    public function process($data)
-    {
-        return array_reduce($data, function ($carry, $item)
-        {
-            return $carry + (array_get($item, 'isDeleted') ? 0 : 1);
-
-        }, 0);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function keep($value)
-    {
-        return ! empty($value);
-    }
-
-    /**
-     * @param Model $model
-     * @param Model $parent
-     *
-     * @return void
-     */
-    public function attach(Model $model, Model $parent)
-    {
-        $extra = $this->extra;
-
-        if ($extra instanceof \Closure)
-        {
-            $extra($model);
+            return $this->getRefEntity()->validate($action, $value);
         }
-        else
-        {
-            $model->fill($extra);
+
+        $result = [];
+
+        foreach ($value as $cid => $itemInput) {
+            $action = $this->getActionFromInput($itemInput);
+
+            if ($errors = $this->getRefEntity()->validate($action, $itemInput)) {
+                $result[$cid] = $errors;
+            }
         }
+
+        return $result;
     }
 
     /**
      * {@inheritdoc}
      */
-    public function extract($model)
+    public function parseInputValue($data)
     {
-        $items = parent::extract($model);
+        if (empty($data)) $data = null;
+
+        $data = (array)$data;
+
+        array_walk($data, function (&$item) {
+            $this->getRefEntity()->getFields()->parseInput($item);
+        });
+
+        return $this->isMultiple() ? $data : Helpers::firstOrNull($data);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function processInputValue($value)
+    {
+        return $value;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getSettingMode()
+    {
+        return self::MODE_AFTER_SAVE;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getModelValue($model)
+    {
+        $items = parent::getModelValue($model);
 
         $items and $this->loadRelations($items);
 
-        return $this->reference->extract($items);
+        return $this->getRefEntity()->getModelData($items);
     }
 
     /**
-     * @param string $owner
+     * @param string $scope
      *
      * @return array
      */
-    public function relations($owner)
+    public function relations($scope)
     {
-        $relations = parent::relations($owner);
+        $relations = parent::relations($scope);
+        $entity = $this->getRefEntity();
 
-        $owner = $owner ? $owner.'.'.$this->reference->getId() : $this->reference->getId();
+        $scope = $scope ? $scope.'.'.$entity->getId() : $entity->getId();
 
-        return array_merge($relations, $this->reference->relations($owner));
+        return array_merge($relations, $entity->relations($scope));
     }
 
     /**
      * {@inheritdoc}
      */
-    public function extractForColumn($model)
+    public function getModelValueForColumn($model)
     {
-        return $this->reference->simplify(parent::extract($model));
+        return $this->getRefEntity()->simplifyModel(parent::getModelValue($model));
     }
 
     /**
@@ -131,7 +133,7 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationCont
      */
     protected function loadRelations($loadee)
     {
-        $relations = $this->reference->relations();
+        $relations = $this->getRefEntity()->relations();
 
         if ($relations) $loadee->load($relations);
     }
@@ -141,9 +143,49 @@ abstract class InlineRelation extends BaseRelation implements InlineRelationCont
      */
     protected function generateLabel()
     {
-        if ($label = $this->translate('fields')) return $label;
+        if ($label = $this->translate('fields')) {
+            return $label;
+        }
 
-        return $this->isMultiple() ? $this->reference->getPluralTitle() : $this->reference->getSingularTitle();
+        $entity = $this->getRefEntity();
+
+        return $this->isMultiple()
+            ? $entity->getPluralTitle()
+            : $entity->getSingularTitle();
+    }
+
+    /**
+     * @param Model $model
+     *
+     * @return bool
+     */
+    protected function modelCanBeSaved($model)
+    {
+        $action = $this->getRefEntity()->getActionFromModel($model);
+
+        return $this->getRefEntity()->isPermitted($action);
+    }
+
+    /**
+     * @param array $value
+     *
+     * @return string
+     */
+    protected function getActionFromInput($value)
+    {
+        $id = $this->getInnerModelId($value);
+
+        return is_null($id) ? Entity::CREATE : Entity::UPDATE;
+    }
+
+    /**
+     * @param $value
+     *
+     * @return mixed
+     */
+    protected function getInnerModelId($value)
+    {
+        return Helpers::processString(Arr::get($value, self::ID_PROPERTY));
     }
 
 }

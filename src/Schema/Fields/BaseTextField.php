@@ -3,7 +3,8 @@
 namespace Kalnoy\Cruddy\Schema\Fields;
 
 use Illuminate\Database\Query\Builder;
-use Kalnoy\Cruddy\Contracts\KeywordsFilter;
+use Kalnoy\Cruddy\Contracts\Filter as FilterContract;
+use Kalnoy\Cruddy\Contracts\KeywordsFilter as KeywordsFilterContract;
 use Kalnoy\Cruddy\Helpers;
 
 /**
@@ -16,14 +17,15 @@ use Kalnoy\Cruddy\Helpers;
  *
  * @since 1.0.0
  */
-abstract class BaseTextField extends BaseInput implements KeywordsFilter {
-
+abstract class BaseTextField extends BaseInput implements KeywordsFilterContract,
+                                                          FilterContract
+{
     /**
      * The name of the JavaScript class that is used to render this field.
      *
      * @return string
      */
-    protected function modelClass()
+    protected function getModelClass()
     {
         return 'Cruddy.Fields.Input';
     }
@@ -33,7 +35,7 @@ abstract class BaseTextField extends BaseInput implements KeywordsFilter {
      *
      * @return string
      */
-    protected function inputType()
+    protected function getInputType()
     {
         return 'text';
     }
@@ -41,21 +43,9 @@ abstract class BaseTextField extends BaseInput implements KeywordsFilter {
     /**
      * {@inheritdoc}
      */
-    public function process($value)
+    public function parseInputValue($value)
     {
-        $value = trim($value);
-
-        return $value === '' ? null : $value;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function order(Builder $builder, $direction)
-    {
-        $builder->orderBy($this->id, $direction);
-
-        return $this;
+        return Helpers::processString($value);
     }
 
     /**
@@ -66,9 +56,18 @@ abstract class BaseTextField extends BaseInput implements KeywordsFilter {
      */
     public function applyKeywordsFilter(Builder $builder, array $keywords)
     {
-        foreach ($keywords as $keyword)
-        {
-            $builder->orWhere($this->id, 'like', '%'.$keyword.'%');
+        foreach ($keywords as $keyword) {
+            $builder->orWhere($this->getModelAttributeName(), 'like', '%'.$keyword.'%');
+        }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function applyFilterConstraint(Builder $builder, $input)
+    {
+        if ($input = Helpers::processString($input)) {
+            $builder->where($this->getModelAttributeName(), 'like', '%'.$input.'%');
         }
     }
 
@@ -78,7 +77,7 @@ abstract class BaseTextField extends BaseInput implements KeywordsFilter {
     public function toArray()
     {
         return [
-            'input_type' => $this->inputType(),
+            'input_type' => $this->getInputType(),
             'placeholder' => Helpers::tryTranslate($this->get('placeholder')),
 
         ] + parent::toArray();

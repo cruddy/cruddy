@@ -7,7 +7,6 @@
  */
 
 namespace Kalnoy\Cruddy\Schema;
-use Illuminate\Database\Eloquent\Model;
 
 /**
  * Class Computed
@@ -17,8 +16,8 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @package Kalnoy\Cruddy\Schema
  */
-trait ComputedTrait {
-
+trait ComputedTrait
+{
     /**
      * The accessor.
      *
@@ -31,17 +30,19 @@ trait ComputedTrait {
      *
      * @return mixed
      */
-    public function extract($model)
+    public function getModelValue($model)
     {
         if ( ! $model->exists) return null;
 
-        if (is_null($this->accessor)) $this->accessor = 'get'.studly_case($this->id);
+        if (is_null($this->accessor)) {
+            $this->accessor = 'get'.studly_case($this->id);
+        }
 
-        if (is_string($this->accessor)) return $model->{$this->accessor}();
+        if (is_string($this->accessor)) {
+            return $model->{$this->accessor}();
+        }
 
-        $accessor = $this->accessor;
-
-        return $accessor($model);
+        return call_user_func($this->accessor, $model);
     }
 
     /**

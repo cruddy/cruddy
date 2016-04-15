@@ -2,11 +2,10 @@
 
 namespace Kalnoy\Cruddy\Schema\Fields;
 
-use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
-use Illuminate\Database\Eloquent\Model as Eloquent;
 use Kalnoy\Cruddy\Entity;
-use Kalnoy\Cruddy\Contracts\Permissions;
+use Kalnoy\Cruddy\Repository;
 
 /**
  * Base relation field class.
@@ -16,36 +15,32 @@ use Kalnoy\Cruddy\Contracts\Permissions;
  *
  * @since 1.0.0
  */
-abstract class BaseRelation extends BaseField {
-
+abstract class BaseRelation extends BaseField
+{
     /**
      * The entity that this relation refers to.
      *
      * @var Entity
      */
-    protected $reference;
+    private $refEntity;
 
     /**
-     * The relation object.
-     *
-     * @var Relation
+     * @var string
      */
-    protected $relation;
+    protected $refEntityId;
 
     /**
      * Init field.
      *
-     * @param Entity $entity
+     * @param Entity $form
      * @param string $id
-     * @param Entity $reference
-     * @param Relation $relation
+     * @param $refEntityId
      */
-    public function __construct(Entity $entity, $id, Entity $reference, Relation $relation)
+    public function __construct(Entity $form, $id, $refEntityId)
     {
-        parent::__construct($entity, $id);
+        parent::__construct($form, $id);
 
-        $this->reference = $reference;
-        $this->relation = $relation;
+        $this->refEntityId = $refEntityId;
     }
 
     /**
@@ -58,26 +53,25 @@ abstract class BaseRelation extends BaseField {
     /**
      * {@inheritdoc}
      */
-    public function extract($model)
+    public function getModelValue($model)
     {
-        if ( ! $this->reference->isPermitted(Entity::READ))
-        {
+        if ( ! $this->getRefEntity()->isPermitted(Entity::READ)) {
             return null;
         }
 
-        return parent::extract($model);
+        return parent::getModelValue($model);
     }
 
     /**
      * Start new relational query for specified model.
      *
-     * @param Eloquent $model
+     * @param Model $model
      *
      * @return Relation
      */
-    public function newRelationalQuery(Eloquent $model = null)
+    public function newRelationQuery(Model $model = null)
     {
-        $model = $model ?: $this->reference->newModel();
+        $model = $model ?: $this->form->newModel();
 
         return $model->{$this->getRelationId()}();
     }
@@ -89,44 +83,20 @@ abstract class BaseRelation extends BaseField {
     {
         $relation = $this->getRelationId();
 
-        return array_merge((array)$relation, $this->reference->eagerLoads($relation));
+        return array_merge((array)$relation,
+                           $this->getRefEntity()->eagerLoads($relation));
     }
 
     /**
      * Get a list of relations.
      *
-     * @param $owner
+     * @param $scope
      *
      * @return array
      */
-    public function relations($owner)
+    public function relations($scope)
     {
-        return [ $this->getRelationId($owner) ];
-    }
-
-    /**
-     * @param array  $relations
-     * @param string $key
-     *
-     * @return void
-     */
-    protected function appendPreloadableRelations(array &$relations, $key = null)
-    {
-        $relations[] = $this->getKeyedRelationId($key);
-    }
-
-    /**
-     * Get relation id prefixed with key if one is provided.
-     *
-     * @param string $key
-     *
-     * @return string
-     */
-    protected function getKeyedRelationId($key)
-    {
-        $relationId = $this->getRelationId();
-
-        return $key ? $key . '.' . $relationId : $relationId;
+        return [ $this->getRelationId($scope) ];
     }
 
     /**
@@ -134,31 +104,46 @@ abstract class BaseRelation extends BaseField {
      *
      * @return Entity
      */
-    public function getReference()
+    public function getRefEntity()
     {
-        return $this->reference;
+        if ($this->refEntity !== null) {
+            return $this->refEntity;
+        }
+
+        $this->refEntity = $this->getEntitiesRepository()
+                                ->resolve($this->getRefEntityId());
+
+        return $this->refEntity;
     }
 
     /**
-     * The relation object.
-     *
-     * @return Relation
+     * @return string
      */
-    public function getRelation()
+    public function getRefEntityId()
     {
-        return $this->relation;
+        return $this->refEntityId ?: $this->id;
+    }
+
+    /**
+     * @return Repository
+     */
+    public function getEntitiesRepository()
+    {
+        return app(Repository::class);
     }
 
     /**
      * Get relation id.
      *
-     * @param string $owner
+     * @param string $scope
      *
      * @return string
      */
-    public function getRelationId($owner = null)
+    public function getRelationId($scope = null)
     {
-        return $owner ? $owner.'.'.$this->id : $this->id;
+        $id = $this->getModelAttributeName();
+
+        return $scope ? $scope.'.'.$id : $id;
     }
 
     /**
@@ -168,7 +153,7 @@ abstract class BaseRelation extends BaseField {
     {
         return [
             'multiple' => $this->isMultiple(),
-            'reference' => $this->reference->getId(),
+            'reference' => $this->getRefEntityId(),
 
         ] + parent::toArray();
     }

@@ -16,7 +16,7 @@ class Image extends File
     /**
      * @return string
      */
-    protected function modelClass()
+    protected function getModelClass()
     {
         return 'Cruddy.Fields.Image';
     }
@@ -24,7 +24,7 @@ class Image extends File
     /**
      * @return string
      */
-    protected function defaultAccepts()
+    protected function getAccepts()
     {
         return 'image/*,image/jpeg';
     }

@@ -17,16 +17,8 @@ use Kalnoy\Cruddy\Entity;
  *
  * @since 1.0.0
  */
-abstract class Attribute extends Entry implements AttributeContract {
-
-    /**
-     * @return array
-     */
-    public function eagerLoads()
-    {
-        return [];
-    }
-
+abstract class Attribute extends Entry implements AttributeContract
+{
     /**
      * {@inheritdoc}
      */

@@ -8,16 +8,15 @@ use Kalnoy\Cruddy\Entity;
  *
  * @since 1.0.0
  */
-class Primary extends StringField
+class Incrementing extends Integer
 {
-
     /**
-     * @param Entity $entity
+     * @param Entity $form
      * @param string $id
      */
-    public function __construct(Entity $entity, $id)
+    public function __construct(Entity $form, $id)
     {
-        parent::__construct($entity, $id);
+        parent::__construct($form, $id);
 
         $this->hide()->disable();
     }
@@ -31,7 +30,7 @@ class Primary extends StringField
     {
         foreach ($keywords as $keyword) {
             if (is_numeric($keyword)) {
-                $builder->orWhere($this->id, '=', $keyword);
+                $builder->orWhere($this->getModelAttributeName(), '=', $keyword);
             }
         }
     }

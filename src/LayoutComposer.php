@@ -61,7 +61,7 @@ class LayoutComposer
 
         $view->cruddyData += [
             'schemaUrl' => $this->url->route('cruddy.schema'),
-            'thumbUrl' => $this->url->route('cruddy.thumb'),
+//            'thumbUrl' => $this->url->route('cruddy.thumb'),
             'baseUrl' => $this->url->route('cruddy.home'),
             'root' => $this->request->root(),
             'token' => csrf_token(),

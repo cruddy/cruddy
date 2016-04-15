@@ -13,8 +13,8 @@ use Kalnoy\Cruddy\Schema\Entry;
  *
  * @package Kalnoy\Cruddy\Schema\Filters
  */
-abstract class BaseFilter extends Entry implements Filter {
-
+abstract class BaseFilter extends Entry implements Filter
+{
     /**
      * The list of internal keys that cannot be used as filter id.
      *
@@ -29,8 +29,7 @@ abstract class BaseFilter extends Entry implements Filter {
      */
     public function getLabel()
     {
-        if ($label = $this->get('label'))
-        {
+        if ($label = $this->get('label')) {
             return Helpers::tryTranslate($label);
         }
 
@@ -52,7 +51,9 @@ abstract class BaseFilter extends Entry implements Filter {
      */
     public function getDataKey()
     {
-        if (in_array($this->id, static::$sysKeys)) return 'f_'.$this->id;
+        if (in_array($this->id, static::$sysKeys)) {
+            return 'f_'.$this->id;
+        }
 
         return $this->id;
     }

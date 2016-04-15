@@ -1,13 +1,16 @@
 <?php namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
 use Illuminate\Database\Eloquent\Model as Eloquent;
+use Illuminate\Support\Arr;
 use Kalnoy\Cruddy\Schema\Fields\BaseField;
+use Kalnoy\Cruddy\Service\Files\FileStorage;
+use Symfony\Component\HttpFoundation\File\UploadedFile;
 
 /**
  * File input field.
  *
- * @property string $accepts
- * @method $this accepts(StringField $value)
+ * @property string $storeTo
+ * @method $this storeTo(string $value)
  *
  * @property bool $many
  * @method $this many(bool $value = true)
@@ -21,17 +24,9 @@ class File extends BaseField
      *
      * @return string
      */
-    protected function modelClass()
+    protected function getModelClass()
     {
         return 'Cruddy.Fields.File';
-    }
-
-    /**
-     * @return string
-     */
-    protected function defaultAccepts()
-    {
-        return null;
     }
 
     /**
@@ -39,9 +34,9 @@ class File extends BaseField
      *
      * @return string[]|string
      */
-    public function extract($model)
+    public function getModelValue($model)
     {
-        $value = parent::extract($model);
+        $value = parent::getModelValue($model);
 
         if ($this->isMultiple()) {
             return is_array($value) ? $value : [ ];
@@ -52,25 +47,12 @@ class File extends BaseField
 
     /**
      * {@inheritdoc}
-     *
-     * @return string[]|string
-     */
-    public function process($value)
-    {
-        if (empty($value)) $value = null;
-
-        return $this->isMultiple() ? (array)$value : $value;
-    }
-
-    /**
-     * {@inheritdoc}
      */
     public function toArray()
     {
         return [
             'multiple' => $this->isMultiple(),
-            'accepts' => $this->get('accepts', $this->defaultAccepts()),
-            'unique' => true,
+            'storage' => $this->getStorageName(),
 
         ] + parent::toArray();
     }
@@ -81,5 +63,21 @@ class File extends BaseField
     public function isMultiple()
     {
         return $this->get('many', false);
+    }
+
+    /**
+     * @return FileStorage
+     */
+    protected function getStorage()
+    {
+        return app('cruddy.files')->storage($this->getStorageName());
+    }
+    
+    /**
+     * @return string
+     */
+    public function getStorageName()
+    {
+        return $this->get('storeTo', 'files');
     }
 }

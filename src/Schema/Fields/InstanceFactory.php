@@ -3,7 +3,7 @@
 namespace Kalnoy\Cruddy\Schema\Fields;
 
 /**
- * @method Types\Primary    increments(string $id)
+ * @method Types\Incrementing    increments(string $id)
  * @method Types\StringField string(string $id)
  * @method Types\Text       text(string $id)
  * @method Types\Email      email(string $id)
@@ -24,6 +24,15 @@ namespace Kalnoy\Cruddy\Schema\Fields;
  * @method Types\Enum       enum(string $id, mixed $items)
  * @method Types\Computed   computed(string $id, mixed $accessor = null)
  * @method Types\Computed   compute(string $id, mixed $accessor = null)
+ *
+ * @method Types\BelongsTo belongsTo(string $id, string $refEntityId = null)
+ * @method Types\BelongsToMany belongsToMany(string $id, string $refEntityId = null)
+ * @method Types\MorphToMany morphToMany(string $id, string $refEntityId = null)
+ *
+ * @method Types\HasOne hasOne(string $id, string $refEntityId = null)
+ * @method Types\HasMany hasMany(string $id, string $refEntityId = null)
+ * @method Types\HasOne morphOne(string $id, string $refEntityId = null)
+ * @method Types\HasMany morphMany(string $id, string $refEntityId = null)
  *
  * @method \Kalnoy\Cruddy\CKEditor\CKEditor ckedit(string $id)
  * @method \Kalnoy\Cruddy\Ace\Markdown markdown(string $id)

@@ -8,22 +8,10 @@ use Kalnoy\Cruddy\Schema\BaseFactory;
 class Factory extends BaseFactory
 {
     /**
-     * @param \Kalnoy\Cruddy\Entity $entity
-     * @param \Kalnoy\Cruddy\Schema\BaseCollection $collection
-     * @param $id
-     * @param null $fieldId
-     *
-     * @return Types\Proxy
+     * @var array
      */
-    public function usingField($entity, $collection, $id, $fieldId = null)
-    {
-        $field = $this->resolveField($entity, $fieldId ?: $id);
-
-        $instance = new Types\Proxy($entity, $id, $field);
-
-        $collection->push($instance);
-
-        return $instance;
-    }
+    protected $macros = [
+        'usingField' => Types\Proxy::class,
+    ];
 
 }

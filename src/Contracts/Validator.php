@@ -9,7 +9,8 @@ namespace Kalnoy\Cruddy\Contracts;
  *
  * @since 1.0.0
  */
-interface Validator {
+interface Validator
+{
 
     /**
      * Validate an input for specific action which is either `create` or `update`.

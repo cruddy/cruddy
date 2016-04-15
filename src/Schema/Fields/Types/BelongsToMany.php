@@ -2,6 +2,7 @@
 
 namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Kalnoy\Cruddy\Contracts\Filter;
 use Kalnoy\Cruddy\Schema\Fields\BasicRelation;
@@ -11,12 +12,22 @@ use Kalnoy\Cruddy\Schema\Fields\BasicRelation;
  *
  * @since 1.0.0
  */
-class BelongsToMany extends BasicRelation implements Filter {
-
+class BelongsToMany extends BasicRelation implements Filter
+{
     /**
-     * @var \Illuminate\Database\Eloquent\Relations\BelongsToMany
+     * @param Model $model
+     * @param array $value
+     *
+     * @return $this
      */
-    protected $relation;
+    public function setModelValue($model, $value)
+    {
+        $value = $this->processInputValue($value);
+
+        $this->newRelationQuery($model)->sync($value);
+
+        return $this;
+    }
 
     /**
      * Get whether the relations works with a collection of models.
@@ -35,9 +46,8 @@ class BelongsToMany extends BasicRelation implements Filter {
     {
         if (empty($data)) return;
 
-        $builder->whereExists(function ($q) use ($data)
-        {
-            $this->initNestedQuery($q, $this->parseData($data));
+        $builder->whereExists(function ($q) use ($data) {
+            $this->initFilterQuery($q, $this->parseData($data));
         });
     }
 
@@ -49,15 +59,19 @@ class BelongsToMany extends BasicRelation implements Filter {
      *
      * @return void
      */
-    protected function initNestedQuery(QueryBuilder $query, array $ids)
+    protected function initFilterQuery(QueryBuilder $query, array $ids)
     {
+        /** @var \Illuminate\Database\Eloquent\Relations\BelongsToMany $relation */
+        $relation = $this->newRelationQuery();
+
         $connection = $query->getConnection();
-        $keyName = $connection->raw($this->relation->getParent()->getQualifiedKeyName());
+        $keyName = $connection->raw($relation->getParent()
+                                             ->getQualifiedKeyName());
 
         $query
-            ->from($this->relation->getTable())
+            ->from($relation->getTable())
             ->select($connection->raw('1'))
-            ->where($this->relation->getForeignKey(), '=', $keyName)
-            ->whereIn($this->relation->getOtherKey(), $ids);
+            ->where($relation->getForeignKey(), '=', $keyName)
+            ->whereIn($relation->getOtherKey(), $ids);
     }
 }

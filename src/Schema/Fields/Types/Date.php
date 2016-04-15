@@ -7,14 +7,14 @@ namespace Kalnoy\Cruddy\Schema\Fields\Types;
  *
  * @since 1.0.0
  */
-class Date extends DateTime {
-
+class Date extends DateTime
+{
     /**
      * The name of the JavaScript class that is used to render this field.
      *
      * @return string
      */
-    protected function modelClass()
+    protected function getModelClass()
     {
         return 'Cruddy.Fields.Date';
     }

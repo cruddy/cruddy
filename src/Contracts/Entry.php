@@ -4,8 +4,8 @@ namespace Kalnoy\Cruddy\Contracts;
 
 use Illuminate\Contracts\Support\Arrayable;
 
-interface Entry extends Arrayable {
-
+interface Entry extends Arrayable
+{
     /**
      * Get the attribute identifier.
      *
@@ -23,6 +23,6 @@ interface Entry extends Arrayable {
      *
      * @return \Kalnoy\Cruddy\BaseForm
      */
-    public function getEntity();
+    public function getForm();
 
 }

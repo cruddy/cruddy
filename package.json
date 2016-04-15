@@ -1,18 +1,19 @@
 {
-    "name": "cruddy",
-
-    "version": "0.4.0",
-
-    "author": "Alexander Kalnoy",
-
-    "devDependencies": {
-        "grunt": "~0.4",
-        "grunt-contrib-uglify": "~0.4",
-        "grunt-contrib-concat": "~0.3",
-        "grunt-contrib-coffee": "~0.12",
-        "grunt-contrib-copy": "~0.4",
-        "grunt-contrib-less": "~1.0",
-        "grunt-contrib-watch": "~0.6"
-    }
-
+  "name": "cruddy",
+  "version": "0.4.0",
+  "author": "Alexander Kalnoy",
+  "devDependencies": {
+    "grunt": "~0.4",
+    "grunt-contrib-coffee": "~0.12",
+    "grunt-contrib-concat": "~0.3",
+    "grunt-contrib-copy": "~0.4",
+    "grunt-contrib-less": "~1.0",
+    "grunt-contrib-uglify": "~0.4",
+    "grunt-contrib-watch": "~0.6",
+    "gulp": "^3.9.1",
+    "laravel-elixir": "^6.0.0-1",
+    "vue": "^1.0.21",
+    "vue-resource": "^0.7.0",
+    "vue-router": "^0.7.13"
+  }
 }

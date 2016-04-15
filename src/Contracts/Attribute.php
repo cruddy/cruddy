@@ -11,31 +11,22 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
  *
  * @since 1.0.0
  */
-interface Attribute extends Entry {
-
+interface Attribute extends Entry
+{
     /**
-     * Get model's corresponding value.
+     * Get model value.
      *
      * @param mixed $model
      *
      * @return mixed
      */
-    public function extract($model);
-
-    /**
-     * Get a list of relations that should be eagerly loaded.
-     *
-     * TODO: should not be here
-     *
-     * @return array
-     */
-    public function eagerLoads();
+    public function getModelValue($model);
 
     /**
      * Apply an order to the query builder.
      *
      * @param QueryBuilder $builder
-     * @param string       $direction
+     * @param string $direction
      *
      * @return $this
      */

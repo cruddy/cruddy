@@ -2,19 +2,28 @@
 
 namespace Kalnoy\Cruddy;
 
+use Illuminate\Contracts\Events\Dispatcher;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Fluent;
+use Kalnoy\Cruddy\Contracts\KeywordsFilter;
 use Kalnoy\Cruddy\Contracts\SearchProcessor;
 use Kalnoy\Cruddy\Repo\BasicEloquentRepository;
 use Kalnoy\Cruddy\Schema\AttributesCollection;
 use Illuminate\Support\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Kalnoy\Cruddy\Repo\ChainedSearchProcessor;
+use Kalnoy\Cruddy\Contracts\Field;
+use Kalnoy\Cruddy\Schema\Columns\Types\Proxy;
+use Kalnoy\Cruddy\Schema\Fields\BaseRelation;
+use Kalnoy\Cruddy\Service\Validation\FluentValidator;
 
 /**
  * The entity class that is responsible for operations on model.
  *
  * @since 1.0.0
  */
-abstract class Entity extends BaseForm
+abstract class Entity extends BaseForm implements SearchProcessor
 {
     /**
      * Action for creating new items.
@@ -45,6 +54,16 @@ abstract class Entity extends BaseForm
      * The state of model when it is exists.
      */
     const WHEN_EXISTS = self::UPDATE;
+
+    /**
+     * @var Dispatcher
+     */
+    protected static $dispatcher;
+
+    /**
+     * @var Repository
+     */
+    protected $entities;
 
     /**
      * @var Schema\Actions\Collection
@@ -127,13 +146,69 @@ abstract class Entity extends BaseForm
     protected $perPage;
 
     /**
+     * Register saving event.
+     *
+     * @param string $id
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public static function saving($id, $callback)
+    {
+        static::registerEvent($id, 'saving', $callback);
+    }
+
+    /**
+     * Register saved event.
+     *
+     * @param string $id
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public static function saved($id, $callback)
+    {
+        static::registerEvent($id, 'saved', $callback);
+    }
+
+    /**
+     * Register entity event handler.
+     *
+     * @param string $id
+     * @param string $event
+     * @param mixed $callback
+     *
+     * @return void
+     */
+    public static function registerEvent($id, $event, $callback)
+    {
+        if ( ! static::$dispatcher) return;
+
+        static::$dispatcher->listen("entity.{$event}: {$id}", $callback);
+    }
+
+    /**
+     * @param Dispatcher $dispatcher
+     */
+    public static function setEventDispatcher(Dispatcher $dispatcher)
+    {
+        static::$dispatcher = $dispatcher;
+    }
+
+    /**
+     * @return Dispatcher
+     */
+    public static function getEventDispatcher()
+    {
+        return static::$dispatcher;
+    }
+
+    /**
      * Specify the columns.
      *
      * @param Schema\Columns\InstanceFactory $schema
      */
-    protected function columns($schema)
-    {
-    }
+    protected function columns($schema) {}
 
     /**
      * Specify filters.
@@ -158,16 +233,7 @@ abstract class Entity extends BaseForm
 
         $model->setRawAttributes($this->defaults);
 
-        return $this->getFields()->extract($model);
-    }
-
-    /**
-     * Specify what files repository uploads.
-     *
-     * @param Repo\AbstractEloquentRepository $repo
-     */
-    protected function files($repo)
-    {
+        return $this->getFields()->getModelData($model);
     }
 
     /**
@@ -175,8 +241,23 @@ abstract class Entity extends BaseForm
      *
      * @param Schema\Actions\Collection $actions
      */
-    protected function actions($actions)
+    protected function actions($actions) {}
+
+    /**
+     * @param FluentValidator $validate
+     */
+    protected function rules($validate) {}
+
+    /**
+     * @return FluentValidator
+     */
+    public function createValidator()
     {
+        $validator = new FluentValidator;
+
+        $this->rules($validator);
+
+        return $validator;
     }
 
     /**
@@ -191,7 +272,9 @@ abstract class Entity extends BaseForm
         $result = [ ];
 
         if ($value = $this->toUrl($model)) {
-            $result[app('cruddy.lang')->translate('cruddy::js.view_external')] = $value;
+            $label = app('cruddy.lang')->translate('cruddy::js.view_external');
+
+            $result[$label] = $value;
         }
 
         return $result;
@@ -233,75 +316,72 @@ abstract class Entity extends BaseForm
      *
      * @return string
      */
-    public function toUrl($model)
-    {
-    }
-
-    /**
-     * @param array $input
-     *
-     * @return EntityData
-     */
-    public function processInput(array $input)
-    {
-        return new EntityData($this, $input);
-    }
+    public function toUrl($model) {}
 
     /**
      * Find an item with given id.
      *
      * @param mixed $id
      *
-     * @return array
-     *
-     * @throws ModelNotFoundException
+     * @return mixed
      */
     public function find($id)
     {
-        $model = $this->getRepository()->find($id);
-
-        return $this->extract($model);
+        return $this->getRepository()->find($id);
     }
 
     /**
-     * Extract model fields.
+     * @param $model
+     * @param array $input
      *
-     * @param mixed $model
-     * @param AttributesCollection $collection
-     *
-     * @return array
+     * @return $this
      */
-    public function extract($model, AttributesCollection $collection = null)
+    public function save($model, array $input)
     {
-        if ( ! $model) return null;
+        $fields = $this->getFields();
+        $repo = $this->getRepository();
 
-        if (is_array($model) || $model instanceof Collection) {
-            return $this->extractAll($model, $collection);
+        $fields->fillModel(Field::MODE_BEFORE_SAVE, $model, $input);
+
+        $repo->startTransaction();
+
+        if (false === $this->fireEvent('saving', [ $model ]) ||
+            ! $repo->save($model)
+        ) {
+            throw new ModelNotSavedException;
         }
 
-        $attributes = parent::extract($model, $collection);
-        $meta = $this->getMetaDataForModel($model);
+        $fields->fillModel(Field::MODE_AFTER_SAVE, $model, $input);
 
-        return compact('attributes', 'meta');
+        $this->fireEvent('saved', [ $model ], false);
+
+        $repo->commitTransaction();
+
+        return $this;
     }
 
     /**
-     * Extract fields of all models.
-     *
-     * @param array|Collection $items
-     * @param AttributesCollection $collection
+     * @param string $action
+     * @param array $input
      *
      * @return array
      */
-    public function extractAll($items, AttributesCollection $collection = null)
+    public function validate($action, array $input)
     {
-        if ($items instanceof Collection) {
-            $items = $items->all();
+        $fields = $this->getFields();
+
+        $result = [];
+
+        $validator = $this->getValidator();
+        $labels = $fields->getValidationLabels();
+
+        $this->getFields()->parseInput($input);
+
+        if ( ! $validator->validFor($action, $input, $labels)) {
+            $result = $validator->errors();
         }
 
-        return array_map(function ($model) use ($collection) {
-            return $this->extract($model, $collection);
-        }, $items);
+        return array_merge_recursive($result, $fields->validate($input));
     }
 
     /**
@@ -334,11 +414,11 @@ abstract class Entity extends BaseForm
         $results = $this->getRepository()
                         ->search($options, $this->getSearchProcessor($options));
 
-        if (array_get($options, 'simple')) {
-            $results['items'] = $this->simplifyAll($results['items']);
+        if (Arr::get($options, 'simple')) {
+            $results['items'] = $this->simplifyModelList($results['items']);
         } else {
-            $results['items'] = $this->extractAll($results['items'],
-                                                  $this->getColumns());
+            $results['items'] = $this->getModelListData($results['items'],
+                                                        $this->getColumns());
         }
 
         return $results;
@@ -353,9 +433,10 @@ abstract class Entity extends BaseForm
      */
     protected function getSearchProcessor(array $options)
     {
-        $processor = new ChainedSearchProcessor(
-            [ $this->getFields(), $this->getColumns(), $this->getFilters() ]
-        );
+        $processor = new ChainedSearchProcessor([ $this,
+                                                  $this->getFields(),
+                                                  $this->getColumns(),
+                                                  $this->getFilters() ]);
 
         if (isset($options['owner'])) {
             $field = $this->entities->field($options['owner']);
@@ -371,31 +452,145 @@ abstract class Entity extends BaseForm
     }
 
     /**
-     * @return Schema\Fields\Collection
+     * @inheritDoc
      */
-    protected function createFields()
+    public function constraintBuilder(Builder $builder, array $input)
     {
-        $collection = parent::createFields();
+        $simple = Arr::get($input, 'simple', false);
 
-        $collection->setSearchableFields($this->searchable);
-
-        return $collection;
+        if ($relations = $this->eagerLoads(null, ! $simple)) {
+            $builder->with($relations);
+        }
     }
 
     /**
-     * Convert all items to simple representation which is used by an entity dropdown.
+     * Get a list of relations that should be eagerly loaded.
      *
-     * @param array $items
+     * @param string $scope
+     * @param bool $deep
      *
      * @return array
      */
-    public function simplifyAll($items)
+    public function eagerLoads($scope = null, $deep = false)
+    {
+        $result = $this->eagerLoads;
+
+        if ($deep) {
+            foreach ($this->getColumns() as $column) {
+                if ( ! $column instanceof Proxy) continue;
+
+                $field = $column->getField();
+
+                if ( ! $field instanceof BaseRelation) {
+                    continue;
+                }
+
+                $result = array_merge($result, $field->eagerLoads());
+            }
+
+            $result = array_unique($result);
+        }
+
+        if (is_null($scope)) return $result;
+
+        return array_map(function ($item) use ($scope) {
+            return $scope.'.'.$item;
+        }, $result);
+    }
+
+    /**
+     * Fire entity event.
+     *
+     * @param string $event
+     * @param array $payload
+     * @param bool $halt
+     *
+     * @return mixed
+     */
+    public function fireEvent($event, array $payload, $halt = true)
+    {
+        if ( ! isset(static::$dispatcher)) return null;
+
+        $event = "entity.{$event}: {$this->id}";
+
+        return static::$dispatcher->fire($event, $payload, $halt);
+    }
+
+    /**
+     * @param Repository $entities
+     */
+    public function setEntitiesRepository(Repository $entities)
+    {
+        $this->entities = $entities;
+    }
+
+    /**
+     * @return Repository
+     */
+    public function getEntitiesRepository()
+    {
+        return $this->entities;
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @param Model $model
+     */
+    public function getModelAttributeValue($model, $attribute)
+    {
+        return $model->getAttributeValue($attribute);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * @param Model $model
+     */
+    public function setModelAttributeValue($model, $value, $attribute)
+    {
+        $model->setAttribute($attribute, $value);
+    }
+
+    /**
+     * Extract model fields.
+     *
+     * @param mixed $model
+     * @param AttributesCollection $collection
+     *
+     * @return array
+     */
+    public function getModelData($model, AttributesCollection $collection = null)
+    {
+        if ( ! $model) return null;
+
+        if (is_array($model) || $model instanceof Collection) {
+            return $this->getModelListData($model, $collection);
+        }
+
+        $attributes = parent::getModelData($model, $collection);
+        $meta = $this->modelMeta($model);
+
+        return compact('attributes', 'meta');
+    }
+
+    /**
+     * Extract fields of all models.
+     *
+     * @param array|Collection $items
+     * @param AttributesCollection $collection
+     *
+     * @return array
+     */
+    public function getModelListData($items, AttributesCollection $collection = null)
     {
         if ($items instanceof Collection) {
             $items = $items->all();
         }
 
-        return array_map([ $this, 'simplify' ], $items);
+        return array_map(function ($model) use ($collection) {
+            return $this->getModelData($model, $collection);
+        }, $items);
     }
 
     /**
@@ -405,15 +600,31 @@ abstract class Entity extends BaseForm
      *
      * @return array
      */
-    public function simplify($model)
+    public function simplifyModel($model)
     {
         if ( ! $model) return null;
 
         if (is_array($model) || $model instanceof Collection) {
-            return $this->simplifyAll($model);
+            return $this->simplifyModelList($model);
         }
 
-        return $this->getSimplifiedModel($model);
+        return $this->simplifiedModel($model);
+    }
+
+    /**
+     * Convert all items to simple representation which is used by an entity dropdown.
+     *
+     * @param array $list
+     *
+     * @return array
+     */
+    public function simplifyModelList($list)
+    {
+        if ($list instanceof Collection) {
+            $list = $list->all();
+        }
+
+        return array_map([ $this, 'simplifyModel' ], $list);
     }
 
     /**
@@ -425,7 +636,7 @@ abstract class Entity extends BaseForm
      *
      * @return array
      */
-    public function getSimplifiedModel(Model $model)
+    public function simplifiedModel(Model $model)
     {
         return [
             'id' => $model->getKey(),
@@ -438,43 +649,35 @@ abstract class Entity extends BaseForm
      *
      * @return array
      */
-    public function getMetaDataForModel(Model $model)
+    public function modelMeta(Model $model)
     {
         return [
             'id' => $model->getKey(),
             'title' => $this->toString($model),
             'links' => $this->links($model),
             'actions' => $this->getActions()->export($model),
-            'simplified' => $this->getSimplifiedModel($model),
+            'simplified' => $this->simplifiedModel($model),
         ];
-    }
-
-    /**
-     * Get a list of eagerly loaded relations, optionally prefixed with owner relation.
-     *
-     * @param string|null $owner
-     *
-     * @return array
-     */
-    public function eagerLoads($owner = null)
-    {
-        if (is_null($owner)) return $this->eagerLoads;
-
-        return array_map(function ($item) use ($owner) {
-            return $owner.'.'.$item;
-        }, $this->eagerLoads);
     }
 
     /**
      * Get a list of relations of the model.
      *
-     * @param string $owner
+     * @param string $scope
      *
      * @return array
      */
-    public function relations($owner = null)
+    public function relations($scope = null)
     {
-        return $this->getFields()->relations($owner);
+        $result = [ ];
+
+        foreach ($this->getFields() as $field) {
+            if ($field instanceof BaseRelation) {
+                $result = array_merge($result, $field->relations($scope));
+            }
+        }
+
+        return $result;
     }
 
     /**
@@ -487,6 +690,18 @@ abstract class Entity extends BaseForm
     public function delete($ids)
     {
         return $this->getRepository()->delete($ids);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    protected function createFields()
+    {
+        $collection = parent::createFields();
+
+        $collection->setSearchableFields($this->searchable);
+
+        return $collection;
     }
 
     /**
@@ -592,8 +807,6 @@ abstract class Entity extends BaseForm
 
         $repo->perPage = $this->perPage;
 
-        $this->files($repo);
-
         return $repo;
     }
 
@@ -691,7 +904,7 @@ abstract class Entity extends BaseForm
     /**
      * @return string
      */
-    protected function modelClass()
+    protected function getModelClass()
     {
         return 'Cruddy.Entity.Entity';
     }
@@ -699,7 +912,7 @@ abstract class Entity extends BaseForm
     /**
      * @return string
      */
-    protected function controllerClass()
+    protected function getControllerClass()
     {
         return 'Cruddy.Entity.Page';
     }
@@ -709,7 +922,7 @@ abstract class Entity extends BaseForm
      */
     public function toArray()
     {
-        $model = new $this->model;
+        $model = $this->newModel();
 
         return [
             'defaults' => $this->defaultAttributes(),
@@ -738,6 +951,16 @@ abstract class Entity extends BaseForm
     protected function getColumnsFactory()
     {
         return app('cruddy.columns');
+    }
+
+    /**
+     * @param $model
+     *
+     * @return string
+     */
+    public function getActionFromModel($model)
+    {
+        return $model->exists ? self::UPDATE : self::CREATE;
     }
 
 }

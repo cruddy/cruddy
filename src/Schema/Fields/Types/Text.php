@@ -12,14 +12,14 @@ use Kalnoy\Cruddy\Schema\Fields\BaseField;
  *
  * @since 1.0.0
  */
-class Text extends BaseField {
-
+class Text extends BaseField
+{
     /**
      * The name of the JavaScript class that is used to render this field.
      *
      * @return string
      */
-    protected function modelClass()
+    protected function getModelClass()
     {
         return 'Cruddy.Fields.Text';
     }

@@ -11,30 +11,14 @@ use Kalnoy\Cruddy\Contracts\Column;
  *
  * @method $this width(int $value)
  * @property int $width
+ * 
  * @property string $orderDir
- * @property string $formatter
- * @property mixed $formatterOptions
- *
+ * @method $this orderDir(string $value)
+ * 
  * @since 1.0.0
  */
-abstract class BaseColumn extends Attribute implements Column {
-
-    /**
-     * Set formatter class for the column.
-     *
-     * @param string $class
-     * @param mixed $options
-     *
-     * @return $this
-     */
-    public function format($class, $options = null)
-    {
-        $this->formatter = $class;
-        $this->formatterOptions = $options;
-
-        return $this;
-    }
-
+abstract class BaseColumn extends Attribute implements Column
+{
     /**
      * Set the default order direction.
      *
@@ -68,8 +52,7 @@ abstract class BaseColumn extends Attribute implements Column {
      */
     public function getHeader()
     {
-        if ($header = $this->get('header'))
-        {
+        if ($header = $this->get('header')) {
             return Helpers::tryTranslate($header);
         }
 

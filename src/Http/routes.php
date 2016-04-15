@@ -1,7 +1,7 @@
 <?php
 
 /**
- * @var \Illuminate\Contracts\Routing\Registrar $router
+ * @var \Illuminate\Routing\Router $router
  */
 
 $router->get('/', [
@@ -14,10 +14,12 @@ $router->get('_schema', [
     'uses' => 'CruddyController@schema',
 ]);
 
-$router->get('_thumb', [
-    'as' => 'cruddy.thumb',
-    'uses' => 'CruddyController@thumb',
-]);
+$router->pattern('storage_path', '[a-zA-Z0-9\-_/]+');
+$router->pattern('storage_file', '[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+');
+
+$router->get('_files/{storage_path}', [ 'uses' => 'FilesController@index' ]);
+$router->get('_files/{storage_path}/{storage_file}', [ 'uses' => 'FilesController@show' ]);
+$router->post('_files/{storage_path}', [ 'uses' => 'FilesController@store' ]);
 
 $router->get('{cruddy_entity}', [
     'as' => 'cruddy.index',

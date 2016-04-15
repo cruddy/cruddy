@@ -14,8 +14,8 @@ use Kalnoy\Cruddy\Schema\Fields\BaseTextField;
  *
  * @since 1.0.0
  */
-class StringField extends BaseTextField {
-
+class StringField extends BaseTextField
+{
     /**
      * {@inheritdoc}
      */

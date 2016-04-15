@@ -2267,6 +2267,8 @@ class Cruddy.Fields.Input extends Cruddy.Fields.Base
             id: inputId
             type: @attributes.input_type or "input"
 
+    createFilterInput: (model) -> @createBaseInput model
+
     format: (value) ->
         return NOT_AVAILABLE if value is null or value is ""
 
@@ -2447,9 +2449,7 @@ class Cruddy.Fields.File extends Cruddy.Fields.Base
         model: model
         key: @id
         multiple: @attributes.multiple
-        accepts: @attributes.accepts
-
-    format: (value) -> if value instanceof File then value.name else value
+        storage: @attributes.storage
 
     getType: -> "file"
 class Cruddy.Fields.Image extends Cruddy.Fields.File

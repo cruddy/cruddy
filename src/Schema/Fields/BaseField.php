@@ -4,6 +4,8 @@ namespace Kalnoy\Cruddy\Schema\Fields;
 
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Support\Arr;
+use Kalnoy\Cruddy\Entity;
 use Kalnoy\Cruddy\Helpers;
 use Kalnoy\Cruddy\Schema\Attribute;
 use Kalnoy\Cruddy\Contracts\Field;
@@ -19,31 +21,71 @@ use Kalnoy\Cruddy\Contracts\Field;
  * @method $this unique(bool $value = true)
  * @property string $disable
  * @method $this disable(mixed $value = true)
+ * @property string $modelAttribute
+ * @method $this modelAttribute(string $value)
+ * 
+ * @property callback $setter
+ * @property callback $getter
+ * @method $this setter(callback $callback)
+ * @method $this getter(callback $callback)
  *
  * @since 1.0.0
  */
-abstract class BaseField extends Attribute implements Field {
-
+abstract class BaseField extends Attribute implements Field
+{
     /**
      * {@inheritdoc}
      */
-    public function extract($model)
+    public function getModelValue($model)
     {
-        return $model->{$this->id};
+        $attribute = $this->getModelAttributeName();
+
+        return call_user_func($this->getGetter(), $model, $attribute);
     }
 
     /**
      * {@inheritdoc}
      */
-    public function extractForColumn($model)
+    public function setModelValue($model, $value)
     {
-        return $this->extract($model);
+        $attribute = $this->getModelAttributeName();
+        $value = $this->processInputValue($value);
+
+        call_user_func($this->getSetter(), $model, $value, $attribute);
+
+        return $this;
+    }
+
+    /**
+     * @param mixed $value
+     *
+     * @return mixed
+     */
+    protected function processInputValue($value)
+    {
+        return $this->parseInputValue($value);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function validate($value)
+    {
+        return [];
     }
 
     /**
      * {@inheritdoc}
      */
-    public function process($value)
+    public function getModelValueForColumn($model)
+    {
+        return $this->getModelValue($model);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function parseInputValue($value)
     {
         return $value;
     }
@@ -55,8 +97,7 @@ abstract class BaseField extends Attribute implements Field {
      */
     public function getLabel()
     {
-        if ($label = $this->get('label'))
-        {
+        if ($label = $this->get('label')) {
             return Helpers::tryTranslate($label);
         }
 
@@ -82,7 +123,7 @@ abstract class BaseField extends Attribute implements Field {
 
         if ($required !== null) return $required;
 
-        return $this->entity->getValidator()->getRequiredState($this->id);
+        return $this->form->getValidator()->getRequiredState($this->id);
     }
 
     /**
@@ -102,23 +143,59 @@ abstract class BaseField extends Attribute implements Field {
     /**
      * {@inheritdoc}
      */
-    public function keep($value)
+    public function getSettingMode()
     {
-        return true;
+        return self::MODE_BEFORE_SAVE;
     }
 
     /**
-     * Get whether the field is disabled for specified action.
-     *
-     * @param string $action
-     *
-     * @return bool
+     * @inheritDoc
      */
-    public function isDisabled($action)
+    public function isDisabled($model)
     {
-        $disabled = $this->get('disable');
+        $disabled = $this->get('disable', false);
 
-        return $disabled === true or $disabled === $action;
+        if ($this->form instanceof Entity) {
+            $action = $this->form->getActionFromModel($model);
+
+            return $disabled === true || $disabled === $action;
+        }
+
+        return $disabled;
+    }
+
+    /**
+     * Get model attribute name.
+     *
+     * @return string
+     */
+    protected function getModelAttributeName()
+    {
+        return $this->get('modelAttribute') ?: $this->id;
+    }
+
+    /**
+     * @return callback
+     */
+    protected function getGetter()
+    {
+        if ($getter = $this->get('getter')) {
+            return $getter;
+        }
+        
+        return [ $this->form, 'getModelAttributeValue' ];
+    }
+
+    /**
+     * @return callback
+     */
+    protected function getSetter()
+    {
+        if ($setter = $this->get('setter')) {
+            return $setter;
+        }
+        
+        return [ $this->form, 'setModelAttributeValue' ];
     }
 
 }

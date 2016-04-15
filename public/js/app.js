@@ -3267,6 +3267,10 @@
       });
     };
 
+    Input.prototype.createFilterInput = function(model) {
+      return this.createBaseInput(model);
+    };
+
     Input.prototype.format = function(value) {
       if (value === null || value === "") {
         return NOT_AVAILABLE;
@@ -3666,16 +3670,8 @@
         model: model,
         key: this.id,
         multiple: this.attributes.multiple,
-        accepts: this.attributes.accepts
+        storage: this.attributes.storage
       });
-    };
-
-    File.prototype.format = function(value) {
-      if (value instanceof File) {
-        return value.name;
-      } else {
-        return value;
-      }
     };
 
     File.prototype.getType = function() {

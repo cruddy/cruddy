@@ -11,18 +11,18 @@ use Kalnoy\Cruddy\Schema\Fields\BaseField;
  *
  * @since 1.0.0
  */
-class Computed extends BaseField {
-
+class Computed extends BaseField
+{
     use ComputedTrait;
 
     /**
-     * @param Entity $entity
+     * @param Entity $form
      * @param string $id
      * @param string $accessor
      */
-    public function __construct(Entity $entity, $id, $accessor = null)
+    public function __construct(Entity $form, $id, $accessor = null)
     {
-        parent::__construct($entity, $id);
+        parent::__construct($form, $id);
 
         $this->accessor = $accessor;
     }
@@ -32,7 +32,7 @@ class Computed extends BaseField {
      *
      * @return string
      */
-    protected function modelClass()
+    protected function getModelClass()
     {
         return 'Cruddy.Fields.Computed';
     }
@@ -40,9 +40,9 @@ class Computed extends BaseField {
     /**
      * {@inheritdoc}
      */
-    public function keep($value)
+    public function getSettingMode()
     {
-        return false;
+        return self::MODE_NONE;
     }
 
 }

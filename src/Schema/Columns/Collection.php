@@ -19,7 +19,6 @@ use Kalnoy\Cruddy\Contracts\SearchProcessor;
  */
 class Collection extends AttributesCollection implements SearchProcessor
 {
-
     /**
      * @var string|array
      */

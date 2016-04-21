@@ -2,12 +2,12 @@ class Cruddy.Inputs.BaseText extends Cruddy.Inputs.Base
     className: "form-control"
 
     events:
-        "change": "change"
-        "keydown": "keydown"
+        "change": "submitValue"
+        "keydown": "handleKeydown"
 
-    keydown: (e) ->
+    handleKeydown: (e) ->
         # Ctrl + Enter
-        return @change() if e.ctrlKey and e.keyCode is 13
+        return @submitValue() if e.ctrlKey and e.keyCode is 13
 
         this
 
@@ -21,10 +21,10 @@ class Cruddy.Inputs.BaseText extends Cruddy.Inputs.Base
 
         this
 
-    change: -> @setValue @$el.val()
+    submitValue: -> @setValue @$el.val()
 
-    applyChanges: (data, external) ->
-        @$el.val data if external
+    handleValueChanged: (newValue, bySelf) ->
+        @$el.val newValue unless bySelf
 
         this
 

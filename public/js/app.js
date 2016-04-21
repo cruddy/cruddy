@@ -1,5 +1,5 @@
 (function() {
-  var AdvFormData, Alert, App, BaseFormatter, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, NOT_AVAILABLE, Pagination, Router, SearchDataSource, TITLE_SEPARATOR, TRANSITIONEND, VALIDATION_FAILED_CODE, after_break, b_btn, b_icon, class_if, entity_url, get, humanize, render_divider, render_presentation_action, render_presentation_actions, thumb,
+  var AdvFormData, Alert, App, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, NOT_AVAILABLE, Pagination, Router, SearchDataSource, TITLE_SEPARATOR, TRANSITIONEND, VALIDATION_FAILED_CODE, add_query_to_url, after_break, b_btn, b_icon, entity_url, get, humanize, render_divider, render_presentation_action, render_presentation_actions, thumb, value_if,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -115,9 +115,9 @@
     return html;
   };
 
-  class_if = function(bool, className) {
+  value_if = function(bool, value) {
     if (bool) {
-      return className;
+      return value;
     } else {
       return "";
     }
@@ -142,53 +142,20 @@
     return obj;
   };
 
-  Alert = (function(_super) {
-    __extends(Alert, _super);
-
-    function Alert() {
-      return Alert.__super__.constructor.apply(this, arguments);
+  add_query_to_url = function(url, query) {
+    var painConverter;
+    if (_.isObject(query)) {
+      painConverter = function(value, param) {
+        return "" + (encodeURIComponent(param)) + "=" + (encodeURIComponent(value));
+      };
+      query = _.map(query, painConverter).join("&");
     }
-
-    Alert.prototype.tagName = "span";
-
-    Alert.prototype.className = "alert";
-
-    Alert.prototype.initialize = function(options) {
-      var _ref;
-      this.$el.addClass((_ref = this.className + "-" + options.type) != null ? _ref : "info");
-      this.$el.text(options.message);
-      if (options.timeout != null) {
-        setTimeout(((function(_this) {
-          return function() {
-            return _this.remove();
-          };
-        })(this)), options.timeout);
-      }
-      return this;
-    };
-
-    Alert.prototype.render = function() {
-      after_break((function(_this) {
-        return function() {
-          return _this.$el.addClass("show");
-        };
-      })(this));
-      return this;
-    };
-
-    Alert.prototype.remove = function() {
-      this.$el.one(TRANSITIONEND, (function(_this) {
-        return function() {
-          return Alert.__super__.remove.apply(_this, arguments);
-        };
-      })(this));
-      this.$el.removeClass("show");
-      return this;
-    };
-
-    return Alert;
-
-  })(Backbone.View);
+    if (query && query.length) {
+      return "" + url + "?" + query;
+    } else {
+      return url;
+    }
+  };
 
   Factory = (function() {
     function Factory() {}
@@ -1028,6 +995,246 @@
 
   })(Backbone.View);
 
+  Alert = (function(_super) {
+    __extends(Alert, _super);
+
+    function Alert() {
+      return Alert.__super__.constructor.apply(this, arguments);
+    }
+
+    Alert.prototype.tagName = "span";
+
+    Alert.prototype.className = "alert";
+
+    Alert.prototype.initialize = function(options) {
+      var _ref;
+      this.$el.addClass((_ref = this.className + "-" + options.type) != null ? _ref : "info");
+      this.$el.text(options.message);
+      if (options.timeout != null) {
+        setTimeout(((function(_this) {
+          return function() {
+            return _this.remove();
+          };
+        })(this)), options.timeout);
+      }
+      return this;
+    };
+
+    Alert.prototype.render = function() {
+      after_break((function(_this) {
+        return function() {
+          return _this.$el.addClass("show");
+        };
+      })(this));
+      return this;
+    };
+
+    Alert.prototype.remove = function() {
+      this.$el.one(TRANSITIONEND, (function(_this) {
+        return function() {
+          return Alert.__super__.remove.apply(_this, arguments);
+        };
+      })(this));
+      this.$el.removeClass("show");
+      return this;
+    };
+
+    return Alert;
+
+  })(Backbone.View);
+
+  Cruddy.UploadQueue = (function() {
+    function UploadQueue(storage) {
+      this._storage = storage;
+      this._q = [];
+      this._xhr = null;
+      this._file = null;
+      this._working = false;
+      this._uploaded = 0;
+      this._total = 0;
+    }
+
+    UploadQueue.prototype.push = function(files, path) {
+      var file, _i, _len;
+      if (files instanceof File) {
+        files = [files];
+      }
+      for (_i = 0, _len = files.length; _i < _len; _i++) {
+        file = files[_i];
+        this._q.push({
+          file: file,
+          path: path,
+          uploaded: 0,
+          total: file.size
+        });
+        if (this._working) {
+          this._uploadStats.total += file.size;
+          this._notifyProgress();
+        }
+      }
+      return this;
+    };
+
+    UploadQueue.prototype.start = function() {
+      if (this._working || !this._q.length) {
+        return this;
+      }
+      this._working = true;
+      this._uploaded = 0;
+      this._total = _.reduce(this._q, ((function(_this) {
+        return function(sum, file) {
+          return sum + file.total;
+        };
+      })(this)), 0);
+      this._notifyProgress();
+      this.trigger("started");
+      return this._next();
+    };
+
+    UploadQueue.prototype.stop = function() {
+      if (!this._working) {
+        return this;
+      }
+      this._working = false;
+      this._xhr && this._xhr.abort();
+      this.trigger("stopped");
+      return this;
+    };
+
+    UploadQueue.prototype.isEmpty = function() {
+      return !this._q.length;
+    };
+
+    UploadQueue.prototype.isWorking = function() {
+      return this._working;
+    };
+
+    UploadQueue.prototype.isCompleted = function() {
+      return !this._q.length;
+    };
+
+    UploadQueue.prototype._next = function() {
+      var file, uploaded;
+      this._xhr = null;
+      this._file = null;
+      if (this.isEmpty()) {
+        return this.stop();
+      }
+      uploaded = this._uploaded;
+      this._file = file = this._q.shift();
+      this.trigger("filestarted", file);
+      this._xhr = this._storage.upload(file.file, file.path, (function(_this) {
+        return function(loaded, total) {
+          file.uploaded = loaded;
+          if (file.total !== total) {
+            _this._total += total - file.total;
+            file.total = total;
+          }
+          _this.trigger("fileprogress", file);
+          _this._uploaded = uploaded + loaded;
+          return _this._notifyProgress();
+        };
+      })(this)).always((function(_this) {
+        return function() {
+          uploaded += file.total;
+          if (_this._uploaded !== uploaded) {
+            _this._uploaded = uploaded;
+            _this._notifyProgress();
+          }
+          return _this._next();
+        };
+      })(this)).done((function(_this) {
+        return function(resp) {
+          return _this.trigger("filecompleted", resp, file);
+        };
+      })(this)).fail((function(_this) {
+        return function(xhr, error) {
+          file.uploaded = file.total;
+          if (xhr.status === 422) {
+            _this.trigger("fileinvalid", xhr.responseJSON.message, xhr.responseJSON.code, file);
+            return;
+          }
+          if (error === "abort") {
+            _this.trigger("fileaborted", file);
+            return;
+          }
+          _this.trigger("fileerror", file, xhr, error);
+        };
+      })(this));
+      return this;
+    };
+
+    UploadQueue.prototype._notifyProgress = function() {
+      var stats;
+      stats = {
+        uploaded: this._uploaded,
+        total: this._total
+      };
+      if (stats.total > 0) {
+        this.trigger("progress", stats);
+      }
+      return this;
+    };
+
+    return UploadQueue;
+
+  })();
+
+  _.extend(Cruddy.UploadQueue.prototype, Backbone.Events);
+
+  Cruddy.FileStorage = (function() {
+    function FileStorage(id) {
+      this.id = id;
+      this._queue = new Cruddy.UploadQueue(this);
+    }
+
+    FileStorage.prototype.url = function(path, query) {
+      var url;
+      url = "" + Cruddy.baseUrl + "/_files/" + this.id + "/" + (path || "");
+      return add_query_to_url(url, query);
+    };
+
+    FileStorage.prototype.upload = function(file, path, progressCallback) {
+      var data;
+      if (_.isFunction(path)) {
+        progressCallback = path;
+        path = "";
+      }
+      data = new FormData;
+      data.append("file", file);
+      return $.ajax({
+        data: data,
+        url: this.url(path),
+        type: "POST",
+        dataType: "json",
+        processData: false,
+        contentType: false,
+        xhr: function() {
+          var xhr;
+          xhr = $.ajaxSettings.xhr();
+          xhr.upload && xhr.upload.addEventListener("progress", function(e) {
+            if (!(e.lengthComputable || !progressCallback)) {
+              return;
+            }
+            return progressCallback(e.loaded, e.total);
+          });
+          return xhr;
+        }
+      });
+    };
+
+    FileStorage.prototype.getUploadQueue = function() {
+      return this._queue;
+    };
+
+    FileStorage.instance = function(id) {
+      return new this(id);
+    };
+
+    return FileStorage;
+
+  })();
+
   Cruddy.Inputs = {};
 
   Cruddy.Inputs.Base = (function(_super) {
@@ -1039,18 +1246,20 @@
     }
 
     Base.prototype.initialize = function() {
-      this.listenTo(this.model, "change:" + this.key, function(model, value, options) {
-        return this.applyChanges(value, !options.input || options.input !== this);
+      this.listenTo(this.model, "change:" + this.key, function(model, value, _arg) {
+        var input;
+        input = _arg.input;
+        return this.handleValueChanged(value, input === this);
       });
       return this;
     };
 
-    Base.prototype.applyChanges = function(data, external) {
+    Base.prototype.handleValueChanged = function(newValue, bySelf) {
       return this;
     };
 
     Base.prototype.render = function() {
-      return this.applyChanges(this.getValue(), true);
+      return this.handleValueChanged(this.getValue(), false);
     };
 
     Base.prototype.focus = function() {
@@ -1100,7 +1309,7 @@
       return Static.__super__.initialize.apply(this, arguments);
     };
 
-    Static.prototype.applyChanges = function(data) {
+    Static.prototype.handleValueChanged = function() {
       return this.render();
     };
 
@@ -1128,13 +1337,13 @@
     BaseText.prototype.className = "form-control";
 
     BaseText.prototype.events = {
-      "change": "change",
-      "keydown": "keydown"
+      "change": "submitValue",
+      "keydown": "handleKeydown"
     };
 
-    BaseText.prototype.keydown = function(e) {
+    BaseText.prototype.handleKeydown = function(e) {
       if (e.ctrlKey && e.keyCode === 13) {
-        return this.change();
+        return this.submitValue();
       }
       return this;
     };
@@ -1149,13 +1358,13 @@
       return this;
     };
 
-    BaseText.prototype.change = function() {
+    BaseText.prototype.submitValue = function() {
       return this.setValue(this.$el.val());
     };
 
-    BaseText.prototype.applyChanges = function(data, external) {
-      if (external) {
-        this.$el.val(data);
+    BaseText.prototype.handleValueChanged = function(newValue, bySelf) {
+      if (!bySelf) {
+        this.$el.val(newValue);
       }
       return this;
     };
@@ -1209,26 +1418,22 @@
 
     Checkbox.prototype.tagName = "label";
 
-    Checkbox.prototype.label = "";
-
     Checkbox.prototype.events = {
-      "change": "change"
+      "change :checkbox": "handleCheckboxChanged"
     };
 
     Checkbox.prototype.initialize = function(options) {
-      if (options.label != null) {
-        this.label = options.label;
-      }
+      this.label = options.label || null;
       return Checkbox.__super__.initialize.apply(this, arguments);
     };
 
-    Checkbox.prototype.change = function() {
+    Checkbox.prototype.handleCheckboxChanged = function() {
       return this.setValue(this.input.prop("checked"));
     };
 
-    Checkbox.prototype.applyChanges = function(value, external) {
-      if (external) {
-        this.input.prop("checked", value);
+    Checkbox.prototype.handleValueChanged = function(newValue, bySelf) {
+      if (!bySelf) {
+        this.input.prop("checked", newValue);
       }
       return this;
     };
@@ -1268,15 +1473,15 @@
 
     Boolean.prototype.check = function(e) {
       var currentValue, value;
+      currentValue = this.getValue();
       value = !!$(e.target).data("value");
-      currentValue = this.model.get(this.key);
       if (value === currentValue && this.tripleState) {
         value = null;
       }
       return this.setValue(value);
     };
 
-    Boolean.prototype.applyChanges = function(value) {
+    Boolean.prototype.handleValueChanged = function(value) {
       value = (function() {
         switch (value) {
           case true:
@@ -1329,9 +1534,9 @@
       "click .ed-item>.input-group-btn>.btn-remove": "removeItem",
       "click .ed-item>.input-group-btn>.btn-edit": "editItem",
       "click .ed-item>.form-control": "executeFirstAction",
-      "keydown .ed-item>.form-control": "itemKeydown",
-      "keydown [type=search]": "searchKeydown",
-      "show.bs.dropdown": "renderDropdown",
+      "keydown .ed-item>.form-control": "handleItemKeydown",
+      "keydown [type=search]": "handleSearchKeydown",
+      "show.bs.dropdown": "handleDropdownShow",
       "shown.bs.dropdown": function() {
         after_break((function(_this) {
           return function() {
@@ -1440,7 +1645,7 @@
       return this;
     };
 
-    EntityDropdown.prototype.searchKeydown = function(e) {
+    EntityDropdown.prototype.handleSearchKeydown = function(e) {
       if (e.keyCode === 27) {
         if (this.selector) {
           this.selector.$el.dropdown("toggle");
@@ -1449,7 +1654,7 @@
       }
     };
 
-    EntityDropdown.prototype.itemKeydown = function(e) {
+    EntityDropdown.prototype.handleItemKeydown = function(e) {
       if (e.keyCode === 13) {
         this.executeFirstAction(e);
         return false;
@@ -1506,7 +1711,7 @@
       return this;
     };
 
-    EntityDropdown.prototype.renderDropdown = function(e) {
+    EntityDropdown.prototype.handleDropdownShow = function(e) {
       if (this.disableDropdown) {
         e.preventDefault();
         return;
@@ -1543,7 +1748,7 @@
       return this;
     };
 
-    EntityDropdown.prototype.applyChanges = function(value) {
+    EntityDropdown.prototype.handleValueChanged = function() {
       if (this.multiple) {
         this.renderItems();
       } else {
@@ -1637,13 +1842,13 @@
       var html;
       html = "";
       if (this.enabled) {
-        html += "<button type=\"button\" class=\"btn btn-default btn-remove\" tabindex=\"-1\" title=\"" + Cruddy.lang.reset + "\">\n    <span class=\"glyphicon glyphicon-remove\"></span>\n</button>";
+        html += "<button type=\"button\" class=\"btn btn-default btn-remove\" tabindex=\"-1\" title=\"" + Cruddy.lang.reset + "\">\n    " + (b_icon("remove")) + "\n</button>";
       }
       if (this.allowEdit) {
-        html += "<button type=\"button\" class=\"btn btn-default btn-edit\" tabindex=\"-1\" title=\"" + Cruddy.lang.edit + "\">\n    <span class=\"glyphicon glyphicon-pencil\"></span>\n</button>";
+        html += "<button type=\"button\" class=\"btn btn-default btn-edit\" tabindex=\"-1\" title=\"" + Cruddy.lang.edit + "\">\n    " + (b_icon("pencil")) + "\n</button>";
       }
       if (!this.multiple) {
-        html += "<button type=\"button\" class=\"btn btn-default btn-dropdown dropdown-toggle\" data-toggle=\"dropdown\" id=\"" + this.cid + "-dropdown\" data-target=\"#" + this.cid + "\" tab-index=\"1\" title=\"" + Cruddy.lang.list_show + "\">\n    <span class=\"glyphicon\"></span>\n</button>";
+        html += "<button type=\"button\" class=\"btn btn-default btn-dropdown dropdown-toggle\" data-toggle=\"dropdown\" id=\"" + this.cid + "-dropdown\" data-target=\"#" + this.cid + "\" tab-index=\"1\" title=\"" + Cruddy.lang.list_show + "\">\n    " + (b_icon("chevron-down")) + "\n</button>";
       }
       return html;
     };
@@ -1767,7 +1972,7 @@
     EntitySelector.prototype.checkItem = function(e) {
       e.preventDefault();
       e.stopPropagation();
-      this.selectItem(this.dataSource.getById($(e.target).data("id")));
+      this.selectItem(this.dataSource.getById($(e.currentTarget).data("id")));
     };
 
     EntitySelector.prototype.selectItem = function(item) {
@@ -1829,8 +2034,8 @@
       return this;
     };
 
-    EntitySelector.prototype.applyChanges = function(data) {
-      this.makeSelectedMap(data);
+    EntitySelector.prototype.handleValueChanged = function(newValue) {
+      this.makeSelectedMap(newValue);
       return this.renderItems();
     };
 
@@ -1909,9 +2114,9 @@
       });
       this.$el.prepend(this.searchInput.render().$el);
       this.searchInput.$el.wrap("<div class=search-input-container></div>");
-      this.searchInput.appendButton("<button type=\"button\" class=\"btn btn-default btn-refresh\" tabindex=\"-1\" title=\"" + Cruddy.lang.refresh + "\">\n    <span class=\"glyphicon glyphicon-refresh\"></span>\n</button>");
+      this.searchInput.appendButton("<button type=\"button\" class=\"btn btn-default btn-refresh\" tabindex=\"-1\" title=\"" + Cruddy.lang.refresh + "\">\n    " + (b_icon("refresh")) + "\n</button>");
       if (this.allowCreate) {
-        this.searchInput.appendButton("<button type=\"button\" class='btn btn-default btn-add' tabindex='-1' title=\"" + Cruddy.lang.model_new_record + "\">\n    <span class='glyphicon glyphicon-plus'></span>\n</button>");
+        this.searchInput.appendButton("<button type=\"button\" class='btn btn-default btn-add' tabindex='-1' title=\"" + Cruddy.lang.model_new_record + "\">\n    " + (b_icon("plus")) + "\n</button>");
       }
       return this;
     };
@@ -1960,85 +2165,106 @@
     FileList.prototype.className = "file-list";
 
     FileList.prototype.events = {
-      "change [type=file]": "appendFiles",
-      "click .action-delete": "deleteFile"
+      "change [type=file]": "handleFilesChanged",
+      "click .action-delete": "handleDeleteFile"
     };
 
     FileList.prototype.initialize = function(options) {
-      var _ref, _ref1, _ref2;
+      var _ref;
       this.multiple = (_ref = options.multiple) != null ? _ref : false;
-      this.formatter = (_ref1 = options.formatter) != null ? _ref1 : {
-        format: function(value) {
-          if (value instanceof File) {
-            return value.name;
-          } else {
-            return value;
-          }
-        }
-      };
-      this.accepts = (_ref2 = options.accepts) != null ? _ref2 : "";
+      this.storage = Cruddy.FileStorage.instance(options.storage);
       this.counter = 1;
+      this.queue = this.storage.getUploadQueue();
+      this.listenTo(this.queue, "started", function() {
+        return this.$el.addClass("--loading");
+      });
+      this.listenTo(this.queue, "stopped", function() {
+        return this.$el.removeClass("--loading");
+      });
+      this.listenTo(this.queue, "progress", function(stats) {
+        return this.$uploadProgress.css("width", "" + (stats.uploaded / stats.total * 100) + "%");
+      });
+      this.listenTo(this.queue, "filestarted", function(file) {
+        return this.$uploadProgress.text(file.file.name);
+      });
+      this.listenTo(this.queue, "filecompleted", function(resp, file) {
+        return this.pushFile(resp.path);
+      });
+      this.listenTo(this.queue, "fileinvalid", function(message, code) {
+        return this.showUploadError(Cruddy.lang["upload_error_" + code] || Cruddy.lang.upload_failed);
+      });
+      this.listenTo(this.queue, "fileerror", function() {
+        return this.showUploadError(Cruddy.lang.upload_failed);
+      });
       return FileList.__super__.initialize.apply(this, arguments);
     };
 
-    FileList.prototype.deleteFile = function(e) {
-      var cid;
-      if (this.multiple) {
-        cid = $(e.currentTarget).data("cid");
-        this.setValue(_.reject(this.getValue(), (function(_this) {
-          return function(item) {
-            return _this.itemId(item) === cid;
-          };
-        })(this)));
-      } else {
-        this.setValue(null);
-      }
-      return false;
+    FileList.prototype.showUploadError = function(message) {
+      this.$uploadError.text(message).show();
+      setTimeout(((function(_this) {
+        return function() {
+          return _this.$uploadError.hide();
+        };
+      })(this)), 3000);
+      return this;
     };
 
-    FileList.prototype.appendFiles = function(e) {
-      var file, value, _i, _j, _len, _len1, _ref, _ref1;
-      if (e.target.files.length === 0) {
-        return;
-      }
-      _ref = e.target.files;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        file = _ref[_i];
-        file.cid = this.cid + "_" + this.counter++;
-      }
+    FileList.prototype.pushFile = function(file) {
+      var value;
       if (this.multiple) {
-        value = _.clone(this.model.get(this.key));
-        _ref1 = e.target.files;
-        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-          file = _ref1[_j];
-          value.push(file);
-        }
+        value = _.clone(this.getValue());
+        value.push(file);
       } else {
-        value = e.target.files[0];
+        value = file;
       }
       return this.setValue(value);
     };
 
-    FileList.prototype.applyChanges = function() {
+    FileList.prototype.removeFile = function(file) {
+      if (this.multiple) {
+        this.setValue(_.reject(this.getValue(), function(item) {
+          return item === file;
+        }));
+      } else {
+        this.setValue(null);
+      }
+      return this;
+    };
+
+    FileList.prototype.handleDeleteFile = function(e) {
+      e.preventDefault();
+      return this.removeFile($(e.currentTarget).data("file"));
+    };
+
+    FileList.prototype.handleFilesChanged = function(e) {
+      if (!e.target.files.length) {
+        return;
+      }
+      this.queue.push(e.target.files).start();
+      return this;
+    };
+
+    FileList.prototype.handleValueChanged = function() {
       return this.render();
     };
 
     FileList.prototype.render = function() {
-      var html, item, value, _i, _len, _ref;
-      value = this.model.get(this.key);
+      var file, files, html, _i, _len;
       html = "";
-      if (value) {
-        _ref = this.multiple ? value : [value];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          item = _ref[_i];
-          html += this.renderItem(item);
+      if (!_.isEmpty(files = this.getValue())) {
+        files = _.isArray(files) ? files : [files];
+        for (_i = 0, _len = files.length; _i < _len; _i++) {
+          file = files[_i];
+          html += this.renderFile(file);
         }
       }
-      if (html.length) {
+      if (!_.isEmpty(html)) {
         html = this.wrapItems(html);
       }
-      html += this.renderInput(this.multiple ? "<span class='glyphicon glyphicon-plus'></span> " + Cruddy.lang.add : Cruddy.lang.choose);
+      html += this.renderInput();
       this.$el.html(html);
+      this.$uploadProgress = this.$component("progress");
+      this.$uploadError = this.$component("error");
       return this;
     };
 
@@ -2046,27 +2272,27 @@
       return "<ul class=\"list-group\">" + html + "</ul>";
     };
 
-    FileList.prototype.renderInput = function(label) {
-      return "<div class=\"btn btn-sm btn-default file-list-input-wrap\">\n    <input type=\"file\" id=\"" + (this.componentId("input")) + "\" accept=\"" + this.accepts + "\"" + (this.multiple ? " multiple" : "") + ">\n    " + label + "\n</div>";
-    };
-
-    FileList.prototype.renderItem = function(item) {
+    FileList.prototype.renderInput = function() {
       var label;
-      label = this.formatter.format(item);
-      return "<li class=\"list-group-item\">\n    <a href=\"#\" class=\"action-delete pull-right\" data-cid=\"" + (this.itemId(item)) + "\"><span class=\"glyphicon glyphicon-remove\"></span></a>\n\n    " + label + "\n</li>";
+      if (this.multiple) {
+        label = "" + (b_icon("plus")) + " " + Cruddy.lang.add;
+      } else {
+        label = Cruddy.lang.choose;
+      }
+      return "<div class=\"progress\">\n    <div class=\"progress-bar\" id=\"" + (this.componentId("progress")) + "\"></div>\n</div>\n\n<div class=\"help-block error\" id=\"" + (this.componentId("error")) + "\" style=\"display:none;\"></div>\n\n<div class=\"btn btn-sm btn-default file-list-input-wrap\">\n    <input type=\"file\" id=\"" + (this.componentId("input")) + "\" accept=\"" + (this.getAccept()) + "\" " + (value_if(this.multiple, "multiple")) + ">\n    " + label + "\n</div>";
     };
 
-    FileList.prototype.itemId = function(item) {
-      if (item instanceof File) {
-        return item.cid;
-      } else {
-        return item;
-      }
+    FileList.prototype.renderFile = function(file) {
+      return "<li class=\"list-group-item\">\n    <a href=\"#\" class=\"action-delete pull-right\" data-cid=\"" + file + "\">\n        <span class=\"glyphicon glyphicon-remove\"></span>\n    </a>\n\n    <a href=\"" + (this.storage.url(file)) + "\" target=\"_blank\">" + file + "</a>\n</li>";
     };
 
     FileList.prototype.focus = function() {
       this.$component("input")[0].focus();
       return this;
+    };
+
+    FileList.prototype.getAccept = function() {
+      return "";
     };
 
     return FileList;
@@ -2076,12 +2302,11 @@
   Cruddy.Inputs.ImageList = (function(_super) {
     __extends(ImageList, _super);
 
-    ImageList.prototype.className = "image-list";
-
     function ImageList() {
-      this.readers = [];
-      ImageList.__super__.constructor.apply(this, arguments);
+      return ImageList.__super__.constructor.apply(this, arguments);
     }
+
+    ImageList.prototype.className = "file-list --images";
 
     ImageList.prototype.initialize = function(options) {
       var _ref, _ref1;
@@ -2090,48 +2315,23 @@
       return ImageList.__super__.initialize.apply(this, arguments);
     };
 
-    ImageList.prototype.render = function() {
-      var reader, _i, _len, _ref;
-      ImageList.__super__.render.apply(this, arguments);
-      _ref = this.readers;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        reader = _ref[_i];
-        reader.readAsDataURL(reader.item);
-      }
-      this.readers = [];
-      return this;
-    };
-
     ImageList.prototype.wrapItems = function(html) {
       return "<ul class=\"image-group\">" + html + "</ul>";
     };
 
-    ImageList.prototype.renderItem = function(item) {
-      return "<li class=\"image-group-item\">\n    " + (this.renderImage(item)) + "\n    <a href=\"#\" class=\"action-delete\" data-cid=\"" + (this.itemId(item)) + "\"><span class=\"glyphicon glyphicon-remove\"></span></a>\n</li>";
+    ImageList.prototype.renderFile = function(file) {
+      return "<li class=\"image-group-item\">\n    " + (this.renderImage(file)) + "\n\n    <a href=\"#\" class=\"action-delete\" data-cid=\"" + file + "\">\n        <span class=\"glyphicon glyphicon-remove\"></span>\n    </a>\n</li>";
     };
 
-    ImageList.prototype.renderImage = function(item) {
-      var image, isFile;
-      if (isFile = item instanceof File) {
-        image = item.data || "";
-        if (item.data == null) {
-          this.readers.push(this.createPreviewLoader(item));
-        }
-      } else {
-        image = thumb(item, this.width, this.height);
-      }
-      return "<a href=\"" + (isFile ? item.data || "#" : Cruddy.root + '/' + item) + "\" class=\"img-wrap\" data-trigger=\"fancybox\">\n    <img src=\"" + image + "\" " + (isFile ? "id='" + item.cid + "'" : "") + ">\n</a>";
+    ImageList.prototype.renderImage = function(file) {
+      return "<a href=\"" + (this.storage.url(file)) + "\" target=\"_blank\" class=\"img-wrap\" data-trigger=\"fancybox\">\n    <img src=\"" + (this.storage.url(file, {
+        width: this.width,
+        height: this.height
+      })) + "\">\n</a>";
     };
 
-    ImageList.prototype.createPreviewLoader = function(item) {
-      var reader;
-      reader = new FileReader;
-      reader.item = item;
-      reader.onload = function(e) {
-        e.target.item.data = e.target.result;
-        return $("#" + item.cid).attr("src", e.target.result).parent().attr("href", e.target.result);
-      };
-      return reader;
+    ImageList.prototype.getAccept = function() {
+      return "image/*,image/jpeg,image/png,image/gif,image/jpeg";
     };
 
     return ImageList;
@@ -2148,7 +2348,7 @@
     Search.prototype.className = "input-group";
 
     Search.prototype.events = {
-      "click .btn-search": "search"
+      "click .btn-search": "handleBtnClick"
     };
 
     Search.prototype.initialize = function(options) {
@@ -2163,12 +2363,10 @@
       return Search.__super__.initialize.apply(this, arguments);
     };
 
-    Search.prototype.search = function(e) {
-      if (e) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
-      this.input.change();
+    Search.prototype.handleBtnClick = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      this.input.submitValue();
     };
 
     Search.prototype.appendButton = function(btn) {
@@ -2210,19 +2408,18 @@
     }
 
     Slug.prototype.initialize = function(options) {
-      this.key = options.key;
       this.ref = _.isArray(options.field) ? options.field : options.field ? [options.field] : void 0;
       if (!this.ref) {
         this.$el.removeClass("input-group");
       }
-      this.listenTo(this.model, "change:" + this.key, (function(_this) {
-        return function() {
-          if (!_this.linkable()) {
-            return _this.unlink();
-          }
-        };
-      })(this));
       return Slug.__super__.initialize.apply(this, arguments);
+    };
+
+    Slug.prototype.handleValueChanged = function() {
+      if (!this.linkable()) {
+        this.unlink();
+      }
+      return this;
     };
 
     Slug.prototype.toggleSyncing = function() {
@@ -2255,14 +2452,13 @@
 
     Slug.prototype.linkable = function() {
       var modelValue, value;
-      modelValue = this.model.get(this.key);
+      modelValue = this.getValue();
       value = this.getSlug();
-      return value === modelValue || modelValue === null && value === "";
+      return value === modelValue;
     };
 
     Slug.prototype.sync = function() {
-      this.model.set(this.key, this.getSlug());
-      return this;
+      return this.setValue(this.getSlug());
     };
 
     Slug.prototype.getSlug = function() {
@@ -2279,7 +2475,7 @@
       if (components.length) {
         return components.join(" ");
       } else {
-        return "";
+        return null;
       }
     };
 
@@ -2304,7 +2500,7 @@
 
     return Slug;
 
-  })(Backbone.View);
+  })(Cruddy.Inputs.Base);
 
   Cruddy.Inputs.Select = (function(_super) {
     __extends(Select, _super);
@@ -2335,9 +2531,9 @@
       return Select.__super__.render.apply(this, arguments);
     };
 
-    Select.prototype.applyChanges = function(data, external) {
-      if (external) {
-        this.$el.val(this._transformValue(data));
+    Select.prototype.handleValueChanged = function(newValue, bySelf) {
+      if (!bySelf) {
+        this.$el.val(this._transformValue(newValue));
       }
       return this;
     };
@@ -2387,7 +2583,7 @@
       if (disabled == null) {
         disabled = false;
       }
-      return "<option value=\"" + (_.escape(value)) + "\"" + (disabled ? " disabled" : "") + ">" + (_.escape(title)) + "</option>";
+      return "<option value=\"" + (_.escape(value)) + "\" " + (value_if(disabled, "disabled")) + ">\n    " + (_.escape(title)) + "\n</option>";
     };
 
     Select.prototype.hasPrompt = function() {
@@ -2408,8 +2604,8 @@
     NumberFilter.prototype.className = "input-group number-filter";
 
     NumberFilter.prototype.events = {
-      "click .dropdown-menu a": "changeOperator",
-      "change": "changeValue"
+      "click .dropdown-menu a": "handleOperatorSelected",
+      "change": "handleInputChanged"
     };
 
     NumberFilter.prototype.initialize = function() {
@@ -2422,7 +2618,7 @@
       return NumberFilter.__super__.initialize.apply(this, arguments);
     };
 
-    NumberFilter.prototype.changeOperator = function(e) {
+    NumberFilter.prototype.handleOperatorSelected = function(e) {
       var op, value;
       e.preventDefault();
       op = $(e.currentTarget).data("op");
@@ -2433,14 +2629,14 @@
       return this;
     };
 
-    NumberFilter.prototype.changeValue = function(e) {
+    NumberFilter.prototype.handleInputChanged = function(e) {
       var value;
       value = this.getValue();
       this.setValue(this.makeValue(value.op, e.target.value));
       return this;
     };
 
-    NumberFilter.prototype.applyChanges = function(value, external) {
+    NumberFilter.prototype.handleValueChanged = function(value, external) {
       this.$(".dropdown-menu li").removeClass("active");
       this.$(".dropdown-menu a[data-op='" + value.op + "']").parent().addClass("active");
       this.op.text(value.op);
@@ -2494,17 +2690,17 @@
       return DateTime.__super__.initialize.apply(this, arguments);
     };
 
-    DateTime.prototype.applyChanges = function(value, external) {
-      this.$el.val(value === null ? "" : external ? moment.unix(value).format(this.format) : void 0);
+    DateTime.prototype.handleValueChanged = function(newValue, bySelf) {
+      this.$el.val(newValue === null ? "" : !bySelf ? moment.unix(newValue).format(this.format) : void 0);
       return this;
     };
 
-    DateTime.prototype.change = function() {
+    DateTime.prototype.submitValue = function() {
       var value;
       value = this.$el.val();
       value = _.isEmpty(value) ? null : moment(value, this.format).unix();
       this.setValue(value);
-      return this.applyChanges(value, true);
+      return this.handleValueChanged(value, true);
     };
 
     return DateTime;
@@ -3351,14 +3547,6 @@
       });
     };
 
-    Text.prototype.format = function(value) {
-      if (value) {
-        return "<pre class=\"limit-height\">" + value + "</pre>";
-      } else {
-        return NOT_AVAILABLE;
-      }
-    };
-
     Text.prototype.getType = function() {
       return "text";
     };
@@ -3696,7 +3884,7 @@
         width: this.attributes.width,
         height: this.attributes.height,
         multiple: this.attributes.multiple,
-        accepts: this.attributes.accepts
+        storage: this.attributes.storage
       });
     };
 
@@ -3706,7 +3894,8 @@
         key: this.id,
         formatter: new Cruddy.Fields.Image.Formatter({
           width: this.attributes.width,
-          height: this.attributes.height
+          height: this.attributes.height,
+          storage: this.attributes.storage
         })
       });
     };
@@ -3721,16 +3910,20 @@
 
   Cruddy.Fields.Image.Formatter = (function() {
     function Formatter(options) {
-      this.options = options;
+      this.options = {
+        width: options.width || 0,
+        height: options.height || 0
+      };
+      this.storage = Cruddy.FileStorage.instance(options.storage);
       return;
     }
 
     Formatter.prototype.imageUrl = function(image) {
-      return Cruddy.root + "/" + image;
+      return this.storage.url(image);
     };
 
     Formatter.prototype.imageThumb = function(image) {
-      return thumb(image, this.options.width, this.options.height);
+      return this.storage.url(image, this.options);
     };
 
     Formatter.prototype.format = function(value) {
@@ -3741,7 +3934,7 @@
       }
       for (_i = 0, _len = value.length; _i < _len; _i++) {
         image = value[_i];
-        html += "<li class=\"image-group-item\">\n    <a href=\"" + (this.imageUrl(image)) + "\" class=\"img-wrap\" data-trigger=\"fancybox\">\n        <img src=\"" + (this.imageThumb(image)) + "\">\n    </a>\n</li>";
+        html += "<li class=\"image-group-item\">\n    <a href=\"" + (this.imageUrl(image)) + "\" class=\"img-wrap\" target=\"_blank\" data-trigger=\"fancybox\">\n        <img src=\"" + (this.imageThumb(image)) + "\">\n    </a>\n</li>";
       }
       return html + "</ul>";
     };
@@ -4370,23 +4563,12 @@
       return Base.__super__.constructor.apply(this, arguments);
     }
 
-    Base.prototype.initialize = function(attributes) {
-      if (attributes.formatter != null) {
-        this.formatter = Cruddy.formatters.create(attributes.formatter, attributes.formatter_options);
-      }
-      return Base.__super__.initialize.apply(this, arguments);
-    };
-
     Base.prototype.render = function(item) {
       return this.format(item.attributes[this.id]);
     };
 
     Base.prototype.format = function(value) {
-      if (this.formatter != null) {
-        return this.formatter.format(value);
-      } else {
-        return _.escape(value);
-      }
+      return value;
     };
 
     Base.prototype.getHeader = function() {
@@ -4420,11 +4602,7 @@
     };
 
     Proxy.prototype.format = function(value) {
-      if (this.formatter != null) {
-        return this.formatter.format(value);
-      } else {
-        return this.field.format(value);
-      }
+      return this.field.format(value);
     };
 
     Proxy.prototype.getClass = function() {
@@ -4612,69 +4790,6 @@
 
   })(Cruddy.Filters.Base);
 
-  BaseFormatter = (function() {
-    BaseFormatter.prototype.defaultOptions = {};
-
-    function BaseFormatter(options) {
-      if (options == null) {
-        options = {};
-      }
-      this.options = $.extend({}, this.defaultOptions, options);
-      this;
-    }
-
-    BaseFormatter.prototype.format = function(value) {
-      return value;
-    };
-
-    return BaseFormatter;
-
-  })();
-
-  Cruddy.formatters.Image = (function(_super) {
-    __extends(Image, _super);
-
-    function Image() {
-      return Image.__super__.constructor.apply(this, arguments);
-    }
-
-    Image.prototype.defaultOptions = {
-      width: 40,
-      height: 40
-    };
-
-    Image.prototype.format = function(value) {
-      if (_.isEmpty(value)) {
-        return "";
-      }
-      if (_.isArray(value)) {
-        value = value[0];
-      }
-      if (_.isObject(value)) {
-        value = value.body;
-      }
-      return "<a href=\"" + (Cruddy.root + "/" + value) + "\" data-trigger=\"fancybox\">\n    <img src=\"" + (thumb(value, this.options.width, this.options.height)) + "\" " + (this.options.width ? " width=" + this.options.width : "") + " " + (this.options.height ? " height=" + this.options.height : "") + " alt=\"" + (_.escape(value)) + "\">\n</a>";
-    };
-
-    return Image;
-
-  })(BaseFormatter);
-
-  Cruddy.formatters.Plain = (function(_super) {
-    __extends(Plain, _super);
-
-    function Plain() {
-      return Plain.__super__.constructor.apply(this, arguments);
-    }
-
-    Plain.prototype.format = function(value) {
-      return value;
-    };
-
-    return Plain;
-
-  })(BaseFormatter);
-
   Cruddy.Entity = {};
 
   Cruddy.Entity.Entity = (function(_super) {
@@ -4854,10 +4969,13 @@
       _ref = this.fields.models;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         field = _ref[_i];
-        if (field.hasChangedSinceSync(model)) {
-          return true;
+        if (!(field.hasChangedSinceSync(model))) {
+          continue;
         }
+        console.log(field);
+        return true;
       }
+      return false;
     };
 
     Entity.prototype.prepareAttributes = function(attributes, model) {
@@ -5710,9 +5828,9 @@
         html += render_presentation_actions(items);
         html += render_divider();
       }
-      html += "<li class=\"" + (class_if(isDeleted, "disabled")) + "\">\n    <a data-action=\"refreshModel\" href=\"#\">\n        " + Cruddy.lang.model_refresh + "\n    </a>\n</li>";
-      html += "<li class=\"" + (class_if(!entity.createPermitted(), "disabled")) + "\">\n    <a data-action=\"copyModel\" href=\"#\">\n        " + Cruddy.lang.model_copy + "\n    </a>\n</li>";
-      html += "<li class=\"divider\"></li>\n\n<li class=\"" + (class_if(isDeleted || !entity.deletePermitted(), "disabled")) + "\">\n    <a data-action=\"destroyModel\" href=\"#\">\n        <span class=\"glyphicon glyphicon-trash\"></span> " + Cruddy.lang.model_delete + "\n    </a>\n</li>";
+      html += "<li class=\"" + (value_if(isDeleted, "disabled")) + "\">\n    <a data-action=\"refreshModel\" href=\"#\">\n        " + Cruddy.lang.model_refresh + "\n    </a>\n</li>";
+      html += "<li class=\"" + (value_if(!entity.createPermitted(), "disabled")) + "\">\n    <a data-action=\"copyModel\" href=\"#\">\n        " + Cruddy.lang.model_copy + "\n    </a>\n</li>";
+      html += "<li class=\"divider\"></li>\n\n<li class=\"" + (value_if(isDeleted || !entity.deletePermitted(), "disabled")) + "\">\n    <a data-action=\"destroyModel\" href=\"#\">\n        <span class=\"glyphicon glyphicon-trash\"></span> " + Cruddy.lang.model_delete + "\n    </a>\n</li>";
       return html;
     };
 
@@ -5724,7 +5842,7 @@
       mainAction = _.find(this.model.meta.actions, function(item) {
         return !item.disabled;
       }) || _.first(this.model.meta.actions);
-      button = "<button data-action=\"saveWithAction\" data-action-id=\"" + mainAction.id + "\" type=\"button\" class=\"btn btn-" + mainAction.state + "\" " + (class_if(mainAction.isDisabled, "disabled")) + ">\n    " + mainAction.title + "\n</button>";
+      button = "<button data-action=\"saveWithAction\" data-action-id=\"" + mainAction.id + "\" type=\"button\" class=\"btn btn-" + mainAction.state + "\" " + (value_if(mainAction.isDisabled, "disabled")) + ">\n    " + mainAction.title + "\n</button>";
       return this.wrapWithExtraActions(button, mainAction);
     };
 
@@ -5739,7 +5857,7 @@
       html = "";
       for (_i = 0, _len = actions.length; _i < _len; _i++) {
         action = actions[_i];
-        html += "<li class=\"" + (class_if(action.disabled, "disabled")) + "\">\n    <a data-action=\"saveWithAction\" data-action-id=\"" + action.id + "\" href=\"#\">" + action.title + "</a>\n</li>";
+        html += "<li class=\"" + (value_if(action.disabled, "disabled")) + "\">\n    <a data-action=\"saveWithAction\" data-action-id=\"" + action.id + "\" href=\"#\">" + action.title + "</a>\n</li>";
       }
       return "<div class=\"btn-group dropup\">\n    " + button + "\n\n    <button type=\"button\" class=\"btn btn-default dropdown-toggle\" data-toggle=\"dropdown\">\n        <span class=\"caret\"></span>\n    </button>\n\n    <ul class=\"dropdown-menu dropdown-menu-right\" role=\"menu\">\n        " + html + "\n    </ul>\n</div>";
     };

@@ -122,7 +122,13 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
         data
 
-    hasChangedSinceSync: (model) -> return yes for field in @fields.models when field.hasChangedSinceSync model
+    hasChangedSinceSync: (model) ->
+        for field in @fields.models when field.hasChangedSinceSync model
+            console.log field
+            
+            return yes
+
+        return no
 
     prepareAttributes: (attributes, model) ->
         result = {}

@@ -61,7 +61,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         e.preventDefault()
         e.stopPropagation()
 
-        @selectItem @dataSource.getById $(e.target).data("id")
+        @selectItem @dataSource.getById $(e.currentTarget).data("id")
 
         return
 
@@ -110,8 +110,8 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
         this
 
-    applyChanges: (data) ->
-        @makeSelectedMap data
+    handleValueChanged: (newValue) ->
+        @makeSelectedMap newValue
         @renderItems()
 
     makeSelectedMap: (data) ->
@@ -182,13 +182,13 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
         @searchInput.appendButton """
             <button type="button" class="btn btn-default btn-refresh" tabindex="-1" title="#{ Cruddy.lang.refresh }">
-                <span class="glyphicon glyphicon-refresh"></span>
+                #{ b_icon "refresh" }
             </button>
         """
 
         @searchInput.appendButton """
             <button type="button" class='btn btn-default btn-add' tabindex='-1' title="#{ Cruddy.lang.model_new_record }">
-                <span class='glyphicon glyphicon-plus'></span>
+                #{ b_icon "plus" }
             </button>
         """ if @allowCreate
 

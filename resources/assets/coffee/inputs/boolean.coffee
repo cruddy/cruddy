@@ -8,20 +8,20 @@ class Cruddy.Inputs.Boolean extends Cruddy.Inputs.Base
         super
 
     check: (e) ->
+        currentValue = @getValue()
         value = !!$(e.target).data "value"
-        currentValue = @model.get @key
 
-        value = null if value == currentValue and @tripleState
+        value = null if value is currentValue and @tripleState
 
         @setValue value
 
-    applyChanges: (value) ->
+    handleValueChanged: (value) ->
         value = switch value
             when yes then 0
             when no then 1
             else null
 
-        @values.removeClass("active")
+        @values.removeClass "active"
         @values.eq(value).addClass "active" if value?
 
         this

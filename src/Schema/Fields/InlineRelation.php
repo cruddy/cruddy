@@ -96,7 +96,9 @@ abstract class InlineRelation extends BaseRelation
     {
         $items = parent::getModelValue($model);
 
-        $items and $this->loadRelations($items);
+        if ($items) {
+            $this->loadRelations($items);
+        }
 
         return $this->getRefEntity()->getModelData($items);
     }

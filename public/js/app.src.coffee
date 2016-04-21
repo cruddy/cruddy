@@ -72,7 +72,7 @@ render_presentation_actions = (items) ->
 
     return html
 
-class_if = (bool, className) -> if bool then className else ""
+value_if = (bool, value) -> if bool then value else ""
 
 get = (path, obj = window) ->
     return obj if _.isEmpty path
@@ -85,29 +85,14 @@ get = (path, obj = window) ->
 
     return obj
 
-class Alert extends Backbone.View
-    tagName: "span"
-    className: "alert"
+add_query_to_url = (url, query) ->
+    if _.isObject query
+        painConverter = (value, param) ->
+            "#{ encodeURIComponent(param) }=#{ encodeURIComponent(value) }"
 
-    initialize: (options) ->
-        @$el.addClass @className + "-" + options.type ? "info"
-        @$el.text options.message
+        query = _. map(query, painConverter).join("&")
 
-        setTimeout (=> @remove()), options.timeout if options.timeout?
-
-        this
-
-    render: ->
-        after_break => @$el.addClass "show"
-
-        this
-
-    remove: ->
-        @$el.one TRANSITIONEND, => super
-
-        @$el.removeClass "show"
-
-        this
+    return if query && query.length then "#{ url }?#{ query }" else url
 class Factory
     create: (name, options) ->
         constructor = @[name]
@@ -676,6 +661,200 @@ class FilterList extends Backbone.View
         @dispose()
 
         super
+class Alert extends Backbone.View
+    tagName: "span"
+    className: "alert"
+
+    initialize: (options) ->
+        @$el.addClass @className + "-" + options.type ? "info"
+        @$el.text options.message
+
+        setTimeout (=> @remove()), options.timeout if options.timeout?
+
+        this
+
+    render: ->
+        after_break => @$el.addClass "show"
+
+        this
+
+    remove: ->
+        @$el.one TRANSITIONEND, => super
+
+        @$el.removeClass "show"
+
+        this
+class Cruddy.UploadQueue
+    constructor: (storage) ->
+        @_storage = storage
+        @_q = []
+
+        @_xhr = null
+        @_file = null
+        @_working = no
+
+        @_uploaded = 0
+        @_total = 0
+
+    push: (files, path) ->
+        files = [ files ] if files instanceof File
+
+        for file in files
+            @_q.push
+                file: file
+                path: path
+                uploaded: 0
+                total: file.size
+
+            if @_working
+                @_uploadStats.total += file.size
+
+                @_notifyProgress()
+
+        return this
+
+    start: () ->
+        return this if @_working || ! @_q.length
+
+        @_working = yes
+        @_uploaded = 0
+        @_total = _.reduce @_q, ((sum, file) => sum + file.total), 0
+
+        @_notifyProgress()
+
+        @trigger "started"
+
+        @_next()
+
+    stop: () ->
+        return this unless @_working
+
+        @_working = no
+
+        @_xhr and @_xhr.abort()
+
+        @trigger "stopped"
+
+        return this
+
+    isEmpty: -> ! @_q.length
+
+    isWorking: -> @_working
+
+    isCompleted: -> ! @_q.length
+
+    _next: () ->
+        @_xhr = null
+        @_file = null
+
+        return @stop() if @isEmpty()
+
+        # Cache currently uploaded amount
+        uploaded = @_uploaded
+
+        @_file = file = @_q.shift()
+
+        @trigger "filestarted", file
+
+        @_xhr = @_storage
+
+        .upload file.file, file.path, (loaded, total) =>
+            file.uploaded = loaded
+
+            # Not sure whether it is needed; total is taken from file size
+            # Maybe it might update when upload started
+            if file.total != total
+                @_total += total - file.total
+
+                file.total = total
+
+            @trigger "fileprogress", file
+
+            @_uploaded = uploaded + loaded
+
+            @_notifyProgress()
+
+        .always =>
+            uploaded += file.total
+
+            if @_uploaded != uploaded
+                @_uploaded = uploaded
+
+                @_notifyProgress()
+
+            @_next()
+
+        .done (resp) => @trigger "filecompleted", resp, file
+
+        .fail (xhr, error) =>
+            file.uploaded = file.total
+
+            if xhr.status is 422
+                @trigger "fileinvalid", xhr.responseJSON.message, xhr.responseJSON.code, file
+
+                return
+
+            if error is "abort"
+                @trigger "fileaborted", file
+
+                return
+
+            @trigger "fileerror", file, xhr, error
+
+            return
+
+        return this
+
+    _notifyProgress: () ->
+        stats =
+            uploaded: @_uploaded
+            total: @_total
+
+        @trigger "progress", stats if stats.total > 0
+
+        return this
+
+_.extend Cruddy.UploadQueue.prototype, Backbone.Events
+class Cruddy.FileStorage
+    constructor: (id) ->
+        @id = id
+        @_queue = new Cruddy.UploadQueue this
+
+    url: (path, query) ->
+        url = "#{ Cruddy.baseUrl }/_files/#{ @id }/#{ path || "" }"
+
+        add_query_to_url url, query
+
+    upload: (file, path, progressCallback) ->
+        if _.isFunction path
+            progressCallback = path
+            path = ""
+
+        data = new FormData
+
+        data.append "file", file
+
+        $.ajax
+            data: data
+            url: @url path
+            type: "POST"
+            dataType: "json"
+            processData: false
+            contentType: false
+
+            xhr: ->
+                xhr = $.ajaxSettings.xhr()
+
+                xhr.upload and xhr.upload.addEventListener "progress", (e) ->
+                    return unless e.lengthComputable || ! progressCallback
+
+                    progressCallback e.loaded, e.total
+
+                xhr
+
+    getUploadQueue: -> @_queue
+
+    @instance: (id) -> new @ id
 Cruddy.Inputs = {}
 
 # Base class for input that will be bound to a model's attribute.
@@ -686,17 +865,16 @@ class Cruddy.Inputs.Base extends Cruddy.View
         super
 
     initialize: ->
-        @listenTo @model, "change:" + @key, (model, value, options) ->
-            @applyChanges value, not options.input or options.input isnt this
+        @listenTo @model, "change:" + @key, (model, value, { input }) ->
+            @handleValueChanged value, input is this
 
         this
 
     # Apply changes when model's attribute changed.
     # external is true when value is changed not by input itself.
-    applyChanges: (data, external) -> this
+    handleValueChanged: (newValue, bySelf) -> this
 
-    render: ->
-        @applyChanges @getValue(), yes
+    render: -> @handleValueChanged @getValue(), no
 
     # Focus an element.
     focus: -> this
@@ -725,7 +903,7 @@ class Cruddy.Inputs.Static extends Cruddy.Inputs.Base
 
         super
 
-    applyChanges: (data) -> @render()
+    handleValueChanged: -> @render()
 
     render: ->
         value = @getValue()
@@ -738,12 +916,12 @@ class Cruddy.Inputs.BaseText extends Cruddy.Inputs.Base
     className: "form-control"
 
     events:
-        "change": "change"
-        "keydown": "keydown"
+        "change": "submitValue"
+        "keydown": "handleKeydown"
 
-    keydown: (e) ->
+    handleKeydown: (e) ->
         # Ctrl + Enter
-        return @change() if e.ctrlKey and e.keyCode is 13
+        return @submitValue() if e.ctrlKey and e.keyCode is 13
 
         this
 
@@ -757,10 +935,10 @@ class Cruddy.Inputs.BaseText extends Cruddy.Inputs.Base
 
         this
 
-    change: -> @setValue @$el.val()
+    submitValue: -> @setValue @$el.val()
 
-    applyChanges: (data, external) ->
-        @$el.val data if external
+    handleValueChanged: (newValue, bySelf) ->
+        @$el.val newValue unless bySelf
 
         this
 
@@ -785,20 +963,19 @@ class Cruddy.Inputs.Textarea extends Cruddy.Inputs.BaseText
 # Renders a checkbox
 class Cruddy.Inputs.Checkbox extends Cruddy.Inputs.Base
     tagName: "label"
-    label: ""
 
     events:
-        "change": "change"
+        "change :checkbox": "handleCheckboxChanged"
 
     initialize: (options) ->
-        @label = options.label if options.label?
+        @label = options.label || null
 
         super
 
-    change: -> @setValue @input.prop "checked"
+    handleCheckboxChanged: -> @setValue @input.prop "checked"
 
-    applyChanges: (value, external) ->
-        @input.prop "checked", value if external
+    handleValueChanged: (newValue, bySelf) ->
+        @input.prop "checked", newValue unless bySelf
 
         this
 
@@ -818,20 +995,20 @@ class Cruddy.Inputs.Boolean extends Cruddy.Inputs.Base
         super
 
     check: (e) ->
+        currentValue = @getValue()
         value = !!$(e.target).data "value"
-        currentValue = @model.get @key
 
-        value = null if value == currentValue and @tripleState
+        value = null if value is currentValue and @tripleState
 
         @setValue value
 
-    applyChanges: (value) ->
+    handleValueChanged: (value) ->
         value = switch value
             when yes then 0
             when no then 1
             else null
 
-        @values.removeClass("active")
+        @values.removeClass "active"
         @values.eq(value).addClass "active" if value?
 
         this
@@ -862,9 +1039,9 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
         "click .ed-item>.input-group-btn>.btn-remove": "removeItem"
         "click .ed-item>.input-group-btn>.btn-edit": "editItem"
         "click .ed-item>.form-control": "executeFirstAction"
-        "keydown .ed-item>.form-control": "itemKeydown"
-        "keydown [type=search]": "searchKeydown"
-        "show.bs.dropdown": "renderDropdown"
+        "keydown .ed-item>.form-control": "handleItemKeydown"
+        "keydown [type=search]": "handleSearchKeydown"
+        "show.bs.dropdown": "handleDropdownShow"
 
         "shown.bs.dropdown": ->
             after_break => @selector.focus()
@@ -956,7 +1133,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         this
 
-    searchKeydown: (e) ->
+    handleSearchKeydown: (e) ->
         if (e.keyCode is 27)
             @selector.$el.dropdown "toggle" if @selector
 
@@ -964,7 +1141,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         return
 
-    itemKeydown: (e) ->
+    handleItemKeydown: (e) ->
         if (e.keyCode is 13)
             @executeFirstAction e
 
@@ -1008,7 +1185,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         this
 
-    renderDropdown: (e) ->
+    handleDropdownShow: (e) ->
         if @disableDropdown
             e.preventDefault()
 
@@ -1045,7 +1222,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         this
 
-    applyChanges: (value) ->
+    handleValueChanged: ->
         if @multiple
             @renderItems()
         else
@@ -1137,19 +1314,19 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         html += """
             <button type="button" class="btn btn-default btn-remove" tabindex="-1" title="#{ Cruddy.lang.reset }">
-                <span class="glyphicon glyphicon-remove"></span>
+                #{ b_icon "remove" }
             </button>
             """ if @enabled
 
         html += """
             <button type="button" class="btn btn-default btn-edit" tabindex="-1" title="#{ Cruddy.lang.edit }">
-                <span class="glyphicon glyphicon-pencil"></span>
+                #{ b_icon "pencil" }
             </button>
             """ if @allowEdit
 
         html += """
             <button type="button" class="btn btn-default btn-dropdown dropdown-toggle" data-toggle="dropdown" id="#{ @cid }-dropdown" data-target="##{ @cid }" tab-index="1" title="#{ Cruddy.lang.list_show }">
-                <span class="glyphicon"></span>
+                #{ b_icon "chevron-down" }
             </button>
             """ if not @multiple
 
@@ -1240,7 +1417,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
         e.preventDefault()
         e.stopPropagation()
 
-        @selectItem @dataSource.getById $(e.target).data("id")
+        @selectItem @dataSource.getById $(e.currentTarget).data("id")
 
         return
 
@@ -1289,8 +1466,8 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
         this
 
-    applyChanges: (data) ->
-        @makeSelectedMap data
+    handleValueChanged: (newValue) ->
+        @makeSelectedMap newValue
         @renderItems()
 
     makeSelectedMap: (data) ->
@@ -1361,13 +1538,13 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
 
         @searchInput.appendButton """
             <button type="button" class="btn btn-default btn-refresh" tabindex="-1" title="#{ Cruddy.lang.refresh }">
-                <span class="glyphicon glyphicon-refresh"></span>
+                #{ b_icon "refresh" }
             </button>
         """
 
         @searchInput.appendButton """
             <button type="button" class='btn btn-default btn-add' tabindex='-1' title="#{ Cruddy.lang.model_new_record }">
-                <span class='glyphicon glyphicon-plus'></span>
+                #{ b_icon "plus" }
             </button>
         """ if @allowCreate
 
@@ -1395,94 +1572,131 @@ class Cruddy.Inputs.FileList extends Cruddy.Inputs.Base
     className: "file-list"
 
     events:
-        "change [type=file]": "appendFiles"
-        "click .action-delete": "deleteFile"
+        "change [type=file]": "handleFilesChanged"
+        "click .action-delete": "handleDeleteFile"
 
     initialize: (options) ->
         @multiple = options.multiple ? false
-        @formatter = options.formatter ? format: (value) -> if value instanceof File then value.name else value
-        @accepts = options.accepts ? ""
+        @storage = Cruddy.FileStorage.instance options.storage
         @counter = 1
+
+        @queue = @storage.getUploadQueue()
+
+        @listenTo @queue, "started", -> @$el.addClass "--loading"
+        @listenTo @queue, "stopped", -> @$el.removeClass "--loading"
+
+        @listenTo @queue, "progress", (stats) ->
+            @$uploadProgress.css "width", "#{ stats.uploaded / stats.total * 100}%"
+
+        @listenTo @queue, "filestarted", (file) ->
+            @$uploadProgress.text file.file.name
+
+        @listenTo @queue, "filecompleted", (resp, file) ->
+            @pushFile resp.path
+
+        @listenTo @queue, "fileinvalid", (message, code) ->
+            @showUploadError Cruddy.lang["upload_error_#{ code }"] || Cruddy.lang.upload_failed
+
+        @listenTo @queue, "fileerror", () ->
+            @showUploadError Cruddy.lang.upload_failed
 
         super
 
-    deleteFile: (e) ->
+    showUploadError: (message) ->
+        @$uploadError.text(message).show()
+
+        setTimeout (=> @$uploadError.hide()), 3000
+
+        return this
+
+    pushFile: (file) ->
         if @multiple
-            cid = $(e.currentTarget).data("cid")
-            @setValue _.reject @getValue(), (item) => @itemId(item) is cid
+            value = _.clone @getValue()
+            value.push file
         else
-            @setValue null
-
-        false
-
-    appendFiles: (e) ->
-        return if e.target.files.length is 0
-
-        file.cid = @cid + "_" + @counter++ for file in e.target.files
-
-        if @multiple
-            value = _.clone @model.get @key
-
-            value.push file for file in e.target.files
-        else
-            value = e.target.files[0]
+            value = file
 
         @setValue value
 
-    applyChanges: -> @render()
+    removeFile: (file) ->
+        if @multiple
+            @setValue _.reject @getValue(), (item) -> item is file
+        else
+            @setValue null
+
+        return this
+
+    handleDeleteFile: (e) ->
+        e.preventDefault();
+
+        @removeFile $(e.currentTarget).data "file"
+
+    handleFilesChanged: (e) ->
+        return unless e.target.files.length
+
+        @queue.push(e.target.files).start();
+
+        return this
+
+    handleValueChanged: -> @render()
 
     render: ->
-        value = @model.get @key
-
         html = ""
 
-        if value
-            html += @renderItem item for item in if @multiple then value else [ value ]
+        unless _.isEmpty(files = @getValue())
+            files = if _.isArray(files) then files else [ files ]
+            html += @renderFile file for file in files
 
-        html = @wrapItems html if html.length
+        html = @wrapItems html unless _.isEmpty html
 
-        html += @renderInput if @multiple then "<span class='glyphicon glyphicon-plus'></span> #{ Cruddy.lang.add }" else Cruddy.lang.choose
+        html += @renderInput()
 
         @$el.html html
+
+        @$uploadProgress = @$component "progress"
+        @$uploadError = @$component "error"
 
         this
 
     wrapItems: (html) -> """<ul class="list-group">#{ html }</ul>"""
 
-    renderInput: (label) ->
+    renderInput: ->
+        if @multiple
+            label = "#{ b_icon "plus" } #{ Cruddy.lang.add }"
+        else
+            label = Cruddy.lang.choose
+
         """
+        <div class="progress">
+            <div class="progress-bar" id="#{ @componentId "progress" }"></div>
+        </div>
+
+        <div class="help-block error" id="#{ @componentId "error" }" style="display:none;"></div>
+
         <div class="btn btn-sm btn-default file-list-input-wrap">
-            <input type="file" id="#{ @componentId "input" }" accept="#{ @accepts }"#{ if @multiple then " multiple" else "" }>
+            <input type="file" id="#{ @componentId "input" }" accept="#{ @getAccept() }" #{ value_if @multiple, "multiple" }>
             #{ label }
         </div>
         """
 
-    renderItem: (item) ->
-        label = @formatter.format item
-
-        """
+    renderFile: (file) -> """
         <li class="list-group-item">
-            <a href="#" class="action-delete pull-right" data-cid="#{ @itemId(item) }"><span class="glyphicon glyphicon-remove"></span></a>
+            <a href="#" class="action-delete pull-right" data-cid="#{ file }">
+                <span class="glyphicon glyphicon-remove"></span>
+            </a>
 
-            #{ label }
+            <a href="#{ @storage.url file }" target="_blank">#{ file }</a>
         </li>
-        """
-
-    itemId: (item) -> if item instanceof File then item.cid else item
+    """
 
     focus: ->
         @$component("input")[0].focus()
 
         this
 
-
+    getAccept: -> ""
 class Cruddy.Inputs.ImageList extends Cruddy.Inputs.FileList
-    className: "image-list"
-
-    constructor: ->
-        @readers = []
-
-        super
+    className: "file-list --images"
 
     initialize: (options) ->
         @width = options.width ? 0
@@ -1490,51 +1704,31 @@ class Cruddy.Inputs.ImageList extends Cruddy.Inputs.FileList
 
         super
 
-    render: ->
-        super
-
-        reader.readAsDataURL reader.item for reader in @readers
-        @readers = []
-
-        this
-
     wrapItems: (html) -> """<ul class="image-group">#{ html }</ul>"""
 
-    renderItem: (item) ->
-        """
+    renderFile: (file) -> """
         <li class="image-group-item">
-            #{ @renderImage item }
-            <a href="#" class="action-delete" data-cid="#{ @itemId(item) }"><span class="glyphicon glyphicon-remove"></span></a>
+            #{ @renderImage file }
+
+            <a href="#" class="action-delete" data-cid="#{ file }">
+                <span class="glyphicon glyphicon-remove"></span>
+            </a>
         </li>
         """
 
-    renderImage: (item) ->
-        if isFile = item instanceof File
-            image = item.data or ""
-            @readers.push @createPreviewLoader item if not item.data?
-        else
-            image = thumb item, @width, @height
-
-        """
-        <a href="#{ if isFile then item.data or "#" else Cruddy.root + '/' + item }" class="img-wrap" data-trigger="fancybox">
-            <img src="#{ image }" #{ if isFile then "id='"+item.cid+"'" else "" }>
+    renderImage: (file) -> """
+        <a href="#{ @storage.url file }" target="_blank" class="img-wrap" data-trigger="fancybox">
+            <img src="#{ @storage.url file, { width: @width, height: @height } }">
         </a>
-        """
+    """
 
-    createPreviewLoader: (item) ->
-        reader = new FileReader
-        reader.item = item
-        reader.onload = (e) ->
-            e.target.item.data = e.target.result
-            $("#" + item.cid).attr("src", e.target.result).parent().attr "href", e.target.result
-
-        reader
+    getAccept: -> "image/*,image/jpeg,image/png,image/gif,image/jpeg"
 # Search input implements "change when type" and also allows to clear text with Esc
 class Cruddy.Inputs.Search extends Cruddy.View
     className: "input-group"
 
     events:
-        "click .btn-search": "search"
+        "click .btn-search": "handleBtnClick"
 
     initialize: (options) ->
         @input = new Cruddy.Inputs.Text
@@ -1546,12 +1740,11 @@ class Cruddy.Inputs.Search extends Cruddy.View
 
         super
 
-    search: (e) ->
-        if e
-            e.preventDefault()
-            e.stopPropagation()
+    handleBtnClick: (e) ->
+        e.preventDefault()
+        e.stopPropagation()
 
-        @input.change()
+        @input.submitValue()
 
         return
 
@@ -1573,7 +1766,7 @@ class Cruddy.Inputs.Search extends Cruddy.View
         @input.focus()
 
         return this
-class Cruddy.Inputs.Slug extends Backbone.View
+class Cruddy.Inputs.Slug extends Cruddy.Inputs.Base
     events:
         "click .btn": "toggleSyncing"
 
@@ -1587,15 +1780,16 @@ class Cruddy.Inputs.Slug extends Backbone.View
         super
 
     initialize: (options) ->
-        @key = options.key
         @ref = if _.isArray(options.field) then options.field else [options.field] if options.field
 
-        @$el.removeClass("input-group") unless @ref
-
-        @listenTo @model, "change:" + @key, =>
-            @unlink() unless @linkable()
+        @$el.removeClass "input-group" unless @ref
 
         super
+
+    handleValueChanged: ->
+        @unlink() unless @linkable()
+
+        return this
 
     toggleSyncing: ->
         if @syncButton.hasClass "active" then @unlink() else @link()
@@ -1607,6 +1801,7 @@ class Cruddy.Inputs.Slug extends Backbone.View
 
         @listenTo @model, "change:" + @ref.join(" change:"), @sync
         @syncButton.addClass "active"
+
         @input.disable()
 
         @sync()
@@ -1614,20 +1809,18 @@ class Cruddy.Inputs.Slug extends Backbone.View
     unlink: ->
         @stopListening @model, null, @sync if @ref?
         @syncButton.removeClass "active"
+
         @input.enable()
 
         this
 
     linkable: ->
-        modelValue = @model.get @key
+        modelValue = @getValue()
         value = @getSlug()
 
-        return value == modelValue or modelValue is null and value is ""
+        return value == modelValue
 
-    sync: ->
-        @model.set @key, @getSlug()
-
-        this
+    sync: -> @setValue @getSlug()
 
     getSlug: ->
         components = []
@@ -1636,7 +1829,7 @@ class Cruddy.Inputs.Slug extends Backbone.View
             refValue = @model.get key
             components.push refValue if refValue
 
-        if components.length then components.join " " else ""
+        if components.length then components.join " " else null
 
     render: ->
         @$el.html @template()
@@ -1676,8 +1869,8 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.BaseText
 
         super
 
-    applyChanges: (data, external) ->
-        @$el.val @_transformValue data if external
+    handleValueChanged: (newValue, bySelf) ->
+        @$el.val @_transformValue newValue unless bySelf
 
         this
 
@@ -1697,16 +1890,19 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.BaseText
         html += @optionTemplate key, value for key, value of @items
         html
 
-    optionTemplate: (value, title, disabled = no) ->
-        """<option value="#{ _.escape value }"#{ if disabled then " disabled" else ""}>#{ _.escape title }</option>"""
+    optionTemplate: (value, title, disabled = no) -> """
+        <option value="#{ _.escape value }" #{ value_if disabled, "disabled" }>
+            #{ _.escape title }
+        </option>
+    """
 
     hasPrompt: -> not @multiple and (not @required or @prompt)
 class Cruddy.Inputs.NumberFilter extends Cruddy.Inputs.Base
     className: "input-group number-filter"
 
     events:
-        "click .dropdown-menu a": "changeOperator"
-        "change": "changeValue"
+        "click .dropdown-menu a": "handleOperatorSelected"
+        "change": "handleInputChanged"
 
     initialize: ->
         @defaultOp = ">"
@@ -1715,7 +1911,7 @@ class Cruddy.Inputs.NumberFilter extends Cruddy.Inputs.Base
 
         super
 
-    changeOperator: (e) ->
+    handleOperatorSelected: (e) ->
         e.preventDefault()
 
         op = $(e.currentTarget).data "op"
@@ -1725,14 +1921,14 @@ class Cruddy.Inputs.NumberFilter extends Cruddy.Inputs.Base
 
         this
 
-    changeValue: (e) ->
+    handleInputChanged: (e) ->
         value = @getValue()
 
         @setValue @makeValue value.op, e.target.value
 
         this
 
-    applyChanges: (value, external) ->
+    handleValueChanged: (value, external) ->
         @$(".dropdown-menu li").removeClass "active"
         @$(".dropdown-menu a[data-op='#{ value.op }']").parent().addClass "active"
 
@@ -1780,19 +1976,19 @@ class Cruddy.Inputs.DateTime extends Cruddy.Inputs.BaseText
 
         super
 
-    applyChanges: (value, external) ->
-        @$el.val if value is null then "" else moment.unix(value).format @format if external
+    handleValueChanged: (newValue, bySelf) ->
+        @$el.val if newValue is null then "" else moment.unix(newValue).format @format unless bySelf
 
         this
 
-    change: ->
+    submitValue: ->
         value = @$el.val()
         value = if _.isEmpty value then null else moment(value, @format).unix()
 
         @setValue value
 
         # We will always set input value because it may not be always parsed properly
-        @applyChanges value, yes
+        @handleValueChanged value, yes
 Cruddy.Layout = {}
 
 class Cruddy.Layout.Element extends Cruddy.View
@@ -2306,8 +2502,6 @@ class Cruddy.Fields.Text extends Cruddy.Fields.Base
             id: inputId
             rows: @attributes.rows
 
-    format: (value) -> if value then """<pre class="limit-height">#{ value }</pre>""" else NOT_AVAILABLE
-
     getType: -> "text"
 class Cruddy.Fields.BaseDateTime extends Cruddy.Fields.Base
 
@@ -2460,7 +2654,7 @@ class Cruddy.Fields.Image extends Cruddy.Fields.File
         width: @attributes.width
         height: @attributes.height
         multiple: @attributes.multiple
-        accepts: @attributes.accepts
+        storage: @attributes.storage
 
     createStaticInput: (model) -> new Cruddy.Inputs.Static
         model: model
@@ -2468,18 +2662,20 @@ class Cruddy.Fields.Image extends Cruddy.Fields.File
         formatter: new Cruddy.Fields.Image.Formatter
             width: @attributes.width
             height: @attributes.height
+            storage: @attributes.storage
 
     getType: -> "image"
 class Cruddy.Fields.Image.Formatter
 
     constructor: (options) ->
-        @options = options
+        @options = { width: options.width || 0, height: options.height || 0 }
+        @storage = Cruddy.FileStorage.instance options.storage
 
         return
 
-    imageUrl: (image) -> Cruddy.root + "/" + image
+    imageUrl: (image) -> @storage.url image
 
-    imageThumb: (image) -> thumb image, @options.width, @options.height
+    imageThumb: (image) -> @storage.url image, @options
 
     format: (value) ->
         html = """<ul class="image-group">"""
@@ -2489,7 +2685,7 @@ class Cruddy.Fields.Image.Formatter
         for image in value
             html += """
                 <li class="image-group-item">
-                    <a href="#{ @imageUrl image }" class="img-wrap" data-trigger="fancybox">
+                    <a href="#{ @imageUrl image }" class="img-wrap" target="_blank" data-trigger="fancybox">
                         <img src="#{ @imageThumb image }">
                     </a>
                 </li>
@@ -2873,15 +3069,10 @@ class Cruddy.Fields.Computed extends Cruddy.Fields.Base
     getType: -> "computed"
 class Cruddy.Columns.Base extends Cruddy.Attribute
 
-    initialize: (attributes) ->
-        @formatter = Cruddy.formatters.create attributes.formatter, attributes.formatter_options if attributes.formatter?
-
-        super
-
     render: (item) -> @format item.attributes[@id]
 
     # Return value's text representation
-    format: (value) -> if @formatter? then @formatter.format value else _.escape value
+    format: (value) -> value
 
     # Get column's header text
     getHeader: -> @attributes.header
@@ -2899,7 +3090,7 @@ class Cruddy.Columns.Proxy extends Cruddy.Columns.Base
 
         super
 
-    format: (value) -> if @formatter? then @formatter.format value else @field.format value
+    format: (value) -> @field.format value
 
     getClass: -> super + " col__" + @field.getType()
 class Cruddy.Columns.Computed extends Cruddy.Columns.Base
@@ -2998,34 +3189,6 @@ class Cruddy.Filters.Proxy extends Cruddy.Filters.Base
     prepareData: (value) -> @field.prepareFilterData value
 
     parseData: (value) -> @field.parseFilterData value
-class BaseFormatter
-    defaultOptions: {}
-
-    constructor: (options = {}) ->
-        @options = $.extend {}, @defaultOptions, options
-
-        this
-
-    format: (value) -> value
-class Cruddy.formatters.Image extends BaseFormatter
-    defaultOptions:
-        width: 40
-        height: 40
-
-    format: (value) ->
-        return "" if _.isEmpty value
-        value = value[0] if _.isArray value
-        value = value.body if _.isObject value
-
-        """
-        <a href="#{ Cruddy.root + "/" + value }" data-trigger="fancybox">
-            <img src="#{ thumb value, @options.width, @options.height }" #{ if @options.width then " width=#{ @options.width }" else "" } #{ if @options.height then " height=#{ @options.height }" else "" } alt="#{ _.escape value }">
-        </a>
-        """
-class Cruddy.formatters.Plain extends BaseFormatter
-    # Plain formatter now uses not escaped value to support feature in issue #46
-    # https://github.com/lazychaser/cruddy/issues/46
-    format: (value) -> value
 Cruddy.Entity = {}
 
 class Cruddy.Entity.Entity extends Backbone.Model
@@ -3150,7 +3313,13 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
         data
 
-    hasChangedSinceSync: (model) -> return yes for field in @fields.models when field.hasChangedSinceSync model
+    hasChangedSinceSync: (model) ->
+        for field in @fields.models when field.hasChangedSinceSync model
+            console.log field
+            
+            return yes
+
+        return no
 
     prepareAttributes: (attributes, model) ->
         result = {}
@@ -3843,7 +4012,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
             html += render_divider()
 
         html += """
-            <li class="#{ class_if isDeleted, "disabled" }">
+            <li class="#{ value_if isDeleted, "disabled" }">
                 <a data-action="refreshModel" href="#">
                     #{ Cruddy.lang.model_refresh }
                 </a>
@@ -3851,7 +4020,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         """
 
         html += """
-            <li class="#{ class_if not entity.createPermitted(), "disabled" }">
+            <li class="#{ value_if not entity.createPermitted(), "disabled" }">
                 <a data-action="copyModel" href="#">
                     #{ Cruddy.lang.model_copy }
                 </a>
@@ -3861,7 +4030,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         html += """
             <li class="divider"></li>
 
-            <li class="#{ class_if isDeleted or not entity.deletePermitted(), "disabled" }">
+            <li class="#{ value_if isDeleted or not entity.deletePermitted(), "disabled" }">
                 <a data-action="destroyModel" href="#">
                     <span class="glyphicon glyphicon-trash"></span> #{ Cruddy.lang.model_delete }
                 </a>
@@ -3876,7 +4045,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         mainAction = _.find(@model.meta.actions, (item) -> not item.disabled) or _.first(@model.meta.actions)
 
         button = """
-            <button data-action="saveWithAction" data-action-id="#{ mainAction.id }" type="button" class="btn btn-#{ mainAction.state }" #{ class_if mainAction.isDisabled, "disabled" }>
+            <button data-action="saveWithAction" data-action-id="#{ mainAction.id }" type="button" class="btn btn-#{ mainAction.state }" #{ value_if mainAction.isDisabled, "disabled" }>
                 #{ mainAction.title }
             </button>
         """
@@ -3890,7 +4059,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         html = ""
         html += """
-            <li class="#{ class_if action.disabled, "disabled" }">
+            <li class="#{ value_if action.disabled, "disabled" }">
                 <a data-action="saveWithAction" data-action-id="#{ action.id }" href="#">#{ action.title }</a>
             </li>
         """ for action in actions

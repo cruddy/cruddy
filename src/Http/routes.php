@@ -18,7 +18,12 @@ $router->pattern('storage_path', '[a-zA-Z0-9\-_/]+');
 $router->pattern('storage_file', '[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+');
 
 $router->get('_files/{storage_path}', [ 'uses' => 'FilesController@index' ]);
-$router->get('_files/{storage_path}/{storage_file}', [ 'uses' => 'FilesController@show' ]);
+
+$router->get('_files/{storage_path}/{storage_file}', [ 
+    'uses' => 'FilesController@show',
+    'as' => 'cruddy.files.show',
+]);
+
 $router->post('_files/{storage_path}', [ 'uses' => 'FilesController@store' ]);
 
 $router->get('{cruddy_entity}', [

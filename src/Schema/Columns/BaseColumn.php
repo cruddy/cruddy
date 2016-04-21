@@ -78,8 +78,6 @@ abstract class BaseColumn extends Attribute implements Column
             'width' => $this->get('width'),
             'header' => $this->getHeader(),
             'order_dir' => $this->getDefaultOrderDirection(),
-            'formatter' => $this->get('formatter'),
-            'formatter_options' => $this->get('formatterOptions'),
 
         ] + parent::toArray();
     }

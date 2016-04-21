@@ -14,8 +14,8 @@ use Kalnoy\Cruddy\Entity;
  *
  * @since 1.0.0
  */
-class Proxy extends BaseColumn {
-
+class Proxy extends BaseColumn
+{
     /**
      * The field instance.
      *

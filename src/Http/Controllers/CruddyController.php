@@ -46,7 +46,7 @@ class CruddyController extends Controller
      */
     public function schema(Compiler $compiler)
     {
-        return new JsonResponse($compiler->schema());
+        return response()->json($compiler->schema());
     }
 
     /**

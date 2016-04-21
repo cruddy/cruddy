@@ -291,7 +291,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
             html += render_divider()
 
         html += """
-            <li class="#{ class_if isDeleted, "disabled" }">
+            <li class="#{ value_if isDeleted, "disabled" }">
                 <a data-action="refreshModel" href="#">
                     #{ Cruddy.lang.model_refresh }
                 </a>
@@ -299,7 +299,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         """
 
         html += """
-            <li class="#{ class_if not entity.createPermitted(), "disabled" }">
+            <li class="#{ value_if not entity.createPermitted(), "disabled" }">
                 <a data-action="copyModel" href="#">
                     #{ Cruddy.lang.model_copy }
                 </a>
@@ -309,7 +309,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         html += """
             <li class="divider"></li>
 
-            <li class="#{ class_if isDeleted or not entity.deletePermitted(), "disabled" }">
+            <li class="#{ value_if isDeleted or not entity.deletePermitted(), "disabled" }">
                 <a data-action="destroyModel" href="#">
                     <span class="glyphicon glyphicon-trash"></span> #{ Cruddy.lang.model_delete }
                 </a>
@@ -324,7 +324,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         mainAction = _.find(@model.meta.actions, (item) -> not item.disabled) or _.first(@model.meta.actions)
 
         button = """
-            <button data-action="saveWithAction" data-action-id="#{ mainAction.id }" type="button" class="btn btn-#{ mainAction.state }" #{ class_if mainAction.isDisabled, "disabled" }>
+            <button data-action="saveWithAction" data-action-id="#{ mainAction.id }" type="button" class="btn btn-#{ mainAction.state }" #{ value_if mainAction.isDisabled, "disabled" }>
                 #{ mainAction.title }
             </button>
         """
@@ -338,7 +338,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         html = ""
         html += """
-            <li class="#{ class_if action.disabled, "disabled" }">
+            <li class="#{ value_if action.disabled, "disabled" }">
                 <a data-action="saveWithAction" data-action-id="#{ action.id }" href="#">#{ action.title }</a>
             </li>
         """ for action in actions

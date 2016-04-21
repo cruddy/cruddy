@@ -83,4 +83,25 @@ class Helpers
     {
         return preg_split('/\s/', $value, -1, PREG_SPLIT_NO_EMPTY);
     }
+
+    /**
+     * @param $value
+     *
+     * @return string
+     */
+    public static function simplifyRichText($value)
+    {
+        if ( ! $value) {
+            return null;
+        }
+
+        // Strip any tags and limit length
+        $value = strip_tags($value);
+
+        if (mb_strlen($value) > 300) {
+            $value = mb_substr($value, 255).'...';
+        }
+
+        return $value;
+    }
 }

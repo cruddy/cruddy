@@ -43,13 +43,13 @@ class ImageStorage extends FileStorage
     protected function store($file, $path)
     {
         $image = $this->getImage($file->getRealPath());
-        
+
         /** @var Size $size */
         $size = $image->getSize();
-        
+
         $this->getDiskInstance()->put($path, $image->encode());
-        
-        return new Image($this, $path, $file, 
+
+        return new Image($this, $path, $file,
                          $size->getWidth(), $size->getHeight());
     }
 
@@ -62,8 +62,8 @@ class ImageStorage extends FileStorage
             return false;
         }
 
-        $width = array_get($options, 'width');
-        $height = array_get($options, 'height');
+        $width = array_get($options, 'width') ?: null;
+        $height = array_get($options, 'height') ?: null;
 
         if ( ! $width && ! $height) {
             return $stream;
@@ -104,7 +104,7 @@ class ImageStorage extends FileStorage
     protected function getImage($file)
     {
         $image = $this->imageManager->make($file);
-        
+
         if ($this->maxHeight || $this->maxWidth) {
             $image = $image->resize(
                 $this->maxWidth, $this->maxHeight, function ($constraint) {
@@ -117,7 +117,7 @@ class ImageStorage extends FileStorage
         if ($this->process) {
             $image = call_user_func($this->process, $image);
         }
-        
+
         return $image;
     }
 
@@ -168,5 +168,5 @@ class ImageStorage extends FileStorage
     {
         $this->maxHeight = $maxHeight;
     }
-    
+
 }

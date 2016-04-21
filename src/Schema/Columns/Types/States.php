@@ -10,8 +10,8 @@ use Kalnoy\Cruddy\Entity;
 /**
  * A column for defining additional states for the row.
  */
-class States extends Attribute implements Column {
-
+class States extends Attribute implements Column
+{
 
     /**
      * The list of states of the row.
@@ -46,18 +46,18 @@ class States extends Attribute implements Column {
      */
     public function getModelValue($model)
     {
-        if ($this->states instanceof \Closure)
-        {
+        if ($this->states instanceof \Closure) {
             $method = $this->states;
 
             return (string)$method($model);
         }
 
-        $states = [];
+        $states = [ ];
 
-        foreach ($this->states as $key => $state)
-        {
-            if ($this->hasState($model, $state)) $states[] = $key;
+        foreach ($this->states as $key => $state) {
+            if ($this->hasState($model, $state)) {
+                $states[] = $key;
+            }
         }
 
         return implode($states, ' ');

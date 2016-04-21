@@ -18,8 +18,13 @@
             }
 
             > .col__sortable {
-                background: #eee;
+                color: @link-color;
                 cursor: pointer;
+
+                &:hover {
+                    color: @link-hover-color;
+                    text-decoration: underline;
+                }
 
                 &:after {
                     &:extend(.glyphicon);

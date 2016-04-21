@@ -147,6 +147,28 @@ abstract class BaseRelation extends BaseField
     }
 
     /**
+     * @inheritDoc
+     */
+    protected function getGetter()
+    {
+        if ($getter = $this->get('getter')) {
+            return $getter;
+        }
+
+        return [ $this, 'getRelationValue' ];
+    }
+
+    /**
+     * @param Model $model
+     *
+     * @return mixed
+     */
+    protected function getRelationValue($model, $attribute)
+    {
+        return $model->getRelationValue($attribute);
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function toArray()

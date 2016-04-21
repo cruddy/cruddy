@@ -38,7 +38,7 @@ render_presentation_actions = (items) ->
 
     return html
 
-class_if = (bool, className) -> if bool then className else ""
+value_if = (bool, value) -> if bool then value else ""
 
 get = (path, obj = window) ->
     return obj if _.isEmpty path
@@ -51,26 +51,11 @@ get = (path, obj = window) ->
 
     return obj
 
-class Alert extends Backbone.View
-    tagName: "span"
-    className: "alert"
+add_query_to_url = (url, query) ->
+    if _.isObject query
+        painConverter = (value, param) ->
+            "#{ encodeURIComponent(param) }=#{ encodeURIComponent(value) }"
 
-    initialize: (options) ->
-        @$el.addClass @className + "-" + options.type ? "info"
-        @$el.text options.message
+        query = _. map(query, painConverter).join("&")
 
-        setTimeout (=> @remove()), options.timeout if options.timeout?
-
-        this
-
-    render: ->
-        after_break => @$el.addClass "show"
-
-        this
-
-    remove: ->
-        @$el.one TRANSITIONEND, => super
-
-        @$el.removeClass "show"
-
-        this
+    return if query && query.length then "#{ url }?#{ query }" else url

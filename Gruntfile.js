@@ -29,6 +29,9 @@ module.exports = function(grunt) {
                     '<%= app %>/pagination.coffee',
                     '<%= app %>/datagrid.coffee',
                     '<%= app %>/filterList.coffee',
+                    '<%= app %>/alert.coffee',
+                    '<%= app %>/uploadQueue.coffee',
+                    '<%= app %>/fileStorage.coffee',
 
                     // Inputs
                     '<%= app %>/inputs/base.coffee',
@@ -117,7 +120,7 @@ module.exports = function(grunt) {
             vendor: {
                 src: [
                     // JQuery
-                    '<%= vendor %>/jquery/jquery.js',
+                    '<%= vendor %>/jquery/dist/jquery.js',
                     '<%= vendor %>/fancybox/source/jquery.fancybox.js',
                     '<%= vendor %>/jquery-maskedinput/dist/jquery.maskedinput.js',
                     '<%= app %>/jquery.query.js',

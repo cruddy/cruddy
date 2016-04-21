@@ -6,6 +6,6 @@ class Cruddy.Columns.Proxy extends Cruddy.Columns.Base
 
         super
 
-    format: (value) -> if @formatter? then @formatter.format value else @field.format value
+    format: (value) -> @field.format value
 
     getClass: -> super + " col__" + @field.getType()

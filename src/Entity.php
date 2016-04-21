@@ -926,11 +926,11 @@ abstract class Entity extends BaseForm implements SearchProcessor
 
         return [
             'defaults' => $this->defaultAttributes(),
-
+//
             'primary_key' => $model->getKeyName(),
             'soft_deleting' => false,
             'order_by' => $this->defaultOrder,
-
+//
             'columns' => $this->getColumns()->toArray(),
             'filters' => $this->getFilters()->toArray(),
 

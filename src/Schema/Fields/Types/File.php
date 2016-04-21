@@ -72,12 +72,42 @@ class File extends BaseField
     {
         return app('cruddy.files')->storage($this->getStorageName());
     }
-    
+
     /**
      * @return string
      */
     public function getStorageName()
     {
         return $this->get('storeTo', 'files');
+    }
+
+    /**
+     * @param string $path
+     * @param array $params
+     *
+     * @return string
+     */
+    public function urlToFile($path, array $params = [])
+    {
+        $path = $this->getStorageName().'/'.ltrim($path, '\\/');
+        $info = pathinfo($path);
+
+        $params['storage_path'] = $info['dirname'];
+        $params['storage_file'] = $info['basename'];
+
+        return url()->route('cruddy.files.show', $params);
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getModelValueForColumn($model)
+    {
+        if ( ! $src = $this->getModelValue($model)) {
+            return null;
+        }
+
+        return
+            '<a href="'.$this->urlToFile($src).'" target="_blank">'.$src.'</a>';
     }
 }

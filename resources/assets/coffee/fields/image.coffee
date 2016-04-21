@@ -6,7 +6,7 @@ class Cruddy.Fields.Image extends Cruddy.Fields.File
         width: @attributes.width
         height: @attributes.height
         multiple: @attributes.multiple
-        accepts: @attributes.accepts
+        storage: @attributes.storage
 
     createStaticInput: (model) -> new Cruddy.Inputs.Static
         model: model
@@ -14,5 +14,6 @@ class Cruddy.Fields.Image extends Cruddy.Fields.File
         formatter: new Cruddy.Fields.Image.Formatter
             width: @attributes.width
             height: @attributes.height
+            storage: @attributes.storage
 
     getType: -> "image"

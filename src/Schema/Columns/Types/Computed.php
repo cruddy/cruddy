@@ -15,8 +15,8 @@ use Kalnoy\Cruddy\Schema\ComputedTrait;
  *
  * @since 1.0.0
  */
-class Computed extends BaseColumn {
-
+class Computed extends BaseColumn
+{
     use ComputedTrait;
 
     /**

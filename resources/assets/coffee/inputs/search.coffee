@@ -3,7 +3,7 @@ class Cruddy.Inputs.Search extends Cruddy.View
     className: "input-group"
 
     events:
-        "click .btn-search": "search"
+        "click .btn-search": "handleBtnClick"
 
     initialize: (options) ->
         @input = new Cruddy.Inputs.Text
@@ -15,12 +15,11 @@ class Cruddy.Inputs.Search extends Cruddy.View
 
         super
 
-    search: (e) ->
-        if e
-            e.preventDefault()
-            e.stopPropagation()
+    handleBtnClick: (e) ->
+        e.preventDefault()
+        e.stopPropagation()
 
-        @input.change()
+        @input.submitValue()
 
         return
 

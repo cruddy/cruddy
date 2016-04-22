@@ -23,7 +23,7 @@ use Kalnoy\Cruddy\Contracts\Field;
  * @method $this disable(mixed $value = true)
  * @property string $modelAttribute
  * @method $this modelAttribute(string $value)
- * 
+ *
  * @property callback $setter
  * @property callback $getter
  * @method $this setter(callback $callback)
@@ -67,14 +67,6 @@ abstract class BaseField extends Attribute implements Field
     }
 
     /**
-     * @inheritDoc
-     */
-    public function validate($value)
-    {
-        return [];
-    }
-
-    /**
      * {@inheritdoc}
      */
     public function getModelValueForColumn($model)
@@ -115,24 +107,12 @@ abstract class BaseField extends Attribute implements Field
     }
 
     /**
-     * @return bool|string
-     */
-    protected function isRequired()
-    {
-        $required = $this->get('required');
-
-        if ($required !== null) return $required;
-
-        return $this->form->getValidator()->getRequiredState($this->id);
-    }
-
-    /**
      * {@inheritdoc}
      */
     public function toArray()
     {
         return [
-            'required' => $this->isRequired(),
+            'required' => $this->get('required', false),
             'unique' => $this->get('unique'),
             'disabled' => $this->get('disable'),
             'label' => $this->getLabel(),
@@ -182,7 +162,7 @@ abstract class BaseField extends Attribute implements Field
         if ($getter = $this->get('getter')) {
             return $getter;
         }
-        
+
         return [ $this->form, 'getModelAttributeValue' ];
     }
 
@@ -194,8 +174,38 @@ abstract class BaseField extends Attribute implements Field
         if ($setter = $this->get('setter')) {
             return $setter;
         }
-        
+
         return [ $this->form, 'setModelAttributeValue' ];
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getRules($modelKey)
+    {
+        $rules = [];
+
+        $action = $modelKey ? Entity::WHEN_EXISTS : Entity::WHEN_NEW;
+
+        $required = $this->get('required', false);
+
+        if ($required === true || $required === $action) {
+            $rules[] = 'required';
+        }
+
+        if ($unique = $this->get('unique')) {
+            $rule = [ 'unique' ];
+            $rule[] = is_string($unique) ? $unique : $this->form->newModel()->getTable();
+            $rule[] = $this->id;
+
+            if ($modelKey) {
+                $rule[] = $modelKey;
+            }
+
+            $rules[] = $rule;
+        }
+
+        return $rules;
     }
 
 }

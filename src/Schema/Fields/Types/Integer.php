@@ -21,4 +21,12 @@ class Integer extends BaseNumber
         return (int)$value;
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function getRules($modelKey)
+    {
+        return array_merge(parent::getRules($modelKey), [ 'integer' ]);
+    }
+
 }

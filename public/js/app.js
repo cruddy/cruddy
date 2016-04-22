@@ -1235,6 +1235,1567 @@
 
   })();
 
+  Cruddy.Layout = {};
+
+  Cruddy.Layout.Element = (function(_super) {
+    __extends(Element, _super);
+
+    function Element(options, parent) {
+      var _ref;
+      this.parent = parent;
+      this.disable = (_ref = options.disable) != null ? _ref : false;
+      Element.__super__.constructor.apply(this, arguments);
+    }
+
+    Element.prototype.initialize = function() {
+      if (!this.model && this.parent) {
+        this.model = this.parent.model;
+      }
+      if (this.model) {
+        this.entity = this.model.entity;
+      }
+      return Element.__super__.initialize.apply(this, arguments);
+    };
+
+    Element.prototype.handleValidationError = function(error) {
+      if (this.parent) {
+        this.parent.handleValidationError(error);
+      }
+      return this;
+    };
+
+    Element.prototype.isDisabled = function() {
+      if (this.disable) {
+        return true;
+      }
+      if (this.parent) {
+        return this.parent.isDisabled();
+      }
+      return false;
+    };
+
+    Element.prototype.isFocusable = function() {
+      return false;
+    };
+
+    Element.prototype.focus = function() {
+      return this;
+    };
+
+    return Element;
+
+  })(Cruddy.View);
+
+  Cruddy.Layout.Container = (function(_super) {
+    __extends(Container, _super);
+
+    function Container() {
+      return Container.__super__.constructor.apply(this, arguments);
+    }
+
+    Container.prototype.initialize = function(options) {
+      Container.__super__.initialize.apply(this, arguments);
+      this.$container = this.$el;
+      this.items = [];
+      if (options.items) {
+        this.createItems(options.items);
+      }
+      return this;
+    };
+
+    Container.prototype.create = function(options) {
+      var constructor;
+      constructor = get(options["class"]);
+      if (!constructor || !_.isFunction(constructor)) {
+        console.error("Couldn't resolve element of type ", options["class"]);
+        return;
+      }
+      return this.append(new constructor(options, this));
+    };
+
+    Container.prototype.createItems = function(items) {
+      var item, _i, _len;
+      for (_i = 0, _len = items.length; _i < _len; _i++) {
+        item = items[_i];
+        this.create(item);
+      }
+      return this;
+    };
+
+    Container.prototype.append = function(element) {
+      if (element) {
+        this.items.push(element);
+      }
+      return element;
+    };
+
+    Container.prototype.renderElement = function(element) {
+      this.$container.append(element.render().$el);
+      return this;
+    };
+
+    Container.prototype.render = function() {
+      var element, _i, _len, _ref;
+      if (this.items) {
+        _ref = this.items;
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          element = _ref[_i];
+          this.renderElement(element);
+        }
+      }
+      return Container.__super__.render.apply(this, arguments);
+    };
+
+    Container.prototype.remove = function() {
+      var item, _i, _len, _ref;
+      _ref = this.items;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        item = _ref[_i];
+        item.remove();
+      }
+      return Container.__super__.remove.apply(this, arguments);
+    };
+
+    Container.prototype.getFocusable = function() {
+      return _.find(this.items, function(item) {
+        return item.isFocusable();
+      });
+    };
+
+    Container.prototype.isFocusable = function() {
+      return this.getFocusable() != null;
+    };
+
+    Container.prototype.focus = function() {
+      var el;
+      if (el = this.getFocusable()) {
+        el.focus();
+      }
+      return this;
+    };
+
+    return Container;
+
+  })(Cruddy.Layout.Element);
+
+  Cruddy.Layout.BaseFieldContainer = (function(_super) {
+    __extends(BaseFieldContainer, _super);
+
+    function BaseFieldContainer(options) {
+      var _ref;
+      this.title = (_ref = options.title) != null ? _ref : null;
+      BaseFieldContainer.__super__.constructor.apply(this, arguments);
+    }
+
+    return BaseFieldContainer;
+
+  })(Cruddy.Layout.Container);
+
+  Cruddy.Layout.FieldSet = (function(_super) {
+    __extends(FieldSet, _super);
+
+    function FieldSet() {
+      return FieldSet.__super__.constructor.apply(this, arguments);
+    }
+
+    FieldSet.prototype.tagName = "fieldset";
+
+    FieldSet.prototype.render = function() {
+      this.$el.html(this.template());
+      this.$container = this.$component("body");
+      return FieldSet.__super__.render.apply(this, arguments);
+    };
+
+    FieldSet.prototype.template = function() {
+      var html;
+      html = this.title ? "<legend>" + _.escape(this.title) + "</legend>" : "";
+      return html + "<div id='" + this.componentId("body") + "'></div>";
+    };
+
+    return FieldSet;
+
+  })(Cruddy.Layout.BaseFieldContainer);
+
+  Cruddy.Layout.TabPane = (function(_super) {
+    __extends(TabPane, _super);
+
+    function TabPane() {
+      return TabPane.__super__.constructor.apply(this, arguments);
+    }
+
+    TabPane.prototype.className = "tab-pane";
+
+    TabPane.prototype.initialize = function(options) {
+      TabPane.__super__.initialize.apply(this, arguments);
+      if (!options.title) {
+        this.title = this.entity.get("title").singular;
+      }
+      this.$el.attr("id", this.cid);
+      this.listenTo(this.model, "request", function() {
+        if (this.header) {
+          return this.header.resetErrors();
+        }
+      });
+      return this;
+    };
+
+    TabPane.prototype.activate = function() {
+      var _ref;
+      if ((_ref = this.header) != null) {
+        _ref.activate();
+      }
+      after_break((function(_this) {
+        return function() {
+          return _this.focus();
+        };
+      })(this));
+      return this;
+    };
+
+    TabPane.prototype.getHeader = function() {
+      if (!this.header) {
+        this.header = new Cruddy.Layout.TabPane.Header({
+          model: this
+        });
+      }
+      return this.header;
+    };
+
+    TabPane.prototype.handleValidationError = function() {
+      var _ref;
+      if ((_ref = this.header) != null) {
+        _ref.incrementErrors();
+      }
+      return TabPane.__super__.handleValidationError.apply(this, arguments);
+    };
+
+    return TabPane;
+
+  })(Cruddy.Layout.BaseFieldContainer);
+
+  Cruddy.Layout.TabPane.Header = (function(_super) {
+    __extends(Header, _super);
+
+    function Header() {
+      return Header.__super__.constructor.apply(this, arguments);
+    }
+
+    Header.prototype.tagName = "li";
+
+    Header.prototype.events = {
+      "shown.bs.tab": function() {
+        after_break((function(_this) {
+          return function() {
+            return _this.model.focus();
+          };
+        })(this));
+      }
+    };
+
+    Header.prototype.initialize = function() {
+      this.errors = 0;
+      return Header.__super__.initialize.apply(this, arguments);
+    };
+
+    Header.prototype.incrementErrors = function() {
+      this.$badge.text(++this.errors);
+      return this;
+    };
+
+    Header.prototype.resetErrors = function() {
+      this.errors = 0;
+      this.$badge.text("");
+      return this;
+    };
+
+    Header.prototype.render = function() {
+      this.$el.html(this.template());
+      this.$badge = this.$component("badge");
+      return Header.__super__.render.apply(this, arguments);
+    };
+
+    Header.prototype.template = function() {
+      return "<a href=\"#" + this.model.cid + "\" role=\"tab\" data-toggle=\"tab\">\n    " + this.model.title + "\n    <span class=\"badge\" id=\"" + (this.componentId("badge")) + "\"></span>\n</a>";
+    };
+
+    Header.prototype.activate = function() {
+      this.$("a").tab("show");
+      return this;
+    };
+
+    return Header;
+
+  })(Cruddy.View);
+
+  Cruddy.Layout.Row = (function(_super) {
+    __extends(Row, _super);
+
+    function Row() {
+      return Row.__super__.constructor.apply(this, arguments);
+    }
+
+    Row.prototype.className = "row";
+
+    return Row;
+
+  })(Cruddy.Layout.Container);
+
+  Cruddy.Layout.Col = (function(_super) {
+    __extends(Col, _super);
+
+    function Col() {
+      return Col.__super__.constructor.apply(this, arguments);
+    }
+
+    Col.prototype.initialize = function(options) {
+      this.$el.addClass("col-xs-" + options.span);
+      return Col.__super__.initialize.apply(this, arguments);
+    };
+
+    return Col;
+
+  })(Cruddy.Layout.BaseFieldContainer);
+
+  Cruddy.Layout.Field = (function(_super) {
+    __extends(Field, _super);
+
+    function Field() {
+      return Field.__super__.constructor.apply(this, arguments);
+    }
+
+    Field.prototype.initialize = function(options) {
+      Field.__super__.initialize.apply(this, arguments);
+      this.fieldView = null;
+      if (!(this.field = this.entity.field(options.field))) {
+        console.error("The field " + options.field + " is not found in " + this.entity.id + ".");
+      }
+      return this;
+    };
+
+    Field.prototype.render = function() {
+      if (this.field && this.field.isVisible()) {
+        this.fieldView = this.field.createView(this.model, this.isDisabled(), this);
+      }
+      if (this.fieldView) {
+        this.$el.html(this.fieldView.render().$el);
+      }
+      return this;
+    };
+
+    Field.prototype.remove = function() {
+      if (this.fieldView) {
+        this.fieldView.remove();
+      }
+      return Field.__super__.remove.apply(this, arguments);
+    };
+
+    Field.prototype.isFocusable = function() {
+      return this.fieldView && this.fieldView.isFocusable();
+    };
+
+    Field.prototype.focus = function() {
+      if (this.fieldView) {
+        this.fieldView.focus();
+      }
+      return this;
+    };
+
+    return Field;
+
+  })(Cruddy.Layout.Element);
+
+  Cruddy.Layout.Text = (function(_super) {
+    __extends(Text, _super);
+
+    function Text() {
+      return Text.__super__.constructor.apply(this, arguments);
+    }
+
+    Text.prototype.tagName = "p";
+
+    Text.prototype.className = "text-node";
+
+    Text.prototype.initialize = function(options) {
+      if (options.contents) {
+        this.$el.html(options.contents);
+      }
+      return Text.__super__.initialize.apply(this, arguments);
+    };
+
+    return Text;
+
+  })(Cruddy.Layout.Element);
+
+  FieldList = (function(_super) {
+    __extends(FieldList, _super);
+
+    function FieldList() {
+      return FieldList.__super__.constructor.apply(this, arguments);
+    }
+
+    FieldList.prototype.className = "field-list";
+
+    FieldList.prototype.initialize = function() {
+      var field, _i, _len, _ref;
+      FieldList.__super__.initialize.apply(this, arguments);
+      _ref = this.entity.fields.models;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        field = _ref[_i];
+        this.append(new Cruddy.Layout.Field({
+          field: field.id
+        }, this));
+      }
+      return this;
+    };
+
+    return FieldList;
+
+  })(Cruddy.Layout.BaseFieldContainer);
+
+  Cruddy.Layout.Layout = (function(_super) {
+    __extends(Layout, _super);
+
+    function Layout() {
+      return Layout.__super__.constructor.apply(this, arguments);
+    }
+
+    Layout.prototype.initialize = function() {
+      Layout.__super__.initialize.apply(this, arguments);
+      return this.setupLayout();
+    };
+
+    Layout.prototype.setupLayout = function() {
+      if (this.entity.attributes.layout) {
+        this.createItems(this.entity.attributes.layout);
+      } else {
+        this.setupDefaultLayout();
+      }
+      return this;
+    };
+
+    Layout.prototype.setupDefaultLayout = function() {
+      return this;
+    };
+
+    return Layout;
+
+  })(Cruddy.Layout.Container);
+
+  Cruddy.Entity = {};
+
+  Cruddy.Entity.Entity = (function(_super) {
+    __extends(Entity, _super);
+
+    function Entity() {
+      return Entity.__super__.constructor.apply(this, arguments);
+    }
+
+    Entity.prototype.initialize = function(attributes, options) {
+      this.fields = this.createObjects(attributes.fields);
+      this.columns = this.createObjects(attributes.columns);
+      this.filters = this.createObjects(attributes.filters);
+      this.permissions = Cruddy.permissions[this.id];
+      this.cache = {};
+      return this;
+    };
+
+    Entity.prototype.createObjects = function(items) {
+      var constructor, data, options, _i, _len;
+      data = [];
+      for (_i = 0, _len = items.length; _i < _len; _i++) {
+        options = items[_i];
+        options.entity = this;
+        constructor = get(options["class"]);
+        if (!constructor) {
+          throw "The class " + options["class"] + " is not found";
+        }
+        data.push(new constructor(options));
+      }
+      return new Backbone.Collection(data);
+    };
+
+    Entity.prototype.createDataSource = function(data) {
+      var col, defaults;
+      defaults = {
+        order_by: this.get("order_by")
+      };
+      if (col = this.columns.get(defaults.order_by)) {
+        defaults.order_dir = col.get("order_dir");
+      }
+      data = $.extend({}, defaults, data);
+      return new DataSource(data, {
+        entity: this
+      });
+    };
+
+    Entity.prototype.getDataSource = function() {
+      if (!this.dataSource) {
+        this.dataSource = this.createDataSource();
+      }
+      return this.dataSource;
+    };
+
+    Entity.prototype.createFilters = function(columns) {
+      var col, filters;
+      if (columns == null) {
+        columns = this.columns;
+      }
+      filters = (function() {
+        var _i, _len, _ref, _results;
+        _ref = columns.models;
+        _results = [];
+        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+          col = _ref[_i];
+          if (col.get("filter_type") === "complex") {
+            _results.push(col.createFilter());
+          }
+        }
+        return _results;
+      })();
+      return new Backbone.Collection(filters);
+    };
+
+    Entity.prototype.createInstance = function(data, options) {
+      var attributes, instance;
+      if (data == null) {
+        data = {};
+      }
+      if (options == null) {
+        options = {};
+      }
+      options.entity = this;
+      attributes = _.extend({}, this.get("defaults"), data.attributes);
+      instance = new Cruddy.Entity.Instance(attributes, options);
+      return instance.setMetaFromResponse(data);
+    };
+
+    Entity.prototype.field = function(id) {
+      var field;
+      if (!(field = this.fields.get(id))) {
+        console.error("The field " + id + " is not found.");
+        return;
+      }
+      return field;
+    };
+
+    Entity.prototype.getField = function(id) {
+      return this.fields.get(id);
+    };
+
+    Entity.prototype.search = function(options) {
+      if (options == null) {
+        options = {};
+      }
+      return new SearchDataSource({}, $.extend({
+        url: this.url()
+      }, options));
+    };
+
+    Entity.prototype.load = function(id, options) {
+      var defaults, xhr;
+      defaults = {
+        cached: true
+      };
+      options = $.extend(defaults, options);
+      if (options.cached && id in this.cache) {
+        return $.Deferred().resolve(this.cache[id]).promise();
+      }
+      xhr = $.ajax({
+        url: this.url(id),
+        type: "GET",
+        dataType: "json",
+        displayLoading: true
+      });
+      xhr = xhr.then((function(_this) {
+        return function(resp) {
+          var instance;
+          instance = _this.createInstance(resp);
+          _this.cache[instance.id] = instance;
+          return instance;
+        };
+      })(this));
+      return xhr;
+    };
+
+    Entity.prototype.destroy = function(id, options) {
+      if (options == null) {
+        options = {};
+      }
+      options.url = this.url(id);
+      options.type = "POST";
+      options.dataType = "json";
+      options.data = {
+        _method: "DELETE"
+      };
+      options.displayLoading = true;
+      return $.ajax(options);
+    };
+
+    Entity.prototype.executeAction = function(id, action, options) {
+      if (options == null) {
+        options = {};
+      }
+      options.url = this.url(id + "/" + action);
+      options.type = "POST";
+      options.dataType = "json";
+      options.displayLoading = true;
+      return $.ajax(options);
+    };
+
+    Entity.prototype.getCopyableAttributes = function(model, copy) {
+      var data, field, _i, _len, _ref;
+      data = {};
+      _ref = this.fields.models;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        field = _ref[_i];
+        if (field.isCopyable()) {
+          data[field.id] = field.copyAttribute(model, copy);
+        }
+      }
+      return data;
+    };
+
+    Entity.prototype.hasChangedSinceSync = function(model) {
+      var field, _i, _len, _ref;
+      _ref = this.fields.models;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        field = _ref[_i];
+        if (!(field.hasChangedSinceSync(model))) {
+          continue;
+        }
+        console.log(field);
+        return true;
+      }
+      return false;
+    };
+
+    Entity.prototype.prepareAttributes = function(attributes, model) {
+      var field, key, result, value;
+      result = {};
+      for (key in attributes) {
+        value = attributes[key];
+        if (field = this.getField(key)) {
+          result[key] = field.prepareAttribute(value);
+        }
+      }
+      return result;
+    };
+
+    Entity.prototype.url = function(id) {
+      return entity_url(this.id, id);
+    };
+
+    Entity.prototype.link = function(id) {
+      var link;
+      link = this.url();
+      if (id instanceof Cruddy.Entity.Instance) {
+        id = id.id;
+      }
+      if (id) {
+        return link + "?id=" + id;
+      } else {
+        return link;
+      }
+    };
+
+    Entity.prototype.createController = function() {
+      var controllerClass;
+      controllerClass = get(this.attributes.controller_class) || Cruddy.Entity.Page;
+      if (!controllerClass) {
+        throw "Failed to resolve page class " + this.attributes.view;
+      }
+      return new controllerClass({
+        model: this
+      });
+    };
+
+    Entity.prototype.getPluralTitle = function() {
+      return this.attributes.title.plural;
+    };
+
+    Entity.prototype.getSingularTitle = function() {
+      return this.attributes.title.singular;
+    };
+
+    Entity.prototype.getPermissions = function() {
+      return this.permissions;
+    };
+
+    Entity.prototype.readPermitted = function() {
+      return this.permissions.read;
+    };
+
+    Entity.prototype.updatePermitted = function() {
+      return this.permissions.update;
+    };
+
+    Entity.prototype.createPermitted = function() {
+      return this.permissions.create;
+    };
+
+    Entity.prototype.deletePermitted = function() {
+      return this.permissions["delete"];
+    };
+
+    Entity.prototype.isSoftDeleting = function() {
+      return this.attributes.soft_deleting;
+    };
+
+    Entity.prototype.getPrimaryKey = function() {
+      return this.attributes.primary_key || "id";
+    };
+
+    return Entity;
+
+  })(Backbone.Model);
+
+  Cruddy.Entity.Instance = (function(_super) {
+    __extends(Instance, _super);
+
+    Instance.prototype.cidPrefix = "0";
+
+    Instance.prototype.idAttribute = "__id";
+
+    function Instance(attributes, options) {
+      this.entity = options.entity;
+      this.meta = {};
+      Instance.__super__.constructor.apply(this, arguments);
+    }
+
+    Instance.prototype.initialize = function(attributes, options) {
+      this.syncOriginalAttributes();
+      this.on("error", this.handleErrorEvent, this);
+      this.on("sync", this.handleSyncEvent, this);
+      this.on("destroy", this.handleDestroyEvent, this);
+      return this;
+    };
+
+    Instance.prototype.syncOriginalAttributes = function() {
+      this.original = _.clone(this.attributes);
+      return this;
+    };
+
+    Instance.prototype.handleSyncEvent = function(model, resp) {
+      this.syncOriginalAttributes();
+      if ((resp != null ? resp.model : void 0) != null) {
+        this.setMetaFromResponse(resp.model);
+      }
+      return this;
+    };
+
+    Instance.prototype.setMetaFromResponse = function(resp) {
+      if (resp.meta != null) {
+        this.meta = _.clone(resp.meta);
+      }
+      return this;
+    };
+
+    Instance.prototype.handleErrorEvent = function(model, xhr) {
+      if (xhr.status === VALIDATION_FAILED_CODE) {
+        this.trigger("invalid", this, xhr.responseJSON);
+      }
+    };
+
+    Instance.prototype.handleDestroyEvent = function(model) {
+      this.isDeleted = true;
+    };
+
+    Instance.prototype.validate = function() {
+      this.set("errors", {});
+      return null;
+    };
+
+    Instance.prototype.link = function() {
+      return this.entity.link(this.id || "create");
+    };
+
+    Instance.prototype.url = function() {
+      return this.entity.url(this.id);
+    };
+
+    Instance.prototype.set = function(key, val, options) {
+      var attributeId, field, value;
+      if (_.isObject(key)) {
+        for (attributeId in key) {
+          value = key[attributeId];
+          if (field = this.entity.getField(attributeId)) {
+            key[attributeId] = field.parse(this, value);
+          }
+        }
+      }
+      return Instance.__super__.set.apply(this, arguments);
+    };
+
+    Instance.prototype.sync = function(method, model, options) {
+      var _ref;
+      if (method === "update" || method === "create") {
+        options.data = new AdvFormData(this.entity.prepareAttributes((_ref = options.attrs) != null ? _ref : this.attributes, this)).original;
+        options.contentType = false;
+        options.processData = false;
+      }
+      return Instance.__super__.sync.apply(this, arguments);
+    };
+
+    Instance.prototype.parse = function(resp) {
+      return resp.model.attributes;
+    };
+
+    Instance.prototype.copy = function() {
+      var copy;
+      copy = this.entity.createInstance();
+      copy.set(this.entity.getCopyableAttributes(this, copy), {
+        silent: true
+      });
+      return copy;
+    };
+
+    Instance.prototype.hasChangedSinceSync = function() {
+      return this.entity.hasChangedSinceSync(this);
+    };
+
+    Instance.prototype.canBeSaved = function() {
+      var isNew;
+      isNew = this.isNew();
+      return ((isNew && this.entity.createPermitted()) || (!isNew && this.entity.updatePermitted())) && (!this.isDeleted || !isNew);
+    };
+
+    Instance.prototype.serialize = function() {
+      var data;
+      data = this.isDeleted ? {} : this.entity.prepareAttributes(this.attributes, this);
+      return $.extend(data, {
+        __id: this.id,
+        __d: this.isDeleted
+      });
+    };
+
+    Instance.prototype.action = function() {
+      if (this.isNew()) {
+        return "create";
+      } else {
+        return "update";
+      }
+    };
+
+    Instance.prototype.getTitle = function() {
+      if (this.isNew()) {
+        return Cruddy.lang.model_new_record;
+      } else {
+        return this.meta.title;
+      }
+    };
+
+    Instance.prototype.getOriginal = function(key) {
+      return this.original[key];
+    };
+
+    return Instance;
+
+  })(Backbone.Model);
+
+  Cruddy.Entity.Page = (function(_super) {
+    __extends(Page, _super);
+
+    Page.prototype.className = "page entity-page";
+
+    Page.prototype.events = {
+      "click .ep-btn-create": "create",
+      "click .ep-btn-refresh": "refreshData"
+    };
+
+    function Page(options) {
+      this.className += " entity-page-" + options.model.id;
+      Page.__super__.constructor.apply(this, arguments);
+    }
+
+    Page.prototype.initialize = function(options) {
+      this.dataSource = this._setupDataSource();
+      after_break((function(_this) {
+        return function() {
+          return _this.listenTo(Cruddy.router, "route:index", _this._updateFromQuery);
+        };
+      })(this));
+      return Page.__super__.initialize.apply(this, arguments);
+    };
+
+    Page.prototype._updateFromQuery = function() {
+      this._updateDataSourceFromQuery();
+      this._displayForm().fail((function(_this) {
+        return function() {
+          return _this._updateModelIdInQuery({
+            replace: true
+          });
+        };
+      })(this));
+      return this;
+    };
+
+    Page.prototype._setupDataSource = function() {
+      var dataSource;
+      this.dataSource = dataSource = this.model.getDataSource();
+      this._updateFromQuery();
+      if (!(dataSource.inProgress() || dataSource.hasData())) {
+        dataSource.fetch();
+      }
+      this.listenTo(dataSource, "change", this._refreshQuery);
+      return dataSource;
+    };
+
+    Page.prototype._refreshQuery = function() {
+      var dataSource;
+      dataSource = this.dataSource;
+      Cruddy.router.refreshQuery(dataSource.attributes, dataSource.defaults, {
+        trigger: false
+      });
+      return this;
+    };
+
+    Page.prototype._updateDataSourceFromQuery = function(options) {
+      var data, key;
+      data = $.extend({}, this.dataSource.defaults, _.omit(Cruddy.router.query.keys, ["id"]));
+      for (key in this.dataSource.attributes) {
+        if (!(key in data)) {
+          data[key] = null;
+        }
+      }
+      this.dataSource.set(data, options);
+    };
+
+    Page.prototype._updateModelIdInQuery = function(options) {
+      var router;
+      router = Cruddy.router;
+      options = $.extend({
+        trigger: false,
+        replace: false
+      }, options);
+      if (this.form) {
+        router.setQuery("id", this.form.model.id || "new", options);
+      } else {
+        router.removeQuery("id", options);
+      }
+      return this;
+    };
+
+    Page.prototype._displayForm = function(instanceId) {
+      var compareId, dfd, instance, resolve, _ref;
+      if (this.loadingForm) {
+        return this.loadingForm;
+      }
+      instanceId = instanceId != null ? instanceId : Cruddy.router.getQuery("id");
+      if (instanceId instanceof Cruddy.Entity.Instance) {
+        instance = instanceId;
+        instanceId = instance.id || "new";
+      }
+      this.loadingForm = dfd = $.Deferred();
+      this.loadingForm.always((function(_this) {
+        return function() {
+          return _this.loadingForm = null;
+        };
+      })(this));
+      if (this.form) {
+        compareId = this.form.model.isNew() ? "new" : this.form.model.id;
+        if (instanceId === compareId || !this.form.confirmClose()) {
+          dfd.reject();
+          return dfd.promise();
+        }
+      }
+      resolve = (function(_this) {
+        return function(instance) {
+          _this._createAndRenderForm(instance);
+          return dfd.resolve(instance);
+        };
+      })(this);
+      if (instanceId === "new" && !instance) {
+        instance = this.model.createInstance();
+      }
+      if (instance) {
+        resolve(instance);
+        return dfd.promise();
+      }
+      if (instanceId) {
+        this.model.load(instanceId).done(resolve).fail(function() {
+          return dfd.reject();
+        });
+      } else {
+        if ((_ref = this.form) != null) {
+          _ref.remove();
+        }
+        dfd.resolve();
+      }
+      return dfd.promise();
+    };
+
+    Page.prototype._createAndRenderForm = function(instance) {
+      var form, _ref;
+      if ((_ref = this.form) != null) {
+        _ref.remove();
+      }
+      this.form = form = Cruddy.Entity.Form.display(instance);
+      form.on("close", (function(_this) {
+        return function() {
+          return Cruddy.router.removeQuery("id", {
+            trigger: false
+          });
+        };
+      })(this));
+      form.on("created", function(model) {
+        return Cruddy.router.setQuery("id", model.id);
+      });
+      form.on("remove", (function(_this) {
+        return function() {
+          _this.form = null;
+          _this.model.set("instance", null);
+          return _this.stopListening(instance);
+        };
+      })(this));
+      form.on("saved", (function(_this) {
+        return function() {
+          _this.dataSource.fetch();
+          return _this._updateModelIdInQuery({
+            replace: true
+          });
+        };
+      })(this));
+      form.on("saved remove", function() {
+        return Cruddy.app.updateTitle();
+      });
+      this.model.set("instance", instance);
+      Cruddy.app.updateTitle();
+      return this;
+    };
+
+    Page.prototype.displayForm = function(id) {
+      return this._displayForm(id).done((function(_this) {
+        return function() {
+          return _this._updateModelIdInQuery();
+        };
+      })(this));
+    };
+
+    Page.prototype.create = function() {
+      this.displayForm("new");
+      return this;
+    };
+
+    Page.prototype.refreshData = function(e) {
+      var btn;
+      btn = $(e.currentTarget);
+      btn.prop("disabled", true);
+      this.dataSource.fetch().always(function() {
+        return btn.prop("disabled", false);
+      });
+      return this;
+    };
+
+    Page.prototype.render = function() {
+      this.$el.html(this.template());
+      this.searchInputView = this.createSearchInputView();
+      this.dataView = this.createDataView();
+      this.paginationView = this.createPaginationView();
+      this.filterListView = this.createFilterListView();
+      if (this.searchInputView) {
+        this.$component("search_input_view").append(this.searchInputView.render().$el);
+      }
+      if (this.filterListView) {
+        this.$component("filter_list_view").append(this.filterListView.render().el);
+      }
+      if (this.dataView) {
+        this.$component("data_view").append(this.dataView.render().el);
+      }
+      if (this.paginationView) {
+        this.$component("pagination_view").append(this.paginationView.render().el);
+      }
+      return this;
+    };
+
+    Page.prototype.createDataView = function() {
+      return new DataGrid({
+        model: this.dataSource,
+        entity: this.model
+      });
+    };
+
+    Page.prototype.createPaginationView = function() {
+      return new Pagination({
+        model: this.dataSource
+      });
+    };
+
+    Page.prototype.createFilterListView = function() {
+      var filters;
+      if ((filters = this.dataSource.entity.filters).isEmpty()) {
+        return;
+      }
+      return new FilterList({
+        model: this.dataSource,
+        entity: this.model,
+        filters: filters
+      });
+    };
+
+    Page.prototype.createSearchInputView = function() {
+      return new Cruddy.Inputs.Search({
+        model: this.dataSource,
+        key: "keywords"
+      });
+    };
+
+    Page.prototype.template = function() {
+      return "<div class=\"content-header\">\n    <div class=\"column column-main\">\n        <h1 class=\"entity-title\">" + (this.model.getPluralTitle()) + "</h1>\n\n        <div class=\"entity-title-buttons\">\n            " + (this.buttonsTemplate()) + "\n        </div>\n    </div>\n\n    <div class=\"column column-extra\">\n        <div class=\"entity-search-box\" id=\"" + (this.componentId("search_input_view")) + "\"></div>\n    </div>\n</div>\n\n<div class=\"content-body\">\n    <div class=\"column column-main\">\n        <div id=\"" + (this.componentId("data_view")) + "\"></div>\n        <div id=\"" + (this.componentId("pagination_view")) + "\"></div>\n    </div>\n\n    <div class=\"column column-extra\" id=\"" + (this.componentId("filter_list_view")) + "\"></div>\n</div>";
+    };
+
+    Page.prototype.buttonsTemplate = function() {
+      var html;
+      html = "<button type=\"button\" class=\"btn btn-default ep-btn-refresh\" title=\"" + Cruddy.lang.refresh + "\">\n    " + (b_icon("refresh")) + "\n</button>";
+      html += " ";
+      if (this.model.createPermitted()) {
+        html += "<button type=\"button\" class=\"btn btn-primary ep-btn-create\" title=\"" + Cruddy.lang.add + "\">\n    " + (b_icon("plus")) + "\n</button>";
+      }
+      return html;
+    };
+
+    Page.prototype.remove = function() {
+      var _ref, _ref1, _ref2, _ref3, _ref4;
+      if ((_ref = this.form) != null) {
+        _ref.remove();
+      }
+      if ((_ref1 = this.filterListView) != null) {
+        _ref1.remove();
+      }
+      if ((_ref2 = this.dataView) != null) {
+        _ref2.remove();
+      }
+      if ((_ref3 = this.paginationView) != null) {
+        _ref3.remove();
+      }
+      if ((_ref4 = this.searchInputView) != null) {
+        _ref4.remove();
+      }
+      return Page.__super__.remove.apply(this, arguments);
+    };
+
+    Page.prototype.getPageTitle = function() {
+      var title;
+      title = this.model.getPluralTitle();
+      if (this.form != null) {
+        title = this.form.model.getTitle() + TITLE_SEPARATOR + title;
+      }
+      return title;
+    };
+
+    Page.prototype.executeCustomAction = function(actionId, modelId, el) {
+      if (el && !$(el).parent().is("disabled")) {
+        this.model.executeAction(modelId, actionId, {
+          success: (function(_this) {
+            return function(resp) {
+              if (resp.successful) {
+                _this.dataSource.fetch();
+              }
+              return Cruddy.getApp().displayActionResult(resp);
+            };
+          })(this)
+        });
+      }
+      return this;
+    };
+
+    Page.prototype.pageUnloadConfirmationMessage = function() {
+      var _ref;
+      return (_ref = this.form) != null ? _ref.pageUnloadConfirmationMessage() : void 0;
+    };
+
+    return Page;
+
+  })(Cruddy.View);
+
+  Cruddy.Entity.Form = (function(_super) {
+    __extends(Form, _super);
+
+    Form.prototype.className = "entity-form";
+
+    Form.prototype.events = {
+      "click [data-action]": "executeAction"
+    };
+
+    function Form(options) {
+      this.className += " " + this.className + "-" + options.model.entity.id;
+      Form.__super__.constructor.apply(this, arguments);
+    }
+
+    Form.prototype.initialize = function(options) {
+      Form.__super__.initialize.apply(this, arguments);
+      this.saveOptions = {
+        displayLoading: true,
+        xhr: (function(_this) {
+          return function() {
+            var xhr;
+            xhr = $.ajaxSettings.xhr();
+            if (xhr.upload) {
+              xhr.upload.addEventListener('progress', $.proxy(_this, "progressCallback"));
+            }
+            return xhr;
+          };
+        })(this)
+      };
+      this.listenTo(this.model, "destroy", this.handleModelDestroyEvent);
+      this.listenTo(this.model, "invalid", this.handleModelInvalidEvent);
+      this.hotkeys = $(document).on("keydown." + this.cid, "body", $.proxy(this, "hotkeys"));
+      return this;
+    };
+
+    Form.prototype.setupDefaultLayout = function() {
+      var field, tab, _i, _len, _ref;
+      tab = this.append(new Cruddy.Layout.TabPane({
+        title: this.model.entity.get("title").singular
+      }, this));
+      _ref = this.entity.fields.models;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        field = _ref[_i];
+        tab.append(new Cruddy.Layout.Field({
+          field: field.id
+        }, tab));
+      }
+      return this;
+    };
+
+    Form.prototype.hotkeys = function(e) {
+      if (e.ctrlKey && e.keyCode === 90 && e.target === document.body) {
+        this.model.set(this.model.previousAttributes());
+        return false;
+      }
+      if (e.ctrlKey && e.keyCode === 13) {
+        this.saveModel();
+        return false;
+      }
+      if (e.keyCode === 27) {
+        this.closeForm();
+        e.preventDefault();
+        return false;
+      }
+      return this;
+    };
+
+    Form.prototype.displayAlert = function(message, type, timeout) {
+      if (this.alert != null) {
+        this.alert.remove();
+      }
+      this.alert = new Alert({
+        message: message,
+        className: "flash",
+        type: type,
+        timeout: timeout
+      });
+      this.$footer.prepend(this.alert.render().el);
+      return this;
+    };
+
+    Form.prototype.displaySuccess = function(resp) {
+      this.displayAlert(Cruddy.lang.form_saved, "success", 3000);
+      if (resp.actionResult) {
+        Cruddy.getApp().displayActionResult(resp.actionResult);
+      }
+      return this;
+    };
+
+    Form.prototype.displayError = function(xhr) {
+      if (xhr.status !== VALIDATION_FAILED_CODE) {
+        this.displayAlert(Cruddy.lang.form_failed, "danger", 5000);
+      }
+      return this;
+    };
+
+    Form.prototype.handleModelInvalidEvent = function() {
+      return this.displayAlert(Cruddy.lang.form_invalid, "warning", 5000);
+    };
+
+    Form.prototype.handleModelDestroyEvent = function() {
+      this.updateModelState();
+      this.trigger("destroyed", this.model);
+      return this;
+    };
+
+    Form.prototype.show = function() {
+      this.$el.toggleClass("opened", true);
+      this.items[0].activate();
+      this.focus();
+      return this;
+    };
+
+    Form.prototype.save = function(options) {
+      var isNew;
+      if (this.request != null) {
+        return;
+      }
+      isNew = this.model.isNew();
+      this.setupRequest(this.model.save(null, $.extend({}, this.saveOptions, options)));
+      this.request.done((function(_this) {
+        return function(resp) {
+          _this.trigger((isNew ? "created" : "updated"), _this.model, resp);
+          _this.trigger("saved", _this.model, resp);
+          return _this.updateModelState();
+        };
+      })(this));
+      return this;
+    };
+
+    Form.prototype.saveModel = function() {
+      return this.save();
+    };
+
+    Form.prototype.saveWithAction = function($el) {
+      return this.save({
+        url: this.model.entity.url(this.model.id + "/" + $el.data("actionId"))
+      });
+    };
+
+    Form.prototype.destroyModel = function() {
+      var confirmed, softDeleting;
+      if (this.request || this.model.isNew()) {
+        return;
+      }
+      softDeleting = this.model.entity.get("soft_deleting");
+      confirmed = !softDeleting ? confirm(Cruddy.lang.confirm_delete) : true;
+      if (confirmed) {
+        this.request = this.softDeleting && this.model.get("deleted_at") ? this.model.restore : this.model.destroy({
+          wait: true
+        });
+        this.request.always((function(_this) {
+          return function() {
+            return _this.request = null;
+          };
+        })(this));
+      }
+      return this;
+    };
+
+    Form.prototype.copyModel = function() {
+      Cruddy.app.entityView.displayForm(this.model.copy());
+      return this;
+    };
+
+    Form.prototype.refreshModel = function() {
+      if (this.request != null) {
+        return;
+      }
+      if (this.confirmClose()) {
+        this.setupRequest(this.model.fetch());
+      }
+      this.request.done((function(_this) {
+        return function() {
+          return _this.updateModelMetaState();
+        };
+      })(this));
+      return this;
+    };
+
+    Form.prototype.setupRequest = function(request) {
+      request.done($.proxy(this, "displaySuccess")).fail($.proxy(this, "displayError"));
+      request.always((function(_this) {
+        return function() {
+          _this.request = null;
+          return _this.updateRequestState();
+        };
+      })(this));
+      this.request = request;
+      return this.updateRequestState();
+    };
+
+    Form.prototype.progressCallback = function(e) {
+      var width;
+      if (e.lengthComputable) {
+        width = (e.loaded * 100) / e.total;
+        this.$progressBar.width(width + '%').parent().show();
+        if (width === 100) {
+          this.$progressBar.parent().hide();
+        }
+      }
+      return this;
+    };
+
+    Form.prototype.closeForm = function() {
+      if (this.confirmClose()) {
+        this.remove();
+        this.trigger("close");
+      }
+      return this;
+    };
+
+    Form.prototype.pageUnloadConfirmationMessage = function() {
+      if (this.model.isDeleted) {
+        return;
+      }
+      if (this.request) {
+        return Cruddy.lang.onclose_abort;
+      }
+      if (this.model.hasChangedSinceSync()) {
+        return Cruddy.lang.onclose_discard;
+      }
+    };
+
+    Form.prototype.confirmClose = function() {
+      if (!this.model.isDeleted) {
+        if (this.request) {
+          return confirm(Cruddy.lang.confirm_abort);
+        }
+        if (this.model.hasChangedSinceSync()) {
+          return confirm(Cruddy.lang.confirm_discard);
+        }
+      }
+      return true;
+    };
+
+    Form.prototype.render = function() {
+      this.$el.html(this.template());
+      this.$container = this.$component("body");
+      this.$nav = this.$component("nav");
+      this.$footer = this.$component("footer");
+      this.$btnSave = this.$component("save");
+      this.$deletedMsg = this.$component("deleted-message");
+      this.$progressBar = this.$component("progress");
+      this.$serviceMenu = this.$component("service-menu");
+      this.$serviceMenuItems = this.$component("service-menu-items");
+      this.updateModelState();
+      return Form.__super__.render.apply(this, arguments);
+    };
+
+    Form.prototype.renderElement = function(el) {
+      this.$nav.append(el.getHeader().render().$el);
+      return Form.__super__.renderElement.apply(this, arguments);
+    };
+
+    Form.prototype.updateRequestState = function() {
+      var isLoading;
+      isLoading = this.request != null;
+      this.$el.toggleClass("loading", isLoading);
+      this.$btnSave.attr("disabled", isLoading);
+      if (this.$btnExtraActions) {
+        this.$btnExtraActions.attr("disabled", isLoading);
+        this.$btnExtraActions.children(".btn").attr("disabled", isLoading);
+      }
+      return this;
+    };
+
+    Form.prototype.updateModelState = function() {
+      var entity, isDeleted, isNew;
+      entity = this.model.entity;
+      isNew = this.model.isNew();
+      isDeleted = this.model.isDeleted || false;
+      this.$el.toggleClass("destroyed", isDeleted);
+      this.$btnSave.text(isNew ? Cruddy.lang.create : Cruddy.lang.save);
+      this.$btnSave.toggle(!isDeleted && (isNew ? entity.createPermitted() : entity.updatePermitted()));
+      return this.updateModelMetaState();
+    };
+
+    Form.prototype.updateModelMetaState = function() {
+      var html, isDeleted, isNew, _ref;
+      isNew = this.model.isNew();
+      isDeleted = this.model.isDeleted || false;
+      this.$serviceMenu.toggle(!isNew);
+      if (!isNew) {
+        this.$serviceMenuItems.html(this.renderServiceMenuItems());
+      }
+      if ((_ref = this.$btnExtraActions) != null) {
+        _ref.remove();
+      }
+      this.$btnExtraActions = null;
+      if (this.model.entity.updatePermitted()) {
+        if (!isNew && !isDeleted && (html = this.renderExtraActionsButton())) {
+          this.$btnSave.before(this.$btnExtraActions = $(html));
+        }
+      }
+      return this;
+    };
+
+    Form.prototype.template = function() {
+      return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n        <ul id=\"" + (this.componentId("nav")) + "\" class=\"nav navbar-nav\"></ul>\n\n        <ul id=\"" + (this.componentId("service-menu")) + "\" class=\"nav navbar-nav navbar-right\">\n            <li class=\"dropdown\">\n                <a class=\"dropdown-toggle\" data-toggle=\"dropdown\" href=\"#\">\n                    <span class=\"glyphicon glyphicon-option-horizontal\"></span>\n                </a>\n\n                <ul class=\"dropdown-menu\" role=\"menu\" id=\"" + (this.componentId("service-menu-items")) + "\"></ul>\n            </li>\n        </ul>\n    </div>\n</div>\n\n<div class=\"tab-content\" id=\"" + (this.componentId("body")) + "\"></div>\n\n<footer id=\"" + (this.componentId("footer")) + "\">\n    <span class=\"fs-deleted-message\">" + Cruddy.lang.model_deleted + "</span>\n\n    <button data-action=\"closeForm\" id=\"" + (this.componentId("close")) + "\" type=\"button\" class=\"btn btn-default\">" + Cruddy.lang.close + "</button><!--\n    --><button data-action=\"saveModel\" id=\"" + (this.componentId("save")) + "\" type=\"button\" class=\"btn btn-primary btn-save\"></button>\n\n    <div class=\"progress\">\n        <div id=\"" + (this.componentId("progress")) + "\" class=\"progress-bar form-save-progress\"></div>\n    </div>\n</footer>";
+    };
+
+    Form.prototype.renderServiceMenuItems = function() {
+      var entity, html, isDeleted, items, model;
+      entity = (model = this.model).entity;
+      html = "";
+      if (!((isDeleted = model.isDeleted) || _.isEmpty(items = model.meta.links))) {
+        html += render_presentation_actions(items);
+        html += render_divider();
+      }
+      html += "<li class=\"" + (value_if(isDeleted, "disabled")) + "\">\n    <a data-action=\"refreshModel\" href=\"#\">\n        " + Cruddy.lang.model_refresh + "\n    </a>\n</li>";
+      html += "<li class=\"" + (value_if(!entity.createPermitted(), "disabled")) + "\">\n    <a data-action=\"copyModel\" href=\"#\">\n        " + Cruddy.lang.model_copy + "\n    </a>\n</li>";
+      html += "<li class=\"divider\"></li>\n\n<li class=\"" + (value_if(isDeleted || !entity.deletePermitted(), "disabled")) + "\">\n    <a data-action=\"destroyModel\" href=\"#\">\n        <span class=\"glyphicon glyphicon-trash\"></span> " + Cruddy.lang.model_delete + "\n    </a>\n</li>";
+      return html;
+    };
+
+    Form.prototype.renderExtraActionsButton = function() {
+      var button, mainAction;
+      if (_.isEmpty(this.model.meta.actions)) {
+        return;
+      }
+      mainAction = _.find(this.model.meta.actions, function(item) {
+        return !item.disabled;
+      }) || _.first(this.model.meta.actions);
+      button = "<button data-action=\"saveWithAction\" data-action-id=\"" + mainAction.id + "\" type=\"button\" class=\"btn btn-" + mainAction.state + "\" " + (value_if(mainAction.isDisabled, "disabled")) + ">\n    " + mainAction.title + "\n</button>";
+      return this.wrapWithExtraActions(button, mainAction);
+    };
+
+    Form.prototype.wrapWithExtraActions = function(button, mainAction) {
+      var action, actions, html, _i, _len;
+      actions = _.filter(this.model.meta.actions, function(action) {
+        return action !== mainAction;
+      });
+      if (_.isEmpty(actions)) {
+        return button;
+      }
+      html = "";
+      for (_i = 0, _len = actions.length; _i < _len; _i++) {
+        action = actions[_i];
+        html += "<li class=\"" + (value_if(action.disabled, "disabled")) + "\">\n    <a data-action=\"saveWithAction\" data-action-id=\"" + action.id + "\" href=\"#\">" + action.title + "</a>\n</li>";
+      }
+      return "<div class=\"btn-group dropup\">\n    " + button + "\n\n    <button type=\"button\" class=\"btn btn-default dropdown-toggle\" data-toggle=\"dropdown\">\n        <span class=\"caret\"></span>\n    </button>\n\n    <ul class=\"dropdown-menu dropdown-menu-right\" role=\"menu\">\n        " + html + "\n    </ul>\n</div>";
+    };
+
+    Form.prototype.remove = function() {
+      this.trigger("remove", this);
+      if (this.request) {
+        this.request.abort();
+      }
+      $(document).off("." + this.cid);
+      this.$el.one(TRANSITIONEND, (function(_this) {
+        return function() {
+          _this.trigger("removed", _this);
+          return Form.__super__.remove.apply(_this, arguments);
+        };
+      })(this));
+      this.$el.removeClass("opened");
+      return Form.__super__.remove.apply(this, arguments);
+    };
+
+    Form.prototype.executeAction = function(e) {
+      var $el, action;
+      if (e.isDefaultPrevented()) {
+        return;
+      }
+      if ((action = ($el = $(e.currentTarget)).data("action")) && action in this) {
+        e.preventDefault();
+        this[action].call(this, $el);
+      }
+    };
+
+    return Form;
+
+  })(Cruddy.Layout.Layout);
+
+  Cruddy.Entity.Form.display = function(instance) {
+    var form;
+    form = new Cruddy.Entity.Form({
+      model: instance
+    });
+    $(document.body).append(form.render().$el);
+    after_break((function(_this) {
+      return function() {
+        return form.show();
+      };
+    })(this));
+    return form;
+  };
+
   Cruddy.Inputs = {};
 
   Cruddy.Inputs.Base = (function(_super) {
@@ -1284,7 +2845,7 @@
     };
 
     Base.prototype.empty = function() {
-      return this.model.set(this.key, this.emptyValue());
+      return this.setValue(this.emptyValue());
     };
 
     return Base;
@@ -1924,7 +3485,6 @@
       this.attributesForNewModel = {};
       this.makeSelectedMap(this.getValue());
       if (this.reference.readPermitted()) {
-        this.primaryKey = "id";
         this.dataSource = this.reference.search({
           ajaxOptions: {
             data: {
@@ -2706,452 +4266,6 @@
     return DateTime;
 
   })(Cruddy.Inputs.BaseText);
-
-  Cruddy.Layout = {};
-
-  Cruddy.Layout.Element = (function(_super) {
-    __extends(Element, _super);
-
-    function Element(options, parent) {
-      var _ref;
-      this.parent = parent;
-      this.disable = (_ref = options.disable) != null ? _ref : false;
-      Element.__super__.constructor.apply(this, arguments);
-    }
-
-    Element.prototype.initialize = function() {
-      if (!this.model && this.parent) {
-        this.model = this.parent.model;
-      }
-      if (this.model) {
-        this.entity = this.model.entity;
-      }
-      return Element.__super__.initialize.apply(this, arguments);
-    };
-
-    Element.prototype.handleValidationError = function(error) {
-      if (this.parent) {
-        this.parent.handleValidationError(error);
-      }
-      return this;
-    };
-
-    Element.prototype.isDisabled = function() {
-      if (this.disable) {
-        return true;
-      }
-      if (this.parent) {
-        return this.parent.isDisabled();
-      }
-      return false;
-    };
-
-    Element.prototype.isFocusable = function() {
-      return false;
-    };
-
-    Element.prototype.focus = function() {
-      return this;
-    };
-
-    return Element;
-
-  })(Cruddy.View);
-
-  Cruddy.Layout.Container = (function(_super) {
-    __extends(Container, _super);
-
-    function Container() {
-      return Container.__super__.constructor.apply(this, arguments);
-    }
-
-    Container.prototype.initialize = function(options) {
-      Container.__super__.initialize.apply(this, arguments);
-      this.$container = this.$el;
-      this.items = [];
-      if (options.items) {
-        this.createItems(options.items);
-      }
-      return this;
-    };
-
-    Container.prototype.create = function(options) {
-      var constructor;
-      constructor = get(options["class"]);
-      if (!constructor || !_.isFunction(constructor)) {
-        console.error("Couldn't resolve element of type ", options["class"]);
-        return;
-      }
-      return this.append(new constructor(options, this));
-    };
-
-    Container.prototype.createItems = function(items) {
-      var item, _i, _len;
-      for (_i = 0, _len = items.length; _i < _len; _i++) {
-        item = items[_i];
-        this.create(item);
-      }
-      return this;
-    };
-
-    Container.prototype.append = function(element) {
-      if (element) {
-        this.items.push(element);
-      }
-      return element;
-    };
-
-    Container.prototype.renderElement = function(element) {
-      this.$container.append(element.render().$el);
-      return this;
-    };
-
-    Container.prototype.render = function() {
-      var element, _i, _len, _ref;
-      if (this.items) {
-        _ref = this.items;
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          element = _ref[_i];
-          this.renderElement(element);
-        }
-      }
-      return Container.__super__.render.apply(this, arguments);
-    };
-
-    Container.prototype.remove = function() {
-      var item, _i, _len, _ref;
-      _ref = this.items;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        item = _ref[_i];
-        item.remove();
-      }
-      return Container.__super__.remove.apply(this, arguments);
-    };
-
-    Container.prototype.getFocusable = function() {
-      return _.find(this.items, function(item) {
-        return item.isFocusable();
-      });
-    };
-
-    Container.prototype.isFocusable = function() {
-      return this.getFocusable() != null;
-    };
-
-    Container.prototype.focus = function() {
-      var el;
-      if (el = this.getFocusable()) {
-        el.focus();
-      }
-      return this;
-    };
-
-    return Container;
-
-  })(Cruddy.Layout.Element);
-
-  Cruddy.Layout.BaseFieldContainer = (function(_super) {
-    __extends(BaseFieldContainer, _super);
-
-    function BaseFieldContainer(options) {
-      var _ref;
-      this.title = (_ref = options.title) != null ? _ref : null;
-      BaseFieldContainer.__super__.constructor.apply(this, arguments);
-    }
-
-    return BaseFieldContainer;
-
-  })(Cruddy.Layout.Container);
-
-  Cruddy.Layout.FieldSet = (function(_super) {
-    __extends(FieldSet, _super);
-
-    function FieldSet() {
-      return FieldSet.__super__.constructor.apply(this, arguments);
-    }
-
-    FieldSet.prototype.tagName = "fieldset";
-
-    FieldSet.prototype.render = function() {
-      this.$el.html(this.template());
-      this.$container = this.$component("body");
-      return FieldSet.__super__.render.apply(this, arguments);
-    };
-
-    FieldSet.prototype.template = function() {
-      var html;
-      html = this.title ? "<legend>" + _.escape(this.title) + "</legend>" : "";
-      return html + "<div id='" + this.componentId("body") + "'></div>";
-    };
-
-    return FieldSet;
-
-  })(Cruddy.Layout.BaseFieldContainer);
-
-  Cruddy.Layout.TabPane = (function(_super) {
-    __extends(TabPane, _super);
-
-    function TabPane() {
-      return TabPane.__super__.constructor.apply(this, arguments);
-    }
-
-    TabPane.prototype.className = "tab-pane";
-
-    TabPane.prototype.initialize = function(options) {
-      TabPane.__super__.initialize.apply(this, arguments);
-      if (!options.title) {
-        this.title = this.entity.get("title").singular;
-      }
-      this.$el.attr("id", this.cid);
-      this.listenTo(this.model, "request", function() {
-        if (this.header) {
-          return this.header.resetErrors();
-        }
-      });
-      return this;
-    };
-
-    TabPane.prototype.activate = function() {
-      var _ref;
-      if ((_ref = this.header) != null) {
-        _ref.activate();
-      }
-      after_break((function(_this) {
-        return function() {
-          return _this.focus();
-        };
-      })(this));
-      return this;
-    };
-
-    TabPane.prototype.getHeader = function() {
-      if (!this.header) {
-        this.header = new Cruddy.Layout.TabPane.Header({
-          model: this
-        });
-      }
-      return this.header;
-    };
-
-    TabPane.prototype.handleValidationError = function() {
-      var _ref;
-      if ((_ref = this.header) != null) {
-        _ref.incrementErrors();
-      }
-      return TabPane.__super__.handleValidationError.apply(this, arguments);
-    };
-
-    return TabPane;
-
-  })(Cruddy.Layout.BaseFieldContainer);
-
-  Cruddy.Layout.TabPane.Header = (function(_super) {
-    __extends(Header, _super);
-
-    function Header() {
-      return Header.__super__.constructor.apply(this, arguments);
-    }
-
-    Header.prototype.tagName = "li";
-
-    Header.prototype.events = {
-      "shown.bs.tab": function() {
-        after_break((function(_this) {
-          return function() {
-            return _this.model.focus();
-          };
-        })(this));
-      }
-    };
-
-    Header.prototype.initialize = function() {
-      this.errors = 0;
-      return Header.__super__.initialize.apply(this, arguments);
-    };
-
-    Header.prototype.incrementErrors = function() {
-      this.$badge.text(++this.errors);
-      return this;
-    };
-
-    Header.prototype.resetErrors = function() {
-      this.errors = 0;
-      this.$badge.text("");
-      return this;
-    };
-
-    Header.prototype.render = function() {
-      this.$el.html(this.template());
-      this.$badge = this.$component("badge");
-      return Header.__super__.render.apply(this, arguments);
-    };
-
-    Header.prototype.template = function() {
-      return "<a href=\"#" + this.model.cid + "\" role=\"tab\" data-toggle=\"tab\">\n    " + this.model.title + "\n    <span class=\"badge\" id=\"" + (this.componentId("badge")) + "\"></span>\n</a>";
-    };
-
-    Header.prototype.activate = function() {
-      this.$("a").tab("show");
-      return this;
-    };
-
-    return Header;
-
-  })(Cruddy.View);
-
-  Cruddy.Layout.Row = (function(_super) {
-    __extends(Row, _super);
-
-    function Row() {
-      return Row.__super__.constructor.apply(this, arguments);
-    }
-
-    Row.prototype.className = "row";
-
-    return Row;
-
-  })(Cruddy.Layout.Container);
-
-  Cruddy.Layout.Col = (function(_super) {
-    __extends(Col, _super);
-
-    function Col() {
-      return Col.__super__.constructor.apply(this, arguments);
-    }
-
-    Col.prototype.initialize = function(options) {
-      this.$el.addClass("col-xs-" + options.span);
-      return Col.__super__.initialize.apply(this, arguments);
-    };
-
-    return Col;
-
-  })(Cruddy.Layout.BaseFieldContainer);
-
-  Cruddy.Layout.Field = (function(_super) {
-    __extends(Field, _super);
-
-    function Field() {
-      return Field.__super__.constructor.apply(this, arguments);
-    }
-
-    Field.prototype.initialize = function(options) {
-      Field.__super__.initialize.apply(this, arguments);
-      this.fieldView = null;
-      if (!(this.field = this.entity.field(options.field))) {
-        console.error("The field " + options.field + " is not found in " + this.entity.id + ".");
-      }
-      return this;
-    };
-
-    Field.prototype.render = function() {
-      if (this.field && this.field.isVisible()) {
-        this.fieldView = this.field.createView(this.model, this.isDisabled(), this);
-      }
-      if (this.fieldView) {
-        this.$el.html(this.fieldView.render().$el);
-      }
-      return this;
-    };
-
-    Field.prototype.remove = function() {
-      if (this.fieldView) {
-        this.fieldView.remove();
-      }
-      return Field.__super__.remove.apply(this, arguments);
-    };
-
-    Field.prototype.isFocusable = function() {
-      return this.fieldView && this.fieldView.isFocusable();
-    };
-
-    Field.prototype.focus = function() {
-      if (this.fieldView) {
-        this.fieldView.focus();
-      }
-      return this;
-    };
-
-    return Field;
-
-  })(Cruddy.Layout.Element);
-
-  Cruddy.Layout.Text = (function(_super) {
-    __extends(Text, _super);
-
-    function Text() {
-      return Text.__super__.constructor.apply(this, arguments);
-    }
-
-    Text.prototype.tagName = "p";
-
-    Text.prototype.className = "text-node";
-
-    Text.prototype.initialize = function(options) {
-      if (options.contents) {
-        this.$el.html(options.contents);
-      }
-      return Text.__super__.initialize.apply(this, arguments);
-    };
-
-    return Text;
-
-  })(Cruddy.Layout.Element);
-
-  FieldList = (function(_super) {
-    __extends(FieldList, _super);
-
-    function FieldList() {
-      return FieldList.__super__.constructor.apply(this, arguments);
-    }
-
-    FieldList.prototype.className = "field-list";
-
-    FieldList.prototype.initialize = function() {
-      var field, _i, _len, _ref;
-      FieldList.__super__.initialize.apply(this, arguments);
-      _ref = this.entity.fields.models;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        field = _ref[_i];
-        this.append(new Cruddy.Layout.Field({
-          field: field.id
-        }, this));
-      }
-      return this;
-    };
-
-    return FieldList;
-
-  })(Cruddy.Layout.BaseFieldContainer);
-
-  Cruddy.Layout.Layout = (function(_super) {
-    __extends(Layout, _super);
-
-    function Layout() {
-      return Layout.__super__.constructor.apply(this, arguments);
-    }
-
-    Layout.prototype.initialize = function() {
-      Layout.__super__.initialize.apply(this, arguments);
-      return this.setupLayout();
-    };
-
-    Layout.prototype.setupLayout = function() {
-      if (this.entity.attributes.layout) {
-        this.createItems(this.entity.attributes.layout);
-      } else {
-        this.setupDefaultLayout();
-      }
-      return this;
-    };
-
-    Layout.prototype.setupDefaultLayout = function() {
-      return this;
-    };
-
-    return Layout;
-
-  })(Cruddy.Layout.Container);
 
   Cruddy.Fields.BaseView = (function(_super) {
     __extends(BaseView, _super);
@@ -4246,6 +5360,8 @@
       return RelatedCollection.__super__.constructor.apply(this, arguments);
     }
 
+    RelatedCollection.prototype.model = Cruddy.Entity.Instance;
+
     RelatedCollection.prototype.initialize = function(items, options) {
       this.entity = options.entity;
       this.owner = options.owner;
@@ -4265,13 +5381,21 @@
     };
 
     RelatedCollection.prototype._handleInvalidEvent = function(model, errors) {
-      var cid, item, itemErrors, _ref;
-      if (!(this.field.id in errors)) {
-        return;
+      var attr, cid, error, innerErrors, item, itemErrors, key, match, re;
+      re = new RegExp("^" + this.field.id + "\\.(\\d+)\\.(.+)$");
+      innerErrors = {};
+      for (key in errors) {
+        error = errors[key];
+        if (!(match = key.match(re))) {
+          continue;
+        }
+        cid = match[1];
+        attr = match[2];
+        (innerErrors[cid] = innerErrors[cid] || {})[attr] = error;
       }
-      _ref = errors[this.field.id];
-      for (cid in _ref) {
-        itemErrors = _ref[cid];
+      console.log(re, innerErrors);
+      for (cid in innerErrors) {
+        itemErrors = innerErrors[cid];
         if (item = this.get(cid)) {
           item.trigger("invalid", item, itemErrors);
         }
@@ -4389,10 +5513,6 @@
         data[item.cid] = item.serialize();
       }
       return data;
-    };
-
-    RelatedCollection.prototype.modelId = function() {
-      return this.entity.getPrimaryKey();
     };
 
     return RelatedCollection;
@@ -4789,1123 +5909,6 @@
     return Proxy;
 
   })(Cruddy.Filters.Base);
-
-  Cruddy.Entity = {};
-
-  Cruddy.Entity.Entity = (function(_super) {
-    __extends(Entity, _super);
-
-    function Entity() {
-      return Entity.__super__.constructor.apply(this, arguments);
-    }
-
-    Entity.prototype.initialize = function(attributes, options) {
-      this.fields = this.createObjects(attributes.fields);
-      this.columns = this.createObjects(attributes.columns);
-      this.filters = this.createObjects(attributes.filters);
-      this.permissions = Cruddy.permissions[this.id];
-      this.cache = {};
-      return this;
-    };
-
-    Entity.prototype.createObjects = function(items) {
-      var constructor, data, options, _i, _len;
-      data = [];
-      for (_i = 0, _len = items.length; _i < _len; _i++) {
-        options = items[_i];
-        options.entity = this;
-        constructor = get(options["class"]);
-        if (!constructor) {
-          throw "The class " + options["class"] + " is not found";
-        }
-        data.push(new constructor(options));
-      }
-      return new Backbone.Collection(data);
-    };
-
-    Entity.prototype.createDataSource = function(data) {
-      var col, defaults;
-      defaults = {
-        order_by: this.get("order_by")
-      };
-      if (col = this.columns.get(defaults.order_by)) {
-        defaults.order_dir = col.get("order_dir");
-      }
-      data = $.extend({}, defaults, data);
-      return new DataSource(data, {
-        entity: this
-      });
-    };
-
-    Entity.prototype.getDataSource = function() {
-      if (!this.dataSource) {
-        this.dataSource = this.createDataSource();
-      }
-      return this.dataSource;
-    };
-
-    Entity.prototype.createFilters = function(columns) {
-      var col, filters;
-      if (columns == null) {
-        columns = this.columns;
-      }
-      filters = (function() {
-        var _i, _len, _ref, _results;
-        _ref = columns.models;
-        _results = [];
-        for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-          col = _ref[_i];
-          if (col.get("filter_type") === "complex") {
-            _results.push(col.createFilter());
-          }
-        }
-        return _results;
-      })();
-      return new Backbone.Collection(filters);
-    };
-
-    Entity.prototype.createInstance = function(data, options) {
-      var attributes, instance;
-      if (data == null) {
-        data = {};
-      }
-      if (options == null) {
-        options = {};
-      }
-      options.entity = this;
-      attributes = _.extend({}, this.get("defaults"), data.attributes);
-      instance = new Cruddy.Entity.Instance(attributes, options);
-      return instance.setMetaFromResponse(data);
-    };
-
-    Entity.prototype.field = function(id) {
-      var field;
-      if (!(field = this.fields.get(id))) {
-        console.error("The field " + id + " is not found.");
-        return;
-      }
-      return field;
-    };
-
-    Entity.prototype.getField = function(id) {
-      return this.fields.get(id);
-    };
-
-    Entity.prototype.search = function(options) {
-      if (options == null) {
-        options = {};
-      }
-      return new SearchDataSource({}, $.extend({
-        url: this.url()
-      }, options));
-    };
-
-    Entity.prototype.load = function(id, options) {
-      var defaults, xhr;
-      defaults = {
-        cached: true
-      };
-      options = $.extend(defaults, options);
-      if (options.cached && id in this.cache) {
-        return $.Deferred().resolve(this.cache[id]).promise();
-      }
-      xhr = $.ajax({
-        url: this.url(id),
-        type: "GET",
-        dataType: "json",
-        displayLoading: true
-      });
-      xhr = xhr.then((function(_this) {
-        return function(resp) {
-          var instance;
-          instance = _this.createInstance(resp);
-          _this.cache[instance.id] = instance;
-          return instance;
-        };
-      })(this));
-      return xhr;
-    };
-
-    Entity.prototype.destroy = function(id, options) {
-      if (options == null) {
-        options = {};
-      }
-      options.url = this.url(id);
-      options.type = "POST";
-      options.dataType = "json";
-      options.data = {
-        _method: "DELETE"
-      };
-      options.displayLoading = true;
-      return $.ajax(options);
-    };
-
-    Entity.prototype.executeAction = function(id, action, options) {
-      if (options == null) {
-        options = {};
-      }
-      options.url = this.url(id + "/" + action);
-      options.type = "POST";
-      options.dataType = "json";
-      options.displayLoading = true;
-      return $.ajax(options);
-    };
-
-    Entity.prototype.getCopyableAttributes = function(model, copy) {
-      var data, field, _i, _len, _ref;
-      data = {};
-      _ref = this.fields.models;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        field = _ref[_i];
-        if (field.isCopyable()) {
-          data[field.id] = field.copyAttribute(model, copy);
-        }
-      }
-      return data;
-    };
-
-    Entity.prototype.hasChangedSinceSync = function(model) {
-      var field, _i, _len, _ref;
-      _ref = this.fields.models;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        field = _ref[_i];
-        if (!(field.hasChangedSinceSync(model))) {
-          continue;
-        }
-        console.log(field);
-        return true;
-      }
-      return false;
-    };
-
-    Entity.prototype.prepareAttributes = function(attributes, model) {
-      var field, key, result, value;
-      result = {};
-      for (key in attributes) {
-        value = attributes[key];
-        if (field = this.getField(key)) {
-          result[key] = field.prepareAttribute(value);
-        }
-      }
-      return result;
-    };
-
-    Entity.prototype.url = function(id) {
-      return entity_url(this.id, id);
-    };
-
-    Entity.prototype.link = function(id) {
-      var link;
-      link = this.url();
-      if (id instanceof Cruddy.Entity.Instance) {
-        id = id.id;
-      }
-      if (id) {
-        return link + "?id=" + id;
-      } else {
-        return link;
-      }
-    };
-
-    Entity.prototype.createController = function() {
-      var controllerClass;
-      controllerClass = get(this.attributes.controller_class) || Cruddy.Entity.Page;
-      if (!controllerClass) {
-        throw "Failed to resolve page class " + this.attributes.view;
-      }
-      return new controllerClass({
-        model: this
-      });
-    };
-
-    Entity.prototype.getPluralTitle = function() {
-      return this.attributes.title.plural;
-    };
-
-    Entity.prototype.getSingularTitle = function() {
-      return this.attributes.title.singular;
-    };
-
-    Entity.prototype.getPermissions = function() {
-      return this.permissions;
-    };
-
-    Entity.prototype.readPermitted = function() {
-      return this.permissions.read;
-    };
-
-    Entity.prototype.updatePermitted = function() {
-      return this.permissions.update;
-    };
-
-    Entity.prototype.createPermitted = function() {
-      return this.permissions.create;
-    };
-
-    Entity.prototype.deletePermitted = function() {
-      return this.permissions["delete"];
-    };
-
-    Entity.prototype.isSoftDeleting = function() {
-      return this.attributes.soft_deleting;
-    };
-
-    Entity.prototype.getPrimaryKey = function() {
-      return this.attributes.primary_key || "id";
-    };
-
-    return Entity;
-
-  })(Backbone.Model);
-
-  Cruddy.Entity.Instance = (function(_super) {
-    __extends(Instance, _super);
-
-    function Instance(attributes, options) {
-      this.entity = options.entity;
-      this.idAttribute = this.entity.getPrimaryKey();
-      this.meta = {};
-      Instance.__super__.constructor.apply(this, arguments);
-    }
-
-    Instance.prototype.initialize = function(attributes, options) {
-      this.syncOriginalAttributes();
-      this.on("error", this.handleErrorEvent, this);
-      this.on("sync", this.handleSyncEvent, this);
-      this.on("destroy", this.handleDestroyEvent, this);
-      return this;
-    };
-
-    Instance.prototype.syncOriginalAttributes = function() {
-      this.original = _.clone(this.attributes);
-      this.primaryKey = this.id;
-      return this;
-    };
-
-    Instance.prototype.handleSyncEvent = function(model, resp) {
-      this.syncOriginalAttributes();
-      if ((resp != null ? resp.model : void 0) != null) {
-        this.setMetaFromResponse(resp.model);
-      }
-      return this;
-    };
-
-    Instance.prototype.setMetaFromResponse = function(resp) {
-      if (resp.meta != null) {
-        this.meta = _.clone(resp.meta);
-      }
-      return this;
-    };
-
-    Instance.prototype.handleErrorEvent = function(model, xhr) {
-      if (xhr.status === VALIDATION_FAILED_CODE) {
-        this.trigger("invalid", this, xhr.responseJSON);
-      }
-    };
-
-    Instance.prototype.handleDestroyEvent = function(model) {
-      this.isDeleted = true;
-    };
-
-    Instance.prototype.validate = function() {
-      this.set("errors", {});
-      return null;
-    };
-
-    Instance.prototype.link = function() {
-      return this.entity.link(this.primaryKey || "create");
-    };
-
-    Instance.prototype.url = function() {
-      return this.entity.url(this.primaryKey);
-    };
-
-    Instance.prototype.set = function(key, val, options) {
-      var attributeId, field, value;
-      if (_.isObject(key)) {
-        for (attributeId in key) {
-          value = key[attributeId];
-          if (field = this.entity.getField(attributeId)) {
-            key[attributeId] = field.parse(this, value);
-          }
-        }
-      }
-      return Instance.__super__.set.apply(this, arguments);
-    };
-
-    Instance.prototype.sync = function(method, model, options) {
-      var _ref;
-      if (method === "update" || method === "create") {
-        options.data = new AdvFormData(this.entity.prepareAttributes((_ref = options.attrs) != null ? _ref : this.attributes, this)).original;
-        options.contentType = false;
-        options.processData = false;
-      }
-      return Instance.__super__.sync.apply(this, arguments);
-    };
-
-    Instance.prototype.parse = function(resp) {
-      return resp.model.attributes;
-    };
-
-    Instance.prototype.copy = function() {
-      var copy;
-      copy = this.entity.createInstance();
-      copy.set(this.entity.getCopyableAttributes(this, copy), {
-        silent: true
-      });
-      return copy;
-    };
-
-    Instance.prototype.hasChangedSinceSync = function() {
-      return this.entity.hasChangedSinceSync(this);
-    };
-
-    Instance.prototype.canBeSaved = function() {
-      var isNew;
-      isNew = this.isNew();
-      return ((isNew && this.entity.createPermitted()) || (!isNew && this.entity.updatePermitted())) && (!this.isDeleted || !isNew);
-    };
-
-    Instance.prototype.serialize = function() {
-      var data;
-      data = this.isDeleted ? {} : this.entity.prepareAttributes(this.attributes, this);
-      return $.extend(data, {
-        __id: this.id,
-        __d: this.isDeleted
-      });
-    };
-
-    Instance.prototype.action = function() {
-      if (this.isNew()) {
-        return "create";
-      } else {
-        return "update";
-      }
-    };
-
-    Instance.prototype.getTitle = function() {
-      if (this.isNew()) {
-        return Cruddy.lang.model_new_record;
-      } else {
-        return this.meta.title;
-      }
-    };
-
-    Instance.prototype.getOriginal = function(key) {
-      return this.original[key];
-    };
-
-    Instance.prototype.isNew = function() {
-      return !this.primaryKey;
-    };
-
-    return Instance;
-
-  })(Backbone.Model);
-
-  Cruddy.Entity.Page = (function(_super) {
-    __extends(Page, _super);
-
-    Page.prototype.className = "page entity-page";
-
-    Page.prototype.events = {
-      "click .ep-btn-create": "create",
-      "click .ep-btn-refresh": "refreshData"
-    };
-
-    function Page(options) {
-      this.className += " entity-page-" + options.model.id;
-      Page.__super__.constructor.apply(this, arguments);
-    }
-
-    Page.prototype.initialize = function(options) {
-      this.dataSource = this._setupDataSource();
-      after_break((function(_this) {
-        return function() {
-          return _this.listenTo(Cruddy.router, "route:index", _this._updateFromQuery);
-        };
-      })(this));
-      return Page.__super__.initialize.apply(this, arguments);
-    };
-
-    Page.prototype._updateFromQuery = function() {
-      this._updateDataSourceFromQuery();
-      this._displayForm().fail((function(_this) {
-        return function() {
-          return _this._updateModelIdInQuery({
-            replace: true
-          });
-        };
-      })(this));
-      return this;
-    };
-
-    Page.prototype._setupDataSource = function() {
-      var dataSource;
-      this.dataSource = dataSource = this.model.getDataSource();
-      this._updateFromQuery();
-      if (!(dataSource.inProgress() || dataSource.hasData())) {
-        dataSource.fetch();
-      }
-      this.listenTo(dataSource, "change", this._refreshQuery);
-      return dataSource;
-    };
-
-    Page.prototype._refreshQuery = function() {
-      var dataSource;
-      dataSource = this.dataSource;
-      Cruddy.router.refreshQuery(dataSource.attributes, dataSource.defaults, {
-        trigger: false
-      });
-      return this;
-    };
-
-    Page.prototype._updateDataSourceFromQuery = function(options) {
-      var data, key;
-      data = $.extend({}, this.dataSource.defaults, _.omit(Cruddy.router.query.keys, ["id"]));
-      for (key in this.dataSource.attributes) {
-        if (!(key in data)) {
-          data[key] = null;
-        }
-      }
-      this.dataSource.set(data, options);
-    };
-
-    Page.prototype._updateModelIdInQuery = function(options) {
-      var router;
-      router = Cruddy.router;
-      options = $.extend({
-        trigger: false,
-        replace: false
-      }, options);
-      if (this.form) {
-        router.setQuery("id", this.form.model.primaryKey || "new", options);
-      } else {
-        router.removeQuery("id", options);
-      }
-      return this;
-    };
-
-    Page.prototype._displayForm = function(instanceId) {
-      var compareId, dfd, instance, resolve, _ref;
-      if (this.loadingForm) {
-        return this.loadingForm;
-      }
-      instanceId = instanceId != null ? instanceId : Cruddy.router.getQuery("id");
-      if (instanceId instanceof Cruddy.Entity.Instance) {
-        instance = instanceId;
-        instanceId = instance.id || "new";
-      }
-      this.loadingForm = dfd = $.Deferred();
-      this.loadingForm.always((function(_this) {
-        return function() {
-          return _this.loadingForm = null;
-        };
-      })(this));
-      if (this.form) {
-        compareId = this.form.model.isNew() ? "new" : this.form.model.id;
-        if (instanceId === compareId || !this.form.confirmClose()) {
-          dfd.reject();
-          return dfd.promise();
-        }
-      }
-      resolve = (function(_this) {
-        return function(instance) {
-          _this._createAndRenderForm(instance);
-          return dfd.resolve(instance);
-        };
-      })(this);
-      if (instanceId === "new" && !instance) {
-        instance = this.model.createInstance();
-      }
-      if (instance) {
-        resolve(instance);
-        return dfd.promise();
-      }
-      if (instanceId) {
-        this.model.load(instanceId).done(resolve).fail(function() {
-          return dfd.reject();
-        });
-      } else {
-        if ((_ref = this.form) != null) {
-          _ref.remove();
-        }
-        dfd.resolve();
-      }
-      return dfd.promise();
-    };
-
-    Page.prototype._createAndRenderForm = function(instance) {
-      var form, _ref;
-      if ((_ref = this.form) != null) {
-        _ref.remove();
-      }
-      this.form = form = Cruddy.Entity.Form.display(instance);
-      form.on("close", (function(_this) {
-        return function() {
-          return Cruddy.router.removeQuery("id", {
-            trigger: false
-          });
-        };
-      })(this));
-      form.on("created", function(model) {
-        return Cruddy.router.setQuery("id", model.id);
-      });
-      form.on("remove", (function(_this) {
-        return function() {
-          _this.form = null;
-          _this.model.set("instance", null);
-          return _this.stopListening(instance);
-        };
-      })(this));
-      form.on("saved", (function(_this) {
-        return function() {
-          _this.dataSource.fetch();
-          return _this._updateModelIdInQuery({
-            replace: true
-          });
-        };
-      })(this));
-      form.on("saved remove", function() {
-        return Cruddy.app.updateTitle();
-      });
-      this.model.set("instance", instance);
-      Cruddy.app.updateTitle();
-      return this;
-    };
-
-    Page.prototype.displayForm = function(id) {
-      return this._displayForm(id).done((function(_this) {
-        return function() {
-          return _this._updateModelIdInQuery();
-        };
-      })(this));
-    };
-
-    Page.prototype.create = function() {
-      this.displayForm("new");
-      return this;
-    };
-
-    Page.prototype.refreshData = function(e) {
-      var btn;
-      btn = $(e.currentTarget);
-      btn.prop("disabled", true);
-      this.dataSource.fetch().always(function() {
-        return btn.prop("disabled", false);
-      });
-      return this;
-    };
-
-    Page.prototype.render = function() {
-      this.$el.html(this.template());
-      this.searchInputView = this.createSearchInputView();
-      this.dataView = this.createDataView();
-      this.paginationView = this.createPaginationView();
-      this.filterListView = this.createFilterListView();
-      if (this.searchInputView) {
-        this.$component("search_input_view").append(this.searchInputView.render().$el);
-      }
-      if (this.filterListView) {
-        this.$component("filter_list_view").append(this.filterListView.render().el);
-      }
-      if (this.dataView) {
-        this.$component("data_view").append(this.dataView.render().el);
-      }
-      if (this.paginationView) {
-        this.$component("pagination_view").append(this.paginationView.render().el);
-      }
-      return this;
-    };
-
-    Page.prototype.createDataView = function() {
-      return new DataGrid({
-        model: this.dataSource,
-        entity: this.model
-      });
-    };
-
-    Page.prototype.createPaginationView = function() {
-      return new Pagination({
-        model: this.dataSource
-      });
-    };
-
-    Page.prototype.createFilterListView = function() {
-      var filters;
-      if ((filters = this.dataSource.entity.filters).isEmpty()) {
-        return;
-      }
-      return new FilterList({
-        model: this.dataSource,
-        entity: this.model,
-        filters: filters
-      });
-    };
-
-    Page.prototype.createSearchInputView = function() {
-      return new Cruddy.Inputs.Search({
-        model: this.dataSource,
-        key: "keywords"
-      });
-    };
-
-    Page.prototype.template = function() {
-      return "<div class=\"content-header\">\n    <div class=\"column column-main\">\n        <h1 class=\"entity-title\">" + (this.model.getPluralTitle()) + "</h1>\n\n        <div class=\"entity-title-buttons\">\n            " + (this.buttonsTemplate()) + "\n        </div>\n    </div>\n\n    <div class=\"column column-extra\">\n        <div class=\"entity-search-box\" id=\"" + (this.componentId("search_input_view")) + "\"></div>\n    </div>\n</div>\n\n<div class=\"content-body\">\n    <div class=\"column column-main\">\n        <div id=\"" + (this.componentId("data_view")) + "\"></div>\n        <div id=\"" + (this.componentId("pagination_view")) + "\"></div>\n    </div>\n\n    <div class=\"column column-extra\" id=\"" + (this.componentId("filter_list_view")) + "\"></div>\n</div>";
-    };
-
-    Page.prototype.buttonsTemplate = function() {
-      var html;
-      html = "<button type=\"button\" class=\"btn btn-default ep-btn-refresh\" title=\"" + Cruddy.lang.refresh + "\">\n    " + (b_icon("refresh")) + "\n</button>";
-      html += " ";
-      if (this.model.createPermitted()) {
-        html += "<button type=\"button\" class=\"btn btn-primary ep-btn-create\" title=\"" + Cruddy.lang.add + "\">\n    " + (b_icon("plus")) + "\n</button>";
-      }
-      return html;
-    };
-
-    Page.prototype.remove = function() {
-      var _ref, _ref1, _ref2, _ref3, _ref4;
-      if ((_ref = this.form) != null) {
-        _ref.remove();
-      }
-      if ((_ref1 = this.filterListView) != null) {
-        _ref1.remove();
-      }
-      if ((_ref2 = this.dataView) != null) {
-        _ref2.remove();
-      }
-      if ((_ref3 = this.paginationView) != null) {
-        _ref3.remove();
-      }
-      if ((_ref4 = this.searchInputView) != null) {
-        _ref4.remove();
-      }
-      return Page.__super__.remove.apply(this, arguments);
-    };
-
-    Page.prototype.getPageTitle = function() {
-      var title;
-      title = this.model.getPluralTitle();
-      if (this.form != null) {
-        title = this.form.model.getTitle() + TITLE_SEPARATOR + title;
-      }
-      return title;
-    };
-
-    Page.prototype.executeCustomAction = function(actionId, modelId, el) {
-      if (el && !$(el).parent().is("disabled")) {
-        this.model.executeAction(modelId, actionId, {
-          success: (function(_this) {
-            return function(resp) {
-              if (resp.successful) {
-                _this.dataSource.fetch();
-              }
-              return Cruddy.getApp().displayActionResult(resp);
-            };
-          })(this)
-        });
-      }
-      return this;
-    };
-
-    Page.prototype.pageUnloadConfirmationMessage = function() {
-      var _ref;
-      return (_ref = this.form) != null ? _ref.pageUnloadConfirmationMessage() : void 0;
-    };
-
-    return Page;
-
-  })(Cruddy.View);
-
-  Cruddy.Entity.Form = (function(_super) {
-    __extends(Form, _super);
-
-    Form.prototype.className = "entity-form";
-
-    Form.prototype.events = {
-      "click [data-action]": "executeAction"
-    };
-
-    function Form(options) {
-      this.className += " " + this.className + "-" + options.model.entity.id;
-      Form.__super__.constructor.apply(this, arguments);
-    }
-
-    Form.prototype.initialize = function(options) {
-      Form.__super__.initialize.apply(this, arguments);
-      this.saveOptions = {
-        displayLoading: true,
-        xhr: (function(_this) {
-          return function() {
-            var xhr;
-            xhr = $.ajaxSettings.xhr();
-            if (xhr.upload) {
-              xhr.upload.addEventListener('progress', $.proxy(_this, "progressCallback"));
-            }
-            return xhr;
-          };
-        })(this)
-      };
-      this.listenTo(this.model, "destroy", this.handleModelDestroyEvent);
-      this.listenTo(this.model, "invalid", this.handleModelInvalidEvent);
-      this.hotkeys = $(document).on("keydown." + this.cid, "body", $.proxy(this, "hotkeys"));
-      return this;
-    };
-
-    Form.prototype.setupDefaultLayout = function() {
-      var field, tab, _i, _len, _ref;
-      tab = this.append(new Cruddy.Layout.TabPane({
-        title: this.model.entity.get("title").singular
-      }, this));
-      _ref = this.entity.fields.models;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        field = _ref[_i];
-        tab.append(new Cruddy.Layout.Field({
-          field: field.id
-        }, tab));
-      }
-      return this;
-    };
-
-    Form.prototype.hotkeys = function(e) {
-      if (e.ctrlKey && e.keyCode === 90 && e.target === document.body) {
-        this.model.set(this.model.previousAttributes());
-        return false;
-      }
-      if (e.ctrlKey && e.keyCode === 13) {
-        this.saveModel();
-        return false;
-      }
-      if (e.keyCode === 27) {
-        this.closeForm();
-        e.preventDefault();
-        return false;
-      }
-      return this;
-    };
-
-    Form.prototype.displayAlert = function(message, type, timeout) {
-      if (this.alert != null) {
-        this.alert.remove();
-      }
-      this.alert = new Alert({
-        message: message,
-        className: "flash",
-        type: type,
-        timeout: timeout
-      });
-      this.$footer.prepend(this.alert.render().el);
-      return this;
-    };
-
-    Form.prototype.displaySuccess = function(resp) {
-      this.displayAlert(Cruddy.lang.form_saved, "success", 3000);
-      if (resp.actionResult) {
-        Cruddy.getApp().displayActionResult(resp.actionResult);
-      }
-      return this;
-    };
-
-    Form.prototype.displayError = function(xhr) {
-      if (xhr.status !== VALIDATION_FAILED_CODE) {
-        this.displayAlert(Cruddy.lang.form_failed, "danger", 5000);
-      }
-      return this;
-    };
-
-    Form.prototype.handleModelInvalidEvent = function() {
-      return this.displayAlert(Cruddy.lang.form_invalid, "warning", 5000);
-    };
-
-    Form.prototype.handleModelDestroyEvent = function() {
-      this.updateModelState();
-      this.trigger("destroyed", this.model);
-      return this;
-    };
-
-    Form.prototype.show = function() {
-      this.$el.toggleClass("opened", true);
-      this.items[0].activate();
-      this.focus();
-      return this;
-    };
-
-    Form.prototype.save = function(options) {
-      var isNew;
-      if (this.request != null) {
-        return;
-      }
-      isNew = this.model.isNew();
-      this.setupRequest(this.model.save(null, $.extend({}, this.saveOptions, options)));
-      this.request.done((function(_this) {
-        return function(resp) {
-          _this.trigger((isNew ? "created" : "updated"), _this.model, resp);
-          _this.trigger("saved", _this.model, resp);
-          return _this.updateModelState();
-        };
-      })(this));
-      return this;
-    };
-
-    Form.prototype.saveModel = function() {
-      return this.save();
-    };
-
-    Form.prototype.saveWithAction = function($el) {
-      return this.save({
-        url: this.model.entity.url(this.model.id + "/" + $el.data("actionId"))
-      });
-    };
-
-    Form.prototype.destroyModel = function() {
-      var confirmed, softDeleting;
-      if (this.request || this.model.isNew()) {
-        return;
-      }
-      softDeleting = this.model.entity.get("soft_deleting");
-      confirmed = !softDeleting ? confirm(Cruddy.lang.confirm_delete) : true;
-      if (confirmed) {
-        this.request = this.softDeleting && this.model.get("deleted_at") ? this.model.restore : this.model.destroy({
-          wait: true
-        });
-        this.request.always((function(_this) {
-          return function() {
-            return _this.request = null;
-          };
-        })(this));
-      }
-      return this;
-    };
-
-    Form.prototype.copyModel = function() {
-      Cruddy.app.entityView.displayForm(this.model.copy());
-      return this;
-    };
-
-    Form.prototype.refreshModel = function() {
-      if (this.request != null) {
-        return;
-      }
-      if (this.confirmClose()) {
-        this.setupRequest(this.model.fetch());
-      }
-      this.request.done((function(_this) {
-        return function() {
-          return _this.updateModelMetaState();
-        };
-      })(this));
-      return this;
-    };
-
-    Form.prototype.setupRequest = function(request) {
-      request.done($.proxy(this, "displaySuccess")).fail($.proxy(this, "displayError"));
-      request.always((function(_this) {
-        return function() {
-          _this.request = null;
-          return _this.updateRequestState();
-        };
-      })(this));
-      this.request = request;
-      return this.updateRequestState();
-    };
-
-    Form.prototype.progressCallback = function(e) {
-      var width;
-      if (e.lengthComputable) {
-        width = (e.loaded * 100) / e.total;
-        this.$progressBar.width(width + '%').parent().show();
-        if (width === 100) {
-          this.$progressBar.parent().hide();
-        }
-      }
-      return this;
-    };
-
-    Form.prototype.closeForm = function() {
-      if (this.confirmClose()) {
-        this.remove();
-        this.trigger("close");
-      }
-      return this;
-    };
-
-    Form.prototype.pageUnloadConfirmationMessage = function() {
-      if (this.model.isDeleted) {
-        return;
-      }
-      if (this.request) {
-        return Cruddy.lang.onclose_abort;
-      }
-      if (this.model.hasChangedSinceSync()) {
-        return Cruddy.lang.onclose_discard;
-      }
-    };
-
-    Form.prototype.confirmClose = function() {
-      if (!this.model.isDeleted) {
-        if (this.request) {
-          return confirm(Cruddy.lang.confirm_abort);
-        }
-        if (this.model.hasChangedSinceSync()) {
-          return confirm(Cruddy.lang.confirm_discard);
-        }
-      }
-      return true;
-    };
-
-    Form.prototype.render = function() {
-      this.$el.html(this.template());
-      this.$container = this.$component("body");
-      this.$nav = this.$component("nav");
-      this.$footer = this.$component("footer");
-      this.$btnSave = this.$component("save");
-      this.$deletedMsg = this.$component("deleted-message");
-      this.$progressBar = this.$component("progress");
-      this.$serviceMenu = this.$component("service-menu");
-      this.$serviceMenuItems = this.$component("service-menu-items");
-      this.updateModelState();
-      return Form.__super__.render.apply(this, arguments);
-    };
-
-    Form.prototype.renderElement = function(el) {
-      this.$nav.append(el.getHeader().render().$el);
-      return Form.__super__.renderElement.apply(this, arguments);
-    };
-
-    Form.prototype.updateRequestState = function() {
-      var isLoading;
-      isLoading = this.request != null;
-      this.$el.toggleClass("loading", isLoading);
-      this.$btnSave.attr("disabled", isLoading);
-      if (this.$btnExtraActions) {
-        this.$btnExtraActions.attr("disabled", isLoading);
-        this.$btnExtraActions.children(".btn").attr("disabled", isLoading);
-      }
-      return this;
-    };
-
-    Form.prototype.updateModelState = function() {
-      var entity, isDeleted, isNew;
-      entity = this.model.entity;
-      isNew = this.model.isNew();
-      isDeleted = this.model.isDeleted || false;
-      this.$el.toggleClass("destroyed", isDeleted);
-      this.$btnSave.text(isNew ? Cruddy.lang.create : Cruddy.lang.save);
-      this.$btnSave.toggle(!isDeleted && (isNew ? entity.createPermitted() : entity.updatePermitted()));
-      return this.updateModelMetaState();
-    };
-
-    Form.prototype.updateModelMetaState = function() {
-      var html, isDeleted, isNew, _ref;
-      isNew = this.model.isNew();
-      isDeleted = this.model.isDeleted || false;
-      this.$serviceMenu.toggle(!isNew);
-      if (!isNew) {
-        this.$serviceMenuItems.html(this.renderServiceMenuItems());
-      }
-      if ((_ref = this.$btnExtraActions) != null) {
-        _ref.remove();
-      }
-      this.$btnExtraActions = null;
-      if (this.model.entity.updatePermitted()) {
-        if (!isNew && !isDeleted && (html = this.renderExtraActionsButton())) {
-          this.$btnSave.before(this.$btnExtraActions = $(html));
-        }
-      }
-      return this;
-    };
-
-    Form.prototype.template = function() {
-      return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n        <ul id=\"" + (this.componentId("nav")) + "\" class=\"nav navbar-nav\"></ul>\n\n        <ul id=\"" + (this.componentId("service-menu")) + "\" class=\"nav navbar-nav navbar-right\">\n            <li class=\"dropdown\">\n                <a class=\"dropdown-toggle\" data-toggle=\"dropdown\" href=\"#\">\n                    <span class=\"glyphicon glyphicon-option-horizontal\"></span>\n                </a>\n\n                <ul class=\"dropdown-menu\" role=\"menu\" id=\"" + (this.componentId("service-menu-items")) + "\"></ul>\n            </li>\n        </ul>\n    </div>\n</div>\n\n<div class=\"tab-content\" id=\"" + (this.componentId("body")) + "\"></div>\n\n<footer id=\"" + (this.componentId("footer")) + "\">\n    <span class=\"fs-deleted-message\">" + Cruddy.lang.model_deleted + "</span>\n\n    <button data-action=\"closeForm\" id=\"" + (this.componentId("close")) + "\" type=\"button\" class=\"btn btn-default\">" + Cruddy.lang.close + "</button><!--\n    --><button data-action=\"saveModel\" id=\"" + (this.componentId("save")) + "\" type=\"button\" class=\"btn btn-primary btn-save\"></button>\n\n    <div class=\"progress\">\n        <div id=\"" + (this.componentId("progress")) + "\" class=\"progress-bar form-save-progress\"></div>\n    </div>\n</footer>";
-    };
-
-    Form.prototype.renderServiceMenuItems = function() {
-      var entity, html, isDeleted, items, model;
-      entity = (model = this.model).entity;
-      html = "";
-      if (!((isDeleted = model.isDeleted) || _.isEmpty(items = model.meta.links))) {
-        html += render_presentation_actions(items);
-        html += render_divider();
-      }
-      html += "<li class=\"" + (value_if(isDeleted, "disabled")) + "\">\n    <a data-action=\"refreshModel\" href=\"#\">\n        " + Cruddy.lang.model_refresh + "\n    </a>\n</li>";
-      html += "<li class=\"" + (value_if(!entity.createPermitted(), "disabled")) + "\">\n    <a data-action=\"copyModel\" href=\"#\">\n        " + Cruddy.lang.model_copy + "\n    </a>\n</li>";
-      html += "<li class=\"divider\"></li>\n\n<li class=\"" + (value_if(isDeleted || !entity.deletePermitted(), "disabled")) + "\">\n    <a data-action=\"destroyModel\" href=\"#\">\n        <span class=\"glyphicon glyphicon-trash\"></span> " + Cruddy.lang.model_delete + "\n    </a>\n</li>";
-      return html;
-    };
-
-    Form.prototype.renderExtraActionsButton = function() {
-      var button, mainAction;
-      if (_.isEmpty(this.model.meta.actions)) {
-        return;
-      }
-      mainAction = _.find(this.model.meta.actions, function(item) {
-        return !item.disabled;
-      }) || _.first(this.model.meta.actions);
-      button = "<button data-action=\"saveWithAction\" data-action-id=\"" + mainAction.id + "\" type=\"button\" class=\"btn btn-" + mainAction.state + "\" " + (value_if(mainAction.isDisabled, "disabled")) + ">\n    " + mainAction.title + "\n</button>";
-      return this.wrapWithExtraActions(button, mainAction);
-    };
-
-    Form.prototype.wrapWithExtraActions = function(button, mainAction) {
-      var action, actions, html, _i, _len;
-      actions = _.filter(this.model.meta.actions, function(action) {
-        return action !== mainAction;
-      });
-      if (_.isEmpty(actions)) {
-        return button;
-      }
-      html = "";
-      for (_i = 0, _len = actions.length; _i < _len; _i++) {
-        action = actions[_i];
-        html += "<li class=\"" + (value_if(action.disabled, "disabled")) + "\">\n    <a data-action=\"saveWithAction\" data-action-id=\"" + action.id + "\" href=\"#\">" + action.title + "</a>\n</li>";
-      }
-      return "<div class=\"btn-group dropup\">\n    " + button + "\n\n    <button type=\"button\" class=\"btn btn-default dropdown-toggle\" data-toggle=\"dropdown\">\n        <span class=\"caret\"></span>\n    </button>\n\n    <ul class=\"dropdown-menu dropdown-menu-right\" role=\"menu\">\n        " + html + "\n    </ul>\n</div>";
-    };
-
-    Form.prototype.remove = function() {
-      this.trigger("remove", this);
-      if (this.request) {
-        this.request.abort();
-      }
-      $(document).off("." + this.cid);
-      this.$el.one(TRANSITIONEND, (function(_this) {
-        return function() {
-          _this.trigger("removed", _this);
-          return Form.__super__.remove.apply(_this, arguments);
-        };
-      })(this));
-      this.$el.removeClass("opened");
-      return Form.__super__.remove.apply(this, arguments);
-    };
-
-    Form.prototype.executeAction = function(e) {
-      var $el, action;
-      if (e.isDefaultPrevented()) {
-        return;
-      }
-      if ((action = ($el = $(e.currentTarget)).data("action")) && action in this) {
-        e.preventDefault();
-        this[action].call(this, $el);
-      }
-    };
-
-    return Form;
-
-  })(Cruddy.Layout.Layout);
-
-  Cruddy.Entity.Form.display = function(instance) {
-    var form;
-    form = new Cruddy.Entity.Form({
-      model: instance
-    });
-    $(document.body).append(form.render().$el);
-    after_break((function(_this) {
-      return function() {
-        return form.show();
-      };
-    })(this));
-    return form;
-  };
 
   App = (function(_super) {
     __extends(App, _super);

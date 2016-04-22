@@ -46,6 +46,18 @@ class File extends BaseField
     }
 
     /**
+     * @inheritDoc
+     */
+    protected function processInputValue($value)
+    {
+        if (empty($value)) {
+            return $this->isMultiple() ? [] : null;
+        }
+
+        return $this->isMultiple() ? (array)$value : $value;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function toArray()

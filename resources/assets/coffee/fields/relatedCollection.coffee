@@ -1,5 +1,7 @@
 class Cruddy.Fields.RelatedCollection extends Backbone.Collection
 
+    model: Cruddy.Entity.Instance
+
     initialize: (items, options) ->
         @entity = options.entity
         @owner = options.owner
@@ -20,9 +22,18 @@ class Cruddy.Fields.RelatedCollection extends Backbone.Collection
         super
 
     _handleInvalidEvent: (model, errors) ->
-        return unless @field.id of errors
+        re = new RegExp("^"+@field.id+"\\.(\\d+)\\.(.+)$")
+        innerErrors = {}
 
-        for cid, itemErrors of errors[@field.id] when item = @get cid
+        for key, error of errors when match = key.match re
+            cid = match[1]
+            attr = match[2]
+
+            (innerErrors[cid] = innerErrors[cid] || {})[attr] = error
+
+        console.log re, innerErrors
+
+        for cid, itemErrors of innerErrors when item = @get cid
             item.trigger "invalid", item, itemErrors
 
         return
@@ -91,5 +102,3 @@ class Cruddy.Fields.RelatedCollection extends Backbone.Collection
         data[item.cid] = item.serialize() for item in models
 
         return data
-
-    modelId: -> @entity.getPrimaryKey()

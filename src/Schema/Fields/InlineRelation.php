@@ -4,10 +4,9 @@ namespace Kalnoy\Cruddy\Schema\Fields;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
-use Kalnoy\Cruddy\Contracts\InlineRelation as InlineRelationContract;
+use Illuminate\Support\MessageBag;
 use Kalnoy\Cruddy\Entity;
 use Kalnoy\Cruddy\Helpers;
-use Kalnoy\Cruddy\Service\Validation\ValidationException;
 
 /**
  * Inline relation allows to edit related models inlinely.
@@ -16,11 +15,6 @@ use Kalnoy\Cruddy\Service\Validation\ValidationException;
  */
 abstract class InlineRelation extends BaseRelation
 {
-    /**
-     * The name of the property where id is stored.
-     */
-    const ID_PROPERTY = '__id';
-
     /**
      * The name of the JavaScript class that is used to render this field.
      *
@@ -34,23 +28,25 @@ abstract class InlineRelation extends BaseRelation
     /**
      * @inheritDoc
      */
-    public function validate($value)
+    public function validate($data)
     {
-        if (empty($value)) return [];
+        if (empty($data)) return [];
 
         if ( ! $this->isMultiple()) {
-            $action = $this->getActionFromInput($value);
+            $key = $this->getInnerModelId($data);
 
-            return $this->getRefEntity()->validate($action, $value);
+            return $this->getRefEntity()->validate($data, $key);
         }
 
         $result = [];
 
-        foreach ($value as $cid => $itemInput) {
-            $action = $this->getActionFromInput($itemInput);
+        foreach ($data as $cid => $itemInput) {
+            $key = $this->getInnerModelId($itemInput);
 
-            if ($errors = $this->getRefEntity()->validate($action, $itemInput)) {
-                $result[$cid] = $errors;
+            $errors = $this->getRefEntity()->validate($itemInput, $key);
+
+            foreach ($errors as $innerKey => $innerErrors) {
+                $result["{$cid}.{$innerKey}"] = $innerErrors;
             }
         }
 
@@ -62,9 +58,9 @@ abstract class InlineRelation extends BaseRelation
      */
     public function parseInputValue($data)
     {
-        if (empty($data)) $data = null;
-
-        $data = (array)$data;
+        // Data will always be either empty or an array even when relation type
+        // isn't multiple
+        if (empty($data)) $data = [];
 
         array_walk($data, function (&$item) {
             $this->getRefEntity()->getFields()->parseInput($item);
@@ -169,25 +165,13 @@ abstract class InlineRelation extends BaseRelation
     }
 
     /**
-     * @param array $value
-     *
-     * @return string
-     */
-    protected function getActionFromInput($value)
-    {
-        $id = $this->getInnerModelId($value);
-
-        return is_null($id) ? Entity::CREATE : Entity::UPDATE;
-    }
-
-    /**
      * @param $value
      *
      * @return mixed
      */
     protected function getInnerModelId($value)
     {
-        return Helpers::processString(Arr::get($value, self::ID_PROPERTY));
+        return Helpers::processString(Arr::get($value, Entity::ID_PROPERTY));
     }
 
 }

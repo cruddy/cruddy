@@ -3,6 +3,7 @@
 namespace Kalnoy\Cruddy;
 
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Contracts\Validation\Validator;
 use Kalnoy\Cruddy\Schema\AttributesCollection;
 use Illuminate\Contracts\Events\Dispatcher;
 
@@ -19,11 +20,6 @@ abstract class BaseForm implements Arrayable
      * @var string
      */
     protected $id;
-
-    /**
-     * @var Contracts\Validator
-     */
-    private $validator;
 
     /**
      * @var Schema\Layout\Layout
@@ -172,25 +168,6 @@ abstract class BaseForm implements Arrayable
 
         return $collection;
     }
-
-    /**
-     * Get the validator.
-     *
-     * @return Contracts\Validator
-     */
-    public function getValidator()
-    {
-        if ($this->validator === null) {
-            return $this->validator = $this->createValidator();
-        }
-
-        return $this->validator;
-    }
-
-    /**
-     * @return Contracts\Validator
-     */
-    abstract public function createValidator();
 
     /**
      * @return Schema\Layout\Layout

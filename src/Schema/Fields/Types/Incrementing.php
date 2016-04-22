@@ -22,6 +22,14 @@ class Incrementing extends Integer
     }
 
     /**
+     * @inheritDoc
+     */
+    public function setModelValue($model, $value)
+    {
+        // Disable primary key from altering value
+    }
+
+    /**
      * {@inheritdoc}
      *
      * We will check for actual match rather than partial.
@@ -33,6 +41,14 @@ class Incrementing extends Integer
                 $builder->orWhere($this->getModelAttributeName(), '=', $keyword);
             }
         }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getRules($modelKey)
+    {
+        return [];
     }
 
     /**

@@ -45,7 +45,7 @@ class Boolean extends BaseField implements Filter {
      *
      * @return bool
      */
-    public function parseInputValue($value)
+    public function processInputValue($value)
     {
         return $value === 'true' || $value == '1' || $value === 'on' ? 1 : 0;
     }
@@ -56,7 +56,15 @@ class Boolean extends BaseField implements Filter {
     public function applyFilterConstraint(Builder $builder, $data)
     {
         if ($this->getSettingMode()) {
-            $builder->where($this->id, '=', $this->parseInputValue($data));
+            $builder->where($this->id, '=', $this->processInputValue($data));
         }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getRules($modelKey)
+    {
+        return array_merge(parent::getRules($modelKey), [ 'boolean' ]);
     }
 }

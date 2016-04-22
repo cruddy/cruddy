@@ -25,13 +25,6 @@ interface Field extends Attribute
     const MODE_AFTER_SAVE = 2;
 
     /**
-     * @param mixed $value
-     *
-     * @return array
-     */
-    public function validate($value);
-
-    /**
      * Extract data from a model for column.
      *
      * @param mixed $model
@@ -79,5 +72,12 @@ interface Field extends Attribute
      * @return bool
      */
     public function isDisabled($model);
+
+    /**
+     * @param mixed $modelKey
+     *
+     * @return array
+     */
+    public function getRules($modelKey);
 
 }

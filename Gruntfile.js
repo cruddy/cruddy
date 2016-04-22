@@ -33,6 +33,25 @@ module.exports = function(grunt) {
                     '<%= app %>/uploadQueue.coffee',
                     '<%= app %>/fileStorage.coffee',
 
+                    // Layout
+                    '<%= app %>/layout/element.coffee',
+                    '<%= app %>/layout/container.coffee',
+                    '<%= app %>/layout/baseFieldContainer.coffee',
+                    '<%= app %>/layout/fieldset.coffee',
+                    '<%= app %>/layout/tabPane.coffee',
+                    '<%= app %>/layout/row.coffee',
+                    '<%= app %>/layout/col.coffee',
+                    '<%= app %>/layout/field.coffee',
+                    '<%= app %>/layout/text.coffee',
+                    '<%= app %>/fieldList.coffee',
+                    '<%= app %>/layout/layout.coffee',
+
+                    // Entity
+                    '<%= app %>/entity/entity.coffee',
+                    '<%= app %>/entity/instance.coffee',
+                    '<%= app %>/entity/page.coffee',
+                    '<%= app %>/entity/form.coffee',
+
                     // Inputs
                     '<%= app %>/inputs/base.coffee',
                     '<%= app %>/inputs/static.coffee',
@@ -48,19 +67,6 @@ module.exports = function(grunt) {
                     '<%= app %>/inputs/select.coffee',
                     '<%= app %>/inputs/numberFilter.coffee',
                     '<%= app %>/inputs/datetime.coffee',
-
-                    // Layout
-                    '<%= app %>/layout/element.coffee',
-                    '<%= app %>/layout/container.coffee',
-                    '<%= app %>/layout/baseFieldContainer.coffee',
-                    '<%= app %>/layout/fieldset.coffee',
-                    '<%= app %>/layout/tabPane.coffee',
-                    '<%= app %>/layout/row.coffee',
-                    '<%= app %>/layout/col.coffee',
-                    '<%= app %>/layout/field.coffee',
-                    '<%= app %>/layout/text.coffee',
-                    '<%= app %>/fieldList.coffee',
-                    '<%= app %>/layout/layout.coffee',
 
                     // Fields
                     '<%= app %>/fields/baseView.coffee',
@@ -95,17 +101,6 @@ module.exports = function(grunt) {
                     // Filters
                     '<%= app %>/filters/base.coffee',
                     '<%= app %>/filters/proxy.coffee',
-
-                    // Formatters
-                    '<%= app %>/formatters/base.coffee',
-                    '<%= app %>/formatters/image.coffee',
-                    '<%= app %>/formatters/plain.coffee',
-
-                    // Entity
-                    '<%= app %>/entity/entity.coffee',
-                    '<%= app %>/entity/instance.coffee',
-                    '<%= app %>/entity/page.coffee',
-                    '<%= app %>/entity/form.coffee',
 
                     '<%= app %>/app.coffee',
                     '<%= app %>/router.coffee',

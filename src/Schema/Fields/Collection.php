@@ -7,6 +7,7 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Arr;
 use Kalnoy\Cruddy\Contracts\Filter;
 use Kalnoy\Cruddy\Contracts\KeywordsFilter;
+use Kalnoy\Cruddy\Contracts\ValidatingField;
 use Kalnoy\Cruddy\Schema\AttributesCollection;
 use Kalnoy\Cruddy\Contracts\Field;
 use Kalnoy\Cruddy\Contracts\SearchProcessor;
@@ -70,9 +71,28 @@ class Collection extends AttributesCollection implements SearchProcessor
      */
     public function getValidationLabels()
     {
-        return array_map(function (Field $item) {
-            return mb_strtolower($item->getLabel());
-        }, $this->items);
+        $labels = [];
+
+        foreach ($this->items as $key => $field) {
+            $labels[$key] = mb_strtolower($field->getLabel());
+
+            // Add validation labels for inline forms
+            if ($field instanceof InlineRelation) {
+                $innerLabels = $field->getRefEntity()
+                               ->getFields()
+                               ->getValidationLabels();
+
+                foreach ($innerLabels as $innerKey => $label) {
+                    if ($field->isMultiple()) {
+                        $innerKey = "*.{$innerKey}";
+                    }
+
+                    $labels["{$key}.{$innerKey}"] = $label;
+                }
+            }
+        }
+
+        return $labels;
     }
 
     /**
@@ -83,7 +103,8 @@ class Collection extends AttributesCollection implements SearchProcessor
      *
      * @return void
      */
-    protected function applyKeywordsFilter($builder, array $keywords) {
+    protected function applyKeywordsFilter($builder, array $keywords)
+    {
         $builder->whereNested(function ($q) use ($keywords) {
             foreach ($this->searchable() as $item) {
                 $item->applyKeywordsFilter($q, $keywords);
@@ -131,20 +152,31 @@ class Collection extends AttributesCollection implements SearchProcessor
      * Validates an input and returns errors if any.
      *
      * @param array $input
+     * @param $modelKey
      *
      * @return array
      */
-    public function validate(array $input)
+    public function validateInner(array $input)
     {
         $result = [];
 
-        /** @var Field $field */
         foreach ($this->items as $key => $field) {
-            if ($errors = $field->validate(Arr::get($input, $key))) {
-                $result[$key] = $errors;
+            if ( ! $field instanceof InlineRelation) continue;
+
+            $errors = $field->validate(Arr::get($input, $key));
+
+            foreach ($errors as $innerKey => $innerErrors) {
+                $result["{$key}.{$innerKey}"] = $innerErrors;
             }
         }
 
         return $result;
+    }
+
+    public function getRules($modelKey)
+    {
+        return array_filter(array_map(function (Field $field) use ($modelKey) {
+            return $field->getRules($modelKey);
+        }, $this->items));
     }
 }

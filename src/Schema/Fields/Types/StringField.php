@@ -26,4 +26,12 @@ class StringField extends BaseTextField
 
         ] + parent::toArray();
     }
+
+    /**
+     * @inheritDoc
+     */
+    public function getRules($modelKey)
+    {
+        return array_merge(parent::getRules($modelKey), [ 'string' ]);
+    }
 }

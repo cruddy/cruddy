@@ -52,7 +52,7 @@ class HasMany extends HasOne
             return $this;
         }
 
-        $idList = Arr::pluck($value, self::ID_PROPERTY);
+        $idList = Arr::pluck($value, Entity::ID_PROPERTY);
 
         $idList = array_diff(array_keys($existing), $idList);
 

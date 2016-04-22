@@ -35,4 +35,4 @@ class Cruddy.Inputs.Base extends Cruddy.View
 
     emptyValue: -> null
 
-    empty: -> @model.set @key, @emptyValue()
+    empty: -> @setValue @emptyValue()

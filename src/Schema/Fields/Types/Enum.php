@@ -141,4 +141,24 @@ class Enum extends BaseInput implements Filter
         return $value;
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function getRules($modelKey)
+    {
+        $rules = [];
+        
+        if ($this->isMultiple()) {
+            $rules[] = 'array';
+        }
+        
+        $in = array_keys($this->getItems());
+        
+        array_unshift($in, 'in');
+        
+        $rules[] = $in;
+        
+        return array_merge(parent::getRules($modelKey), $rules);
+    }
+
 }

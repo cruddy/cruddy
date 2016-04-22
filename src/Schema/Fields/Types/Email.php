@@ -17,4 +17,11 @@ class Email extends BaseTextField
         return 'email';
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function getRules($modelKey)
+    {
+        return array_merge(parent::getRules($modelKey), [ 'email' ]);
+    }
 }

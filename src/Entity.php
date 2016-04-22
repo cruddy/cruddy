@@ -6,6 +6,8 @@ use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Fluent;
+use Illuminate\Validation\Factory;
+use Illuminate\Validation\Validator;
 use Kalnoy\Cruddy\Contracts\KeywordsFilter;
 use Kalnoy\Cruddy\Contracts\SearchProcessor;
 use Kalnoy\Cruddy\Repo\BasicEloquentRepository;
@@ -54,6 +56,11 @@ abstract class Entity extends BaseForm implements SearchProcessor
      * The state of model when it is exists.
      */
     const WHEN_EXISTS = self::UPDATE;
+
+    /**
+     * Special attribute name for the model key.
+     */
+    const ID_PROPERTY = '__id';
 
     /**
      * @var Dispatcher
@@ -244,20 +251,15 @@ abstract class Entity extends BaseForm implements SearchProcessor
     protected function actions($actions) {}
 
     /**
-     * @param FluentValidator $validate
+     * Get custom validation rules.
+     *
+     * @param mixed $modelKey
+     *
+     * @return array
      */
-    protected function rules($validate) {}
-
-    /**
-     * @return FluentValidator
-     */
-    public function createValidator()
+    protected function rules($modelKey)
     {
-        $validator = new FluentValidator;
-
-        $this->rules($validator);
-
-        return $validator;
+        return [];
     }
 
     /**
@@ -361,27 +363,51 @@ abstract class Entity extends BaseForm implements SearchProcessor
     }
 
     /**
-     * @param string $action
      * @param array $input
+     * @param mixed $modelKey Primary key of the model to which validation is
+     *                        applied. `null` means that model is to be created.
      *
      * @return array
      */
-    public function validate($action, array $input)
+    public function validate(array $input, $modelKey = null)
     {
-        $fields = $this->getFields();
+        $validator = $this->makeValidator($input, $this->getRules($modelKey));
 
-        $result = [];
+        $messages = $validator->messages()->messages();
 
-        $validator = $this->getValidator();
-        $labels = $fields->getValidationLabels();
+        $innerMessages = $this->getFields()->validateInner($input);
 
-        $this->getFields()->parseInput($input);
+        return array_merge_recursive($messages, $innerMessages);
+    }
 
-        if ( ! $validator->validFor($action, $input, $labels)) {
-            $result = $validator->errors();
-        }
+    /**
+     * @param array $input
+     *
+     * @return Validator
+     */
+    protected function makeValidator(array $input, array $rules)
+    {
+        $labels = $this->getFields()->getValidationLabels();
 
-        return array_merge_recursive($result, $fields->validate($input));
+        return app(Factory::class)->make($input, $rules, [], $labels);
+    }
+
+    /**
+     * @param $modelKey
+     *
+     * @return array
+     */
+    public function getRules($modelKey)
+    {
+        $rules = $this->getFields()->getRules($modelKey);
+
+        $userRules = (array)$this->rules($modelKey);
+
+        $userRules = array_map(function ($rules) {
+            return is_string($rules) ? explode('|', $rules) : $rules;
+        }, $userRules);
+
+        return array_merge($rules, $userRules);
     }
 
     /**
@@ -555,7 +581,7 @@ abstract class Entity extends BaseForm implements SearchProcessor
     /**
      * Extract model fields.
      *
-     * @param mixed $model
+     * @param Model $model
      * @param AttributesCollection $collection
      *
      * @return array
@@ -570,6 +596,8 @@ abstract class Entity extends BaseForm implements SearchProcessor
 
         $attributes = parent::getModelData($model, $collection);
         $meta = $this->modelMeta($model);
+
+        $attributes[self::ID_PROPERTY] = $model->getKey();
 
         return compact('attributes', 'meta');
     }

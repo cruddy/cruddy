@@ -62,4 +62,12 @@ class DateTime extends BaseField
         return $value->getTimestamp();
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function getRules($modelKey)
+    {
+        return array_merge(parent::getRules($modelKey), [ 'date' ]);
+    }
+
 }

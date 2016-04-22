@@ -117,9 +117,9 @@ class EntityController extends Controller
     {
         $entity = $this->resolveEntity($entity, Entity::CREATE);
 
-        $input = $input->all();
+        $toValidate = $this->inputForValidation($input, $entity);
 
-        if ($errors = $entity->validate(Entity::CREATE, $input)) {
+        if ($errors = $entity->validate($toValidate)) {
             return $this->validationErrorsResponse($errors);
         }
 
@@ -142,9 +142,9 @@ class EntityController extends Controller
     {
         $entity = $this->resolveEntity($entity, Entity::UPDATE);
 
-        $input = $input->all();
+        $toValidate = $this->inputForValidation($input, $entity);
 
-        if ($errors = $entity->validate(Entity::UPDATE, $input)) {
+        if ($errors = $entity->validate($toValidate, $id)) {
             return $this->validationErrorsResponse($errors);
         }
 
@@ -156,14 +156,14 @@ class EntityController extends Controller
     /**
      * @param Entity $entity
      * @param $model
-     * @param array $input
+     * @param Request $input
      * @param string $action
      *
      * @return JsonResponse
      */
-    protected function saveModel($entity, $model, array $input, $action = null)
+    protected function saveModel($entity, $model, $input, $action = null)
     {
-        $entity->save($model, $input);
+        $entity->save($model, $input->all());
 
         if ($action) {
             $actionResult = $this->executeActionOnModel($entity, $action, $model);
@@ -331,6 +331,21 @@ class EntityController extends Controller
     {
         return response($errors,
                         Response::HTTP_UNPROCESSABLE_ENTITY);
+    }
+
+    /**
+     * @param Request $input
+     * @param Entity $entity
+     *
+     * @return array
+     */
+    protected function inputForValidation(Request $input, Entity $entity)
+    {
+        $parsedInput = $input->all();
+
+        $entity->getFields()->parseInput($parsedInput);
+
+        return $parsedInput;
     }
 
 }

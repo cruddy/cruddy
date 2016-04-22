@@ -62,12 +62,10 @@ class Factory extends BaseFactory
                                $disable = null
     ) {
         $this->resolve('datetime', $collection, [ 'created_at' ])
-             ->unique()
              ->hide($hide)
              ->disable($disable ? true : Entity::CREATE);
 
         $this->resolve('datetime', $collection, [ 'updated_at' ])
-             ->unique()
              ->hide($hide)
              ->disable($disable !== false);
     }

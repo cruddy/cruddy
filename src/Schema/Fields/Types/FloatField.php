@@ -21,4 +21,12 @@ class FloatField extends BaseNumber
         return (float)$value;
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function getRules($modelKey)
+    {
+        return array_merge(parent::getRules($modelKey), [ 'numeric' ]);
+    }
+
 }

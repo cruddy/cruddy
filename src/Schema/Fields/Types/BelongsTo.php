@@ -2,6 +2,7 @@
 
 namespace Kalnoy\Cruddy\Schema\Fields\Types;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Kalnoy\Cruddy\Contracts\Filter;
 use Kalnoy\Cruddy\Schema\Fields\BasicRelation;
@@ -11,12 +12,22 @@ use Kalnoy\Cruddy\Schema\Fields\BasicRelation;
  *
  * @since 1.0.0
  */
-class BelongsTo extends BasicRelation implements Filter {
-
+class BelongsTo extends BasicRelation implements Filter
+{
     /**
-     * @var \Illuminate\Database\Eloquent\Relations\BelongsTo
+     * @param Model $model
+     * @param array $value
+     *
+     * @return $this
      */
-    protected $relation;
+    public function setModelValue($model, $value)
+    {
+        $value = $this->processInputValue($value);
+
+        $model->setAttribute($this->getForeignKey(), $value);
+
+        return $this;
+    }
 
     /**
      * Get whether the relations works with a collection of models.
@@ -38,6 +49,14 @@ class BelongsTo extends BasicRelation implements Filter {
     {
         if (empty($data)) return;
 
-        $builder->whereIn($this->relation->getForeignKey(), explode(',', $data));
+        $builder->whereIn($this->getForeignKey(), $this->parseData($data));
+    }
+
+    /**
+     * @return string
+     */
+    public function getForeignKey()
+    {
+        return $this->newRelationQuery()->getForeignKey();
     }
 }

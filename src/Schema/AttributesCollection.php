@@ -14,13 +14,13 @@ class AttributesCollection extends BaseCollection
      *
      * @return array
      */
-    public function extract($model)
+    public function getModelData($model)
     {
         $data = [ ];
 
         /** @var Attribute $attribute */
         foreach ($this->items as $key => $attribute) {
-            $value = $attribute->extract($model);
+            $value = $attribute->getModelValue($model);
 
             if ($value instanceof Arrayable) {
                 $value = $value->toArray();
@@ -41,13 +41,13 @@ class AttributesCollection extends BaseCollection
      *
      * @return array
      */
-    public function extractAll($items)
+    public function getModelListData($items)
     {
         if ($items instanceof Collection) {
             $items = $items->all();
         }
 
-        return array_map(array( $this, 'extract' ), $items);
+        return array_map(array( $this, 'getModelData' ), $items);
     }
 
 }

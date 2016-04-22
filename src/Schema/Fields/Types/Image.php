@@ -16,7 +16,7 @@ class Image extends File
     /**
      * @return string
      */
-    protected function modelClass()
+    protected function getModelClass()
     {
         return 'Cruddy.Fields.Image';
     }
@@ -24,7 +24,7 @@ class Image extends File
     /**
      * @return string
      */
-    protected function defaultAccepts()
+    protected function getAccepts()
     {
         return 'image/*,image/jpeg';
     }
@@ -35,10 +35,26 @@ class Image extends File
     public function toArray()
     {
         return [
-            'width' => $this->get('width', null),
-            'height' => $this->get('height', 80),
+            'width' => $this->getWidth(),
+            'height' => $this->getHeight(),
 
         ] + parent::toArray();
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getWidth()
+    {
+        return $this->get('width', null);
+    }
+
+    /**
+     * @return mixed
+     */
+    public function getHeight()
+    {
+        return $this->get('height', 80);
     }
 
     /**
@@ -85,6 +101,33 @@ class Image extends File
         $this->width = null;
 
         return $this;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getStorageName()
+    {
+        return $this->get('storeTo', 'images');
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getModelValueForColumn($model)
+    {
+        if ( ! $src = $this->getModelValue($model)) {
+            return null;
+        }
+
+        $url = $this->urlToFile($src);
+        $thumb = $this->urlToFile($src, [ 'width' => $this->getWidth(),
+                                          'height' => $this->getHeight() ]);
+
+        return 
+            '<a href="'.$url.'" title="'.$src.'" target="_blank" data-trigger="fancybox">'.
+                '<img src="'.$thumb.'" alt="'.$src.'">'.
+            '</a>';
     }
 
 }

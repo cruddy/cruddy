@@ -6,8 +6,8 @@ use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Kalnoy\Cruddy\Contracts\SearchProcessor;
 use Kalnoy\Cruddy\Schema\BaseCollection;
 
-class Collection extends BaseCollection implements SearchProcessor {
-
+class Collection extends BaseCollection implements SearchProcessor
+{
     /**
      * @param EloquentBuilder $builder
      * @param array $input
@@ -17,14 +17,12 @@ class Collection extends BaseCollection implements SearchProcessor {
         $query = $builder->getQuery();
 
         /** @var BaseFilter $filter */
-        foreach ($this->items as $filter)
-        {
+        foreach ($this->items as $filter) {
             $key = $filter->getDataKey();
 
-            if (isset($input[$key]))
-            {
-                $filter->applyFilterConstraint($query, $input[$key]);
-            }
+            if ( ! isset($input[$key])) continue;
+
+            $filter->applyFilterConstraint($query, $input[$key]);
         }
     }
 }

@@ -14,8 +14,8 @@ use Kalnoy\Cruddy\Entity;
  *
  * @since 1.0.0
  */
-class Proxy extends BaseColumn {
-
+class Proxy extends BaseColumn
+{
     /**
      * The field instance.
      *
@@ -28,7 +28,7 @@ class Proxy extends BaseColumn {
      *
      * @return string
      */
-    protected function modelClass()
+    protected function getModelClass()
     {
         return 'Cruddy.Columns.Proxy';
     }
@@ -36,13 +36,13 @@ class Proxy extends BaseColumn {
     /**
      * Init column.
      *
-     * @param Entity $entity
+     * @param Entity $form
      * @param string $id
      * @param \Kalnoy\Cruddy\Contracts\Field $field
      */
-    public function __construct(Entity $entity, $id, Field $field)
+    public function __construct(Entity $form, $id, Field $field)
     {
-        parent::__construct($entity, $id);
+        parent::__construct($form, $id);
 
         $this->field = $field;
     }
@@ -50,17 +50,9 @@ class Proxy extends BaseColumn {
     /**
      * {@inheritdoc}
      */
-    public function extract($model)
+    public function getModelValue($model)
     {
-        return $this->field->extractForColumn($model);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function eagerLoads()
-    {
-        return $this->field->eagerLoads();
+        return $this->field->getModelValueForColumn($model);
     }
 
     /**
@@ -85,6 +77,14 @@ class Proxy extends BaseColumn {
     public function generateLabel()
     {
         return $this->field->getLabel();
+    }
+
+    /**
+     * @return \Kalnoy\Cruddy\Contracts\Field
+     */
+    public function getField()
+    {
+        return $this->form->getFields()->get($this->field);
     }
 
     /**

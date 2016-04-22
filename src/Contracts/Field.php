@@ -7,22 +7,22 @@ namespace Kalnoy\Cruddy\Contracts;
  *
  * @since 1.0.0
  */
-interface Field extends Attribute {
+interface Field extends Attribute
+{
+    /**
+     * The value will not be set on model.
+     */
+    const MODE_NONE = 0;
 
     /**
-     * No filtering is supported.
+     * The value should be set before saving the model.
      */
-    const FILTER_NONE = 'none';
+    const MODE_BEFORE_SAVE = 1;
 
     /**
-     * Filtering is based on string value.
+     * The value should be set after the model has been saved.
      */
-    const FILTER_STRING = 'string';
-
-    /**
-     * Filtering is more complex and requires additional data.
-     */
-    const FILTER_COMPLEX = 'complex';
+    const MODE_AFTER_SAVE = 2;
 
     /**
      * Extract data from a model for column.
@@ -31,24 +31,33 @@ interface Field extends Attribute {
      *
      * @return mixed
      */
-    public function extractForColumn($model);
+    public function getModelValueForColumn($model);
 
     /**
-     * Process a value and convert it to a format consumable by a validator
-     * and a repository.
+     * Set attribute on model from input.
+     *
+     * @param mixed $model
+     * @param mixed $value
+     *
+     * @return $this
+     */
+    public function setModelValue($model, $value);
+
+    /**
+     * Get model value setting mode.
+     *
+     * @return int
+     */
+    public function getSettingMode();
+
+    /**
+     * Process a value and convert it to a format consumable by a validator.
      *
      * @param mixed $value
      *
      * @return mixed
      */
-    public function process($value);
-
-    /**
-     * Get whether value can stay in the input.
-     *
-     * @return bool
-     */
-    public function keep($value);
+    public function parseInputValue($value);
 
     /**
      * @return string
@@ -56,12 +65,19 @@ interface Field extends Attribute {
     public function getLabel();
 
     /**
-     * Get whether the field is disabled for specified action.
+     * Get whether the field is disabled for specified model.
      *
-     * @param $action
+     * @param $model
      *
      * @return bool
      */
-    public function isDisabled($action);
+    public function isDisabled($model);
+
+    /**
+     * @param mixed $modelKey
+     *
+     * @return array
+     */
+    public function getRules($modelKey);
 
 }

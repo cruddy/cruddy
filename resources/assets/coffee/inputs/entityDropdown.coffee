@@ -5,9 +5,9 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
         "click .ed-item>.input-group-btn>.btn-remove": "removeItem"
         "click .ed-item>.input-group-btn>.btn-edit": "editItem"
         "click .ed-item>.form-control": "executeFirstAction"
-        "keydown .ed-item>.form-control": "itemKeydown"
-        "keydown [type=search]": "searchKeydown"
-        "show.bs.dropdown": "renderDropdown"
+        "keydown .ed-item>.form-control": "handleItemKeydown"
+        "keydown [type=search]": "handleSearchKeydown"
+        "show.bs.dropdown": "handleDropdownShow"
 
         "shown.bs.dropdown": ->
             after_break => @selector.focus()
@@ -99,7 +99,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         this
 
-    searchKeydown: (e) ->
+    handleSearchKeydown: (e) ->
         if (e.keyCode is 27)
             @selector.$el.dropdown "toggle" if @selector
 
@@ -107,7 +107,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         return
 
-    itemKeydown: (e) ->
+    handleItemKeydown: (e) ->
         if (e.keyCode is 13)
             @executeFirstAction e
 
@@ -151,7 +151,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         this
 
-    renderDropdown: (e) ->
+    handleDropdownShow: (e) ->
         if @disableDropdown
             e.preventDefault()
 
@@ -188,7 +188,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         this
 
-    applyChanges: (value) ->
+    handleValueChanged: ->
         if @multiple
             @renderItems()
         else
@@ -280,19 +280,19 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
 
         html += """
             <button type="button" class="btn btn-default btn-remove" tabindex="-1" title="#{ Cruddy.lang.reset }">
-                <span class="glyphicon glyphicon-remove"></span>
+                #{ b_icon "remove" }
             </button>
             """ if @enabled
 
         html += """
             <button type="button" class="btn btn-default btn-edit" tabindex="-1" title="#{ Cruddy.lang.edit }">
-                <span class="glyphicon glyphicon-pencil"></span>
+                #{ b_icon "pencil" }
             </button>
             """ if @allowEdit
 
         html += """
             <button type="button" class="btn btn-default btn-dropdown dropdown-toggle" data-toggle="dropdown" id="#{ @cid }-dropdown" data-target="##{ @cid }" tab-index="1" title="#{ Cruddy.lang.list_show }">
-                <span class="glyphicon"></span>
+                #{ b_icon "chevron-down" }
             </button>
             """ if not @multiple
 

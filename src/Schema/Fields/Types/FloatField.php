@@ -9,16 +9,24 @@ use Kalnoy\Cruddy\Schema\Fields\BaseNumber;
  *
  * @since 1.0.0
  */
-class FloatField extends BaseNumber {
-
+class FloatField extends BaseNumber
+{
     /**
      * {@inheritdoc}
      *
      * @return float
      */
-    protected function cast($value)
+    public function cast($value)
     {
         return (float)$value;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getRules($modelKey)
+    {
+        return array_merge(parent::getRules($modelKey), [ 'numeric' ]);
     }
 
 }

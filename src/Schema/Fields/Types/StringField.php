@@ -14,8 +14,8 @@ use Kalnoy\Cruddy\Schema\Fields\BaseTextField;
  *
  * @since 1.0.0
  */
-class StringField extends BaseTextField {
-
+class StringField extends BaseTextField
+{
     /**
      * {@inheritdoc}
      */
@@ -25,5 +25,13 @@ class StringField extends BaseTextField {
             'mask' => $this->get('mask'),
 
         ] + parent::toArray();
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getRules($modelKey)
+    {
+        return array_merge(parent::getRules($modelKey), [ 'string' ]);
     }
 }

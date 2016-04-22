@@ -27,7 +27,7 @@ class Boolean extends BaseField implements Filter {
      *
      * @return string
      */
-    protected function modelClass()
+    protected function getModelClass()
     {
         return 'Cruddy.Fields.Boolean';
     }
@@ -35,9 +35,9 @@ class Boolean extends BaseField implements Filter {
     /**
      * {@inheritdoc}
      */
-    public function extract($model)
+    public function getModelValue($model)
     {
-        return (bool)parent::extract($model);
+        return (bool)parent::getModelValue($model);
     }
 
     /**
@@ -45,7 +45,7 @@ class Boolean extends BaseField implements Filter {
      *
      * @return bool
      */
-    public function process($value)
+    public function processInputValue($value)
     {
         return $value === 'true' || $value == '1' || $value === 'on' ? 1 : 0;
     }
@@ -53,29 +53,18 @@ class Boolean extends BaseField implements Filter {
     /**
      * {@inheritdoc}
      */
-    public function keep($value)
-    {
-        return trim($value) !== '';
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function order(Builder $builder, $direction)
-    {
-        $builder->orderBy($this->id, $direction);
-
-        return $this;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
     public function applyFilterConstraint(Builder $builder, $data)
     {
-        if ($this->keep($data))
-        {
-            $builder->where($this->id, '=', $this->process($data));
+        if ($this->getSettingMode()) {
+            $builder->where($this->id, '=', $this->processInputValue($data));
         }
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getRules($modelKey)
+    {
+        return array_merge(parent::getRules($modelKey), [ 'boolean' ]);
     }
 }

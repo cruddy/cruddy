@@ -8,7 +8,7 @@ class Cruddy.Inputs.Static extends Cruddy.Inputs.Base
 
         super
 
-    applyChanges: (data) -> @render()
+    handleValueChanged: -> @render()
 
     render: ->
         value = @getValue()

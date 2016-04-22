@@ -7,14 +7,21 @@ use Kalnoy\Cruddy\Schema\Fields\BaseTextField;
  *
  * @since 1.0.0
  */
-class Email extends BaseTextField {
-
+class Email extends BaseTextField
+{
     /**
      * @return string
      */
-    protected function inputType()
+    protected function getInputType()
     {
         return 'email';
     }
 
+    /**
+     * @inheritDoc
+     */
+    public function getRules($modelKey)
+    {
+        return array_merge(parent::getRules($modelKey), [ 'email' ]);
+    }
 }

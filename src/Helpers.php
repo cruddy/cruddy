@@ -49,4 +49,59 @@ class Helpers
     {
         return static::ucfirst(static::prettifyString($id));
     }
+
+    /**
+     * @param string $value
+     *
+     * @return null|string
+     */
+    public static function processString($value)
+    {
+        if ( ! is_string($value)) return $value;
+
+        $value = trim($value);
+
+        return $value === '' ? null : $value;
+    }
+
+    /**
+     * @param array $data
+     *
+     * @return mixed
+     */
+    public static function firstOrNull(array $data)
+    {
+        return empty($data) ? null : reset($data);
+    }
+
+    /**
+     * @param string $value
+     *
+     * @return array
+     */
+    public static function splitKeywords($value)
+    {
+        return preg_split('/\s/', $value, -1, PREG_SPLIT_NO_EMPTY);
+    }
+
+    /**
+     * @param $value
+     *
+     * @return string
+     */
+    public static function simplifyRichText($value)
+    {
+        if ( ! $value) {
+            return null;
+        }
+
+        // Strip any tags and limit length
+        $value = strip_tags($value);
+
+        if (mb_strlen($value) > 300) {
+            $value = mb_substr($value, 255).'...';
+        }
+
+        return $value;
+    }
 }

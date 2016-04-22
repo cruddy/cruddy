@@ -12,14 +12,17 @@ use Kalnoy\Cruddy\Schema\Fields\BaseTextField;
  * Password field will not expose a value and will always be empty. The empty
  * password will be removed from the input.
  *
+ * @property bool $hash
+ * @method $this hash(bool $value = true)
+ *
  * @since 1.0.0
  */
-class Password extends BaseTextField {
-
+class Password extends BaseTextField
+{
     /**
      * @return string
      */
-    protected function inputType()
+    protected function getInputType()
     {
         return 'password';
     }
@@ -27,19 +30,43 @@ class Password extends BaseTextField {
     /**
      * {@inheritdoc}
      */
-    public function extract($model)
+    public function getModelValue($model)
     {
         return null;
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
-    public function keep($value)
+    public function setModelValue($model, $value)
     {
-        $value = trim($value);
+        if (is_null($value)) {
+            return $this;
+        }
 
-        return ! empty($value);
+        return parent::setModelValue($model, $value);
+    }
+
+    /**
+     * @inheritDoc
+     *
+     * Leaving password input without changes.
+     */
+    public function parseInputValue($value)
+    {
+        return is_null($value) || trim($value) === '' ? null : $value;
+    }
+
+    /**
+     * @param array $value
+     *
+     * @return string
+     */
+    protected function processInputValue($value)
+    {
+        $value = parent::processInputValue($value);
+
+        return $this->hash ? bcrypt($value) : $value;
     }
 
     /**

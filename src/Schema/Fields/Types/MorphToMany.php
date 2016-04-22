@@ -9,21 +9,19 @@ use Illuminate\Database\Query\Builder as QueryBuilder;
  *
  * @since 1.0.0
  */
-class MorphToMany extends BelongsToMany {
-
-    /**
-     * @var \Illuminate\Database\Eloquent\Relations\MorphToMany
-     */
-    protected $relation;
-
+class MorphToMany extends BelongsToMany
+{
     /**
      * {@inheritdoc}
      */
-    protected function initNestedQuery(QueryBuilder $query, array $ids)
+    protected function initFilterQuery(QueryBuilder $query, array $ids)
     {
-        parent::initNestedQuery($query, $ids);
+        parent::initFilterQuery($query, $ids);
 
-        $query->where($this->relation->getMorphType(), '=', $this->relation->getMorphClass());
+        /** @var \Illuminate\Database\Eloquent\Relations\MorphToMany $relation */
+        $relation = $this->newRelationQuery();
+
+        $query->where($relation->getMorphType(), '=', $relation->getMorphClass());
     }
 
 }

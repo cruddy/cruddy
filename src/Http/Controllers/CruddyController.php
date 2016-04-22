@@ -9,15 +9,17 @@ use Illuminate\Http\Response;
 use Kalnoy\Cruddy\Compiler;
 use Kalnoy\Cruddy\Environment;
 use Illuminate\Routing\Controller;
+use Kalnoy\Cruddy\Service\Files\StorageManager;
 use Kalnoy\Cruddy\Service\ThumbnailFactory;
+use Symfony\Component\HttpFoundation\File\Exception\UploadException;
 
 /**
  * This controller handles base web-requests.
  *
  * @since 1.0.0
  */
-class CruddyController extends Controller {
-
+class CruddyController extends Controller
+{
     /**
      * Initial page.
      *
@@ -29,7 +31,9 @@ class CruddyController extends Controller {
     {
         $dashboard = config('cruddy.dashboard', 'cruddy::dashboard');
 
-       if ($dashboard[0] === '@') return redirect()->route('cruddy.index', [ substr($dashboard, 1) ]);
+       if ($dashboard[0] === '@') {
+           return redirect()->route('cruddy.index', [ substr($dashboard, 1) ]);
+       }
 
        return view($dashboard, [ 'cruddy' => $cruddy ]);
     }
@@ -42,7 +46,7 @@ class CruddyController extends Controller {
      */
     public function schema(Compiler $compiler)
     {
-        return new JsonResponse($compiler->schema());
+        return response()->json($compiler->schema());
     }
 
     /**
@@ -62,13 +66,11 @@ class CruddyController extends Controller {
         if ($width !== null) $width = (int)$width;
         if ($height !== null) $height = (int)$height;
 
-        try
-        {
+        try {
             return $factory->make(public_path($src), $width, $height)->response();
         }
 
-        catch (Exception $e)
-        {
+        catch (Exception $e) {
             return response('Failed to process image.', 404);
         }
     }

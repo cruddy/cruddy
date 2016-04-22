@@ -9,16 +9,24 @@ use Kalnoy\Cruddy\Schema\Fields\BaseNumber;
  *
  * @since 1.0.0
  */
-class Integer extends BaseNumber {
-
+class Integer extends BaseNumber
+{
     /**
      * {@inheritdoc}
      *
      * @return int
      */
-    protected function cast($value)
+    public function cast($value)
     {
         return (int)$value;
+    }
+
+    /**
+     * @inheritDoc
+     */
+    public function getRules($modelKey)
+    {
+        return array_merge(parent::getRules($modelKey), [ 'integer' ]);
     }
 
 }

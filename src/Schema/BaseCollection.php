@@ -86,4 +86,12 @@ class BaseCollection implements ArrayableContract
     {
         return $this->container;
     }
+
+    /**
+     * @return array
+     */
+    public function getItems()
+    {
+        return $this->items;
+    }
 }

@@ -17,23 +17,39 @@ use Kalnoy\Cruddy\Schema\Fields\BaseInput;
  *
  * @since 1.0.0
  */
-class Enum extends BaseInput implements Filter {
-
+class Enum extends BaseInput implements Filter
+{
     /**
-     * @var mixed
+     * @var array
      */
-    protected $items;
+    private $items;
 
     /**
-     * @param BaseForm $entity
+     * @param BaseForm $form
      * @param string $id
      * @param $items
      */
-    public function __construct(BaseForm $entity, $id, $items)
+    public function __construct(BaseForm $form, $id, $items)
     {
-        parent::__construct($entity, $id);
+        parent::__construct($form, $id);
 
         $this->items = $items;
+    }
+
+    /**
+     * @return mixed
+     */
+    public function isMultiple()
+    {
+        return $this->get('multiple', false);
+    }
+
+    /**
+     * @return string
+     */
+    public function getPrompt()
+    {
+        return Helpers::tryTranslate($this->get('prompt'));
     }
 
     /**
@@ -41,7 +57,7 @@ class Enum extends BaseInput implements Filter {
      *
      * @return string
      */
-    protected function modelClass()
+    protected function getModelClass()
     {
         return 'Cruddy.Fields.Enum';
     }
@@ -49,11 +65,11 @@ class Enum extends BaseInput implements Filter {
     /**
      * {@inheritdoc}
      */
-    public function process($value)
+    public function parseInputValue($value)
     {
         $value = $this->parse($value);
 
-        return $this->multiple ? $value : reset($value);
+        return $this->isMultiple() ? $value : reset($value);
     }
 
     /**
@@ -61,12 +77,10 @@ class Enum extends BaseInput implements Filter {
      */
     public function applyFilterConstraint(Builder $query, $data)
     {
-        if ($this->multiple or ! ($data = $this->parse($data))) return;
+        if ($this->isMultiple() || ! ($data = $this->parse($data))) return;
 
-        $query->whereNested(function ($inner) use ($data)
-        {
-            foreach ($data as $key)
-            {
+        $query->whereNested(function ($inner) use ($data) {
+            foreach ($data as $key) {
                 $inner->orWhere($this->id, '=', $key);
             }
         });
@@ -81,8 +95,7 @@ class Enum extends BaseInput implements Filter {
      */
     protected function translateItems($items)
     {
-        foreach ($items as $key => $value)
-        {
+        foreach ($items as $key => $value) {
             $items[$key] = Helpers::tryTranslate($value);
         }
 
@@ -95,9 +108,9 @@ class Enum extends BaseInput implements Filter {
     public function toArray()
     {
         return [
-            'prompt' => Helpers::tryTranslate($this->get('prompt')),
+            'prompt' => $this->getPrompt(),
             'items' => $this->translateItems($this->getItems()),
-            'multiple' => $this->get('multiple', false),
+            'multiple' => $this->isMultiple(),
 
         ] + parent::toArray();
     }
@@ -105,16 +118,16 @@ class Enum extends BaseInput implements Filter {
     /**
      * @return array
      */
-    protected function getItems()
+    public function getItems()
     {
-        if ($this->items instanceof \Closure) $this->items = value($this->items);
+        if ($this->items instanceof \Closure) {
+            $this->items = value($this->items);
+        }
 
         return $this->items;
     }
 
     /**
-     * Parse value and return array of valid items.
-     *
      * @param $value
      *
      * @return array
@@ -125,9 +138,27 @@ class Enum extends BaseInput implements Filter {
 
         if (is_string($value)) $value = explode(',', $value);
 
-        $items = array_keys($this->getItems());
+        return $value;
+    }
 
-        return array_values(array_intersect($items, (array)$value));
+    /**
+     * @inheritDoc
+     */
+    public function getRules($modelKey)
+    {
+        $rules = [];
+        
+        if ($this->isMultiple()) {
+            $rules[] = 'array';
+        }
+        
+        $in = array_keys($this->getItems());
+        
+        array_unshift($in, 'in');
+        
+        $rules[] = $in;
+        
+        return array_merge(parent::getRules($modelKey), $rules);
     }
 
 }

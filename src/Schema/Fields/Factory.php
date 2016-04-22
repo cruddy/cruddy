@@ -17,7 +17,7 @@ class Factory extends BaseFactory
      * @var array
      */
     protected $macros = [
-        'increments' => Types\Primary::class,
+        'increments' => Types\Incrementing::class,
         'string' => Types\StringField::class,
         'text' => Types\Text::class,
         'email' => Types\Email::class,
@@ -35,6 +35,15 @@ class Factory extends BaseFactory
         'computed' => Types\Computed::class,
         'enum' => Types\Enum::class,
         'slug' => Types\Slug::class,
+
+        'belongsTo' => Types\BelongsTo::class,
+        'belongsToMany' => Types\BelongsToMany::class,
+        'morphToMany' => Types\MorphToMany::class,
+
+        'hasOne' => Types\HasOne::class,
+        'hasMany' => Types\HasMany::class,
+        'morphOne' => Types\HasOne::class,
+        'morphMany' => Types\HasMany::class,
     ];
 
     /**
@@ -53,12 +62,10 @@ class Factory extends BaseFactory
                                $disable = null
     ) {
         $this->resolve('datetime', $collection, [ 'created_at' ])
-             ->unique()
              ->hide($hide)
              ->disable($disable ? true : Entity::CREATE);
 
         $this->resolve('datetime', $collection, [ 'updated_at' ])
-             ->unique()
              ->hide($hide)
              ->disable($disable !== false);
     }
@@ -104,7 +111,7 @@ class Factory extends BaseFactory
             throw new \RuntimeException("Cruddy does not know how to handle [{$relationClassName}] relation.");
         }
 
-        $instance = new $className($entity, $id, $ref, $relation);
+        $instance = new $className($entity, $id, $ref->getId());
 
         $collection->push($instance);
 

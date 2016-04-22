@@ -15,8 +15,8 @@ use Kalnoy\Cruddy\Contracts\Field;
  *
  * @since 1.0.0
  */
-abstract class BasicRelation extends BaseRelation implements SearchProcessor {
-
+abstract class BasicRelation extends BaseRelation implements SearchProcessor
+{
     /**
      * The constraint with other field.
      *
@@ -36,7 +36,7 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessor {
      *
      * @return string
      */
-    protected function modelClass()
+    protected function getModelClass()
     {
         return 'Cruddy.Fields.Relation';
     }
@@ -60,7 +60,7 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessor {
      *
      * @return array|mixed
      */
-    public function process($value)
+    public function parseInputValue($value)
     {
         $value = $this->parseData($value);
 
@@ -97,16 +97,15 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessor {
 
         extract($this->constraint);
 
-        $fieldInstance = $this->findField($this->entity, $field);
-        $otherFieldInstance = $this->findField($this->reference, $otherField);
+        $fieldInstance = $this->findField($this->form, $field);
+        $otherFieldInstance = $this->findField($this->getRefEntity(),
+                                               $otherField);
 
-        if (get_class($fieldInstance) !== get_class($otherFieldInstance))
-        {
+        if (get_class($fieldInstance) !== get_class($otherFieldInstance)) {
             throw new RuntimeException('Fields on current and related entity must be of same type in order to enable constraint.');
         }
 
-        if ( ! $fieldInstance instanceof Filter)
-        {
+        if ( ! $fieldInstance instanceof Filter) {
             throw new RuntimeException('Cannot set up constraint with a field that is not able to apply filter.');
         }
     }
@@ -123,8 +122,7 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessor {
     {
         $field = $entity->getFields()->get($fieldId);
 
-        if ( ! $field)
-        {
+        if ( ! $field) {
             throw new RuntimeException("The field [{$entity->getId()}.{$fieldId}] is not defined.");
         }
 
@@ -134,18 +132,17 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessor {
     /**
      * {@inheritdoc}
      */
-    public function extract($model)
+    public function getModelValue($model)
     {
         // Strange, but relations are still resolved even when model doesn't
         // really exists, so wee need to handle this case.
-        if ( ! $model->exists)
-        {
+        if ( ! $model->exists) {
             return $this->isMultiple() ? [] : null;
         }
 
-        $data = parent::extract($model);
+        $data = parent::getModelValue($model);
 
-        return $data ? $this->reference->simplify($data) : null;
+        return $data ? $this->getRefEntity()->simplifyModel($data) : null;
     }
 
     /**
@@ -153,15 +150,15 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessor {
      */
     public function constraintBuilder(Builder $query, array $options)
     {
-        if (isset($this->filter))
-        {
+        if (isset($this->filter)) {
             call_user_func($this->filter, $query, $options);
         }
 
-        if ($this->constraint and ($constraintData = array_get($options, 'constraint')))
-        {
-            $this->applyConstraint($query, $constraintData);
-        }
+        if ( ! $this->constraint) return;
+
+        $constraintData = array_get($options, 'constraint');
+
+        $this->applyConstraint($query, $constraintData);
     }
 
     /**
@@ -171,7 +168,8 @@ abstract class BasicRelation extends BaseRelation implements SearchProcessor {
     protected function applyConstraint(Builder $query, $constraintData)
     {
         /** @var Filter $filterer */
-        $filterer = $this->findField($this->reference, $this->constraint['otherField']);
+        $filterer = $this->findField($this->getRefEntity(),
+                                     $this->constraint['otherField']);
 
         $filterer->applyFilterConstraint($query->getQuery(), $constraintData);
     }

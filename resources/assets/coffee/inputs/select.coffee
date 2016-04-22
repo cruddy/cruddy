@@ -18,8 +18,8 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.BaseText
 
         super
 
-    applyChanges: (data, external) ->
-        @$el.val @_transformValue data if external
+    handleValueChanged: (newValue, bySelf) ->
+        @$el.val @_transformValue newValue unless bySelf
 
         this
 
@@ -39,7 +39,10 @@ class Cruddy.Inputs.Select extends Cruddy.Inputs.BaseText
         html += @optionTemplate key, value for key, value of @items
         html
 
-    optionTemplate: (value, title, disabled = no) ->
-        """<option value="#{ _.escape value }"#{ if disabled then " disabled" else ""}>#{ _.escape title }</option>"""
+    optionTemplate: (value, title, disabled = no) -> """
+        <option value="#{ _.escape value }" #{ value_if disabled, "disabled" }>
+            #{ _.escape title }
+        </option>
+    """
 
     hasPrompt: -> not @multiple and (not @required or @prompt)

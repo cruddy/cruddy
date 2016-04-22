@@ -40,4 +40,23 @@
     'entities' => [
 
     ],
+
+    'storage' => [
+        
+        'files' => [
+            'type' => 'files',
+            'disk' => 'local',
+            
+            // Optionally specify allowed mime types
+            'mime' => [  ],
+
+            // Specify whether to keep original file names
+            'keep_names' => true,
+        ],
+        
+        'images' => [
+            'type' => 'images',
+            'disk' => 'local',
+        ],
+    ],
 );

@@ -68,15 +68,19 @@ class Compiler
      */
     public function fresh($locale = null)
     {
-        $currentLocale = $this->lang->getLocale();
+        if ($locale !== null) {
+            $currentLocale = $this->lang->getLocale();
+            
+            $this->lang->setLocale($locale);
+        }
 
-        if ($locale !== null) $this->lang->setLocale($locale);
+        $data = $this->entities->resolveAll();
 
-        $data = array_map(function (BaseForm $item) {
-            return $item->toArray();
-        }, $this->entities->resolveAll());
+        $data = array_map(function ($item) { return $item->toArray(); }, $data);
 
-        if ($locale !== null) $this->lang->setLocale($currentLocale);
+        if ($locale !== null) {
+            $this->lang->setLocale($currentLocale);
+        }
 
         return $data;
     }

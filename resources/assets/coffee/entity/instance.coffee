@@ -1,8 +1,14 @@
 class Cruddy.Entity.Instance extends Backbone.Model
+    # Cid is used for identification during validation and we need this to be
+    # numeric value rather than string to allow laravel's asterisk validation
+    # We prefix with 0 to make sure that cid doesn't interfere with default
+    # numeric primary keys
+    cidPrefix: "0"
+
+    idAttribute: "__id"
 
     constructor: (attributes, options) ->
         @entity = options.entity
-        @idAttribute = @entity.getPrimaryKey()
         @meta = {}
 
         super
@@ -18,7 +24,6 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
     syncOriginalAttributes: ->
         @original = _.clone @attributes
-        @primaryKey = @id
 
         return this
 
@@ -49,9 +54,9 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
         return null
 
-    link: -> @entity.link @primaryKey or "create"
+    link: -> @entity.link @id or "create"
 
-    url: -> @entity.url @primaryKey
+    url: -> @entity.url @id
 
     set: (key, val, options) ->
         if _.isObject key
@@ -99,5 +104,3 @@ class Cruddy.Entity.Instance extends Backbone.Model
     getTitle: -> if @isNew() then Cruddy.lang.model_new_record else @meta.title
 
     getOriginal: (key) -> @original[key]
-
-    isNew: -> ! @primaryKey

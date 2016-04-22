@@ -1,4 +1,4 @@
-class Cruddy.Inputs.Slug extends Backbone.View
+class Cruddy.Inputs.Slug extends Cruddy.Inputs.Base
     events:
         "click .btn": "toggleSyncing"
 
@@ -12,15 +12,16 @@ class Cruddy.Inputs.Slug extends Backbone.View
         super
 
     initialize: (options) ->
-        @key = options.key
         @ref = if _.isArray(options.field) then options.field else [options.field] if options.field
 
-        @$el.removeClass("input-group") unless @ref
-
-        @listenTo @model, "change:" + @key, =>
-            @unlink() unless @linkable()
+        @$el.removeClass "input-group" unless @ref
 
         super
+
+    handleValueChanged: ->
+        @unlink() unless @linkable()
+
+        return this
 
     toggleSyncing: ->
         if @syncButton.hasClass "active" then @unlink() else @link()
@@ -32,6 +33,7 @@ class Cruddy.Inputs.Slug extends Backbone.View
 
         @listenTo @model, "change:" + @ref.join(" change:"), @sync
         @syncButton.addClass "active"
+
         @input.disable()
 
         @sync()
@@ -39,20 +41,18 @@ class Cruddy.Inputs.Slug extends Backbone.View
     unlink: ->
         @stopListening @model, null, @sync if @ref?
         @syncButton.removeClass "active"
+
         @input.enable()
 
         this
 
     linkable: ->
-        modelValue = @model.get @key
+        modelValue = @getValue()
         value = @getSlug()
 
-        return value == modelValue or modelValue is null and value is ""
+        return value == modelValue
 
-    sync: ->
-        @model.set @key, @getSlug()
-
-        this
+    sync: -> @setValue @getSlug()
 
     getSlug: ->
         components = []
@@ -61,7 +61,7 @@ class Cruddy.Inputs.Slug extends Backbone.View
             refValue = @model.get key
             components.push refValue if refValue
 
-        if components.length then components.join " " else ""
+        if components.length then components.join " " else null
 
     render: ->
         @$el.html @template()

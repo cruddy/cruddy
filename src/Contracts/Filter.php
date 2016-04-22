@@ -4,8 +4,8 @@ namespace Kalnoy\Cruddy\Contracts;
 
 use Illuminate\Database\Query\Builder;
 
-interface Filter extends Entry {
-
+interface Filter
+{
     /**
      * @param Builder $builder
      * @param $input

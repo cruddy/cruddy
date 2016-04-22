@@ -2,8 +2,8 @@ class Cruddy.Inputs.NumberFilter extends Cruddy.Inputs.Base
     className: "input-group number-filter"
 
     events:
-        "click .dropdown-menu a": "changeOperator"
-        "change": "changeValue"
+        "click .dropdown-menu a": "handleOperatorSelected"
+        "change": "handleInputChanged"
 
     initialize: ->
         @defaultOp = ">"
@@ -12,7 +12,7 @@ class Cruddy.Inputs.NumberFilter extends Cruddy.Inputs.Base
 
         super
 
-    changeOperator: (e) ->
+    handleOperatorSelected: (e) ->
         e.preventDefault()
 
         op = $(e.currentTarget).data "op"
@@ -22,14 +22,14 @@ class Cruddy.Inputs.NumberFilter extends Cruddy.Inputs.Base
 
         this
 
-    changeValue: (e) ->
+    handleInputChanged: (e) ->
         value = @getValue()
 
         @setValue @makeValue value.op, e.target.value
 
         this
 
-    applyChanges: (value, external) ->
+    handleValueChanged: (value, external) ->
         @$(".dropdown-menu li").removeClass "active"
         @$(".dropdown-menu a[data-op='#{ value.op }']").parent().addClass "active"
 

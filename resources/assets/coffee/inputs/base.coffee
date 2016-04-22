@@ -8,17 +8,16 @@ class Cruddy.Inputs.Base extends Cruddy.View
         super
 
     initialize: ->
-        @listenTo @model, "change:" + @key, (model, value, options) ->
-            @applyChanges value, not options.input or options.input isnt this
+        @listenTo @model, "change:" + @key, (model, value, { input }) ->
+            @handleValueChanged value, input is this
 
         this
 
     # Apply changes when model's attribute changed.
     # external is true when value is changed not by input itself.
-    applyChanges: (data, external) -> this
+    handleValueChanged: (newValue, bySelf) -> this
 
-    render: ->
-        @applyChanges @getValue(), yes
+    render: -> @handleValueChanged @getValue(), no
 
     # Focus an element.
     focus: -> this
@@ -36,4 +35,4 @@ class Cruddy.Inputs.Base extends Cruddy.View
 
     emptyValue: -> null
 
-    empty: -> @model.set @key, @emptyValue()
+    empty: -> @setValue @emptyValue()

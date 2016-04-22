@@ -12,8 +12,8 @@ use Carbon\Carbon;
  *
  * @since 1.0.0
  */
-class DateTime extends BaseField {
-
+class DateTime extends BaseField
+{
     /**
      * @return bool
      */
@@ -27,7 +27,7 @@ class DateTime extends BaseField {
      *
      * @return string
      */
-    protected function modelClass()
+    protected function getModelClass()
     {
         return 'Cruddy.Fields.DateTime';
     }
@@ -37,7 +37,7 @@ class DateTime extends BaseField {
      *
      * @return \Carbon\Carbon
      */
-    public function process($value)
+    public function parseInputValue($value)
     {
         return empty($value) ? null : Carbon::createFromTimestamp($value);
     }
@@ -47,25 +47,27 @@ class DateTime extends BaseField {
      *
      * @return int
      */
-    public function extract($model)
+    public function getModelValue($model)
     {
-        $value = parent::extract($model);
+        $value = parent::getModelValue($model);
 
-        if ($value === null) return null;
+        if ($value === null) {
+            return null;
+        }
 
-        if ( ! $value instanceof Carbon) $value = new Carbon($value);
+        if ( ! $value instanceof Carbon) {
+            $value = new Carbon($value);
+        }
 
         return $value->getTimestamp();
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritDoc
      */
-    public function order(Builder $builder, $direction)
+    public function getRules($modelKey)
     {
-        $builder->orderBy($this->id, $direction);
-
-        return $this;
+        return array_merge(parent::getRules($modelKey), [ 'date' ]);
     }
 
 }

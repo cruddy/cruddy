@@ -13,8 +13,8 @@ use Illuminate\Database\Eloquent\Model;
  *
  * @since 1.0.0
  */
-interface Repository {
-
+interface Repository
+{
    /**
     * Get an item by given id.
     *
@@ -45,12 +45,10 @@ interface Repository {
      * Save the model.
      *
      * @param Model $model
-     * @param array $input
-     * @param callable $extra
      *
-     * @return void
+     * @return bool
      */
-    public function save(Model $model, array $input, Closure $extra = null);
+    public function save($model);
 
     /**
      * Delete a model or a set of model.

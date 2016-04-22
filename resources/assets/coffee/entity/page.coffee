@@ -60,7 +60,7 @@ class Cruddy.Entity.Page extends Cruddy.View
         options = $.extend { trigger: no, replace: no }, options
 
         if @form
-            router.setQuery "id", @form.model.primaryKey or "new", options
+            router.setQuery "id", @form.model.id or "new", options
         else
             router.removeQuery "id", options
 

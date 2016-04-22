@@ -1,20 +1,19 @@
 # Renders a checkbox
 class Cruddy.Inputs.Checkbox extends Cruddy.Inputs.Base
     tagName: "label"
-    label: ""
 
     events:
-        "change": "change"
+        "change :checkbox": "handleCheckboxChanged"
 
     initialize: (options) ->
-        @label = options.label if options.label?
+        @label = options.label || null
 
         super
 
-    change: -> @setValue @input.prop "checked"
+    handleCheckboxChanged: -> @setValue @input.prop "checked"
 
-    applyChanges: (value, external) ->
-        @input.prop "checked", value if external
+    handleValueChanged: (newValue, bySelf) ->
+        @input.prop "checked", newValue unless bySelf
 
         this
 

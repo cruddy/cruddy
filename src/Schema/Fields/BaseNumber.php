@@ -15,38 +15,46 @@ use Kalnoy\Cruddy\Contracts\Filter;
  *
  * @since 1.0.0
  */
-abstract class BaseNumber extends BaseInput implements Filter {
-
+abstract class BaseNumber extends BaseInput implements Filter
+{
     /**
      * The name of the JavaScript class that is used to render this field.
      *
      * @return string
      */
-    protected function modelClass()
+    protected function getModelClass()
     {
         return 'Cruddy.Fields.Number';
     }
 
     /**
      * {@inheritdoc}
-     *
-     * If value is empty, null is returned.
      */
-    public function process($value)
+    public function getModelValue($model)
     {
-        $value = trim($value);
+        $value = parent::getModelValue($model);
 
-        return $value === '' ? null : $this->cast($value);
+        return $this->castNullable($value);
     }
 
     /**
-     * {@inheritdoc}
+     * @param array $value
+     *
+     * @return mixed
      */
-    public function extract($model)
+    protected function processInputValue($value)
     {
-        $value = parent::extract($model);
+        return $this->castNullable(parent::processInputValue($value));
+    }
 
-        return $value === null ? $value : $this->cast($value);
+    /**
+     * @param mixed $value
+     *
+     * @return mixed
+     */
+    public function castNullable($value)
+    {
+        return is_null($value) ? $value : $this->cast($value);
     }
 
     /**
@@ -56,17 +64,7 @@ abstract class BaseNumber extends BaseInput implements Filter {
      *
      * @return mixed
      */
-    abstract protected function cast($value);
-
-    /**
-     * {@inheritdoc}
-     */
-    public function order(QueryBuilder $builder, $direction)
-    {
-        $builder->orderBy($this->id, $direction);
-
-        return $this;
-    }
+    abstract public function cast($value);
 
     /**
      * {@inheritdoc}
@@ -75,12 +73,9 @@ abstract class BaseNumber extends BaseInput implements Filter {
     {
         if (empty($data)) return;
 
-        if (is_numeric($data))
-        {
+        if (is_numeric($data)) {
             $operator = '=';
-        }
-        else
-        {
+        } else {
             if (strlen($data) < 2) return;
 
             $operator = substr($data, 0, 1);

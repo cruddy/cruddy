@@ -7,14 +7,14 @@ use Kalnoy\Cruddy\BaseForm;
 use Kalnoy\Cruddy\Entity;
 use Kalnoy\Cruddy\Helpers;
 
-abstract class Entry implements \Kalnoy\Cruddy\Contracts\Entry {
-
+abstract class Entry implements \Kalnoy\Cruddy\Contracts\Entry
+{
     /**
      * The entity.
      *
      * @var BaseForm
      */
-    protected $entity;
+    protected $form;
 
     /**
      * The attribute id.
@@ -31,12 +31,12 @@ abstract class Entry implements \Kalnoy\Cruddy\Contracts\Entry {
     /**
      * Init attribute.
      *
-     * @param BaseForm $entity
+     * @param BaseForm $form
      * @param string $id
      */
-    public function __construct(BaseForm $entity, $id)
+    public function __construct(BaseForm $form, $id)
     {
-        $this->entity = $entity;
+        $this->form = $form;
         $this->id = $id;
     }
 
@@ -45,7 +45,7 @@ abstract class Entry implements \Kalnoy\Cruddy\Contracts\Entry {
      *
      * @return string
      */
-    abstract protected function modelClass();
+    abstract protected function getModelClass();
 
     /**
      * Set the value of the attribute.
@@ -109,7 +109,7 @@ abstract class Entry implements \Kalnoy\Cruddy\Contracts\Entry {
 
         if ($group !== null) $key = "{$group}.{$key}";
 
-        return $this->entity->translate($key, $default);
+        return $this->form->translate($key, $default);
     }
 
     /**
@@ -137,7 +137,7 @@ abstract class Entry implements \Kalnoy\Cruddy\Contracts\Entry {
      */
     public function getFullyQualifiedId()
     {
-        return $this->entity->getId().'.'.$this->id;
+        return $this->form->getId().'.'.$this->id;
     }
 
     /**
@@ -145,9 +145,9 @@ abstract class Entry implements \Kalnoy\Cruddy\Contracts\Entry {
      *
      * @return BaseForm
      */
-    public function getEntity()
+    public function getForm()
     {
-        return $this->entity;
+        return $this->form;
     }
 
     /**
@@ -156,7 +156,7 @@ abstract class Entry implements \Kalnoy\Cruddy\Contracts\Entry {
     public function toArray()
     {
         return [
-            'class' => $this->modelClass(),
+            'class' => $this->getModelClass(),
             'id' => $this->id,
             'hide' => $this->get('hide', false),
             'help' => $this->getHelp(),

@@ -3,22 +3,12 @@
 namespace Kalnoy\Cruddy;
 
 use Illuminate\Contracts\Support\Arrayable;
+use Illuminate\Contracts\Validation\Validator;
 use Kalnoy\Cruddy\Schema\AttributesCollection;
-use Kalnoy\Cruddy\Service\Validation\FluentValidator;
 use Illuminate\Contracts\Events\Dispatcher;
 
 abstract class BaseForm implements Arrayable
 {
-    /**
-     * @var Dispatcher
-     */
-    protected static $dispatcher;
-
-    /**
-     * @var Repository
-     */
-    protected $entities;
-
     /**
      * @var Lang
      */
@@ -30,11 +20,6 @@ abstract class BaseForm implements Arrayable
      * @var string
      */
     protected $id;
-
-    /**
-     * @var Contracts\Validator
-     */
-    private $validator;
 
     /**
      * @var Schema\Layout\Layout
@@ -56,29 +41,11 @@ abstract class BaseForm implements Arrayable
     abstract protected function fields($schema);
 
     /**
-     * Set up validator.
-     *
-     * @param FluentValidator $validate
-     */
-    protected function rules($validate)
-    {
-    }
-
-    /**
      * Define the layout.
      *
      * @param Schema\Layout\Layout $l
      */
-    protected function layout($l)
-    {
-    }
-
-    /**
-     * @param array $input
-     *
-     * @return BaseFormData
-     */
-    abstract public function processInput(array $input);
+    protected function layout($l) {}
 
     /**
      * @return mixed
@@ -93,12 +60,12 @@ abstract class BaseForm implements Arrayable
     /**
      * @return string
      */
-    abstract protected function modelClass();
+    abstract protected function getModelClass();
 
     /**
      * @return string
      */
-    abstract protected function controllerClass();
+    abstract protected function getControllerClass();
 
     /**
      * @param array $options
@@ -115,14 +82,35 @@ abstract class BaseForm implements Arrayable
      *
      * @return array
      */
-    public function extract($model, AttributesCollection $collection = null)
+    public function getModelData($model, AttributesCollection $collection = null)
     {
         if ( ! $model) return null;
 
         if ($collection === null) $collection = $this->getFields();
 
-        return $collection->extract($model);
+        return $collection->getModelData($model);
     }
+
+    /**
+     * Get the attribute of the model.
+     *
+     * @param $model
+     * @param $attribute
+     *
+     * @return mixed
+     */
+    abstract public function getModelAttributeValue($model, $attribute);
+
+    /**
+     * Set the value of attribute of the model.
+     *
+     * @param $model
+     * @param $value
+     * @param $attribute
+     *
+     * @return
+     */
+    abstract public function setModelAttributeValue($model, $value, $attribute);
 
     /**
      * Translate line.
@@ -182,32 +170,6 @@ abstract class BaseForm implements Arrayable
     }
 
     /**
-     * Get the validator.
-     *
-     * @return Contracts\Validator
-     */
-    public function getValidator()
-    {
-        if ($this->validator === null) {
-            return $this->validator = $this->createValidator();
-        }
-
-        return $this->validator;
-    }
-
-    /**
-     * @return FluentValidator
-     */
-    public function createValidator()
-    {
-        $validator = new FluentValidator;
-
-        $this->rules($validator);
-
-        return $validator;
-    }
-
-    /**
      * @return Schema\Layout\Layout
      */
     public function getLayout()
@@ -232,66 +194,6 @@ abstract class BaseForm implements Arrayable
     }
 
     /**
-     * Register saving event.
-     *
-     * @param string $id
-     * @param mixed $callback
-     *
-     * @return void
-     */
-    public static function saving($id, $callback)
-    {
-        static::registerEvent($id, 'saving', $callback);
-    }
-
-    /**
-     * Register saved event.
-     *
-     * @param string $id
-     * @param mixed $callback
-     *
-     * @return void
-     */
-    public static function saved($id, $callback)
-    {
-        static::registerEvent($id, 'saved', $callback);
-    }
-
-    /**
-     * Register entity event handler.
-     *
-     * @param string $id
-     * @param string $event
-     * @param mixed $callback
-     *
-     * @return void
-     */
-    public static function registerEvent($id, $event, $callback)
-    {
-        if ( ! static::$dispatcher) return;
-
-        static::$dispatcher->listen("entity.{$event}: {$id}", $callback);
-    }
-
-    /**
-     * Fire entity event.
-     *
-     * @param string $event
-     * @param array $payload
-     * @param bool $halt
-     *
-     * @return mixed
-     */
-    public function fireEvent($event, array $payload, $halt = true)
-    {
-        if ( ! isset(static::$dispatcher)) return null;
-
-        $event = "entity.{$event}: {$this->id}";
-
-        return static::$dispatcher->fire($event, $payload, $halt);
-    }
-
-    /**
      * Get entity's id.
      *
      * @return string
@@ -312,30 +214,14 @@ abstract class BaseForm implements Arrayable
     }
 
     /**
-     * @param Repository $entities
-     */
-    public function setEntitiesRepository(Repository $entities)
-    {
-        $this->entities = $entities;
-    }
-
-    /**
-     * @return Repository
-     */
-    public function getEntitiesRepository()
-    {
-        return $this->entities;
-    }
-
-    /**
      * @return array
      */
     public function toArray()
     {
         return [
             'id' => $this->id,
-            'model_class' => $this->modelClass(),
-            'controller_class' => $this->controllerClass(),
+            'model_class' => $this->getModelClass(),
+            'controller_class' => $this->getControllerClass(),
             'title' => $this->getTitle(),
 
             'fields' => $this->getFields()->toArray(),
@@ -373,22 +259,9 @@ abstract class BaseForm implements Arrayable
      */
     public function getLang()
     {
-        return $this->lang ?: app('cruddy.lang');
+        if ($this->lang) return $this->lang;
+
+        return $this->lang = app('cruddy.lang');
     }
 
-    /**
-     * @param Dispatcher $dispatcher
-     */
-    public static function setEventDispatcher(Dispatcher $dispatcher)
-    {
-        static::$dispatcher = $dispatcher;
-    }
-
-    /**
-     * @return Dispatcher
-     */
-    public static function getEventDispatcher()
-    {
-        return static::$dispatcher;
-    }
 }

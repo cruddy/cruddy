@@ -15,8 +15,8 @@ use Kalnoy\Cruddy\Schema\ComputedTrait;
  *
  * @since 1.0.0
  */
-class Computed extends BaseColumn {
-
+class Computed extends BaseColumn
+{
     use ComputedTrait;
 
     /**
@@ -33,7 +33,7 @@ class Computed extends BaseColumn {
      *
      * @return string
      */
-    protected function modelClass()
+    protected function getModelClass()
     {
         return 'Cruddy.Columns.Computed';
     }
@@ -41,13 +41,13 @@ class Computed extends BaseColumn {
     /**
      * Init the column.
      *
-     * @param Entity $entity
+     * @param Entity $form
      * @param string $id
      * @param string|\Closure $accessor
      */
-    public function __construct(Entity $entity, $id, $accessor = null)
+    public function __construct(Entity $form, $id, $accessor = null)
     {
-        parent::__construct($entity, $id);
+        parent::__construct($form, $id);
 
         $this->accessor = $accessor;
     }
@@ -71,8 +71,7 @@ class Computed extends BaseColumn {
      */
     public function order(Builder $builder, $direction)
     {
-        if ($this->columnClause !== null)
-        {
+        if ($this->columnClause !== null) {
             $builder->orderBy($this->columnClause, $direction);
         }
 

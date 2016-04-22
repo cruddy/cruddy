@@ -67,4 +67,10 @@
 
     'action_applied' => 'Action executed successfully.',
     'action_failed' => 'Action failed to execute.',
+    
+    'upload_failed' => 'Failed to upload file.',
+    'upload_error_1' => 'Invalid file.',
+    'upload_error_2' => 'File is too big.',
+    'upload_error_3' => 'File type is not valid.',
+    'upload_error_4' => 'File cannot have empty extension.',
 ];

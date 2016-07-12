@@ -100,7 +100,7 @@ class Collection extends AttributesCollection implements SearchProcessor
 
         $query = $builder->getQuery();
 
-        if ($value = array_get($options, 'order', $this->defaultOrder)) {
+        if ($value = array_get($options, 'sort', $this->defaultOrder)) {
             $this->order($query, $value);
         }
     }

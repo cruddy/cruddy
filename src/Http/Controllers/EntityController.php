@@ -70,7 +70,7 @@ class EntityController extends Controller
     protected function prepareSearchOptions(array $options)
     {
         if (isset($options['order_by']) && isset($options['order_dir'])) {
-            $options['order'] = [ $options['order_by'] => $options['order_dir'] ];
+            $options['sort'] = [ $options['order_by'] => $options['order_dir'] ];
         }
 
         return $options;

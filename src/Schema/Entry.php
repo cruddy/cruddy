@@ -141,6 +141,14 @@ abstract class Entry implements \Kalnoy\Cruddy\Contracts\Entry {
     }
 
     /**
+     * @return string
+     */
+	public function getFullyQualifiedIdForQuery()
+	{
+		return $this->entity->newModel()->getTable().'.'.$this->id;
+	}
+
+    /**
      * Get an owning entity.
      *
      * @return BaseForm

@@ -31,7 +31,7 @@ class FileStreamResponse extends Response
     }
 
     /**
-     * @inheritDoc
+     * @inheritdoc
      */
     public function prepare(Request $request)
     {
@@ -53,7 +53,7 @@ class FileStreamResponse extends Response
     }
 
     /**
-     * @inheritDoc
+     * @inheritdoc
      */
     public function sendContent()
     {

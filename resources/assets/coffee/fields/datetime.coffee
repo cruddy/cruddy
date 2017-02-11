@@ -1,5 +1,4 @@
 class Cruddy.Fields.BaseDateTime extends Cruddy.Fields.Base
-
     inputFormat: null
     mask: null
 
@@ -28,5 +27,3 @@ class Cruddy.Fields.Time extends Cruddy.Fields.BaseDateTime
 class Cruddy.Fields.DateTime extends Cruddy.Fields.BaseDateTime
     inputFormat: "YYYY-MM-DD HH:mm:ss"
     mask: "9999-99-99 99:99:99"
-
-    formatDate: (value) -> moment.unix(value).fromNow()

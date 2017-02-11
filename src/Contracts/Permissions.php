@@ -2,7 +2,7 @@
 
 namespace Kalnoy\Cruddy\Contracts;
 
-use Kalnoy\Cruddy\BaseForm;
+use Kalnoy\Cruddy\Entity\Entity;
 
 /**
  * Permissions interface.
@@ -13,9 +13,9 @@ interface Permissions {
      * Get whether a user is allowed to perform an action on entity.
      *
      * @param string $action
-     * @param BaseForm $entity
+     * @param Entity $entity
      *
      * @return bool
      */
-    public function isPermitted($action, BaseForm $entity);
+    public function isPermitted($action, Entity $entity);
 }

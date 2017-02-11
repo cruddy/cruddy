@@ -2,15 +2,16 @@ Cruddy.Layout = {}
 
 class Cruddy.Layout.Element extends Cruddy.View
 
-    constructor: (options, parent) ->
-        @parent = parent
+    constructor: (options) ->
+        @parent = options.parent
         @disable = options.disable ? no
+        @_form = options.form ? null
 
         super
 
     initialize: ->
-        @model = @parent.model if not @model and @parent
-        @entity = @model.entity if @model
+        @model = @model || @parent?.model
+        @entity = @model?.entity
 
         super
 
@@ -19,14 +20,12 @@ class Cruddy.Layout.Element extends Cruddy.View
 
         return this
 
-    isDisabled: ->
-        return yes if @disable
-        return @parent.isDisabled() if @parent
-
-        return no
+    isDisabled: -> @disable || @parent?.isDisabled()
 
     # Get whether element is focusable
     isFocusable: -> no
 
     # Focus the element
     focus: -> return this
+        
+    form: -> @_form || @parent?.form()

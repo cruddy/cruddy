@@ -2,9 +2,9 @@
 
 namespace Kalnoy\Cruddy\Schema;
 
-use Kalnoy\Cruddy\BaseForm;
+use Kalnoy\Cruddy\Form\BaseForm;
 use Kalnoy\Cruddy\Contracts\Attribute;
-use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\Entity\Entity;
 
 /**
  * Base factory for all kinds of attributes.

@@ -2,7 +2,7 @@ humanize = (id) => id.replace(/_-/, " ")
 
 # Get url for an entity action
 entity_url = (id, extra) ->
-    url = Cruddy.baseUrl + "/" + id;
+    url = Cruddy.baseUrl + "/entities/" + id;
     url += "/" + extra if extra
 
     url

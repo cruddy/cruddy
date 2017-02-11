@@ -3,7 +3,7 @@
 namespace Kalnoy\Cruddy\Schema;
 
 use Illuminate\Support\Fluent;
-use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\Entity\Entity;
 
 /**
  * Base schema.

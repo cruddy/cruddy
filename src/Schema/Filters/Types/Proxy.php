@@ -4,7 +4,7 @@ namespace Kalnoy\Cruddy\Schema\Filters\Types;
 
 use Illuminate\Database\Query\Builder;
 use Kalnoy\Cruddy\Contracts\Filter;
-use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\Entity\Entity;
 use Kalnoy\Cruddy\Schema\Filters\BaseFilter;
 use Kalnoy\Cruddy\Contracts\Field;
 

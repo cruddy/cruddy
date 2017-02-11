@@ -76,7 +76,7 @@ class Router extends Backbone.Router
         return this
 
     addRoute: (name, entities, appendage = null) ->
-        route = "^(#{ entities })"
+        route = "^entities/(#{ entities })"
         route += "/" + appendage if appendage
         route += "(\\?.*)?$"
 

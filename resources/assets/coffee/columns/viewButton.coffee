@@ -9,13 +9,13 @@ class Cruddy.Columns.ViewButton extends Cruddy.Columns.Base
     canOrder: -> false
 
     render: (model) -> @wrapWithActions model, """
-        <a onclick="Cruddy.app.entityView.displayForm('#{ model.meta.id }', this);return false;" class="btn btn-default btn-view btn-xs auto-hide-target" href="#{ @entity.link model.meta.id }">
+        <a onclick="Cruddy.app.entityView.displayForm('#{ model.id }', this);return false;" class="btn btn-default btn-view btn-xs auto-hide-target" href="#{ @entity.link model.id }">
             #{ b_icon("pencil") }
         </a>
     """
 
     wrapWithActions: (item, html) ->
-        return html if _.isEmpty(item.meta.links) and _.isEmpty(item.meta.actions)
+        return html if _.isEmpty(item.links) and _.isEmpty(item.actions)
 
         html = """<div class="btn-group btn-group-xs auto-hide-target">""" + html
         html += @dropdownToggleTemplate()
@@ -33,12 +33,12 @@ class Cruddy.Columns.ViewButton extends Cruddy.Columns.Base
     renderActions: (model) ->
         html = """<ul class="dropdown-menu" role="menu">"""
 
-        unless noPresentationActions = _.isEmpty model.meta.links
-            html += render_presentation_actions model.meta.links
+        unless noPresentationActions = _.isEmpty model.links
+            html += render_presentation_actions model.links
 
-        unless _.isEmpty model.meta.actions
+        unless _.isEmpty model.actions
             html += render_divider() unless noPresentationActions
-            html += @renderAction action, model for action in model.meta.actions
+            html += @renderAction action, model for action in model.actions
 
         html += "</ul>"
 
@@ -46,7 +46,7 @@ class Cruddy.Columns.ViewButton extends Cruddy.Columns.Base
 
     renderAction: (action, model) -> """
         <li class="#{ if action.disabled then "disabled" else "" }">
-            <a onclick="Cruddy.app.entityView.executeCustomAction('#{ action.id }', '#{ model.meta.id }', this);return false;" href="javascript:void;">
+            <a onclick="Cruddy.app.entityView.executeCustomAction('#{ action.id }', '#{ model.id }', this);return false;" href="javascript:void;">
                 #{ _.escape action.title }
             </a>
         </li>

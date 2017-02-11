@@ -2,6 +2,11 @@ class Cruddy.Fields.Base extends Cruddy.Attribute
 
     viewConstructor: Cruddy.Fields.InputView
 
+    defaults:
+        rules: []
+        label: ''
+        disabled: no
+
     # Create a view that will represent this field in field list
     createView: (model, forceDisable = no, parent) -> new @viewConstructor { model: model, field: this, forceDisable: forceDisable }, parent
 
@@ -33,13 +38,15 @@ class Cruddy.Fields.Base extends Cruddy.Attribute
     getLabel: -> @attributes.label
 
     # Get whether the field is editable for specified model
-    isEditable: (model) -> model.canBeSaved() and @attributes.disabled isnt yes and @attributes.disabled isnt model.action()
+    isEditable: (model) -> model.canBeSaved() and not @attributes.disabled
+
+    hasRule: (rule) -> @attributes.rules[rule] isnt undefined
 
     # Get whether field is required
-    isRequired: (model) -> @attributes.required is yes or @attributes.required == model.action()
+    isRequired: -> @hasRule "required"
 
     # Get whether the field is unique
-    isUnique: -> @attributes.unique
+    isUnique: -> @hasRule "unique"
 
     hasChangedSinceSync: (model) -> not @valuesEqual model.get(@id), model.getOriginal(@id)
 

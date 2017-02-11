@@ -3,8 +3,8 @@
 namespace Kalnoy\Cruddy\Schema;
 
 use Illuminate\Support\Contracts\ArrayableInterface;
-use Kalnoy\Cruddy\BaseForm;
-use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\Form\BaseForm;
+use Kalnoy\Cruddy\Entity\Entity;
 use Kalnoy\Cruddy\Helpers;
 
 abstract class Entry implements \Kalnoy\Cruddy\Contracts\Entry
@@ -151,7 +151,7 @@ abstract class Entry implements \Kalnoy\Cruddy\Contracts\Entry
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function toArray()
     {

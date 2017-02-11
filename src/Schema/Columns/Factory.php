@@ -2,7 +2,7 @@
 
 namespace Kalnoy\Cruddy\Schema\Columns;
 
-use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\Entity\Entity;
 use Kalnoy\Cruddy\Schema\BaseFactory;
 
 /**

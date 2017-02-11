@@ -110,7 +110,7 @@ class DataGrid extends Cruddy.View
 
     renderRow: (item) ->
         html = """
-            <tr class="item #{ @itemStates item }" id="#{ @itemRowId item }" data-id="#{ item.meta.id }">"""
+            <tr class="item #{ @itemStates item }" id="#{ @itemRowId item }" data-id="#{ item.id }">"""
 
         html += @renderCell columns, item for columns in @columns
 
@@ -119,7 +119,7 @@ class DataGrid extends Cruddy.View
     itemStates: (item) ->
         states = if item.attributes._states then item.attributes._states else ""
 
-        states += " active" if (instance = @entity.get "instance")? and item.meta.id == instance.id
+        states += " active" if (instance = @entity.get "instance")? and item.id == instance.id
 
         return states
 
@@ -177,6 +177,6 @@ class DataGrid extends Cruddy.View
 
     $colCell: (id) -> @$component "col-" + id
 
-    itemRowId: (item) -> @componentId "item-" + item.meta.id
+    itemRowId: (item) -> @componentId "item-" + item.id
 
-    $itemRow: (item) -> @$component "item-" + item.meta.id
+    $itemRow: (item) -> @$component "item-" + item.id

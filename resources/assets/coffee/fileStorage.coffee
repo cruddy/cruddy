@@ -4,7 +4,7 @@ class Cruddy.FileStorage
         @_queue = new Cruddy.UploadQueue this
 
     url: (path, query) ->
-        url = "#{ Cruddy.baseUrl }/_files/#{ @id }/#{ path || "" }"
+        url = "#{ Cruddy.baseUrl }/storage/#{ @id }/#{ path || "" }"
 
         add_query_to_url url, query
 

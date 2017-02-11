@@ -53,7 +53,7 @@ abstract class AbstractEloquentRepository implements Repository
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function find($id)
     {
@@ -67,7 +67,7 @@ abstract class AbstractEloquentRepository implements Repository
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function search(array $options, SearchProcessor $processor = null)
     {
@@ -103,7 +103,7 @@ abstract class AbstractEloquentRepository implements Repository
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function delete($ids)
     {

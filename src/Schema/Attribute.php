@@ -5,7 +5,7 @@ namespace Kalnoy\Cruddy\Schema;
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Kalnoy\Cruddy\Contracts\Attribute as AttributeContract;
-use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\Entity\Entity;
 
 /**
  * Base attribute class.
@@ -20,7 +20,7 @@ use Kalnoy\Cruddy\Entity;
 abstract class Attribute extends Entry implements AttributeContract
 {
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function order(QueryBuilder $builder, $direction)
     {
@@ -30,7 +30,7 @@ abstract class Attribute extends Entry implements AttributeContract
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function canOrder()
     {
@@ -38,7 +38,7 @@ abstract class Attribute extends Entry implements AttributeContract
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function toArray()
     {

@@ -5,7 +5,7 @@ namespace Kalnoy\Cruddy\Service\Validation;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Fluent;
 use Kalnoy\Cruddy\Contracts\Validator as ValidatorContract;
-use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\Entity\Entity;
 
 /**
  * Fluent validator for validating input.
@@ -50,7 +50,7 @@ class FluentValidator extends Fluent implements ValidatorContract {
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function validFor($action, array $input, array $labels)
     {
@@ -182,7 +182,7 @@ class FluentValidator extends Fluent implements ValidatorContract {
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function errors()
     {

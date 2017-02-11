@@ -8,9 +8,11 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 use Kalnoy\Cruddy\AccessDeniedException;
-use Kalnoy\Cruddy\BaseForm;
+use Kalnoy\Cruddy\Entity\Form;
+use Kalnoy\Cruddy\Entity\ModelForm;
+use Kalnoy\Cruddy\Form\BaseForm;
 use Kalnoy\Cruddy\BaseFormData;
-use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\Entity\Entity;
 use Kalnoy\Cruddy\EntityNotFoundException;
 use Kalnoy\Cruddy\Environment;
 use Kalnoy\Cruddy\Helpers;
@@ -54,11 +56,17 @@ class EntityController extends Controller
     {
         $entity = $this->resolveEntity($entity, Entity::READ);
 
-        if ( ! $input->ajax()) return $this->loadingView();
+        if ( ! $input->ajax()) {
+            return $this->loadingView();
+        }
 
         $options = $this->prepareSearchOptions($input->all());
 
-        return new JsonResponse($entity->index($options));
+        $ds = $input->query('simple')
+            ? $entity->getSimpleDataSource()
+            : $entity->getMainDataSource();
+
+        return response()->json($ds->get($options));
     }
 
     /**
@@ -99,9 +107,7 @@ class EntityController extends Controller
                                                        'id' => $id ]);
         }
 
-        $model = $entity->find($id);
-
-        return new JsonResponse($entity->getModelData($model));
+        return response()->json($entity->form($id)->data());
     }
 
     /**
@@ -117,15 +123,7 @@ class EntityController extends Controller
     {
         $entity = $this->resolveEntity($entity, Entity::CREATE);
 
-        $toValidate = $this->inputForValidation($input, $entity);
-
-        if ($errors = $entity->validate($toValidate)) {
-            return $this->validationErrorsResponse($errors);
-        }
-
-        $model = $entity->newModel();
-
-        return $this->saveModel($entity, $model, $input, $action);
+        return $this->save($entity->form(null), $input->all(), $action);
     }
 
     /**
@@ -142,36 +140,29 @@ class EntityController extends Controller
     {
         $entity = $this->resolveEntity($entity, Entity::UPDATE);
 
-        $toValidate = $this->inputForValidation($input, $entity);
-
-        if ($errors = $entity->validate($toValidate, $id)) {
-            return $this->validationErrorsResponse($errors);
-        }
-
-        $model = $entity->find($id);
-
-        return $this->saveModel($entity, $model, $input, $action);
+        return $this->save($entity->form($id), $input->all(), $action);
     }
 
     /**
-     * @param Entity $entity
-     * @param $model
-     * @param Request $input
+     * @param ModelForm $form
+     * @param array $input
      * @param string $action
      *
      * @return JsonResponse
      */
-    protected function saveModel($entity, $model, $input, $action = null)
+    protected function save(ModelForm $form, array $input, $action = null)
     {
-        $entity->save($model, $input->all());
+        $form->validateAndSave($input);
 
         if ($action) {
-            $actionResult = $this->executeActionOnModel($entity, $action, $model);
+            $actionResult = $this->executeActionOnModel($form->getBaseForm()->getEntity(),
+                                                        $action,
+                                                        $form->getModel());
         }
 
-        $model = $entity->getModelData($model);
+        $model = $form->data();
 
-        return new JsonResponse(compact('actionResult', 'model'));
+        return response()->json(compact('actionResult', 'model'));
     }
 
     /**
@@ -187,7 +178,7 @@ class EntityController extends Controller
     {
         $entity = $this->resolveEntity($entity, Entity::UPDATE);
 
-        $model = $entity->getRepository()->find($id);
+        $model = $entity->find($id);
 
         return $this->executeActionOnModel($entity, $action, $model);
     }
@@ -217,7 +208,7 @@ class EntityController extends Controller
      * @param string $id
      * @param string $action
      *
-     * @return \Kalnoy\Cruddy\Entity
+     * @return \Kalnoy\Cruddy\Entity\Entity
      */
     protected function resolveEntity($id, $action)
     {
@@ -242,15 +233,15 @@ class EntityController extends Controller
     }
 
     /**
-     * @param Entity $form
+     * @param Entity $entity
      * @param $action
      * @param $model
      *
      * @return mixed
      */
-    protected function executeActionOnModel(Entity $form, $action, $model)
+    protected function executeActionOnModel(Entity $entity, $action, $model)
     {
-        return $form->getActions()->execute($model, $action);
+        return $entity->getActions()->execute($model, $action);
     }
 
     /**
@@ -299,7 +290,7 @@ class EntityController extends Controller
      */
     protected function responseError($error, $status = 500)
     {
-        return new JsonResponse(compact('error'), $status);
+        return response()->json(compact('error'), $status);
     }
 
     /**
@@ -331,21 +322,6 @@ class EntityController extends Controller
     {
         return response($errors,
                         Response::HTTP_UNPROCESSABLE_ENTITY);
-    }
-
-    /**
-     * @param Request $input
-     * @param Entity $entity
-     *
-     * @return array
-     */
-    protected function inputForValidation(Request $input, Entity $entity)
-    {
-        $parsedInput = $input->all();
-
-        $entity->getFields()->parseInput($parsedInput);
-
-        return $parsedInput;
     }
 
 }

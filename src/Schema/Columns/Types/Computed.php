@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Illuminate\Database\Query\Builder;
 use Kalnoy\Cruddy\Schema\Columns\BaseColumn;
-use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\Entity\Entity;
 use Kalnoy\Cruddy\Schema\ComputedTrait;
 
 /**
@@ -67,7 +67,7 @@ class Computed extends BaseColumn
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function order(Builder $builder, $direction)
     {
@@ -79,7 +79,7 @@ class Computed extends BaseColumn
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function canOrder()
     {

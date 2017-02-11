@@ -10,7 +10,7 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
         items = items or []
 
         # create default item if no data is available and field is required
-        items.push {} if _.isEmpty(items) and @isRequired(model)
+        items.push {} if _.isEmpty(items) and @isRequired()
 
         ref = @getReferencedEntity()
 

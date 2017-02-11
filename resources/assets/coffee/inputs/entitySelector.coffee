@@ -147,7 +147,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
     renderItem: (item) ->
         className = if item.id of @selected then "selected" else ""
 
-        """<li class="item #{ className }" data-id="#{ item.id }">#{ item.body }</li>"""
+        """<li class="item #{ className }" data-id="#{ item.id }">#{ item.attributes.body }</li>"""
 
     render: ->
         if @reference.readPermitted()

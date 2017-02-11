@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Illuminate\Support\Arr;
 use Kalnoy\Cruddy\Contracts\Column;
-use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\Entity\Entity;
 use Kalnoy\Cruddy\Schema\AttributesCollection;
 use Kalnoy\Cruddy\Contracts\SearchProcessor;
 
@@ -70,7 +70,7 @@ class Collection extends AttributesCollection implements SearchProcessor
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function constraintBuilder(EloquentBuilder $builder, array $options)
     {

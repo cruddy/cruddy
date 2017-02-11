@@ -11,6 +11,8 @@ class Cruddy.Layout.Container extends Cruddy.Layout.Element
         return this
 
     create: (options) ->
+        options = $.extend {}, options, { parent: @ }
+
         constructor = get options.class
 
         if not constructor or not _.isFunction constructor
@@ -18,7 +20,7 @@ class Cruddy.Layout.Container extends Cruddy.Layout.Element
 
             return
 
-        @append new constructor options, this
+        @append new constructor options
 
     createItems: (items) ->
         @create item for item in items

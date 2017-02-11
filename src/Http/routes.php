@@ -1,57 +1,30 @@
 <?php
 
+use Illuminate\Routing\Router;
+
 /**
- * @var \Illuminate\Routing\Router $router
+ * @var Router $router
  */
 
-$router->get('/', [
-    'as' => 'cruddy.home',
-    'uses' => 'CruddyController@index',
-]);
+$router->get('/', 'CruddyController@index')->name('cruddy.home');
+$router->get('_schema', 'CruddyController@schema')->name('cruddy.schema');
 
-$router->get('_schema', [
-    'as' => 'cruddy.schema',
-    'uses' => 'CruddyController@schema',
-]);
+// File routes
+$router->group([ 'prefix' => 'storage' ], function (Router $router) {
+    $router->pattern('storage_path', '[a-zA-Z0-9\-_/]+');
+    $router->pattern('storage_file', '[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+');
 
-$router->pattern('storage_path', '[a-zA-Z0-9\-_/]+');
-$router->pattern('storage_file', '[a-zA-Z0-9\-_]+\.[a-zA-Z0-9\-_]+');
+    $router->get('{storage_path}', 'FilesController@index');
+    $router->get('{storage_path}/{storage_file}', 'FilesController@show')->name('cruddy.files.show');
+    $router->post('{storage_path}', [ 'uses' => 'FilesController@store' ]);
+});
 
-$router->get('_files/{storage_path}', [ 'uses' => 'FilesController@index' ]);
-
-$router->get('_files/{storage_path}/{storage_file}', [ 
-    'uses' => 'FilesController@show',
-    'as' => 'cruddy.files.show',
-]);
-
-$router->post('_files/{storage_path}', [ 'uses' => 'FilesController@store' ]);
-
-$router->get('{cruddy_entity}', [
-    'as' => 'cruddy.index',
-    'uses' => 'EntityController@index',
-]);
-
-$router->get('{cruddy_entity}/{id}', [
-    'as' => 'cruddy.show',
-    'uses' => 'EntityController@show',
-]);
-
-$router->post('{cruddy_entity}/{action?}', [
-    'as' => 'cruddy.store',
-    'uses' => 'EntityController@store',
-]);
-
-$router->post('{cruddy_entity}/{id}/{action}', [
-    'as' => 'cruddy.action',
-    'uses' => 'EntityController@executeCustomAction',
-]);
-
-$router->put('{cruddy_entity}/{id}/{action?}', [
-    'as' => 'cruddy.update',
-    'uses' => 'EntityController@update',
-]);
-
-$router->delete('{cruddy_entity}/{id}', [
-    'as' => 'cruddy.destroy',
-    'uses' => 'EntityController@destroy',
-]);
+// Entity routes
+$router->group([ 'prefix' => 'entities/{cruddy_entity}' ], function (Router $router) {
+    $router->get('/', 'EntityController@index')->name('cruddy.index');
+    $router->get('{id}', 'EntityController@show')->name('cruddy.show');
+    $router->post('{action?}', 'EntityController@store');
+    $router->post('{id}/{action}', 'EntityController@executeCustomAction');
+    $router->put('{id}/{action?}', 'EntityController@update');
+    $router->delete('{id}', 'EntityController@destroy');
+});

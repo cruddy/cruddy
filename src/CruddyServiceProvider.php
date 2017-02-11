@@ -11,8 +11,6 @@ use Illuminate\Contracts\Config\Repository as Config;
 use Illuminate\Contracts\View\Factory;
 use Kalnoy\Cruddy\Service\MenuBuilder;
 use Kalnoy\Cruddy\Service\PermitsEverything;
-use Kalnoy\Cruddy\Service\ThumbnailFactory;
-use Intervention\Image\ImageManager;
 use Illuminate\Routing\Router;
 
 class CruddyServiceProvider extends ServiceProvider
@@ -50,7 +48,7 @@ class CruddyServiceProvider extends ServiceProvider
 
         $this->registerRoutes($this->app['router'], $this->app['config']);
 
-        Entity::setEventDispatcher($this->app->make('events'));
+        Entity\Entity::setEventDispatcher($this->app->make('events'));
     }
 
     /**
@@ -69,7 +67,6 @@ class CruddyServiceProvider extends ServiceProvider
         $this->registerCruddy();
         $this->registerCommands();
         $this->registerCompiler();
-        $this->registerThumbnailFactory();
         $this->registerAliases();
         $this->registerViewComposer();
     }
@@ -124,9 +121,10 @@ class CruddyServiceProvider extends ServiceProvider
      */
     protected function registerFactories()
     {
-        $this->app->singleton('cruddy.fields', Schema\Fields\Factory::class);
-        $this->app->singleton('cruddy.columns', Schema\Columns\Factory::class);
-        $this->app->singleton('cruddy.filters', Schema\Filters\Factory::class);
+        $this->app->singleton('cruddy.form.fields', Form\FieldsFactory::class);
+        $this->app->singleton('cruddy.entity.fields', Entity\FieldsFactory::class);
+        $this->app->singleton('cruddy.entity.columns', Entity\DataSource\ColumnsFactory::class);
+        $this->app->singleton('cruddy.entity.filters', Entity\DataSource\FiltersFactory::class);
     }
 
     /**
@@ -134,10 +132,11 @@ class CruddyServiceProvider extends ServiceProvider
      */
     public function registerRepository()
     {
-        $this->app->singleton('cruddy.repository', function (Container $app) {
-            $config = $app->make('config');
+        $this->app->singleton('cruddy.entity.repository', function () {
+            $config = $this->app->make('config');
+            $entities = $config->get('cruddy.entities', [ ]);
 
-            return new Repository($app, $config->get('cruddy.entities', [ ]));
+            return new Entity\Repository($this->app, $entities);
         });
     }
 
@@ -150,7 +149,7 @@ class CruddyServiceProvider extends ServiceProvider
     {
         $this->app->singleton('cruddy', function (Container $app) {
             $permissions = $app->make('cruddy.permissions');
-            $repository = $app->make('cruddy.repository');
+            $repository = $app->make('cruddy.entity.repository');
             $lang = $app->make('cruddy.lang');
 
             return new Environment($repository, $permissions, $lang);
@@ -240,22 +239,11 @@ class CruddyServiceProvider extends ServiceProvider
         $this->app->singleton('cruddy.compiler', function (Container $app) {
             $basePath = storage_path('cruddy');
 
-            $repository = $app->make('cruddy.repository');
+            $repository = $app->make('cruddy.entity.repository');
             $files = $app->make('files');
             $lang = $app->make('cruddy.lang');
 
             return new Compiler($repository, $files, $lang, $basePath);
-        });
-    }
-
-    /**
-     * Register thumbnail factory.
-     */
-    protected function registerThumbnailFactory()
-    {
-        $this->app->singleton('cruddy.thumbs', function (Container $app) {
-            return new ThumbnailFactory(new ImageManager, $app->make('cache')
-                                                              ->driver());
         });
     }
 
@@ -268,11 +256,10 @@ class CruddyServiceProvider extends ServiceProvider
             'cruddy' => Environment::class,
             'cruddy.compiler' => Compiler::class,
             'cruddy.lang' => Lang::class,
-            'cruddy.thumbs' => Service\ThumbnailFactory::class,
-            'cruddy.repository' => Repository::class,
             'cruddy.permissions' => Contracts\Permissions::class,
             'cruddy.menu' => Service\MenuBuilder::class,
             'cruddy.assets' => Assets::class,
+            'cruddy.entity.repository' => Entity\Repository::class,
         ];
 
         foreach ($aliases as $key => $alias) {
@@ -306,7 +293,7 @@ class CruddyServiceProvider extends ServiceProvider
      */
     protected function applyRoutingPattern(Router $router)
     {
-        $entities = app('cruddy.repository')->available();
+        $entities = app('cruddy.entity.repository')->available();
 
         $router->pattern('cruddy_entity', '('.$entities.')');
     }

@@ -4,8 +4,8 @@ namespace DummyNamespace;
 
 use Kalnoy\Cruddy\Entity;
 
-class DummyClass extends Entity {
-
+class DummyClass extends Entity
+{
     /**
      * @var string
      */
@@ -28,7 +28,7 @@ class DummyClass extends Entity {
     /**
      * Define some fields.
      *
-     * @param \Kalnoy\Cruddy\Schema\Fields\InstanceFactory $schema
+     * @param \Kalnoy\Cruddy\Form\InstanceFactory $schema
      */
     public function fields($schema)
     {

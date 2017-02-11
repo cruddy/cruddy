@@ -3,7 +3,7 @@
 namespace Kalnoy\Cruddy\Schema;
 
 use Kalnoy\Cruddy\Contracts\Attribute;
-use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\Entity\Entity;
 
 /**
  * Instance factory connects attribute collection, entity and actual factory.

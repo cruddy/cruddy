@@ -55,7 +55,7 @@ class File
     }
 
     /**
-     * @inheritDoc
+     * @inheritdoc
      */
     public function __toString()
     {

@@ -3,7 +3,7 @@
 namespace Kalnoy\Cruddy\Facades;
 
 use Illuminate\Support\Facades\Facade;
-use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\Entity\Entity;
 
 /**
  * @see \Kalnoy\Cruddy\Environment
@@ -108,7 +108,7 @@ class Cruddy extends Facade {
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     protected static function getFacadeAccessor() { return 'cruddy'; }
 

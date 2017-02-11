@@ -12,4 +12,4 @@ class Cruddy.Attribute extends Backbone.Model
     getHelp: -> @attributes.help
 
     # Get whether a column is visible
-    isVisible: -> @attributes.hide is no
+    isVisible: -> yes

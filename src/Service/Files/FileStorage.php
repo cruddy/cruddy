@@ -105,15 +105,15 @@ class FileStorage
     public function get($path, array $options)
     {
         $disk = $this->getDiskInstance();
-        
+
         if ( ! $path || ! ($stream = $disk->getDriver()->readStream($path))) {
             return false;
         }
-        
+
         $size = $disk->size($path);
         $lastModified = $disk->lastModified($path);
         $mime = $disk->mimeType($path);
-        
+
         return new FileStream($path, $stream, $size, $mime, $lastModified);
     }
 
@@ -126,14 +126,14 @@ class FileStorage
     protected function getPath($path, $fileName, $ext)
     {
         $path = $path ? trim($path, '/\\').'/'.$fileName : $fileName;
-        
+
         $ext = '.'.$ext;
 
         // Add some random letters if the file already exists
         while ($this->getDiskInstance()->exists($path.$ext)) {
-            $path .= '-'. Str::quickRandom(3);
+            $path .= '-'. Str::random(3);
         }
-        
+
         return $path.$ext;
     }
 
@@ -147,7 +147,7 @@ class FileStorage
     protected function getFileName(UploadedFile $file)
     {
         if ( ! $this->keepNames) {
-            return Str::quickRandom(6);
+            return Str::random(6);
         }
 
         $name = Str::ascii($file->getClientOriginalName());
@@ -155,7 +155,7 @@ class FileStorage
 
         // After sanitation name may become empty.
         // In this case we simply generate a random name.
-        return $name ? $name : Str::quickRandom(6);
+        return $name ? $name : Str::random(6);
     }
 
     /**
@@ -167,7 +167,7 @@ class FileStorage
             throw new UploadException('Specified file is not valid.',
                                       self::ERR_INVALID_FILE);
         }
-        
+
         if ($file->getError() == UPLOAD_ERR_INI_SIZE) {
             throw new UploadException('File is too big.', self::ERR_TOO_BIG);
         }
@@ -180,9 +180,9 @@ class FileStorage
             throw new UploadException('Mime type is not allowed.',
                                       self::ERR_INVALID_MIME);
         }
-        
+
         if ( ! $file->getClientOriginalExtension()) {
-            throw new UploadException('File cannot have empty extension.', 
+            throw new UploadException('File cannot have empty extension.',
                                       self::ERR_EMPTY_EXTENSION);
         }
     }
@@ -330,7 +330,7 @@ class FileStorage
      */
     protected function store($file, $path)
     {
-        $this->getDiskInstance()->put($path, 
+        $this->getDiskInstance()->put($path,
                                       file_get_contents($file->getRealPath()));
 
         return new File($this, $path, $file);

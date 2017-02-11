@@ -4,12 +4,14 @@ namespace Kalnoy\Cruddy;
 
 use Illuminate\Config\Repository as Config;
 use Kalnoy\Cruddy\Contracts\Permissions;
+use Kalnoy\Cruddy\Entity\Entity;
+use Kalnoy\Cruddy\Entity\Repository;
 use RuntimeException;
 
 /**
  * Cruddy environment.
  *
- * @since 1.0.0
+ * @package Kalnoy\Cruddy
  */
 class Environment
 {
@@ -54,23 +56,6 @@ class Environment
     public function entity($id)
     {
         return $this->entities->resolve($id);
-    }
-
-    /**
-     * Find a field with given id.
-     *
-     * The full field id consists of two parts: the entity id and the field id.
-     * I.e. `users.password`.
-     *
-     * @param string $id
-     *
-     * @throws RuntimeException
-     *
-     * @return Schema\Fields\BaseField
-     */
-    public function field($id)
-    {
-        return $this->entities->field($id);
     }
 
     /**

@@ -60,7 +60,11 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
     set: (key, val, options) ->
         if _.isObject key
-            for attributeId, value of key when field = @entity.getField attributeId
+            id = this.id || key[@idAttribute]
+
+            form = @entity.form if id then "update" else "create"
+
+            for attributeId, value of key when field = form.fields.get attributeId
                 key[attributeId] = field.parse this, value
 
         super
@@ -91,7 +95,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
     canBeSaved: ->
         isNew = @isNew()
 
-        return ((isNew and @entity.createPermitted()) or (not isNew and @entity.updatePermitted())) and (not @isDeleted or not isNew)
+        return not @isDeleted and ((isNew and @entity.createPermitted()) or (not isNew and @entity.updatePermitted()))
 
     serialize: ->
         data = if @isDeleted then {} else @entity.prepareAttributes @attributes, this

@@ -7,7 +7,7 @@ use Illuminate\Html\HtmlBuilder;
 use Illuminate\Http\Request;
 use Illuminate\Routing\UrlGenerator;
 use Kalnoy\Cruddy\Contracts\Permissions;
-use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\Entity\Entity;
 use Kalnoy\Cruddy\Environment;
 
 /**

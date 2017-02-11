@@ -1,5 +1,5 @@
 # View that displays a form for an entity instance
-class Cruddy.Entity.Form extends Cruddy.Layout.Layout
+class Cruddy.Entity.Form extends Cruddy.View
     className: "entity-form"
 
     events:
@@ -11,7 +11,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         super
 
     initialize: (options) ->
-        super
+        @formType = null
 
         @saveOptions =
             displayLoading: yes
@@ -27,14 +27,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         @hotkeys = $(document).on "keydown." + @cid, "body", $.proxy this, "hotkeys"
 
-        return this
-
-    setupDefaultLayout: ->
-        tab = @append new Cruddy.Layout.TabPane { title: @model.entity.get("title").singular }, this
-
-        tab.append new Cruddy.Layout.Field { field: field.id }, tab for field in @entity.fields.models
-
-        return this
+        super
 
     hotkeys: (e) ->
         # Ctrl + Z
@@ -94,9 +87,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
     show: ->
         @$el.toggleClass "opened", true
 
-        @items[0].activate()
-
-        @focus()
+        @layout.activate()
 
         this
 
@@ -110,6 +101,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         @request.done (resp) =>
             @trigger (if isNew then "created" else "updated"), @model, resp
             @trigger "saved", @model, resp
+
             @updateModelState()
 
         return this
@@ -191,9 +183,8 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
     render: ->
         @$el.html @template()
 
-        @$container = @$component "body"
-
         @$nav = @$component "nav"
+        @$navbar = @$component "navbar"
         @$footer = @$component "footer"
         @$btnSave = @$component "save"
         @$deletedMsg = @$component "deleted-message"
@@ -203,11 +194,6 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         @$serviceMenuItems = @$component "service-menu-items"
 
         @updateModelState()
-
-        super
-
-    renderElement: (el) ->
-        @$nav.append el.getHeader().render().$el
 
         super
 
@@ -228,12 +214,56 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         isNew = @model.isNew()
         isDeleted = @model.isDeleted or false
 
+        formType = if isNew then "create" else "update"
+
+        if formType != @formType
+            @layout?.remove()
+
+            @formType = formType
+            form = entity.form formType
+
+            @layout = @createLayout form
+
+            @$navbar.after @layout.render().$el
+
+            @$nav.empty()
+
+            @layout.items.forEach (item) => @$nav.append item.getHeader().render().$el
+
+            after_break => @layout.activate()
+
         @$el.toggleClass "destroyed", isDeleted
 
         @$btnSave.text if isNew then Cruddy.lang.create else Cruddy.lang.save
         @$btnSave.toggle not isDeleted and if isNew then entity.createPermitted() else entity.updatePermitted()
 
         @updateModelMetaState()
+
+    createLayout: (form) ->
+        if form.layout
+            return new Cruddy.Layout.Layout
+                form: form
+                model: @model
+                items: form.layout
+                el: @$container
+
+        layout = new Cruddy.Layout.Layout
+            form: form
+            model: @model
+            el: @$container
+
+        tab = layout.append new Cruddy.Layout.TabPane
+            title: @model.entity.getSingularTitle()
+            parent: layout
+            model: @model
+
+        form.fields.forEach (field) ->
+            tab.append new Cruddy.Layout.Field
+                field: field.id
+                parent: tab
+                model: @model
+
+        return layout
 
     updateModelMetaState: ->
         isNew = @model.isNew()
@@ -251,7 +281,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         return this
 
     template: -> """
-        <div class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="navbar navbar-default navbar-static-top" role="navigation" id="#{ @componentId "navbar" }">
             <div class="container-fluid">
                 <ul id="#{ @componentId "nav" }" class="nav navbar-nav"></ul>
 
@@ -266,8 +296,6 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
                 </ul>
             </div>
         </div>
-
-        <div class="tab-content" id="#{ @componentId "body" }"></div>
 
         <footer id="#{ @componentId "footer" }">
             <span class="fs-deleted-message">#{ Cruddy.lang.model_deleted }</span>
@@ -381,6 +409,15 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
             this[action].call this, $el
 
         return
+
+    # Get a field with specified id
+    field: (id) ->
+        if not field = @fields.get id
+            console.error "The field #{id} is not found."
+
+            return
+
+        return field
 
 Cruddy.Entity.Form.display = (instance) ->
     form = new Cruddy.Entity.Form model: instance

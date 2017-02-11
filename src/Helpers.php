@@ -27,6 +27,17 @@ class Helpers
     }
 
     /**
+     * @param string $key
+     * @param string $default
+     *
+     * @return string
+     */
+    public static function translate($key, $default = null)
+    {
+        return app('cruddy.lang')->translate($key, $default);
+    }
+
+    /**
      * `uncfirst` for unicode strings.
      *
      * @param string $str

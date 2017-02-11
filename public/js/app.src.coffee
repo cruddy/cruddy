@@ -36,7 +36,7 @@ humanize = (id) => id.replace(/_-/, " ")
 
 # Get url for an entity action
 entity_url = (id, extra) ->
-    url = Cruddy.baseUrl + "/" + id;
+    url = Cruddy.baseUrl + "/entities/" + id;
     url += "/" + extra if extra
 
     url
@@ -161,7 +161,7 @@ class Cruddy.Attribute extends Backbone.Model
     getHelp: -> @attributes.help
 
     # Get whether a column is visible
-    isVisible: -> @attributes.hide is no
+    isVisible: -> yes
 class DataSource extends Backbone.Model
     defaults:
         page: 1
@@ -496,7 +496,7 @@ class DataGrid extends Cruddy.View
 
     renderRow: (item) ->
         html = """
-            <tr class="item #{ @itemStates item }" id="#{ @itemRowId item }" data-id="#{ item.meta.id }">"""
+            <tr class="item #{ @itemStates item }" id="#{ @itemRowId item }" data-id="#{ item.id }">"""
 
         html += @renderCell columns, item for columns in @columns
 
@@ -505,7 +505,7 @@ class DataGrid extends Cruddy.View
     itemStates: (item) ->
         states = if item.attributes._states then item.attributes._states else ""
 
-        states += " active" if (instance = @entity.get "instance")? and item.meta.id == instance.id
+        states += " active" if (instance = @entity.get "instance")? and item.id == instance.id
 
         return states
 
@@ -563,9 +563,9 @@ class DataGrid extends Cruddy.View
 
     $colCell: (id) -> @$component "col-" + id
 
-    itemRowId: (item) -> @componentId "item-" + item.meta.id
+    itemRowId: (item) -> @componentId "item-" + item.id
 
-    $itemRow: (item) -> @$component "item-" + item.meta.id
+    $itemRow: (item) -> @$component "item-" + item.id
 class FilterList extends Backbone.View
     className: "filter-list"
 
@@ -821,7 +821,7 @@ class Cruddy.FileStorage
         @_queue = new Cruddy.UploadQueue this
 
     url: (path, query) ->
-        url = "#{ Cruddy.baseUrl }/_files/#{ @id }/#{ path || "" }"
+        url = "#{ Cruddy.baseUrl }/storage/#{ @id }/#{ path || "" }"
 
         add_query_to_url url, query
 
@@ -859,15 +859,16 @@ Cruddy.Layout = {}
 
 class Cruddy.Layout.Element extends Cruddy.View
 
-    constructor: (options, parent) ->
-        @parent = parent
+    constructor: (options) ->
+        @parent = options.parent
         @disable = options.disable ? no
+        @_form = options.form ? null
 
         super
 
     initialize: ->
-        @model = @parent.model if not @model and @parent
-        @entity = @model.entity if @model
+        @model = @model || @parent?.model
+        @entity = @model?.entity
 
         super
 
@@ -876,17 +877,15 @@ class Cruddy.Layout.Element extends Cruddy.View
 
         return this
 
-    isDisabled: ->
-        return yes if @disable
-        return @parent.isDisabled() if @parent
-
-        return no
+    isDisabled: -> @disable || @parent?.isDisabled()
 
     # Get whether element is focusable
     isFocusable: -> no
 
     # Focus the element
     focus: -> return this
+        
+    form: -> @_form || @parent?.form()
 class Cruddy.Layout.Container extends Cruddy.Layout.Element
 
     initialize: (options) ->
@@ -900,6 +899,8 @@ class Cruddy.Layout.Container extends Cruddy.Layout.Element
         return this
 
     create: (options) ->
+        options = $.extend {}, options, { parent: @ }
+
         constructor = get options.class
 
         if not constructor or not _.isFunction constructor
@@ -907,7 +908,7 @@ class Cruddy.Layout.Container extends Cruddy.Layout.Element
 
             return
 
-        @append new constructor options, this
+        @append new constructor options
 
     createItems: (items) ->
         @create item for item in items
@@ -943,7 +944,6 @@ class Cruddy.Layout.Container extends Cruddy.Layout.Element
 
         return this
 class Cruddy.Layout.BaseFieldContainer extends Cruddy.Layout.Container
-
     constructor: (options) ->
         @title = options.title ? null
 
@@ -959,9 +959,10 @@ class Cruddy.Layout.FieldSet extends Cruddy.Layout.BaseFieldContainer
         super
 
     template: ->
-        html = if @title then "<legend>" + _.escape(@title) + "</legend>" else ""
+        html = if @title then "<legend>#{ @title }</legend>" else ""
 
-        return html + "<div id='" + @componentId("body") + "'></div>"
+        return html + "<div id='#{ @componentId("body") }'></div>"
+                    
 class Cruddy.Layout.TabPane extends Cruddy.Layout.BaseFieldContainer
     className: "tab-pane"
 
@@ -1038,7 +1039,6 @@ class Cruddy.Layout.TabPane.Header extends Cruddy.View
 class Cruddy.Layout.Row extends Cruddy.Layout.Container
     className: "row"
 class Cruddy.Layout.Col extends Cruddy.Layout.BaseFieldContainer
-
     initialize: (options) ->
         @$el.addClass "col-xs-" + options.span
 
@@ -1049,29 +1049,32 @@ class Cruddy.Layout.Field extends Cruddy.Layout.Element
         super
 
         @fieldView = null
+        
+        if not form = @form()
+            throw new Error "Cannot render field since form is not specified."
 
-        if not @field = @entity.field options.field
-            console.error "The field #{ options.field } is not found in #{ @entity.id }."
+        if not @field = form.fields.get options.field
+            throw new Error "The field #{ options.field } is not found."
 
         return this
 
     render: ->
-        if @field and @field.isVisible()
+        if @field?.isVisible()
             @fieldView = @field.createView @model, @isDisabled(), this
 
-        @$el.html @fieldView.render().$el if @fieldView
+            @$el.html @fieldView.render().$el if @fieldView
 
         return this
 
     remove: ->
-        @fieldView.remove() if @fieldView
+        @fieldView?.remove()
 
         super
 
-    isFocusable: -> @fieldView and @fieldView.isFocusable()
+    isFocusable: -> @fieldView?.isFocusable()
 
     focus: ->
-        @fieldView.focus() if @fieldView
+        @fieldView?.focus()
 
         return this
 class Cruddy.Layout.Text extends Cruddy.Layout.Element
@@ -1089,37 +1092,41 @@ class FieldList extends Cruddy.Layout.BaseFieldContainer
     initialize: ->
         super
 
-        @append new Cruddy.Layout.Field { field: field.id }, this for field in @entity.fields.models
+        @_form = @entity.form @model
+
+        @_form.fields.forEach (field) =>
+            @append new Cruddy.Layout.Field
+                field: field.id
+                parent: @
+                model: @model
 
         return this
 class Cruddy.Layout.Layout extends Cruddy.Layout.Container
-
-    initialize: ->
-        super
-
-        @setupLayout()
-
-    setupLayout: ->
-        if @entity.attributes.layout
-            @createItems @entity.attributes.layout
-        else
-            @setupDefaultLayout()
-
-        return this
-
-    setupDefaultLayout: -> return this
+    className: "layout tab-content"
+    
+    activate: -> @items[0]?.activate()
 Cruddy.Entity = {}
 
 class Cruddy.Entity.Entity extends Backbone.Model
 
     initialize: (attributes, options) ->
-        @fields = @createObjects attributes.fields
-        @columns = @createObjects attributes.columns
-        @filters = @createObjects attributes.filters
+        @columns = @createObjects attributes.data_source.columns
+        @filters = @createObjects attributes.data_source.filters
+
+        console.log attributes.data_source
+
         @permissions = Cruddy.permissions[@id]
         @cache = {}
 
+        @forms =
+            create: @setupForm attributes.create_form
+            update: @setupForm attributes.update_form
+
         return this
+
+    setupForm: (config) ->
+        fields: @createObjects config.fields
+        layout: config.layout
 
     createObjects: (items) ->
         data = []
@@ -1168,16 +1175,11 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
         instance.setMetaFromResponse data
 
-    # Get a field with specified id
-    field: (id) ->
-        if not field = @fields.get id
-            console.error "The field #{id} is not found."
+    form: (type) ->
+        if type instanceof Cruddy.Entity.Instance
+            type = if type.isNew() then "create" else "update"
 
-            return
-
-        return field
-
-    getField: (id) -> @fields.get id
+        return @forms[type]
 
     search: (options = {}) -> new SearchDataSource {}, $.extend { url: @url() }, options
 
@@ -1226,23 +1228,29 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
     # Get only those attributes are not unique for the model
     getCopyableAttributes: (model, copy) ->
+        form = @form model
+
         data = {}
 
-        data[field.id] = field.copyAttribute(model, copy) for field in @fields.models when field.isCopyable()
+        data[field.id] = field.copyAttribute(model, copy) for field in form.fields.models when field.isCopyable()
 
         data
 
     hasChangedSinceSync: (model) ->
-        for field in @fields.models when field.hasChangedSinceSync model
+        form = @form model
+
+        for field in form.fields.models when field.hasChangedSinceSync model
             console.log field
-            
+
             return yes
 
         return no
 
     prepareAttributes: (attributes, model) ->
+        form = @form model
+
         result = {}
-        result[key] = field.prepareAttribute value for key, value of attributes when field = @getField(key)
+        result[key] = field.prepareAttribute value for key, value of attributes when field = form.fields.get key
 
         return result
 
@@ -1345,7 +1353,11 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
     set: (key, val, options) ->
         if _.isObject key
-            for attributeId, value of key when field = @entity.getField attributeId
+            id = this.id || key[@idAttribute]
+
+            form = @entity.form if id then "update" else "create"
+
+            for attributeId, value of key when field = form.fields.get attributeId
                 key[attributeId] = field.parse this, value
 
         super
@@ -1376,7 +1388,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
     canBeSaved: ->
         isNew = @isNew()
 
-        return ((isNew and @entity.createPermitted()) or (not isNew and @entity.updatePermitted())) and (not @isDeleted or not isNew)
+        return not @isDeleted and ((isNew and @entity.createPermitted()) or (not isNew and @entity.updatePermitted()))
 
     serialize: ->
         data = if @isDeleted then {} else @entity.prepareAttributes @attributes, this
@@ -1642,7 +1654,7 @@ class Cruddy.Entity.Page extends Cruddy.View
 
     pageUnloadConfirmationMessage: -> return @form?.pageUnloadConfirmationMessage()
 # View that displays a form for an entity instance
-class Cruddy.Entity.Form extends Cruddy.Layout.Layout
+class Cruddy.Entity.Form extends Cruddy.View
     className: "entity-form"
 
     events:
@@ -1654,7 +1666,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         super
 
     initialize: (options) ->
-        super
+        @formType = null
 
         @saveOptions =
             displayLoading: yes
@@ -1670,14 +1682,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
 
         @hotkeys = $(document).on "keydown." + @cid, "body", $.proxy this, "hotkeys"
 
-        return this
-
-    setupDefaultLayout: ->
-        tab = @append new Cruddy.Layout.TabPane { title: @model.entity.get("title").singular }, this
-
-        tab.append new Cruddy.Layout.Field { field: field.id }, tab for field in @entity.fields.models
-
-        return this
+        super
 
     hotkeys: (e) ->
         # Ctrl + Z
@@ -1737,9 +1742,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
     show: ->
         @$el.toggleClass "opened", true
 
-        @items[0].activate()
-
-        @focus()
+        @layout.activate()
 
         this
 
@@ -1753,6 +1756,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         @request.done (resp) =>
             @trigger (if isNew then "created" else "updated"), @model, resp
             @trigger "saved", @model, resp
+
             @updateModelState()
 
         return this
@@ -1834,9 +1838,8 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
     render: ->
         @$el.html @template()
 
-        @$container = @$component "body"
-
         @$nav = @$component "nav"
+        @$navbar = @$component "navbar"
         @$footer = @$component "footer"
         @$btnSave = @$component "save"
         @$deletedMsg = @$component "deleted-message"
@@ -1846,11 +1849,6 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         @$serviceMenuItems = @$component "service-menu-items"
 
         @updateModelState()
-
-        super
-
-    renderElement: (el) ->
-        @$nav.append el.getHeader().render().$el
 
         super
 
@@ -1871,12 +1869,56 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         isNew = @model.isNew()
         isDeleted = @model.isDeleted or false
 
+        formType = if isNew then "create" else "update"
+
+        if formType != @formType
+            @layout?.remove()
+
+            @formType = formType
+            form = entity.form formType
+
+            @layout = @createLayout form
+
+            @$navbar.after @layout.render().$el
+
+            @$nav.empty()
+
+            @layout.items.forEach (item) => @$nav.append item.getHeader().render().$el
+
+            after_break => @layout.activate()
+
         @$el.toggleClass "destroyed", isDeleted
 
         @$btnSave.text if isNew then Cruddy.lang.create else Cruddy.lang.save
         @$btnSave.toggle not isDeleted and if isNew then entity.createPermitted() else entity.updatePermitted()
 
         @updateModelMetaState()
+
+    createLayout: (form) ->
+        if form.layout
+            return new Cruddy.Layout.Layout
+                form: form
+                model: @model
+                items: form.layout
+                el: @$container
+
+        layout = new Cruddy.Layout.Layout
+            form: form
+            model: @model
+            el: @$container
+
+        tab = layout.append new Cruddy.Layout.TabPane
+            title: @model.entity.getSingularTitle()
+            parent: layout
+            model: @model
+
+        form.fields.forEach (field) ->
+            tab.append new Cruddy.Layout.Field
+                field: field.id
+                parent: tab
+                model: @model
+
+        return layout
 
     updateModelMetaState: ->
         isNew = @model.isNew()
@@ -1894,7 +1936,7 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
         return this
 
     template: -> """
-        <div class="navbar navbar-default navbar-static-top" role="navigation">
+        <div class="navbar navbar-default navbar-static-top" role="navigation" id="#{ @componentId "navbar" }">
             <div class="container-fluid">
                 <ul id="#{ @componentId "nav" }" class="nav navbar-nav"></ul>
 
@@ -1909,8 +1951,6 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
                 </ul>
             </div>
         </div>
-
-        <div class="tab-content" id="#{ @componentId "body" }"></div>
 
         <footer id="#{ @componentId "footer" }">
             <span class="fs-deleted-message">#{ Cruddy.lang.model_deleted }</span>
@@ -2024,6 +2064,15 @@ class Cruddy.Entity.Form extends Cruddy.Layout.Layout
             this[action].call this, $el
 
         return
+
+    # Get a field with specified id
+    field: (id) ->
+        if not field = @fields.get id
+            console.error "The field #{id} is not found."
+
+            return
+
+        return field
 
 Cruddy.Entity.Form.display = (instance) ->
     form = new Cruddy.Entity.Form model: instance
@@ -2464,14 +2513,9 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
         this
 
     itemBody: (item) ->
-        unless item.body
-            data = @selector.dataSource.getById item.id
+        item = @selector?.dataSource.getById(item.id) || item unless item.attributes
 
-            item = data if data
-
-        return item.body if item.body
-
-        return item.id
+        return item.attributes.body || item.title || item.id
 
     itemTemplate: (value, key = null) ->
         html = """
@@ -2681,7 +2725,7 @@ class Cruddy.Inputs.EntitySelector extends Cruddy.Inputs.Base
     renderItem: (item) ->
         className = if item.id of @selected then "selected" else ""
 
-        """<li class="item #{ className }" data-id="#{ item.id }">#{ item.body }</li>"""
+        """<li class="item #{ className }" data-id="#{ item.id }">#{ item.attributes.body }</li>"""
 
     render: ->
         if @reference.readPermitted()
@@ -3204,7 +3248,7 @@ class Cruddy.Fields.BaseView extends Cruddy.Layout.Element
         @isEditable = not @forceDisable and @field.isEditable(@model)
 
         @$el.toggle @isVisible()
-        @$el.toggleClass "required", @field.isRequired @model
+        @$el.toggleClass "required", @field.isRequired()
 
         this
 
@@ -3310,6 +3354,11 @@ class Cruddy.Fields.Base extends Cruddy.Attribute
 
     viewConstructor: Cruddy.Fields.InputView
 
+    defaults:
+        rules: []
+        label: ''
+        disabled: no
+
     # Create a view that will represent this field in field list
     createView: (model, forceDisable = no, parent) -> new @viewConstructor { model: model, field: this, forceDisable: forceDisable }, parent
 
@@ -3341,13 +3390,15 @@ class Cruddy.Fields.Base extends Cruddy.Attribute
     getLabel: -> @attributes.label
 
     # Get whether the field is editable for specified model
-    isEditable: (model) -> model.canBeSaved() and @attributes.disabled isnt yes and @attributes.disabled isnt model.action()
+    isEditable: (model) -> model.canBeSaved() and not @attributes.disabled
+
+    hasRule: (rule) -> @attributes.rules[rule] isnt undefined
 
     # Get whether field is required
-    isRequired: (model) -> @attributes.required is yes or @attributes.required == model.action()
+    isRequired: -> @hasRule "required"
 
     # Get whether the field is unique
-    isUnique: -> @attributes.unique
+    isUnique: -> @hasRule "unique"
 
     hasChangedSinceSync: (model) -> not @valuesEqual model.get(@id), model.getOriginal(@id)
 
@@ -3427,7 +3478,6 @@ class Cruddy.Fields.Text extends Cruddy.Fields.Base
 
     getType: -> "text"
 class Cruddy.Fields.BaseDateTime extends Cruddy.Fields.Base
-
     inputFormat: null
     mask: null
 
@@ -3456,8 +3506,6 @@ class Cruddy.Fields.Time extends Cruddy.Fields.BaseDateTime
 class Cruddy.Fields.DateTime extends Cruddy.Fields.BaseDateTime
     inputFormat: "YYYY-MM-DD HH:mm:ss"
     mask: "9999-99-99 99:99:99"
-
-    formatDate: (value) -> moment.unix(value).fromNow()
 class Cruddy.Fields.Boolean extends Cruddy.Fields.Base
 
     createEditableInput: (model) -> new Cruddy.Inputs.Boolean
@@ -3782,6 +3830,13 @@ class Cruddy.Fields.EmbeddedItemView extends Cruddy.Layout.Layout
 
         super
 
+    initialize: (options) ->
+        super
+
+        @setupDefaultLayout() if _.isEmpty @items
+
+        return this
+
     toggleItem: (e) ->
         if @model.isDeleted then @collection.restore @model else @collection.removeSoftly @model
 
@@ -3794,7 +3849,7 @@ class Cruddy.Fields.EmbeddedItemView extends Cruddy.Layout.Layout
             b_icon("trash") + " " + Cruddy.lang.delete
 
     setupDefaultLayout: ->
-        @append new FieldList {}, this
+        @append new FieldList model: @model
 
         return this
 
@@ -3933,7 +3988,7 @@ class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation
         items = items or []
 
         # create default item if no data is available and field is required
-        items.push {} if _.isEmpty(items) and @isRequired(model)
+        items.push {} if _.isEmpty(items) and @isRequired()
 
         ref = @getReferencedEntity()
 
@@ -4014,17 +4069,8 @@ class Cruddy.Columns.Base extends Cruddy.Attribute
 
     # Get whether a column can order items
     canOrder: -> @attributes.can_order
-class Cruddy.Columns.Proxy extends Cruddy.Columns.Base
-
-    initialize: (attributes) ->
-        field = attributes.field ? attributes.id
-        @field = attributes.entity.fields.get field
-
-        super
-
-    format: (value) -> @field.format value
-
-    getClass: -> super + " col__" + @field.getType()
+class Cruddy.Columns.Basic extends Cruddy.Columns.Base
+    format: (value) -> value || '&mdash;'
 class Cruddy.Columns.Computed extends Cruddy.Columns.Base
     getClass: -> super + " col__computed"
 class Cruddy.Columns.ViewButton extends Cruddy.Columns.Base
@@ -4038,13 +4084,13 @@ class Cruddy.Columns.ViewButton extends Cruddy.Columns.Base
     canOrder: -> false
 
     render: (model) -> @wrapWithActions model, """
-        <a onclick="Cruddy.app.entityView.displayForm('#{ model.meta.id }', this);return false;" class="btn btn-default btn-view btn-xs auto-hide-target" href="#{ @entity.link model.meta.id }">
+        <a onclick="Cruddy.app.entityView.displayForm('#{ model.id }', this);return false;" class="btn btn-default btn-view btn-xs auto-hide-target" href="#{ @entity.link model.id }">
             #{ b_icon("pencil") }
         </a>
     """
 
     wrapWithActions: (item, html) ->
-        return html if _.isEmpty(item.meta.links) and _.isEmpty(item.meta.actions)
+        return html if _.isEmpty(item.links) and _.isEmpty(item.actions)
 
         html = """<div class="btn-group btn-group-xs auto-hide-target">""" + html
         html += @dropdownToggleTemplate()
@@ -4062,12 +4108,12 @@ class Cruddy.Columns.ViewButton extends Cruddy.Columns.Base
     renderActions: (model) ->
         html = """<ul class="dropdown-menu" role="menu">"""
 
-        unless noPresentationActions = _.isEmpty model.meta.links
-            html += render_presentation_actions model.meta.links
+        unless noPresentationActions = _.isEmpty model.links
+            html += render_presentation_actions model.links
 
-        unless _.isEmpty model.meta.actions
+        unless _.isEmpty model.actions
             html += render_divider() unless noPresentationActions
-            html += @renderAction action, model for action in model.meta.actions
+            html += @renderAction action, model for action in model.actions
 
         html += "</ul>"
 
@@ -4075,7 +4121,7 @@ class Cruddy.Columns.ViewButton extends Cruddy.Columns.Base
 
     renderAction: (action, model) -> """
         <li class="#{ if action.disabled then "disabled" else "" }">
-            <a onclick="Cruddy.app.entityView.executeCustomAction('#{ action.id }', '#{ model.meta.id }', this);return false;" href="javascript:void;">
+            <a onclick="Cruddy.app.entityView.executeCustomAction('#{ action.id }', '#{ model.id }', this);return false;" href="javascript:void;">
                 #{ _.escape action.title }
             </a>
         </li>
@@ -4353,7 +4399,7 @@ class Router extends Backbone.Router
         return this
 
     addRoute: (name, entities, appendage = null) ->
-        route = "^(#{ entities })"
+        route = "^entities/(#{ entities })"
         route += "/" + appendage if appendage
         route += "(\\?.*)?$"
 

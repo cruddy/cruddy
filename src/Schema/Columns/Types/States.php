@@ -5,7 +5,7 @@ namespace Kalnoy\Cruddy\Schema\Columns\Types;
 use Illuminate\Database\Eloquent\Model as Eloquent;
 use Kalnoy\Cruddy\Schema\Attribute;
 use Kalnoy\Cruddy\Contracts\Column;
-use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\Entity\Entity;
 
 /**
  * A column for defining additional states for the row.
@@ -42,7 +42,7 @@ class States extends Attribute implements Column
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getModelValue($model)
     {
@@ -81,7 +81,7 @@ class States extends Attribute implements Column
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function toArray()
     {

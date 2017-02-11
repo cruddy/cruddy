@@ -15,6 +15,13 @@ class Cruddy.Fields.EmbeddedItemView extends Cruddy.Layout.Layout
 
         super
 
+    initialize: (options) ->
+        super
+
+        @setupDefaultLayout() if _.isEmpty @items
+
+        return this
+
     toggleItem: (e) ->
         if @model.isDeleted then @collection.restore @model else @collection.removeSoftly @model
 
@@ -27,7 +34,7 @@ class Cruddy.Fields.EmbeddedItemView extends Cruddy.Layout.Layout
             b_icon("trash") + " " + Cruddy.lang.delete
 
     setupDefaultLayout: ->
-        @append new FieldList {}, this
+        @append new FieldList model: @model
 
         return this
 

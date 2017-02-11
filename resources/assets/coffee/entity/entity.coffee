@@ -3,13 +3,23 @@ Cruddy.Entity = {}
 class Cruddy.Entity.Entity extends Backbone.Model
 
     initialize: (attributes, options) ->
-        @fields = @createObjects attributes.fields
-        @columns = @createObjects attributes.columns
-        @filters = @createObjects attributes.filters
+        @columns = @createObjects attributes.data_source.columns
+        @filters = @createObjects attributes.data_source.filters
+
+        console.log attributes.data_source
+
         @permissions = Cruddy.permissions[@id]
         @cache = {}
 
+        @forms =
+            create: @setupForm attributes.create_form
+            update: @setupForm attributes.update_form
+
         return this
+
+    setupForm: (config) ->
+        fields: @createObjects config.fields
+        layout: config.layout
 
     createObjects: (items) ->
         data = []
@@ -58,16 +68,11 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
         instance.setMetaFromResponse data
 
-    # Get a field with specified id
-    field: (id) ->
-        if not field = @fields.get id
-            console.error "The field #{id} is not found."
+    form: (type) ->
+        if type instanceof Cruddy.Entity.Instance
+            type = if type.isNew() then "create" else "update"
 
-            return
-
-        return field
-
-    getField: (id) -> @fields.get id
+        return @forms[type]
 
     search: (options = {}) -> new SearchDataSource {}, $.extend { url: @url() }, options
 
@@ -116,23 +121,29 @@ class Cruddy.Entity.Entity extends Backbone.Model
 
     # Get only those attributes are not unique for the model
     getCopyableAttributes: (model, copy) ->
+        form = @form model
+
         data = {}
 
-        data[field.id] = field.copyAttribute(model, copy) for field in @fields.models when field.isCopyable()
+        data[field.id] = field.copyAttribute(model, copy) for field in form.fields.models when field.isCopyable()
 
         data
 
     hasChangedSinceSync: (model) ->
-        for field in @fields.models when field.hasChangedSinceSync model
+        form = @form model
+
+        for field in form.fields.models when field.hasChangedSinceSync model
             console.log field
-            
+
             return yes
 
         return no
 
     prepareAttributes: (attributes, model) ->
+        form = @form model
+
         result = {}
-        result[key] = field.prepareAttribute value for key, value of attributes when field = @getField(key)
+        result[key] = field.prepareAttribute value for key, value of attributes when field = form.fields.get key
 
         return result
 

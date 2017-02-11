@@ -93,7 +93,7 @@ module.exports = function(grunt) {
 
                     // Columns
                     '<%= app %>/columns/base.coffee',
-                    '<%= app %>/columns/proxy.coffee',
+                    '<%= app %>/columns/basic.coffee',
                     '<%= app %>/columns/computed.coffee',
                     '<%= app %>/columns/viewButton.coffee',
                     '<%= app %>/columns/deleteButton.coffee',

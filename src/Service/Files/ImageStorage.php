@@ -38,7 +38,7 @@ class ImageStorage extends FileStorage
     protected $maxHeight;
 
     /**
-     * @inheritDoc
+     * @inheritdoc
      */
     protected function store($file, $path)
     {
@@ -54,7 +54,7 @@ class ImageStorage extends FileStorage
     }
 
     /**
-     * @inheritDoc
+     * @inheritdoc
      */
     public function get($path, array $options)
     {
@@ -73,7 +73,7 @@ class ImageStorage extends FileStorage
     }
 
     /**
-     * @inheritDoc
+     * @inheritdoc
      */
     public function supportsMime($mime)
     {

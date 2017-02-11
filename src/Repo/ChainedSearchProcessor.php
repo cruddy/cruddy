@@ -56,7 +56,7 @@ class ChainedSearchProcessor implements SearchProcessor
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function constraintBuilder(Builder $query, array $options)
     {

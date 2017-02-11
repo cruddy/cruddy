@@ -4,28 +4,31 @@ class Cruddy.Layout.Field extends Cruddy.Layout.Element
         super
 
         @fieldView = null
+        
+        if not form = @form()
+            throw new Error "Cannot render field since form is not specified."
 
-        if not @field = @entity.field options.field
-            console.error "The field #{ options.field } is not found in #{ @entity.id }."
+        if not @field = form.fields.get options.field
+            throw new Error "The field #{ options.field } is not found."
 
         return this
 
     render: ->
-        if @field and @field.isVisible()
+        if @field?.isVisible()
             @fieldView = @field.createView @model, @isDisabled(), this
 
-        @$el.html @fieldView.render().$el if @fieldView
+            @$el.html @fieldView.render().$el if @fieldView
 
         return this
 
     remove: ->
-        @fieldView.remove() if @fieldView
+        @fieldView?.remove()
 
         super
 
-    isFocusable: -> @fieldView and @fieldView.isFocusable()
+    isFocusable: -> @fieldView?.isFocusable()
 
     focus: ->
-        @fieldView.focus() if @fieldView
+        @fieldView?.focus()
 
         return this

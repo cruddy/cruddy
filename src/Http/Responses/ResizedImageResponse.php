@@ -26,7 +26,7 @@ class ResizedImageResponse extends FileStreamResponse
     }
 
     /**
-     * @inheritDoc
+     * @inheritdoc
      */
     public function prepare(Request $request)
     {
@@ -54,7 +54,7 @@ class ResizedImageResponse extends FileStreamResponse
     }
 
     /**
-     * @inheritDoc
+     * @inheritdoc
      */
     public function sendContent()
     {

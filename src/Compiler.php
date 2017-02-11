@@ -3,6 +3,7 @@
 namespace Kalnoy\Cruddy;
 
 use Illuminate\Filesystem\Filesystem;
+use Kalnoy\Cruddy\Entity\Repository;
 
 class Compiler
 {

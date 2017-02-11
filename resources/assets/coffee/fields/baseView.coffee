@@ -37,7 +37,7 @@ class Cruddy.Fields.BaseView extends Cruddy.Layout.Element
         @isEditable = not @forceDisable and @field.isEditable(@model)
 
         @$el.toggle @isVisible()
-        @$el.toggleClass "required", @field.isRequired @model
+        @$el.toggleClass "required", @field.isRequired()
 
         this
 

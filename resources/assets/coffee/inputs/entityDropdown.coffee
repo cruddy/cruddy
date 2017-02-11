@@ -252,14 +252,9 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
         this
 
     itemBody: (item) ->
-        unless item.body
-            data = @selector.dataSource.getById item.id
+        item = @selector?.dataSource.getById(item.id) || item unless item.attributes
 
-            item = data if data
-
-        return item.body if item.body
-
-        return item.id
+        return item.attributes.body || item.title || item.id
 
     itemTemplate: (value, key = null) ->
         html = """

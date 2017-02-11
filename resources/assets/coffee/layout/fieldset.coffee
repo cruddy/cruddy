@@ -9,6 +9,7 @@ class Cruddy.Layout.FieldSet extends Cruddy.Layout.BaseFieldContainer
         super
 
     template: ->
-        html = if @title then "<legend>" + _.escape(@title) + "</legend>" else ""
+        html = if @title then "<legend>#{ @title }</legend>" else ""
 
-        return html + "<div id='" + @componentId("body") + "'></div>"
+        return html + "<div id='#{ @componentId("body") }'></div>"
+                    

@@ -51,7 +51,7 @@
 
   entity_url = function(id, extra) {
     var url;
-    url = Cruddy.baseUrl + "/" + id;
+    url = Cruddy.baseUrl + "/entities/" + id;
     if (extra) {
       url += "/" + extra;
     }
@@ -287,7 +287,7 @@
     };
 
     Attribute.prototype.isVisible = function() {
-      return this.attributes.hide === false;
+      return true;
     };
 
     return Attribute;
@@ -779,7 +779,7 @@
 
     DataGrid.prototype.renderRow = function(item) {
       var columns, html, _i, _len, _ref;
-      html = "<tr class=\"item " + (this.itemStates(item)) + "\" id=\"" + (this.itemRowId(item)) + "\" data-id=\"" + item.meta.id + "\">";
+      html = "<tr class=\"item " + (this.itemStates(item)) + "\" id=\"" + (this.itemRowId(item)) + "\" data-id=\"" + item.id + "\">";
       _ref = this.columns;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         columns = _ref[_i];
@@ -791,7 +791,7 @@
     DataGrid.prototype.itemStates = function(item) {
       var instance, states;
       states = item.attributes._states ? item.attributes._states : "";
-      if (((instance = this.entity.get("instance")) != null) && item.meta.id === instance.id) {
+      if (((instance = this.entity.get("instance")) != null) && item.id === instance.id) {
         states += " active";
       }
       return states;
@@ -849,11 +849,11 @@
     };
 
     DataGrid.prototype.itemRowId = function(item) {
-      return this.componentId("item-" + item.meta.id);
+      return this.componentId("item-" + item.id);
     };
 
     DataGrid.prototype.$itemRow = function(item) {
-      return this.$component("item-" + item.meta.id);
+      return this.$component("item-" + item.id);
     };
 
     return DataGrid;
@@ -1190,7 +1190,7 @@
 
     FileStorage.prototype.url = function(path, query) {
       var url;
-      url = "" + Cruddy.baseUrl + "/_files/" + this.id + "/" + (path || "");
+      url = "" + Cruddy.baseUrl + "/storage/" + this.id + "/" + (path || "");
       return add_query_to_url(url, query);
     };
 
@@ -1240,20 +1240,18 @@
   Cruddy.Layout.Element = (function(_super) {
     __extends(Element, _super);
 
-    function Element(options, parent) {
-      var _ref;
-      this.parent = parent;
+    function Element(options) {
+      var _ref, _ref1;
+      this.parent = options.parent;
       this.disable = (_ref = options.disable) != null ? _ref : false;
+      this._form = (_ref1 = options.form) != null ? _ref1 : null;
       Element.__super__.constructor.apply(this, arguments);
     }
 
     Element.prototype.initialize = function() {
-      if (!this.model && this.parent) {
-        this.model = this.parent.model;
-      }
-      if (this.model) {
-        this.entity = this.model.entity;
-      }
+      var _ref, _ref1;
+      this.model = this.model || ((_ref = this.parent) != null ? _ref.model : void 0);
+      this.entity = (_ref1 = this.model) != null ? _ref1.entity : void 0;
       return Element.__super__.initialize.apply(this, arguments);
     };
 
@@ -1265,13 +1263,8 @@
     };
 
     Element.prototype.isDisabled = function() {
-      if (this.disable) {
-        return true;
-      }
-      if (this.parent) {
-        return this.parent.isDisabled();
-      }
-      return false;
+      var _ref;
+      return this.disable || ((_ref = this.parent) != null ? _ref.isDisabled() : void 0);
     };
 
     Element.prototype.isFocusable = function() {
@@ -1280,6 +1273,11 @@
 
     Element.prototype.focus = function() {
       return this;
+    };
+
+    Element.prototype.form = function() {
+      var _ref;
+      return this._form || ((_ref = this.parent) != null ? _ref.form() : void 0);
     };
 
     return Element;
@@ -1305,12 +1303,15 @@
 
     Container.prototype.create = function(options) {
       var constructor;
+      options = $.extend({}, options, {
+        parent: this
+      });
       constructor = get(options["class"]);
       if (!constructor || !_.isFunction(constructor)) {
         console.error("Couldn't resolve element of type ", options["class"]);
         return;
       }
-      return this.append(new constructor(options, this));
+      return this.append(new constructor(options));
     };
 
     Container.prototype.createItems = function(items) {
@@ -1408,8 +1409,8 @@
 
     FieldSet.prototype.template = function() {
       var html;
-      html = this.title ? "<legend>" + _.escape(this.title) + "</legend>" : "";
-      return html + "<div id='" + this.componentId("body") + "'></div>";
+      html = this.title ? "<legend>" + this.title + "</legend>" : "";
+      return html + ("<div id='" + (this.componentId("body")) + "'></div>");
     };
 
     return FieldSet;
@@ -1564,38 +1565,46 @@
     }
 
     Field.prototype.initialize = function(options) {
+      var form;
       Field.__super__.initialize.apply(this, arguments);
       this.fieldView = null;
-      if (!(this.field = this.entity.field(options.field))) {
-        console.error("The field " + options.field + " is not found in " + this.entity.id + ".");
+      if (!(form = this.form())) {
+        throw new Error("Cannot render field since form is not specified.");
+      }
+      if (!(this.field = form.fields.get(options.field))) {
+        throw new Error("The field " + options.field + " is not found.");
       }
       return this;
     };
 
     Field.prototype.render = function() {
-      if (this.field && this.field.isVisible()) {
+      var _ref;
+      if ((_ref = this.field) != null ? _ref.isVisible() : void 0) {
         this.fieldView = this.field.createView(this.model, this.isDisabled(), this);
-      }
-      if (this.fieldView) {
-        this.$el.html(this.fieldView.render().$el);
+        if (this.fieldView) {
+          this.$el.html(this.fieldView.render().$el);
+        }
       }
       return this;
     };
 
     Field.prototype.remove = function() {
-      if (this.fieldView) {
-        this.fieldView.remove();
+      var _ref;
+      if ((_ref = this.fieldView) != null) {
+        _ref.remove();
       }
       return Field.__super__.remove.apply(this, arguments);
     };
 
     Field.prototype.isFocusable = function() {
-      return this.fieldView && this.fieldView.isFocusable();
+      var _ref;
+      return (_ref = this.fieldView) != null ? _ref.isFocusable() : void 0;
     };
 
     Field.prototype.focus = function() {
-      if (this.fieldView) {
-        this.fieldView.focus();
+      var _ref;
+      if ((_ref = this.fieldView) != null) {
+        _ref.focus();
       }
       return this;
     };
@@ -1636,15 +1645,17 @@
     FieldList.prototype.className = "field-list";
 
     FieldList.prototype.initialize = function() {
-      var field, _i, _len, _ref;
       FieldList.__super__.initialize.apply(this, arguments);
-      _ref = this.entity.fields.models;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        field = _ref[_i];
-        this.append(new Cruddy.Layout.Field({
-          field: field.id
-        }, this));
-      }
+      this._form = this.entity.form(this.model);
+      this._form.fields.forEach((function(_this) {
+        return function(field) {
+          return _this.append(new Cruddy.Layout.Field({
+            field: field.id,
+            parent: _this,
+            model: _this.model
+          }));
+        };
+      })(this));
       return this;
     };
 
@@ -1659,22 +1670,11 @@
       return Layout.__super__.constructor.apply(this, arguments);
     }
 
-    Layout.prototype.initialize = function() {
-      Layout.__super__.initialize.apply(this, arguments);
-      return this.setupLayout();
-    };
+    Layout.prototype.className = "layout tab-content";
 
-    Layout.prototype.setupLayout = function() {
-      if (this.entity.attributes.layout) {
-        this.createItems(this.entity.attributes.layout);
-      } else {
-        this.setupDefaultLayout();
-      }
-      return this;
-    };
-
-    Layout.prototype.setupDefaultLayout = function() {
-      return this;
+    Layout.prototype.activate = function() {
+      var _ref;
+      return (_ref = this.items[0]) != null ? _ref.activate() : void 0;
     };
 
     return Layout;
@@ -1691,12 +1691,23 @@
     }
 
     Entity.prototype.initialize = function(attributes, options) {
-      this.fields = this.createObjects(attributes.fields);
-      this.columns = this.createObjects(attributes.columns);
-      this.filters = this.createObjects(attributes.filters);
+      this.columns = this.createObjects(attributes.data_source.columns);
+      this.filters = this.createObjects(attributes.data_source.filters);
+      console.log(attributes.data_source);
       this.permissions = Cruddy.permissions[this.id];
       this.cache = {};
+      this.forms = {
+        create: this.setupForm(attributes.create_form),
+        update: this.setupForm(attributes.update_form)
+      };
       return this;
+    };
+
+    Entity.prototype.setupForm = function(config) {
+      return {
+        fields: this.createObjects(config.fields),
+        layout: config.layout
+      };
     };
 
     Entity.prototype.createObjects = function(items) {
@@ -1769,17 +1780,11 @@
       return instance.setMetaFromResponse(data);
     };
 
-    Entity.prototype.field = function(id) {
-      var field;
-      if (!(field = this.fields.get(id))) {
-        console.error("The field " + id + " is not found.");
-        return;
+    Entity.prototype.form = function(type) {
+      if (type instanceof Cruddy.Entity.Instance) {
+        type = type.isNew() ? "create" : "update";
       }
-      return field;
-    };
-
-    Entity.prototype.getField = function(id) {
-      return this.fields.get(id);
+      return this.forms[type];
     };
 
     Entity.prototype.search = function(options) {
@@ -1843,9 +1848,10 @@
     };
 
     Entity.prototype.getCopyableAttributes = function(model, copy) {
-      var data, field, _i, _len, _ref;
+      var data, field, form, _i, _len, _ref;
+      form = this.form(model);
       data = {};
-      _ref = this.fields.models;
+      _ref = form.fields.models;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         field = _ref[_i];
         if (field.isCopyable()) {
@@ -1856,8 +1862,9 @@
     };
 
     Entity.prototype.hasChangedSinceSync = function(model) {
-      var field, _i, _len, _ref;
-      _ref = this.fields.models;
+      var field, form, _i, _len, _ref;
+      form = this.form(model);
+      _ref = form.fields.models;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         field = _ref[_i];
         if (!(field.hasChangedSinceSync(model))) {
@@ -1870,11 +1877,12 @@
     };
 
     Entity.prototype.prepareAttributes = function(attributes, model) {
-      var field, key, result, value;
+      var field, form, key, result, value;
+      form = this.form(model);
       result = {};
       for (key in attributes) {
         value = attributes[key];
-        if (field = this.getField(key)) {
+        if (field = form.fields.get(key)) {
           result[key] = field.prepareAttribute(value);
         }
       }
@@ -2014,11 +2022,13 @@
     };
 
     Instance.prototype.set = function(key, val, options) {
-      var attributeId, field, value;
+      var attributeId, field, form, id, value;
       if (_.isObject(key)) {
+        id = this.id || key[this.idAttribute];
+        form = this.entity.form(id ? "update" : "create");
         for (attributeId in key) {
           value = key[attributeId];
-          if (field = this.entity.getField(attributeId)) {
+          if (field = form.fields.get(attributeId)) {
             key[attributeId] = field.parse(this, value);
           }
         }
@@ -2056,7 +2066,7 @@
     Instance.prototype.canBeSaved = function() {
       var isNew;
       isNew = this.isNew();
-      return ((isNew && this.entity.createPermitted()) || (!isNew && this.entity.updatePermitted())) && (!this.isDeleted || !isNew);
+      return !this.isDeleted && ((isNew && this.entity.createPermitted()) || (!isNew && this.entity.updatePermitted()));
     };
 
     Instance.prototype.serialize = function() {
@@ -2422,7 +2432,7 @@
     }
 
     Form.prototype.initialize = function(options) {
-      Form.__super__.initialize.apply(this, arguments);
+      this.formType = null;
       this.saveOptions = {
         displayLoading: true,
         xhr: (function(_this) {
@@ -2439,22 +2449,7 @@
       this.listenTo(this.model, "destroy", this.handleModelDestroyEvent);
       this.listenTo(this.model, "invalid", this.handleModelInvalidEvent);
       this.hotkeys = $(document).on("keydown." + this.cid, "body", $.proxy(this, "hotkeys"));
-      return this;
-    };
-
-    Form.prototype.setupDefaultLayout = function() {
-      var field, tab, _i, _len, _ref;
-      tab = this.append(new Cruddy.Layout.TabPane({
-        title: this.model.entity.get("title").singular
-      }, this));
-      _ref = this.entity.fields.models;
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        field = _ref[_i];
-        tab.append(new Cruddy.Layout.Field({
-          field: field.id
-        }, tab));
-      }
-      return this;
+      return Form.__super__.initialize.apply(this, arguments);
     };
 
     Form.prototype.hotkeys = function(e) {
@@ -2515,8 +2510,7 @@
 
     Form.prototype.show = function() {
       this.$el.toggleClass("opened", true);
-      this.items[0].activate();
-      this.focus();
+      this.layout.activate();
       return this;
     };
 
@@ -2645,8 +2639,8 @@
 
     Form.prototype.render = function() {
       this.$el.html(this.template());
-      this.$container = this.$component("body");
       this.$nav = this.$component("nav");
+      this.$navbar = this.$component("navbar");
       this.$footer = this.$component("footer");
       this.$btnSave = this.$component("save");
       this.$deletedMsg = this.$component("deleted-message");
@@ -2655,11 +2649,6 @@
       this.$serviceMenuItems = this.$component("service-menu-items");
       this.updateModelState();
       return Form.__super__.render.apply(this, arguments);
-    };
-
-    Form.prototype.renderElement = function(el) {
-      this.$nav.append(el.getHeader().render().$el);
-      return Form.__super__.renderElement.apply(this, arguments);
     };
 
     Form.prototype.updateRequestState = function() {
@@ -2675,14 +2664,65 @@
     };
 
     Form.prototype.updateModelState = function() {
-      var entity, isDeleted, isNew;
+      var entity, form, formType, isDeleted, isNew, _ref;
       entity = this.model.entity;
       isNew = this.model.isNew();
       isDeleted = this.model.isDeleted || false;
+      formType = isNew ? "create" : "update";
+      if (formType !== this.formType) {
+        if ((_ref = this.layout) != null) {
+          _ref.remove();
+        }
+        this.formType = formType;
+        form = entity.form(formType);
+        this.layout = this.createLayout(form);
+        this.$navbar.after(this.layout.render().$el);
+        this.$nav.empty();
+        this.layout.items.forEach((function(_this) {
+          return function(item) {
+            return _this.$nav.append(item.getHeader().render().$el);
+          };
+        })(this));
+        after_break((function(_this) {
+          return function() {
+            return _this.layout.activate();
+          };
+        })(this));
+      }
       this.$el.toggleClass("destroyed", isDeleted);
       this.$btnSave.text(isNew ? Cruddy.lang.create : Cruddy.lang.save);
       this.$btnSave.toggle(!isDeleted && (isNew ? entity.createPermitted() : entity.updatePermitted()));
       return this.updateModelMetaState();
+    };
+
+    Form.prototype.createLayout = function(form) {
+      var layout, tab;
+      if (form.layout) {
+        return new Cruddy.Layout.Layout({
+          form: form,
+          model: this.model,
+          items: form.layout,
+          el: this.$container
+        });
+      }
+      layout = new Cruddy.Layout.Layout({
+        form: form,
+        model: this.model,
+        el: this.$container
+      });
+      tab = layout.append(new Cruddy.Layout.TabPane({
+        title: this.model.entity.getSingularTitle(),
+        parent: layout,
+        model: this.model
+      }));
+      form.fields.forEach(function(field) {
+        return tab.append(new Cruddy.Layout.Field({
+          field: field.id,
+          parent: tab,
+          model: this.model
+        }));
+      });
+      return layout;
     };
 
     Form.prototype.updateModelMetaState = function() {
@@ -2706,7 +2746,7 @@
     };
 
     Form.prototype.template = function() {
-      return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\">\n    <div class=\"container-fluid\">\n        <ul id=\"" + (this.componentId("nav")) + "\" class=\"nav navbar-nav\"></ul>\n\n        <ul id=\"" + (this.componentId("service-menu")) + "\" class=\"nav navbar-nav navbar-right\">\n            <li class=\"dropdown\">\n                <a class=\"dropdown-toggle\" data-toggle=\"dropdown\" href=\"#\">\n                    <span class=\"glyphicon glyphicon-option-horizontal\"></span>\n                </a>\n\n                <ul class=\"dropdown-menu\" role=\"menu\" id=\"" + (this.componentId("service-menu-items")) + "\"></ul>\n            </li>\n        </ul>\n    </div>\n</div>\n\n<div class=\"tab-content\" id=\"" + (this.componentId("body")) + "\"></div>\n\n<footer id=\"" + (this.componentId("footer")) + "\">\n    <span class=\"fs-deleted-message\">" + Cruddy.lang.model_deleted + "</span>\n\n    <button data-action=\"closeForm\" id=\"" + (this.componentId("close")) + "\" type=\"button\" class=\"btn btn-default\">" + Cruddy.lang.close + "</button><!--\n    --><button data-action=\"saveModel\" id=\"" + (this.componentId("save")) + "\" type=\"button\" class=\"btn btn-primary btn-save\"></button>\n\n    <div class=\"progress\">\n        <div id=\"" + (this.componentId("progress")) + "\" class=\"progress-bar form-save-progress\"></div>\n    </div>\n</footer>";
+      return "<div class=\"navbar navbar-default navbar-static-top\" role=\"navigation\" id=\"" + (this.componentId("navbar")) + "\">\n    <div class=\"container-fluid\">\n        <ul id=\"" + (this.componentId("nav")) + "\" class=\"nav navbar-nav\"></ul>\n\n        <ul id=\"" + (this.componentId("service-menu")) + "\" class=\"nav navbar-nav navbar-right\">\n            <li class=\"dropdown\">\n                <a class=\"dropdown-toggle\" data-toggle=\"dropdown\" href=\"#\">\n                    <span class=\"glyphicon glyphicon-option-horizontal\"></span>\n                </a>\n\n                <ul class=\"dropdown-menu\" role=\"menu\" id=\"" + (this.componentId("service-menu-items")) + "\"></ul>\n            </li>\n        </ul>\n    </div>\n</div>\n\n<footer id=\"" + (this.componentId("footer")) + "\">\n    <span class=\"fs-deleted-message\">" + Cruddy.lang.model_deleted + "</span>\n\n    <button data-action=\"closeForm\" id=\"" + (this.componentId("close")) + "\" type=\"button\" class=\"btn btn-default\">" + Cruddy.lang.close + "</button><!--\n    --><button data-action=\"saveModel\" id=\"" + (this.componentId("save")) + "\" type=\"button\" class=\"btn btn-primary btn-save\"></button>\n\n    <div class=\"progress\">\n        <div id=\"" + (this.componentId("progress")) + "\" class=\"progress-bar form-save-progress\"></div>\n    </div>\n</footer>";
     };
 
     Form.prototype.renderServiceMenuItems = function() {
@@ -2778,9 +2818,18 @@
       }
     };
 
+    Form.prototype.field = function(id) {
+      var field;
+      if (!(field = this.fields.get(id))) {
+        console.error("The field " + id + " is not found.");
+        return;
+      }
+      return field;
+    };
+
     return Form;
 
-  })(Cruddy.Layout.Layout);
+  })(Cruddy.View);
 
   Cruddy.Entity.Form.display = function(instance) {
     var form;
@@ -3374,17 +3423,11 @@
     };
 
     EntityDropdown.prototype.itemBody = function(item) {
-      var data;
-      if (!item.body) {
-        data = this.selector.dataSource.getById(item.id);
-        if (data) {
-          item = data;
-        }
+      var _ref;
+      if (!item.attributes) {
+        item = ((_ref = this.selector) != null ? _ref.dataSource.getById(item.id) : void 0) || item;
       }
-      if (item.body) {
-        return item.body;
-      }
-      return item.id;
+      return item.attributes.body || item.title || item.id;
     };
 
     EntityDropdown.prototype.itemTemplate = function(value, key) {
@@ -3645,7 +3688,7 @@
     EntitySelector.prototype.renderItem = function(item) {
       var className;
       className = item.id in this.selected ? "selected" : "";
-      return "<li class=\"item " + className + "\" data-id=\"" + item.id + "\">" + item.body + "</li>";
+      return "<li class=\"item " + className + "\" data-id=\"" + item.id + "\">" + item.attributes.body + "</li>";
     };
 
     EntitySelector.prototype.render = function() {
@@ -4308,7 +4351,7 @@
     BaseView.prototype.updateContainer = function() {
       this.isEditable = !this.forceDisable && this.field.isEditable(this.model);
       this.$el.toggle(this.isVisible());
-      this.$el.toggleClass("required", this.field.isRequired(this.model));
+      this.$el.toggleClass("required", this.field.isRequired());
       return this;
     };
 
@@ -4446,6 +4489,12 @@
 
     Base.prototype.viewConstructor = Cruddy.Fields.InputView;
 
+    Base.prototype.defaults = {
+      rules: [],
+      label: '',
+      disabled: false
+    };
+
     Base.prototype.createView = function(model, forceDisable, parent) {
       if (forceDisable == null) {
         forceDisable = false;
@@ -4497,15 +4546,19 @@
     };
 
     Base.prototype.isEditable = function(model) {
-      return model.canBeSaved() && this.attributes.disabled !== true && this.attributes.disabled !== model.action();
+      return model.canBeSaved() && !this.attributes.disabled;
     };
 
-    Base.prototype.isRequired = function(model) {
-      return this.attributes.required === true || this.attributes.required === model.action();
+    Base.prototype.hasRule = function(rule) {
+      return this.attributes.rules[rule] !== void 0;
+    };
+
+    Base.prototype.isRequired = function() {
+      return this.hasRule("required");
     };
 
     Base.prototype.isUnique = function() {
-      return this.attributes.unique;
+      return this.hasRule("unique");
     };
 
     Base.prototype.hasChangedSinceSync = function(model) {
@@ -4752,10 +4805,6 @@
     DateTime.prototype.inputFormat = "YYYY-MM-DD HH:mm:ss";
 
     DateTime.prototype.mask = "9999-99-99 99:99:99";
-
-    DateTime.prototype.formatDate = function(value) {
-      return moment.unix(value).fromNow();
-    };
 
     return DateTime;
 
@@ -5311,6 +5360,14 @@
       EmbeddedItemView.__super__.constructor.apply(this, arguments);
     }
 
+    EmbeddedItemView.prototype.initialize = function(options) {
+      EmbeddedItemView.__super__.initialize.apply(this, arguments);
+      if (_.isEmpty(this.items)) {
+        this.setupDefaultLayout();
+      }
+      return this;
+    };
+
     EmbeddedItemView.prototype.toggleItem = function(e) {
       if (this.model.isDeleted) {
         this.collection.restore(this.model);
@@ -5329,7 +5386,9 @@
     };
 
     EmbeddedItemView.prototype.setupDefaultLayout = function() {
-      this.append(new FieldList({}, this));
+      this.append(new FieldList({
+        model: this.model
+      }));
       return this;
     };
 
@@ -5537,7 +5596,7 @@
         items = [items];
       }
       items = items || [];
-      if (_.isEmpty(items) && this.isRequired(model)) {
+      if (_.isEmpty(items) && this.isRequired()) {
         items.push({});
       }
       ref = this.getReferencedEntity();
@@ -5707,29 +5766,18 @@
 
   })(Cruddy.Attribute);
 
-  Cruddy.Columns.Proxy = (function(_super) {
-    __extends(Proxy, _super);
+  Cruddy.Columns.Basic = (function(_super) {
+    __extends(Basic, _super);
 
-    function Proxy() {
-      return Proxy.__super__.constructor.apply(this, arguments);
+    function Basic() {
+      return Basic.__super__.constructor.apply(this, arguments);
     }
 
-    Proxy.prototype.initialize = function(attributes) {
-      var field, _ref;
-      field = (_ref = attributes.field) != null ? _ref : attributes.id;
-      this.field = attributes.entity.fields.get(field);
-      return Proxy.__super__.initialize.apply(this, arguments);
+    Basic.prototype.format = function(value) {
+      return value || '&mdash;';
     };
 
-    Proxy.prototype.format = function(value) {
-      return this.field.format(value);
-    };
-
-    Proxy.prototype.getClass = function() {
-      return Proxy.__super__.getClass.apply(this, arguments) + " col__" + this.field.getType();
-    };
-
-    return Proxy;
+    return Basic;
 
   })(Cruddy.Columns.Base);
 
@@ -5770,11 +5818,11 @@
     };
 
     ViewButton.prototype.render = function(model) {
-      return this.wrapWithActions(model, "<a onclick=\"Cruddy.app.entityView.displayForm('" + model.meta.id + "', this);return false;\" class=\"btn btn-default btn-view btn-xs auto-hide-target\" href=\"" + (this.entity.link(model.meta.id)) + "\">\n    " + (b_icon("pencil")) + "\n</a>");
+      return this.wrapWithActions(model, "<a onclick=\"Cruddy.app.entityView.displayForm('" + model.id + "', this);return false;\" class=\"btn btn-default btn-view btn-xs auto-hide-target\" href=\"" + (this.entity.link(model.id)) + "\">\n    " + (b_icon("pencil")) + "\n</a>");
     };
 
     ViewButton.prototype.wrapWithActions = function(item, html) {
-      if (_.isEmpty(item.meta.links) && _.isEmpty(item.meta.actions)) {
+      if (_.isEmpty(item.links) && _.isEmpty(item.actions)) {
         return html;
       }
       html = "<div class=\"btn-group btn-group-xs auto-hide-target\">" + html;
@@ -5791,14 +5839,14 @@
     ViewButton.prototype.renderActions = function(model) {
       var action, html, noPresentationActions, _i, _len, _ref;
       html = "<ul class=\"dropdown-menu\" role=\"menu\">";
-      if (!(noPresentationActions = _.isEmpty(model.meta.links))) {
-        html += render_presentation_actions(model.meta.links);
+      if (!(noPresentationActions = _.isEmpty(model.links))) {
+        html += render_presentation_actions(model.links);
       }
-      if (!_.isEmpty(model.meta.actions)) {
+      if (!_.isEmpty(model.actions)) {
         if (!noPresentationActions) {
           html += render_divider();
         }
-        _ref = model.meta.actions;
+        _ref = model.actions;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           action = _ref[_i];
           html += this.renderAction(action, model);
@@ -5809,7 +5857,7 @@
     };
 
     ViewButton.prototype.renderAction = function(action, model) {
-      return "<li class=\"" + (action.disabled ? "disabled" : "") + "\">\n    <a onclick=\"Cruddy.app.entityView.executeCustomAction('" + action.id + "', '" + model.meta.id + "', this);return false;\" href=\"javascript:void;\">\n        " + (_.escape(action.title)) + "\n    </a>\n</li>";
+      return "<li class=\"" + (action.disabled ? "disabled" : "") + "\">\n    <a onclick=\"Cruddy.app.entityView.executeCustomAction('" + action.id + "', '" + model.id + "', this);return false;\" href=\"javascript:void;\">\n        " + (_.escape(action.title)) + "\n    </a>\n</li>";
     };
 
     return ViewButton;
@@ -6188,7 +6236,7 @@
       if (appendage == null) {
         appendage = null;
       }
-      route = "^(" + entities + ")";
+      route = "^entities/(" + entities + ")";
       if (appendage) {
         route += "/" + appendage;
       }

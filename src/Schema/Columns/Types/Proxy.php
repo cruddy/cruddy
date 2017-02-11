@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Illuminate\Database\Query\Builder as QueryBuilder;
 use Kalnoy\Cruddy\Schema\Columns\BaseColumn;
 use Kalnoy\Cruddy\Contracts\Field;
-use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\Entity\Entity;
 
 /**
  * Proxy relies on a field to do stuff. It just passes calls to the field.
@@ -48,7 +48,7 @@ class Proxy extends BaseColumn
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function getModelValue($model)
     {
@@ -56,7 +56,7 @@ class Proxy extends BaseColumn
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function order(QueryBuilder $builder, $data)
     {
@@ -64,7 +64,7 @@ class Proxy extends BaseColumn
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function canOrder()
     {
@@ -72,7 +72,7 @@ class Proxy extends BaseColumn
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function generateLabel()
     {
@@ -88,7 +88,7 @@ class Proxy extends BaseColumn
     }
 
     /**
-     * {@inheritdoc}
+     * @inheritdoc
      */
     public function toArray()
     {

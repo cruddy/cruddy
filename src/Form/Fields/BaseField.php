@@ -102,11 +102,13 @@ abstract class BaseField extends BaseItem
      *
      * Disabled field won't be editable.
      *
+     * @param bool $value
+     *
      * @return $this
      */
-    public function disable()
+    public function disable($value = true)
     {
-        $this->disabled = true;
+        $this->disabled = $value;
 
         return $this;
     }

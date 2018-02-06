@@ -279,6 +279,10 @@ class CruddyServiceProvider extends ServiceProvider
     {
         $this->applyRoutingPattern($router);
 
+        if ($this->app->routesAreCached()) {
+            return;
+        }
+        
         $group = [
             'middleware' => $config->get('cruddy.middleware'),
             'prefix' => $config->get('cruddy.uri', 'backend'),

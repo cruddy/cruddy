@@ -2,7 +2,6 @@
 
 namespace Kalnoy\Cruddy\Schema;
 
-use Illuminate\Support\Fluent;
 use Kalnoy\Cruddy\Entity\Entity;
 
 /**
@@ -10,6 +9,7 @@ use Kalnoy\Cruddy\Entity\Entity;
  *
  * @since 1.0.0
  */
-abstract class BaseSchema extends Entity {
+abstract class BaseSchema extends Entity
+{
 
 }

@@ -10,8 +10,8 @@ use Kalnoy\Cruddy\Entity\Entity;
  *
  * @since 1.0.0
  */
-class InstanceFactory {
-
+class InstanceFactory
+{
     /**
      * The factory.
      *

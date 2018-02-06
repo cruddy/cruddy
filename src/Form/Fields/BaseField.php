@@ -16,21 +16,22 @@ use Kalnoy\Cruddy\Service\GetsValueFromModel;
 
 /**
  * A base class for all fields.
- * 
+ *
  * @method $this required()
  * @method $this unique()
+ * @method $this nullable()
  *
  * @package Kalnoy\Cruddy\Form\Fields
  */
 abstract class BaseField extends BaseItem
 {
     use GetsValueFromModel;
-    
+
     /**
      * @var BaseForm
      */
     protected $owner;
-    
+
     /**
      * @var array
      */
@@ -98,26 +99,26 @@ abstract class BaseField extends BaseItem
 
     /**
      * Disable the field.
-     * 
+     *
      * Disabled field won't be editable.
-     * 
+     *
      * @return $this
      */
     public function disable()
     {
         $this->disabled = true;
-        
+
         return $this;
     }
 
     /**
      * Set the value on model.
-     * 
+     *
      * Value is pre-processed using {@see processValueBeforeSetting} function.
-     * 
+     *
      * @param mixed $model
      * @param mixed $value
-     * 
+     *
      * @see setter To define custom setter
      *
      * @return $this
@@ -125,7 +126,7 @@ abstract class BaseField extends BaseItem
     public function setModelValue($model, $value)
     {
         $attribute = $this->getModelAttribute();
-        
+
         $value = $this->processValueBeforeSetting($value);
 
         call_user_func($this->getSetter(), $model, $value, $attribute);
@@ -135,7 +136,7 @@ abstract class BaseField extends BaseItem
 
     /**
      * Process value before it'll be set on model.
-     * 
+     *
      * @param mixed $value
      *
      * @return mixed
@@ -178,7 +179,7 @@ abstract class BaseField extends BaseItem
      */
     protected function generateLabel()
     {
-        return $this->owner->translate("fields.{$this->id}") 
+        return $this->owner->translate("fields.{$this->id}")
             ?: Helpers::labelFromId($this->id);
     }
 
@@ -238,13 +239,13 @@ abstract class BaseField extends BaseItem
 
     /**
      * @inheritdoc
-     * 
+     *
      * @return $this
      */
     public function __call($name, $arguments)
     {
         $this->rules[Str::snake($name)] = $arguments;
-        
+
         return $this;
     }
 

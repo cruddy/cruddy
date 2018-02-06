@@ -26,6 +26,8 @@ abstract class BaseEntitySelector extends BaseRelation
      */
     public $filter;
 
+    protected $rules = [ 'nullable' => [] ];
+
     /**
      * The name of the JavaScript class that is used to render this field.
      *

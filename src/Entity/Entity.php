@@ -190,7 +190,7 @@ abstract class Entity
      */
     public function fields($form)
     {
-
+        //
     }
 
     /**
@@ -212,7 +212,7 @@ abstract class Entity
      */
     public function layout($layout)
     {
-
+        //
     }
 
     /**
@@ -222,7 +222,7 @@ abstract class Entity
      */
     public function columns($columns)
     {
-
+        //
     }
 
     /**
@@ -232,7 +232,7 @@ abstract class Entity
      */
     public function filters($filters)
     {
-
+        //
     }
 
     /**
@@ -242,7 +242,7 @@ abstract class Entity
      */
     public function actions($actions)
     {
-
+        //
     }
 
     /**
@@ -317,7 +317,7 @@ abstract class Entity
      */
     public function toUrl($model)
     {
-
+        return null;
     }
 
     /**
@@ -450,7 +450,9 @@ abstract class Entity
      */
     public function fireEvent($event, array $payload, $halt = true)
     {
-        if ( ! isset(static::$dispatcher)) return null;
+        if ( ! isset(static::$dispatcher)) {
+            return null;
+        }
 
         $event = "entity.{$event}: {$this->id}";
 

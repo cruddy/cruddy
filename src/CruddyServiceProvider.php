@@ -224,6 +224,10 @@ class CruddyServiceProvider extends ServiceProvider
      */
     protected function registerCommands()
     {
+        if ( ! $this->app->runningInConsole()) {
+            return;
+
+        }
         $this->commands([
                             Console\MakeEntityCommand::class,
                             Console\CompileCommand::class,

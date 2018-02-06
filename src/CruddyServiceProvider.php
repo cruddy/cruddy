@@ -282,9 +282,9 @@ class CruddyServiceProvider extends ServiceProvider
         if ($this->app->routesAreCached()) {
             return;
         }
-        
+
         $group = [
-            'middleware' => $config->get('cruddy.middleware'),
+            'middleware' => $config->get('cruddy.middleware', 'web'),
             'prefix' => $config->get('cruddy.uri', 'backend'),
             'namespace' => 'Kalnoy\Cruddy\Http\Controllers',
         ];

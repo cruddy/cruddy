@@ -2,8 +2,8 @@
 
 namespace Kalnoy\Cruddy\Service;
 
-use Kalnoy\Cruddy\Form\BaseForm;
 use Kalnoy\Cruddy\Contracts\Permissions;
+use Kalnoy\Cruddy\Entity\Entity;
 
 /**
  * BasicEloquentRepository permissions.

@@ -17,7 +17,7 @@
     'permissions' => 'Kalnoy\Cruddy\Service\PermitsEverything',
 
     // The middleware that wraps every request to Cruddy. Can be used for authentication.
-    'middleware' => null,
+    'middleware' => [ 'web' ],
 
     // Main menu items.
     //
@@ -42,18 +42,18 @@
     ],
 
     'storage' => [
-        
+
         'files' => [
             'type' => 'files',
             'disk' => 'local',
-            
+
             // Optionally specify allowed mime types
             'mime' => [  ],
 
             // Specify whether to keep original file names
             'keep_names' => true,
         ],
-        
+
         'images' => [
             'type' => 'images',
             'disk' => 'local',

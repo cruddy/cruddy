@@ -1,6 +1,6 @@
 <?php
 
-namespace Kalnoy\Cruddy\Schema\Actions;
+namespace Kalnoy\Cruddy\Entity\Actions;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Fluent;
@@ -15,7 +15,7 @@ use Kalnoy\Cruddy\Helpers;
  * @method $this hide($value)
  * @method $this disable($value)
  *
- * @package Kalnoy\Cruddy\Schema\Actions
+ * @package Kalnoy\Cruddy\Entity\Actions
  */
 class FluentAction extends Fluent implements Action
 {

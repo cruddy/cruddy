@@ -1,6 +1,6 @@
 <?php
 
-namespace Kalnoy\Cruddy\Schema\Actions;
+namespace Kalnoy\Cruddy\Entity\Actions;
 
 use Illuminate\Contracts\Support\Arrayable as ArrayableContract;
 

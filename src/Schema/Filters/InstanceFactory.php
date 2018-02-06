@@ -5,7 +5,7 @@ namespace Kalnoy\Cruddy\Schema\Filters;
 /**
  * Class InstanceFactory
  *
- * @method Types\Proxy usingField(string $filterId, string $fieldId = null)
+ * @method \Kalnoy\Cruddy\Entity\DataSource\Filters\Proxy usingField(string $filterId, string $fieldId = null)
  *
  * @package Kalnoy\Cruddy\Schema\Filters
  */

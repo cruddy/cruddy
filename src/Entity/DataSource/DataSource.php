@@ -133,7 +133,7 @@ class DataSource
     public function modelData(Model $model)
     {
         $data = $this->entity->modelMeta($model);
-        
+
         $data['id'] = $model->getKey();
         $data['attributes'] = $this->getColumns()->modelData($model);
 
@@ -230,7 +230,7 @@ class DataSource
     }
 
     /**
-     * @return mixed
+     * @return FiltersCollection
      */
     public function getFilters()
     {

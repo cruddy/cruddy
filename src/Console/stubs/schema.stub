@@ -2,62 +2,27 @@
 
 namespace DummyNamespace;
 
-use Kalnoy\Cruddy\Entity;
+use Kalnoy\Cruddy\Entity\Entity;
 
 class DummyClass extends Entity
 {
-    /**
-     * @var string
-     */
-    protected $model = 'DummyModel';
+    public $model = 'DummyModel';
 
-    /**
-     * The name of the column that is used to convert a model to a string.
-     *
-     * @var string
-     */
-    protected $titleAttribute = null;
+    public $titleAttribute = 'name';
 
-    /**
-     * The name of the column that will sort data by default.
-     *
-     * @var string
-     */
-    protected $defaultOrder = null;
+    public $defaultOrder = 'updated_at';
 
-    /**
-     * Define some fields.
-     *
-     * @param \Kalnoy\Cruddy\Form\InstanceFactory $schema
-     */
     public function fields($schema)
     {
-        $schema->increments('id');
-
+        $schema->string('name')->required();
         $schema->timestamps();
     }
 
-    /**
-     * Define some columns.
-     *
-     * @param \Kalnoy\Cruddy\Schema\Columns\InstanceFactory $schema
-     */
     public function columns($schema)
     {
-        $schema->col('id');
-
-        $schema->col('updated_at')->reversed();
+        $schema->attr('id');
+        $schema->attr('name');
+        $schema->attr('updated_at')->reversed();
     }
 
-    /**
-     * Define validation rules.
-     *
-     * @param \Kalnoy\Cruddy\Service\Validation\FluentValidator $v
-     */
-    public function rules($v)
-    {
-        $v->always([
-
-        ]);
-    }
 }

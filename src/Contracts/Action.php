@@ -4,7 +4,7 @@ namespace Kalnoy\Cruddy\Contracts;
 /**
  * Interface Action
  *
- * @package Kalnoy\Cruddy\Schema\Actions
+ * @package Kalnoy\Cruddy\Entity\Actions
  */
 interface Action
 {

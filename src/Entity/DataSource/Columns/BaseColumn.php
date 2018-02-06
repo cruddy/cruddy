@@ -127,9 +127,15 @@ abstract class BaseColumn extends BaseItem
      */
     protected function generateHeader()
     {
-        $header = $this->owner->getEntity()->translate("columns.{$this->id}");
+        if ($header = $this->owner->getEntity()->translate("columns.{$this->id}")) {
+            return $header;
+        }
 
-        return $header ?: Helpers::labelFromId($this->id);
+        if ($header = $this->owner->getEntity()->translate("fields.{$this->id}")) {
+            return $header;
+        }
+
+        return Helpers::labelFromId($this->id);
 }
 
     /**

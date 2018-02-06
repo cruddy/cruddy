@@ -62,7 +62,7 @@ abstract class Entity
     protected $entities;
 
     /**
-     * @var Schema\Actions\Collection
+     * @var Actions\Collection
      */
     private $actions;
 
@@ -238,7 +238,7 @@ abstract class Entity
     /**
      * Set up actions.
      *
-     * @param Schema\Actions\Collection $actions
+     * @param Actions\Collection $actions
      */
     public function actions($actions)
     {
@@ -529,7 +529,7 @@ abstract class Entity
     }
 
     /**
-     * @return Schema\Actions\Collection
+     * @return Actions\Collection
      */
     public function getActions()
     {
@@ -541,11 +541,11 @@ abstract class Entity
     }
 
     /**
-     * @return Schema\Actions\Collection
+     * @return Actions\Collection
      */
     protected function buildActions()
     {
-        $collection = new Schema\Actions\Collection;
+        $collection = new Actions\Collection;
 
         $this->actions($collection);
 

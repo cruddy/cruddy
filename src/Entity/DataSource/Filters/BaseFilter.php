@@ -1,10 +1,12 @@
 <?php
 
-namespace Kalnoy\Cruddy\Schema\Filters;
+namespace Kalnoy\Cruddy\Entity\DataSource\Filters;
 
 use Kalnoy\Cruddy\Contracts\Filter;
+use Kalnoy\Cruddy\Entity\DataSource\DataSource;
 use Kalnoy\Cruddy\Helpers;
 use Kalnoy\Cruddy\Schema\Entry;
+use Kalnoy\Cruddy\Service\BaseItem;
 
 /**
  * Class BaseFilter
@@ -13,7 +15,7 @@ use Kalnoy\Cruddy\Schema\Entry;
  *
  * @package Kalnoy\Cruddy\Schema\Filters
  */
-abstract class BaseFilter extends Entry implements Filter
+abstract class BaseFilter extends BaseItem
 {
     /**
      * The list of internal keys that cannot be used as filter id.
@@ -23,27 +25,54 @@ abstract class BaseFilter extends Entry implements Filter
     static $sysKeys = [ 'page', 'per_page', 'keywords', 'order_by', 'order_dir' ];
 
     /**
+     * @var DataSource
+     */
+    protected $owner;
+
+    /**
+     * @var string
+     */
+    protected $label;
+
+    /**
+     * BaseFilter constructor.
+     *
+     * @param DataSource $owner
+     * @param $id
+     */
+    public function __construct(DataSource $owner, $id)
+    {
+        parent::__construct($owner, $id);
+    }
+
+    /**
      * Get field label.
      *
      * @return string
      */
     public function getLabel()
     {
-        if ($label = $this->get('label')) {
-            return Helpers::tryTranslate($label);
+        if ($this->label) {
+            return Helpers::tryTranslate($this->label);
         }
 
         return $this->generateLabel();
     }
 
     /**
-     * Generate a label.
-     *
      * @return string
      */
-    protected function generateLabel()
+    public function generateLabel()
     {
-        return $this->translate('filters') ?: parent::generateLabel();
+        if ($label = $this->owner->translate('filters')) {
+            return $label;
+        }
+
+        if ($label = $this->owner->translate('fields')) {
+            return $label;
+        }
+
+        return Helpers::labelFromId($this->id);
     }
 
     /**
@@ -61,12 +90,12 @@ abstract class BaseFilter extends Entry implements Filter
     /**
      * @return array
      */
-    public function toArray()
+    public function getConfig()
     {
         return [
             'label' => $this->getLabel(),
             'data_key' => $this->getDataKey(),
 
-        ] + parent::toArray();
+        ] + parent::getConfig();
     }
 }

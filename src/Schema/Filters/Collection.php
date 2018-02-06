@@ -4,6 +4,7 @@ namespace Kalnoy\Cruddy\Schema\Filters;
 
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Kalnoy\Cruddy\Contracts\SearchProcessor;
+use Kalnoy\Cruddy\Entity\DataSource\Filters\BaseFilter;
 use Kalnoy\Cruddy\Schema\BaseCollection;
 
 class Collection extends BaseCollection implements SearchProcessor

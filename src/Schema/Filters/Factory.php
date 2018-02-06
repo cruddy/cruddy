@@ -11,7 +11,7 @@ class Factory extends BaseFactory
      * @var array
      */
     protected $macros = [
-        'usingField' => Types\Proxy::class,
+        'usingField' => \Kalnoy\Cruddy\Entity\DataSource\Filters\Proxy::class,
     ];
 
 }

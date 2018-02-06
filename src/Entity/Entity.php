@@ -114,7 +114,7 @@ abstract class Entity
      *
      * @var string
      */
-    public $defaultOrder;
+    public $defaultOrderBy;
 
     /**
      * The number of items per page.
@@ -580,7 +580,8 @@ abstract class Entity
             ->columns([ $this, 'columns' ])
             ->paginateBy($this->perPage)
             ->eagerLoads($this->eagerLoads)
-            ->searchable($this->searchable);
+            ->searchable($this->searchable)
+            ->orderBy($this->defaultOrderBy);
     }
 
     /**
@@ -603,6 +604,8 @@ abstract class Entity
         return (new DataSource($this))
             ->eagerLoads($this->eagerLoads)
             ->paginateBy($this->perPage)
+            ->searchable($this->searchable)
+            ->orderBy($this->defaultOrderBy)
             ->columns(function (ColumnsCollection $columns) {
                 $columns->attr('id')
                         ->modelAttribute($this->newModel()->getKeyName());
@@ -739,7 +742,7 @@ abstract class Entity
             'controller_class' => $this->getControllerClass(),
             'title' => $this->getTitle(),
 
-            'order_by' => $this->defaultOrder,
+            'order_by' => $this->defaultOrderBy,
 
             'defaults' => $this->defaultAttributes(),
             'create_form' => $this->formForCreate()->getConfig(),
@@ -750,7 +753,7 @@ abstract class Entity
     }
 
     /**
-     * @return Schema\Filters\Factory
+     * @return \Kalnoy\Cruddy\Entity\FieldsFactory
      */
     protected function getFiltersFactory()
     {
@@ -758,7 +761,7 @@ abstract class Entity
     }
 
     /**
-     * @return Schema\Columns\Factory
+     * @return \Kalnoy\Cruddy\Entity\DataSource\ColumnsFactory
      */
     protected function getColumnsFactory()
     {

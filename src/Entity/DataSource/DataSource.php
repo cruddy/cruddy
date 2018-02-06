@@ -56,6 +56,11 @@ class DataSource
     public $searchable = [];
 
     /**
+     * @var string|array
+     */
+    public $orderBy;
+
+    /**
      * DataSource constructor.
      *
      * @param Entity $entity
@@ -120,7 +125,19 @@ class DataSource
      */
     public function searchable($value)
     {
-        $this->searchable = Arr::wrap($value);
+        $this->searchable = $value ? Arr::wrap($value) : [];
+
+        return $this;
+    }
+
+    /**
+     * @param $value
+     *
+     * @return $this
+     */
+    public function orderBy($value)
+    {
+        $this->orderBy = $value;
 
         return $this;
     }
@@ -180,9 +197,27 @@ class DataSource
             ->with($this->relationships())
             ->forPage($page, $perPage)
             ->when(Arr::get($input, 'keywords'), $this->keywordsFilter($query->getModel()->getKeyName()))
+            ->when(Arr::get($input, 'order', $this->orderBy), $this->order())
             ->get();
 
         return new DataSet($this->data($items), $total, $page, $perPage);
+    }
+
+    /**
+     * @return \Closure
+     */
+    protected function order()
+    {
+        return function ($query, $order) {
+            foreach (Arr::wrap($order) as $attr => $dir) {
+                if (is_numeric($attr)) {
+                    $attr = $dir;
+                    $dir = 'asc';
+                }
+
+                $query->orderBy($attr, $dir);
+            }
+        };
     }
 
     /**

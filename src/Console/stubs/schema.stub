@@ -12,6 +12,8 @@ class DummyClass extends Entity
 
     public $defaultOrder = 'updated_at';
 
+    public $searchable = [ 'name' ];
+
     public function fields($schema)
     {
         $schema->string('name')->required();

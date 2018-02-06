@@ -4,6 +4,7 @@ namespace Kalnoy\Cruddy\Entity\DataSource;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Arr;
 use Kalnoy\Cruddy\Entity\Entity;
 
@@ -48,6 +49,11 @@ class DataSource
      * @var array
      */
     public $eagerLoads = [];
+
+    /**
+     * @var array
+     */
+    public $searchable = [];
 
     /**
      * DataSource constructor.
@@ -108,6 +114,18 @@ class DataSource
     }
 
     /**
+     * @param array $value
+     *
+     * @return $this
+     */
+    public function searchable($value)
+    {
+        $this->searchable = Arr::wrap($value);
+
+        return $this;
+    }
+
+    /**
      * @param Collection|Model $model
      *
      * @return array|null
@@ -158,11 +176,33 @@ class DataSource
         $perPage = $this->resolvePerPage($input);
         $page = $this->resolvePage($total, $perPage, $input);
 
-        $items = $query->with($this->relationships())
-                       ->forPage($page, $perPage)
-                       ->get();
+        $items = $query
+            ->with($this->relationships())
+            ->forPage($page, $perPage)
+            ->when(Arr::get($input, 'keywords'), $this->keywordsFilter($query->getModel()->getKeyName()))
+            ->get();
 
         return new DataSet($this->data($items), $total, $page, $perPage);
+    }
+
+    /**
+     * @param $primaryKey
+     *
+     * @return \Closure
+     */
+    protected function keywordsFilter($primaryKey)
+    {
+        return function ($query, $keywords) use ($primaryKey) {
+            $query->whereNested(function ($query) use ($keywords, $primaryKey) {
+                $query->orWhere($primaryKey, $keywords);
+
+                $keywords = "%$keywords%";
+
+                foreach ($this->searchable as $attr) {
+                    $query->orWhere($attr, 'like', $keywords);
+                }
+            });
+        };
     }
 
     /**

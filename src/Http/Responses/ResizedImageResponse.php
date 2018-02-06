@@ -30,6 +30,10 @@ class ResizedImageResponse extends FileStreamResponse
      */
     public function prepare(Request $request)
     {
+        if ($this->prepared) {
+            return $this;
+        }
+
         parent::prepare($request);
 
         if ( ! $this->isSuccessful() || $this->isEmpty()) {

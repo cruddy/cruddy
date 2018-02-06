@@ -14,6 +14,8 @@ class FileStreamResponse extends Response
      */
     protected $file;
 
+    protected $prepared = false;
+
     /**
      * FileStreamResponse constructor.
      *
@@ -35,6 +37,10 @@ class FileStreamResponse extends Response
      */
     public function prepare(Request $request)
     {
+        if ($this->prepared) {
+            return $this;
+        }
+
         if ($lastModified = $this->file->getLastModified()) {
             $lastModified = Carbon::createFromTimestamp($lastModified);
             $modifiedSince = $request->headers->getDate('If-Modified-Since');
@@ -48,6 +54,8 @@ class FileStreamResponse extends Response
 
         $this->headers->set('Content-Type', $this->getMimeType());
         $this->headers->set('Content-Length', $this->file->getSize());
+
+        $this->prepared = true;
 
         return $this;
     }

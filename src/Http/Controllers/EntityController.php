@@ -82,9 +82,9 @@ class EntityController extends Controller
             $options['order'] = [ $options['order_by'] => $options['order_dir'] ];
         }
 
-        if (isset($options['keywords'])) {
-            $options['keywords'] = Helpers::splitKeywords($options['keywords']);
-        }
+//        if (isset($options['keywords'])) {
+//            $options['keywords'] = Helpers::splitKeywords($options['keywords']);
+//        }
 
         return $options;
     }
@@ -103,8 +103,10 @@ class EntityController extends Controller
         $entity = $this->resolveEntity($entity, Entity::READ);
 
         if ( ! $input->ajax()) {
-            return redirect()->route('cruddy.index', [ $entity->getId(),
-                                                       'id' => $id ]);
+            return redirect()->route('cruddy.index', [
+                $entity->getId(),
+                'id' => $id,
+            ]);
         }
 
         return response()->json($entity->form($id)->data());
@@ -189,7 +191,7 @@ class EntityController extends Controller
      * @param $entity
      * @param $id
      *
-     * @return \Illuminate\Http\Response
+     * @return mixed
      */
     public function destroy($entity, $id)
     {
@@ -250,37 +252,37 @@ class EntityController extends Controller
      *
      * @return Response
      */
-    public function callAction($method, $parameters)
-    {
-        try {
-            return parent::callAction($method, $parameters);
-        }
-
-        catch (ValidationException $e) {
-            return $this->validationErrorsResponse($e->getErrors());
-        }
-
-        catch (EntityNotFoundException $e) {
-            return $this->responseError($e->getMessage(),
-                                        Response::HTTP_NOT_FOUND);
-        }
-
-        catch (ModelNotFoundException $e) {
-            return $this->responseError('Specified model not found.',
-                                        Response::HTTP_NOT_FOUND);
-        }
-
-        catch (AccessDeniedException $e) {
-            return $this->responseError($e->getMessage(),
-                                        Response::HTTP_FORBIDDEN);
-        }
-
-        catch (Exception $e) {
-            $this->reportException($e);
-
-            return $this->responseError($this->convertException($e));
-        }
-    }
+//    public function callAction($method, $parameters)
+//    {
+//        try {
+//            return parent::callAction($method, $parameters);
+//        }
+//
+//        catch (ValidationException $e) {
+//            return $this->validationErrorsResponse($e->getErrors());
+//        }
+//
+//        catch (EntityNotFoundException $e) {
+//            return $this->responseError($e->getMessage(),
+//                                        Response::HTTP_NOT_FOUND);
+//        }
+//
+//        catch (ModelNotFoundException $e) {
+//            return $this->responseError('Specified model not found.',
+//                                        Response::HTTP_NOT_FOUND);
+//        }
+//
+//        catch (AccessDeniedException $e) {
+//            return $this->responseError($e->getMessage(),
+//                                        Response::HTTP_FORBIDDEN);
+//        }
+//
+//        catch (Exception $e) {
+//            $this->reportException($e);
+//
+//            return $this->responseError($this->convertException($e));
+//        }
+//    }
 
     /**
      * @param $error

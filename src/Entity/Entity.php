@@ -126,6 +126,13 @@ abstract class Entity
     public $perPage;
 
     /**
+     * The list of searchable attributes.
+     *
+     * @var array
+     */
+    public $searchable;
+
+    /**
      * Register saving event.
      *
      * @param string $id
@@ -572,7 +579,8 @@ abstract class Entity
         return (new DataSource($this))
             ->columns([ $this, 'columns' ])
             ->paginateBy($this->perPage)
-            ->eagerLoads($this->eagerLoads);
+            ->eagerLoads($this->eagerLoads)
+            ->searchable($this->searchable);
     }
 
     /**

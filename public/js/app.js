@@ -6063,10 +6063,8 @@
       if (xhr.status === VALIDATION_FAILED_CODE) {
         return;
       }
-      if ((_ref = xhr.responseJSON) != null ? _ref.error : void 0) {
-        if (_.isObject(error = xhr.responseJSON.error)) {
-          error = error.type + ": " + error.message;
-        }
+      if ((_ref = xhr.responseJSON) != null ? _ref.message : void 0) {
+        error = xhr.responseJSON.message;
       } else {
         error = "Unknown error occurred";
       }

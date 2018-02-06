@@ -4264,9 +4264,8 @@ class App extends Backbone.Model
     handleAjaxError: (xhr) ->
         return if xhr.status is VALIDATION_FAILED_CODE
 
-        if xhr.responseJSON?.error
-            if _.isObject error = xhr.responseJSON.error
-                error = error.type + ": " + error.message
+        if xhr.responseJSON?.message
+            error = xhr.responseJSON.message
         else
             error = "Unknown error occurred"
 

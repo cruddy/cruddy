@@ -81,7 +81,7 @@ class FilesController extends Controller
         $storageInstance = $this->storageManager->storage($storage);
 
         if ( ! $file = $storageInstance->get($path.'/'.$file, $input->all())) {
-            return response('File not found.', 404);
+            return abort(404);
         }
 
         if ($file instanceof ResizedImageStream) {

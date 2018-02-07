@@ -116,6 +116,12 @@ class Form extends BaseForm
         $result = [];
 
         foreach ($rules as $rule => $params) {
+            if (is_object($params)) {
+                $result[] = $params;
+
+                continue;
+            }
+
             if (is_string($params)) {
                 $rule = $params;
                 $params = [];
@@ -268,7 +274,7 @@ class Form extends BaseForm
 
     /**
      * Get whether the form is for updating model.
-     * 
+     *
      * @return bool
      */
     public function updates()
@@ -278,7 +284,7 @@ class Form extends BaseForm
 
     /**
      * Get whether this form is for creating model.
-     * 
+     *
      * @return bool
      */
     public function creates()
@@ -293,5 +299,5 @@ class Form extends BaseForm
     {
         return $this->type;
     }
-    
+
 }

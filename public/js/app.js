@@ -4294,7 +4294,11 @@
     };
 
     DateTime.prototype.handleValueChanged = function(newValue, bySelf) {
-      this.$el.val(newValue === null ? "" : !bySelf ? moment.unix(newValue).format(this.format) : void 0);
+      var value;
+      value = newValue === null ? "" : moment.unix(newValue).format(this.format);
+      if (!bySelf) {
+        this.$el.val(value);
+      }
       return this;
     };
 

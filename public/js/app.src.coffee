@@ -3197,7 +3197,8 @@ class Cruddy.Inputs.DateTime extends Cruddy.Inputs.BaseText
         super
 
     handleValueChanged: (newValue, bySelf) ->
-        @$el.val if newValue is null then "" else moment.unix(newValue).format @format unless bySelf
+        value = if newValue is null then "" else moment.unix(newValue).format @format
+        @$el.val value unless bySelf
 
         this
 

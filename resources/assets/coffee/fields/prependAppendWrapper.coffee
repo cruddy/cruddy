@@ -12,3 +12,5 @@ class Cruddy.Fields.Input.PrependAppendWrapper extends Cruddy.View
         return this
 
     createAddon: (text) -> "<span class=input-group-addon>" + _.escape(text) + "</span>"
+
+    focus: -> @input.focus()

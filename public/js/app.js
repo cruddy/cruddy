@@ -4694,6 +4694,10 @@
       return "<span class=input-group-addon>" + _.escape(text) + "</span>";
     };
 
+    PrependAppendWrapper.prototype.focus = function() {
+      return this.input.focus();
+    };
+
     return PrependAppendWrapper;
 
   })(Cruddy.View);

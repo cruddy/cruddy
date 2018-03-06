@@ -70,11 +70,11 @@ abstract class BaseFilter extends BaseItem
      */
     public function generateLabel()
     {
-        if ($label = $this->owner->getEntity()->translate('filters')) {
+        if ($label = $this->owner->getEntity()->translate("filters.{$this->id}")) {
             return $label;
         }
 
-        if ($label = $this->owner->getEntity()->translate('fields')) {
+        if ($label = $this->owner->getEntity()->translate("fields.{$this->id}")) {
             return $label;
         }
 

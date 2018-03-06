@@ -20,8 +20,10 @@ class ColumnsFactory extends BaseFactory
 
         'compute' => Columns\Computed::class,
         'computed' => Columns\Computed::class,
-        
+
         'enum' => Columns\Enum::class,
         'entity' => Columns\EntityColumn::class,
+        'bool' => Columns\Boolean::class,
+        'boolean' => Columns\Boolean::class,
     ];
 }

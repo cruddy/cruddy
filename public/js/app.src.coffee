@@ -3512,24 +3512,11 @@ class Cruddy.Fields.Boolean extends Cruddy.Fields.Base
         model: model
         key: @id
 
-    createFilterInput: (model) -> new Cruddy.Inputs.Boolean
-        model: model
-        key: @id
-        tripleState: yes
-
     format: (value) -> if value then Cruddy.lang.yes else Cruddy.lang.no
 
     prepareAttribute: (value) ->
         return 0 if value is false
         return 1 if value is true
-
-        return null
-
-    parseFilterData: (value) ->
-        value = parseInt value
-
-        return true if value is 1
-        return false if value is 0
 
         return null
 
@@ -3686,13 +3673,6 @@ class Cruddy.Fields.Enum extends Cruddy.Fields.Input
         attributes:
             id: inputId
 
-    createFilterInput: (model) -> new Cruddy.Inputs.Select
-        model: model
-        key: @id
-        prompt: Cruddy.lang.any_value
-        items: @attributes.items
-        multiple: yes
-
     format: (value) ->
         items = @attributes.items
 
@@ -3701,8 +3681,6 @@ class Cruddy.Fields.Enum extends Cruddy.Fields.Input
         labels = ((if key of items then items[key] else key) for key in value)
 
         labels.join ", "
-
-    parseFilterData: (value) -> if _.isString value then value.split "," else null
 
     getType: -> "enum"
 class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
@@ -4154,19 +4132,34 @@ class Cruddy.Filters.Base extends Cruddy.Attribute
     parseData: (value) -> value
 
     getDataKey: -> @get("data_key") or @id
-class Cruddy.Filters.Proxy extends Cruddy.Filters.Base
+class Cruddy.Filters.Enum extends Cruddy.Filters.Base
+    createFilterInput: (model) -> new Cruddy.Inputs.Select
+        model: model
+        key: @id
+        prompt: Cruddy.lang.any_value
+        items: @attributes.items
+        multiple: yes
 
-    initialize: (attributes) ->
-        field = attributes.field ? attributes.id
-        @field = attributes.entity.fields.get field
+    parseData: (value) -> if _.isString value then value.split "," else null
+class Cruddy.Filters.Boolean extends Cruddy.Filters.Base
+    createFilterInput: (model) -> new Cruddy.Inputs.Boolean
+        model: model
+        key: @id
+        tripleState: yes
 
-        super
+    prepareData: (value) ->
+        return 0 if value is false
+        return 1 if value is true
 
-    createFilterInput: (model) -> @field.createFilterInput model
+        return null
 
-    prepareData: (value) -> @field.prepareFilterData value
+    parseData: (value) ->
+        value = parseInt value
 
-    parseData: (value) -> @field.parseFilterData value
+        return true if value is 1
+        return false if value is 0
+
+        return null
 # Backend application file
 
 class App extends Backbone.Model

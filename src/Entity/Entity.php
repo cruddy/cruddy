@@ -578,6 +578,7 @@ abstract class Entity
     {
         return (new DataSource($this))
             ->columns([ $this, 'columns' ])
+            ->filters([ $this, 'filters' ])
             ->paginateBy($this->perPage)
             ->eagerLoads($this->eagerLoads)
             ->searchable($this->searchable)

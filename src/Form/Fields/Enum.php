@@ -2,6 +2,7 @@
 
 namespace Kalnoy\Cruddy\Form\Fields;
 
+use Kalnoy\Cruddy\Common\EnumAttr;
 use Kalnoy\Cruddy\Form\BaseForm;
 use Kalnoy\Cruddy\Helpers;
 
@@ -12,10 +13,7 @@ use Kalnoy\Cruddy\Helpers;
  */
 class Enum extends BaseInput
 {
-    /**
-     * @var array|callable
-     */
-    private $items;
+    use EnumAttr;
 
     /**
      * @var bool
@@ -45,7 +43,7 @@ class Enum extends BaseInput
     public function multiple()
     {
         $this->multiple = true;
-        
+
         return $this;
     }
 
@@ -57,7 +55,7 @@ class Enum extends BaseInput
     public function prompt($value)
     {
         $this->prompt = $value;
-        
+
         return $this;
     }
 
@@ -69,22 +67,6 @@ class Enum extends BaseInput
         $value = $this->parse($value);
 
         return $this->isMultiple() ? $value : reset($value);
-    }
-
-    /**
-     * Translate items if possible.
-     *
-     * @param array $items
-     *
-     * @return array
-     */
-    protected function translateItems($items)
-    {
-        foreach ($items as $key => $value) {
-            $items[$key] = Helpers::tryTranslate($value);
-        }
-
-        return $items;
     }
 
     /**
@@ -127,46 +109,18 @@ class Enum extends BaseInput
     }
 
     /**
-     * @return array
-     */
-    public function getItems()
-    {
-        if (is_callable($this->items)) {
-            $this->items = call_user_func($this->items);
-        }
-
-        return $this->items;
-    }
-
-    /**
-     * @param $value
-     *
-     * @return array
-     */
-    protected function parse($value)
-    {
-        if (empty($value)) return [];
-
-        if (is_string($value)) {
-            return explode(',', $value);
-        }
-
-        return $value;
-    }
-
-    /**
      * @inheritdoc
      */
     public function getRules()
     {
         $rules = parent::getRules();
-        
+
         if ($this->isMultiple()) {
             $rules['array'] = true;
         }
-        
+
         $rules['in'] = array_keys($this->getItems());
-        
+
         return array_merge(parent::getRules(), $rules);
     }
 

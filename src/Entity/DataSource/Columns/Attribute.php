@@ -4,6 +4,7 @@ namespace Kalnoy\Cruddy\Entity\DataSource\Columns;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
 
 /**
  * Class Attribute
@@ -36,7 +37,7 @@ class Attribute extends BaseColumn
      */
     public function canOrder()
     {
-        return true;
+        return ! Str::contains($this->getModelAttribute(), '.');
     }
 
     /**

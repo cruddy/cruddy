@@ -46,6 +46,12 @@ abstract class BaseFilter extends BaseItem
     }
 
     /**
+     * @param $query
+     * @param $value
+     */
+    abstract public function apply($query, $value);
+
+    /**
      * Get field label.
      *
      * @return string
@@ -64,11 +70,11 @@ abstract class BaseFilter extends BaseItem
      */
     public function generateLabel()
     {
-        if ($label = $this->owner->translate('filters')) {
+        if ($label = $this->owner->getEntity()->translate('filters')) {
             return $label;
         }
 
-        if ($label = $this->owner->translate('fields')) {
+        if ($label = $this->owner->getEntity()->translate('fields')) {
             return $label;
         }
 

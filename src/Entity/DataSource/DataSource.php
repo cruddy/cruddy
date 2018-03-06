@@ -101,7 +101,7 @@ class DataSource
      */
     public function filters($callback)
     {
-        $this->filters = $callback;
+        $this->filtersBuilder = $callback;
 
         return $this;
     }
@@ -198,6 +198,9 @@ class DataSource
             ->forPage($page, $perPage)
             ->when(Arr::get($input, 'keywords'), $this->keywordsFilter($query->getModel()->getKeyName()))
             ->when(Arr::get($input, 'order', $this->orderBy), $this->order())
+            ->when($this->getFilters(), function ($query, FiltersCollection $filters) use ($input) {
+                return $filters->apply($query, $input);
+            })
             ->get();
 
         return new DataSet($this->data($items), $total, $page, $perPage);

@@ -10,13 +10,6 @@ class Cruddy.Fields.Enum extends Cruddy.Fields.Input
         attributes:
             id: inputId
 
-    createFilterInput: (model) -> new Cruddy.Inputs.Select
-        model: model
-        key: @id
-        prompt: Cruddy.lang.any_value
-        items: @attributes.items
-        multiple: yes
-
     format: (value) ->
         items = @attributes.items
 
@@ -25,7 +18,5 @@ class Cruddy.Fields.Enum extends Cruddy.Fields.Input
         labels = ((if key of items then items[key] else key) for key in value)
 
         labels.join ", "
-
-    parseFilterData: (value) -> if _.isString value then value.split "," else null
 
     getType: -> "enum"

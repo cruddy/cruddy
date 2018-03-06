@@ -4824,14 +4824,6 @@
       });
     };
 
-    Boolean.prototype.createFilterInput = function(model) {
-      return new Cruddy.Inputs.Boolean({
-        model: model,
-        key: this.id,
-        tripleState: true
-      });
-    };
-
     Boolean.prototype.format = function(value) {
       if (value) {
         return Cruddy.lang.yes;
@@ -4846,17 +4838,6 @@
       }
       if (value === true) {
         return 1;
-      }
-      return null;
-    };
-
-    Boolean.prototype.parseFilterData = function(value) {
-      value = parseInt(value);
-      if (value === 1) {
-        return true;
-      }
-      if (value === 0) {
-        return false;
       }
       return null;
     };
@@ -5153,16 +5134,6 @@
       });
     };
 
-    Enum.prototype.createFilterInput = function(model) {
-      return new Cruddy.Inputs.Select({
-        model: model,
-        key: this.id,
-        prompt: Cruddy.lang.any_value,
-        items: this.attributes.items,
-        multiple: true
-      });
-    };
-
     Enum.prototype.format = function(value) {
       var items, key, labels;
       items = this.attributes.items;
@@ -5179,14 +5150,6 @@
         return _results;
       })();
       return labels.join(", ");
-    };
-
-    Enum.prototype.parseFilterData = function(value) {
-      if (_.isString(value)) {
-        return value.split(",");
-      } else {
-        return null;
-      }
     };
 
     Enum.prototype.getType = function() {
@@ -5928,33 +5891,72 @@
 
   })(Cruddy.Attribute);
 
-  Cruddy.Filters.Proxy = (function(_super) {
-    __extends(Proxy, _super);
+  Cruddy.Filters.Enum = (function(_super) {
+    __extends(Enum, _super);
 
-    function Proxy() {
-      return Proxy.__super__.constructor.apply(this, arguments);
+    function Enum() {
+      return Enum.__super__.constructor.apply(this, arguments);
     }
 
-    Proxy.prototype.initialize = function(attributes) {
-      var field, _ref;
-      field = (_ref = attributes.field) != null ? _ref : attributes.id;
-      this.field = attributes.entity.fields.get(field);
-      return Proxy.__super__.initialize.apply(this, arguments);
+    Enum.prototype.createFilterInput = function(model) {
+      return new Cruddy.Inputs.Select({
+        model: model,
+        key: this.id,
+        prompt: Cruddy.lang.any_value,
+        items: this.attributes.items,
+        multiple: true
+      });
     };
 
-    Proxy.prototype.createFilterInput = function(model) {
-      return this.field.createFilterInput(model);
+    Enum.prototype.parseData = function(value) {
+      if (_.isString(value)) {
+        return value.split(",");
+      } else {
+        return null;
+      }
     };
 
-    Proxy.prototype.prepareData = function(value) {
-      return this.field.prepareFilterData(value);
+    return Enum;
+
+  })(Cruddy.Filters.Base);
+
+  Cruddy.Filters.Boolean = (function(_super) {
+    __extends(Boolean, _super);
+
+    function Boolean() {
+      return Boolean.__super__.constructor.apply(this, arguments);
+    }
+
+    Boolean.prototype.createFilterInput = function(model) {
+      return new Cruddy.Inputs.Boolean({
+        model: model,
+        key: this.id,
+        tripleState: true
+      });
     };
 
-    Proxy.prototype.parseData = function(value) {
-      return this.field.parseFilterData(value);
+    Boolean.prototype.prepareData = function(value) {
+      if (value === false) {
+        return 0;
+      }
+      if (value === true) {
+        return 1;
+      }
+      return null;
     };
 
-    return Proxy;
+    Boolean.prototype.parseData = function(value) {
+      value = parseInt(value);
+      if (value === 1) {
+        return true;
+      }
+      if (value === 0) {
+        return false;
+      }
+      return null;
+    };
+
+    return Boolean;
 
   })(Cruddy.Filters.Base);
 

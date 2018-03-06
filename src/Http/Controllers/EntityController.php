@@ -262,26 +262,26 @@ class EntityController extends Controller
             return $this->validationErrorsResponse($e->getErrors());
         }
 
-        catch (EntityNotFoundException $e) {
-            return $this->responseError($e->getMessage(),
-                                        Response::HTTP_NOT_FOUND);
-        }
-
-        catch (ModelNotFoundException $e) {
-            return $this->responseError('Specified model not found.',
-                                        Response::HTTP_NOT_FOUND);
-        }
-
-        catch (AccessDeniedException $e) {
-            return $this->responseError($e->getMessage(),
-                                        Response::HTTP_FORBIDDEN);
-        }
-
-        catch (Exception $e) {
-            $this->reportException($e);
-
-            return $this->responseError($this->convertException($e));
-        }
+//        catch (EntityNotFoundException $e) {
+//            return $this->responseError($e->getMessage(),
+//                                        Response::HTTP_NOT_FOUND);
+//        }
+//
+//        catch (ModelNotFoundException $e) {
+//            return $this->responseError('Specified model not found.',
+//                                        Response::HTTP_NOT_FOUND);
+//        }
+//
+//        catch (AccessDeniedException $e) {
+//            return $this->responseError($e->getMessage(),
+//                                        Response::HTTP_FORBIDDEN);
+//        }
+//
+//        catch (Exception $e) {
+//            $this->reportException($e);
+//
+//            return $this->responseError($this->convertException($e));
+//        }
     }
 
     /**

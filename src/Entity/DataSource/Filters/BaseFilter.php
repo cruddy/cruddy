@@ -69,6 +69,18 @@ abstract class BaseFilter extends BaseItem
     }
 
     /**
+     * @param $value
+     *
+     * @return $this
+     */
+    public function label($value)
+    {
+        $this->label = $value;
+
+        return $this;
+    }
+
+    /**
      * Get field label.
      *
      * @return string

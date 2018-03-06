@@ -35,6 +35,11 @@ abstract class BaseFilter extends BaseItem
     protected $label;
 
     /**
+     * @var callable
+     */
+    protected $callback;
+
+    /**
      * BaseFilter constructor.
      *
      * @param DataSource $owner
@@ -50,6 +55,18 @@ abstract class BaseFilter extends BaseItem
      * @param $value
      */
     abstract public function apply($query, $value);
+
+    /**
+     * @param $value
+     *
+     * @return $this
+     */
+    public function callback($value)
+    {
+        $this->callback = $value;
+
+        return $this;
+    }
 
     /**
      * Get field label.

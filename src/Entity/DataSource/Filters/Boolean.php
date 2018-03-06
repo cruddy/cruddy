@@ -10,7 +10,11 @@ class Boolean extends BaseFilter
      */
     public function apply($query, $value)
     {
-        $query->where($this->id, $value);
+        if ($this->callback) {
+            call_user_func($this->callback, $query, $value);
+        } else {
+            $query->where($this->id, $value);
+        }
     }
 
     /**

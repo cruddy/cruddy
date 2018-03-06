@@ -29,7 +29,11 @@ class Enum extends BaseFilter
      */
     public function apply($query, $value)
     {
-        $query->whereIn($this->id, $this->parse($value));
+        if ($this->callback) {
+            call_user_func($this->callback, $query, $this->parse($value));
+        } else {
+            $query->whereIn($this->id, $this->parse($value));
+        }
     }
 
     /**

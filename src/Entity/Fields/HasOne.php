@@ -40,10 +40,10 @@ class HasOne extends BaseInlineRelation
         $innerInput = reset($value);
 
         $form = $this->innerForm($innerInput);
-        
+
         if ($this->modelCanBeSaved($innerModel = $form->getModel())) {
             $this->associate($model, $innerModel);
-            
+
             $form->save($innerInput);
         }
 
@@ -54,18 +54,18 @@ class HasOne extends BaseInlineRelation
      * @param Model $model
      * @param Model $inner
      *
-     * @return static
+     * @return Model
      */
     public function associate($model, $inner)
     {
         /** @var HasOneOrMany $relation */
         $relation = $this->newRelationQuery($model);
 
-        $inner->setAttribute($relation->getPlainForeignKey(),
+        $inner->setAttribute($relation->getForeignKeyName(),
                              $relation->getParentKey());
 
         if ($relation instanceof MorphOneOrMany) {
-            $inner->setAttribute($relation->getPlainMorphType(),
+            $inner->setAttribute($relation->getMorphType(),
                                  $relation->getMorphClass());
         }
 

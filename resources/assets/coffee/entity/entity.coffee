@@ -6,8 +6,6 @@ class Cruddy.Entity.Entity extends Backbone.Model
         @columns = @createObjects attributes.data_source.columns
         @filters = @createObjects attributes.data_source.filters
 
-        console.log attributes.data_source
-
         @permissions = Cruddy.permissions[@id]
         @cache = {}
 

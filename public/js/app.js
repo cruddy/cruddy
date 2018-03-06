@@ -1693,7 +1693,6 @@
     Entity.prototype.initialize = function(attributes, options) {
       this.columns = this.createObjects(attributes.data_source.columns);
       this.filters = this.createObjects(attributes.data_source.filters);
-      console.log(attributes.data_source);
       this.permissions = Cruddy.permissions[this.id];
       this.cache = {};
       this.forms = {
@@ -5205,11 +5204,14 @@
     };
 
     EmbeddedView.prototype.add = function(model, collection, options) {
-      var itemOptions, view;
+      var form, itemOptions, view;
+      form = model.entity.form(model.action());
       itemOptions = {
         model: model,
         collection: this.collection,
-        disable: !this.isEditable
+        disable: !this.isEditable,
+        items: form.layout,
+        form: form
       };
       this.views[model.cid] = view = new Cruddy.Fields.EmbeddedItemView(itemOptions, this);
       this.body.append(view.render().el);

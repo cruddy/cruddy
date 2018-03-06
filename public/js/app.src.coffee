@@ -1113,8 +1113,6 @@ class Cruddy.Entity.Entity extends Backbone.Model
         @columns = @createObjects attributes.data_source.columns
         @filters = @createObjects attributes.data_source.filters
 
-        console.log attributes.data_source
-
         @permissions = Cruddy.permissions[@id]
         @cache = {}
 
@@ -3716,10 +3714,14 @@ class Cruddy.Fields.EmbeddedView extends Cruddy.Fields.BaseView
         this
 
     add: (model, collection, options) ->
+        form = model.entity.form(model.action())
+
         itemOptions =
             model: model
             collection: @collection
             disable: not @isEditable
+            items: form.layout
+            form: form
 
         @views[model.cid] = view = new Cruddy.Fields.EmbeddedItemView itemOptions, this
 

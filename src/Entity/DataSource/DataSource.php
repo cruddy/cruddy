@@ -189,6 +189,8 @@ class DataSource
             call_user_func($constraint, $query, $input);
         }
 
+        $this->getFilters()->apply($query, $input);
+
         $total = $query->toBase()->getCountForPagination();
         $perPage = $this->resolvePerPage($input);
         $page = $this->resolvePage($total, $perPage, $input);
@@ -198,9 +200,6 @@ class DataSource
             ->forPage($page, $perPage)
             ->when(Arr::get($input, 'keywords'), $this->keywordsFilter($query->getModel()->getKeyName()))
             ->when(Arr::get($input, 'order', $this->orderBy), $this->order())
-            ->when($this->getFilters(), function ($query, FiltersCollection $filters) use ($input) {
-                return $filters->apply($query, $input);
-            })
             ->get();
 
         return new DataSet($this->data($items), $total, $page, $perPage);

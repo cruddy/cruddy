@@ -2438,10 +2438,11 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     toggleOpenDirection: ->
         return if not @opened
 
+        spaceAtTop = @$el.offset().top + (@$el.parent(".field-list").scrollTop() || 0)
         wnd = $(window)
-        space = wnd.height() - @$el.offset().top - wnd.scrollTop() - @$el.parent(".field-list").scrollTop()
+        spaceAtBottom = wnd.height() - spaceAtTop - wnd.scrollTop()
 
-        targetClass = if space > 292 then "open-down" else "open-up"
+        targetClass = if spaceAtBottom > spaceAtTop || spaceAtBottom > 292 then "open-down" else "open-up"
 
         @$el.removeClass("open-up open-down").addClass targetClass if not @$el.hasClass targetClass
 
@@ -2513,7 +2514,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     itemBody: (item) ->
         item = @selector?.dataSource.getById(item.id) || item unless item.attributes
 
-        return item.attributes.body || item.title || item.id
+        return item.attributes?.body || item.title || item.id
 
     itemTemplate: (value, key = null) ->
         html = """
@@ -3553,16 +3554,6 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         constraint: @attributes.constraint
         enabled: not forceDisable and @isEditable(model)
 
-    createFilterInput: (model) -> new Cruddy.Inputs.EntityDropdown
-        model: model
-        key: @id
-        reference: @getReferencedEntity()
-        allowEdit: no
-        placeholder: Cruddy.lang.any_value
-        owner: @entity.id + "." + @id
-        constraint: @attributes.constraint
-        multiple: yes
-
     isEditable: -> @getReferencedEntity().readPermitted() and super
 
     canFilter: -> @getReferencedEntity().readPermitted() and super
@@ -3580,22 +3571,6 @@ class Cruddy.Fields.Relation extends Cruddy.Fields.BaseRelation
         return _.pluck(value, "id").join(",") if _.isArray value
 
         return value.id
-
-    prepareFilterData: (value) ->
-        value = super
-
-        if _.isEmpty value then null else value
-
-    parseFilterData: (value) ->
-        return null unless _.isString(value) or _.isNumber(value)
-
-        value = value.toString()
-
-        return null unless value.length
-
-        value = value.split ","
-
-        return _.map value, (value) -> { id: value }
 class Cruddy.Fields.File extends Cruddy.Fields.Base
 
     createEditableInput: (model) -> new Cruddy.Inputs.FileList
@@ -4165,6 +4140,32 @@ class Cruddy.Filters.Boolean extends Cruddy.Filters.Base
         return false if value is 0
 
         return null
+class Cruddy.Filters.Entity extends Cruddy.Filters.Base
+    createFilterInput: (model) -> new Cruddy.Inputs.EntityDropdown
+        model: model
+        key: @id
+        reference: Cruddy.app.entity @attributes.refEntityId
+        allowEdit: no
+        placeholder: Cruddy.lang.any_value
+        owner: @entity.id + "." + @id
+
+    prepareData: (value) ->
+        return _.pluck(value, "id").join(",") if _.isArray(value) && value.length
+
+        return value && value.id || null
+
+    parseData: (value) ->
+        return null unless _.isString(value) or _.isNumber(value)
+
+        value = value.toString()
+
+        return null unless value.length
+
+        return { id: value }
+
+        value = value.split ","
+
+        return _.map value, (value) -> { id: value }
 # Backend application file
 
 class App extends Backbone.Model

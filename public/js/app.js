@@ -3344,13 +3344,14 @@
     };
 
     EntityDropdown.prototype.toggleOpenDirection = function() {
-      var space, targetClass, wnd;
+      var spaceAtBottom, spaceAtTop, targetClass, wnd;
       if (!this.opened) {
         return;
       }
+      spaceAtTop = this.$el.offset().top + (this.$el.parent(".field-list").scrollTop() || 0);
       wnd = $(window);
-      space = wnd.height() - this.$el.offset().top - wnd.scrollTop() - this.$el.parent(".field-list").scrollTop();
-      targetClass = space > 292 ? "open-down" : "open-up";
+      spaceAtBottom = wnd.height() - spaceAtTop - wnd.scrollTop();
+      targetClass = spaceAtBottom > spaceAtTop || spaceAtBottom > 292 ? "open-down" : "open-up";
       if (!this.$el.hasClass(targetClass)) {
         this.$el.removeClass("open-up open-down").addClass(targetClass);
       }
@@ -3422,11 +3423,11 @@
     };
 
     EntityDropdown.prototype.itemBody = function(item) {
-      var _ref;
+      var _ref, _ref1;
       if (!item.attributes) {
         item = ((_ref = this.selector) != null ? _ref.dataSource.getById(item.id) : void 0) || item;
       }
-      return item.attributes.body || item.title || item.id;
+      return ((_ref1 = item.attributes) != null ? _ref1.body : void 0) || item.title || item.id;
     };
 
     EntityDropdown.prototype.itemTemplate = function(value, key) {
@@ -4928,19 +4929,6 @@
       });
     };
 
-    Relation.prototype.createFilterInput = function(model) {
-      return new Cruddy.Inputs.EntityDropdown({
-        model: model,
-        key: this.id,
-        reference: this.getReferencedEntity(),
-        allowEdit: false,
-        placeholder: Cruddy.lang.any_value,
-        owner: this.entity.id + "." + this.id,
-        constraint: this.attributes.constraint,
-        multiple: true
-      });
-    };
-
     Relation.prototype.isEditable = function() {
       return this.getReferencedEntity().readPermitted() && Relation.__super__.isEditable.apply(this, arguments);
     };
@@ -4966,31 +4954,6 @@
         return _.pluck(value, "id").join(",");
       }
       return value.id;
-    };
-
-    Relation.prototype.prepareFilterData = function(value) {
-      value = Relation.__super__.prepareFilterData.apply(this, arguments);
-      if (_.isEmpty(value)) {
-        return null;
-      } else {
-        return value;
-      }
-    };
-
-    Relation.prototype.parseFilterData = function(value) {
-      if (!(_.isString(value) || _.isNumber(value))) {
-        return null;
-      }
-      value = value.toString();
-      if (!value.length) {
-        return null;
-      }
-      value = value.split(",");
-      return _.map(value, function(value) {
-        return {
-          id: value
-        };
-      });
     };
 
     return Relation;
@@ -5967,6 +5930,54 @@
     };
 
     return Boolean;
+
+  })(Cruddy.Filters.Base);
+
+  Cruddy.Filters.Entity = (function(_super) {
+    __extends(Entity, _super);
+
+    function Entity() {
+      return Entity.__super__.constructor.apply(this, arguments);
+    }
+
+    Entity.prototype.createFilterInput = function(model) {
+      return new Cruddy.Inputs.EntityDropdown({
+        model: model,
+        key: this.id,
+        reference: Cruddy.app.entity(this.attributes.refEntityId),
+        allowEdit: false,
+        placeholder: Cruddy.lang.any_value,
+        owner: this.entity.id + "." + this.id
+      });
+    };
+
+    Entity.prototype.prepareData = function(value) {
+      if (_.isArray(value) && value.length) {
+        return _.pluck(value, "id").join(",");
+      }
+      return value && value.id || null;
+    };
+
+    Entity.prototype.parseData = function(value) {
+      if (!(_.isString(value) || _.isNumber(value))) {
+        return null;
+      }
+      value = value.toString();
+      if (!value.length) {
+        return null;
+      }
+      return {
+        id: value
+      };
+      value = value.split(",");
+      return _.map(value, function(value) {
+        return {
+          id: value
+        };
+      });
+    };
+
+    return Entity;
 
   })(Cruddy.Filters.Base);
 

@@ -13,5 +13,6 @@ class FiltersFactory extends BaseFactory
         'enum' => Filters\Enum::class,
         'bool' => Filters\Boolean::class,
         'boolean' => Filters\Boolean::class,
+        'entity' => Filters\Entity::class,
     ];
 }

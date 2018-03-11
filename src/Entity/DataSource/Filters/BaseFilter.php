@@ -11,8 +11,6 @@ use Kalnoy\Cruddy\Service\BaseItem;
 /**
  * Class BaseFilter
  *
- * @method $this label(string $label)
- *
  * @package Kalnoy\Cruddy\Schema\Filters
  */
 abstract class BaseFilter extends BaseItem
@@ -32,12 +30,12 @@ abstract class BaseFilter extends BaseItem
     /**
      * @var string
      */
-    protected $label;
+    public $label;
 
     /**
      * @var callable
      */
-    protected $callback;
+    public $callback;
 
     /**
      * BaseFilter constructor.

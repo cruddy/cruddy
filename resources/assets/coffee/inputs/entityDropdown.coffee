@@ -179,10 +179,11 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     toggleOpenDirection: ->
         return if not @opened
 
+        spaceAtTop = @$el.offset().top + (@$el.parent(".field-list").scrollTop() || 0)
         wnd = $(window)
-        space = wnd.height() - @$el.offset().top - wnd.scrollTop() - @$el.parent(".field-list").scrollTop()
+        spaceAtBottom = wnd.height() - spaceAtTop - wnd.scrollTop()
 
-        targetClass = if space > 292 then "open-down" else "open-up"
+        targetClass = if spaceAtBottom > spaceAtTop || spaceAtBottom > 292 then "open-down" else "open-up"
 
         @$el.removeClass("open-up open-down").addClass targetClass if not @$el.hasClass targetClass
 
@@ -254,7 +255,7 @@ class Cruddy.Inputs.EntityDropdown extends Cruddy.Inputs.Base
     itemBody: (item) ->
         item = @selector?.dataSource.getById(item.id) || item unless item.attributes
 
-        return item.attributes.body || item.title || item.id
+        return item.attributes?.body || item.title || item.id
 
     itemTemplate: (value, key = null) ->
         html = """

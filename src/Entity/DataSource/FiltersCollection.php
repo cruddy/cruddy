@@ -11,6 +11,7 @@ use Kalnoy\Cruddy\Service\BaseCollection;
  * @method Filters\Enum enum(string $id, $items)
  * @method Filters\Boolean bool(string $id)
  * @method Filters\Boolean boolean(string $id)
+ * @method Filters\Entity entity(string $id, string $refEntityId = null)
  *
  * @package Kalnoy\Cruddy\Entity\DataSource
  */

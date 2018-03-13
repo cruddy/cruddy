@@ -503,7 +503,9 @@ abstract class Entity
     {
         $ids = is_array($ids) ? $ids : func_get_args();
 
-        return $this->newQuery()->delete($ids);
+        return $this->newQuery()->findMany($ids)->each(function (Model $model) {
+            $model->delete();
+        })->count();
     }
 
     /**

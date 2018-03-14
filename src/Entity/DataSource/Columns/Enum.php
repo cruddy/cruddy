@@ -23,7 +23,7 @@ class Enum extends Attribute
     public function __construct(DataSource $owner, $id, $items)
     {
         parent::__construct($owner, $id);
-        
+
         $this->items = $items;
     }
 
@@ -32,17 +32,19 @@ class Enum extends Attribute
      */
     public function modelValue(Model $model, $attr)
     {
-        if ( ! $value = data_get($model, $attr)) {
+        $value = data_get($model, $attr);
+
+        if (is_null($value) || $value === '') {
             return null;
         }
-        
+
         $items = $this->getItems();
-        
+
         return implode(', ', array_map(function ($key) use ($items) {
             if ( ! isset($items[$key])) {
                 return $key;
             }
-            
+
             return Helpers::tryTranslate($items[$key]);
         }, (array)$value));
     }
@@ -55,9 +57,9 @@ class Enum extends Attribute
         if (is_callable($this->items)) {
             $this->items = call_user_func($this->items);
         }
-        
+
         return $this->items;
     }
-    
-    
+
+
 }

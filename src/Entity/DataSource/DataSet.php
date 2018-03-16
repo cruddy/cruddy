@@ -107,13 +107,13 @@ class DataSet implements Arrayable
     public function toArray()
     {
         return [
-            'perPage' => $this->perPage,
-            'page' => $this->page,
-            'total' => $this->total,
+            'perPage' => (int)$this->perPage,
+            'page' => (int)$this->page,
+            'total' => (int)$this->total,
             'items' => $this->items,
-            'from' => $this->getFrom(),
-            'to' => $this->getTo(),
-            'lastPage' => $this->getLastPage(),
+            'from' => (int)$this->getFrom(),
+            'to' => (int)$this->getTo(),
+            'lastPage' => (int)$this->getLastPage(),
         ];
     }
 }

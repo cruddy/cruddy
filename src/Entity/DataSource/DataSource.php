@@ -193,7 +193,7 @@ class DataSource
 
         $total = $query->toBase()->getCountForPagination();
         $perPage = $this->resolvePerPage($input);
-        $page = $this->resolvePage($total, $perPage, $input);
+        $page = (int)$this->resolvePage($total, $perPage, $input);
 
         $items = $query
             ->with($this->relationships())

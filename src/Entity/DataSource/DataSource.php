@@ -191,6 +191,8 @@ class DataSource
 
         $this->getFilters()->apply($query, $input);
 
+        $query->when(Arr::get($input, 'keywords'), $this->keywordsFilter($query->getModel()->getKeyName()));
+
         $total = $query->toBase()->getCountForPagination();
         $perPage = $this->resolvePerPage($input);
         $page = (int)$this->resolvePage($total, $perPage, $input);
@@ -198,7 +200,6 @@ class DataSource
         $items = $query
             ->with($this->relationships())
             ->forPage($page, $perPage)
-            ->when(Arr::get($input, 'keywords'), $this->keywordsFilter($query->getModel()->getKeyName()))
             ->when(Arr::get($input, 'order', $this->orderBy), $this->order())
             ->get();
 

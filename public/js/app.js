@@ -1984,8 +1984,8 @@
 
     Instance.prototype.handleSyncEvent = function(model, resp) {
       this.syncOriginalAttributes();
-      if ((resp != null ? resp.model : void 0) != null) {
-        this.setMetaFromResponse(resp.model);
+      if (resp != null) {
+        this.setMetaFromResponse(resp);
       }
       return this;
     };
@@ -2046,7 +2046,7 @@
     };
 
     Instance.prototype.parse = function(resp) {
-      return resp.model.attributes;
+      return resp.attributes;
     };
 
     Instance.prototype.copy = function() {

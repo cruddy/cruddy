@@ -78,8 +78,6 @@ class App extends Backbone.Model
         this
 
     displayActionResult: (result) ->
-        console.log result
-
         message = result.message
 
         unless message

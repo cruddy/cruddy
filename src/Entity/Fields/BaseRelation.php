@@ -32,13 +32,9 @@ abstract class BaseRelation extends BaseField
      * @param string $id
      * @param $refEntityId
      */
-    public function __construct(Form $owner, $id, $refEntityId)
+    public function __construct(Form $owner, $id, $refEntityId = null)
     {
         parent::__construct($owner, $id);
-
-        if ( ! $refEntityId) {
-            $refEntityId = $this->isMultiple() ? $id : str_plural($id);
-        }
 
         $this->refEntityId = $refEntityId;
     }

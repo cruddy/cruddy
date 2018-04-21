@@ -1371,7 +1371,7 @@ class Cruddy.Entity.Instance extends Backbone.Model
 
         super
 
-    parse: (resp) -> resp.attributes
+    parse: (resp) -> resp.model.attributes
 
     copy: ->
         copy = @entity.createInstance()

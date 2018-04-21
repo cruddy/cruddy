@@ -26,8 +26,10 @@ class BelongsTo extends BaseEntitySelector
 
         if ($this->setter) {
             call_user_func($this->setter, $model, $value);
+        } elseif ($value) {
+            $this->newRelationQuery($model)->associate($value);
         } else {
-            $model->setAttribute($this->getForeignKey(), $value);
+            $this->newRelationQuery($model)->dissociate();
         }
 
         return $this;

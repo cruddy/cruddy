@@ -2046,7 +2046,7 @@
     };
 
     Instance.prototype.parse = function(resp) {
-      return resp.attributes;
+      return resp.model.attributes;
     };
 
     Instance.prototype.copy = function() {

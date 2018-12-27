@@ -718,7 +718,7 @@
       if (orderBy === this.model.get("order_by")) {
         orderDir = orderDir === 'asc' ? 'desc' : 'asc';
       } else {
-        orderDir = this.entity.columns.get(orderBy).get("order_dir");
+        orderDir = this.entity.columns.get(orderBy).get("order_dir") || 'asc';
       }
       this.model.set({
         order_by: orderBy,
@@ -6072,7 +6072,6 @@
 
     App.prototype.displayActionResult = function(result) {
       var message;
-      console.log(result);
       message = result.message;
       if (!message) {
         message = result.successful ? Cruddy.lang.action_applied : Cruddy.lang.action_failed;

@@ -49,12 +49,12 @@ class DataGrid extends Cruddy.View
 
     setOrder: (e) ->
         orderBy = $(e.target).data "id"
-        orderDir = @model.get "order_dir"
+        orderDir = @model.get("order_dir")
 
         if orderBy is @model.get "order_by"
             orderDir = if orderDir == 'asc' then 'desc' else 'asc'
         else
-            orderDir = @entity.columns.get(orderBy).get "order_dir"
+            orderDir = @entity.columns.get(orderBy).get("order_dir") or 'asc'
 
         @model.set { order_by: orderBy, order_dir: orderDir }
 

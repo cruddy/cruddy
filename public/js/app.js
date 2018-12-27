@@ -1,5 +1,5 @@
 (function() {
-  var AdvFormData, Alert, App, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, NOT_AVAILABLE, Pagination, Router, SearchDataSource, TITLE_SEPARATOR, TRANSITIONEND, VALIDATION_FAILED_CODE, add_query_to_url, after_break, b_btn, b_icon, entity_url, get, humanize, render_divider, render_presentation_action, render_presentation_actions, thumb, value_if,
+  var AdvFormData, Alert, App, Cruddy, DataGrid, DataSource, Factory, FieldList, FilterList, NOT_AVAILABLE, Pagination, Router, SearchDataSource, Stats, TITLE_SEPARATOR, TRANSITIONEND, VALIDATION_FAILED_CODE, add_query_to_url, after_break, b_btn, b_icon, entity_url, get, humanize, render_divider, render_presentation_action, render_presentation_actions, thumb, value_if,
     __hasProp = {}.hasOwnProperty,
     __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor(); child.__super__ = parent.prototype; return child; };
 
@@ -436,6 +436,11 @@
     DataSource.prototype.getLastPage = function() {
       var _ref;
       return (_ref = this.resp) != null ? _ref.lastPage : void 0;
+    };
+
+    DataSource.prototype.getStats = function() {
+      var _ref;
+      return (_ref = this.resp) != null ? _ref.stats : void 0;
     };
 
     return DataSource;
@@ -1234,6 +1239,40 @@
     return FileStorage;
 
   })();
+
+  Stats = (function(_super) {
+    __extends(Stats, _super);
+
+    function Stats() {
+      return Stats.__super__.constructor.apply(this, arguments);
+    }
+
+    Stats.prototype.className = "stats-list";
+
+    Stats.prototype.initialize = function(options) {
+      this.entity = options.entity;
+      this.listenTo(this.model, "data", (function(_this) {
+        return function() {
+          return _this.render();
+        };
+      })(this));
+      return this;
+    };
+
+    Stats.prototype.render = function() {
+      var key, value, _ref;
+      this.$el.html("");
+      _ref = this.model.getStats();
+      for (key in _ref) {
+        value = _ref[key];
+        this.$el.append("<div class=\"stat-item\"><span class=\"title\">" + key + "</span><span class=\"value\">" + value + "</span></div>");
+      }
+      return this;
+    };
+
+    return Stats;
+
+  })(Backbone.View);
 
   Cruddy.Layout = {};
 
@@ -2301,6 +2340,7 @@
       this.dataView = this.createDataView();
       this.paginationView = this.createPaginationView();
       this.filterListView = this.createFilterListView();
+      this.statsView = this.createStatsView();
       if (this.searchInputView) {
         this.$component("search_input_view").append(this.searchInputView.render().$el);
       }
@@ -2312,6 +2352,9 @@
       }
       if (this.paginationView) {
         this.$component("pagination_view").append(this.paginationView.render().el);
+      }
+      if (this.statsView) {
+        this.$component("filter_list_view").append(this.statsView.render().el);
       }
       return this;
     };
@@ -2338,6 +2381,13 @@
         model: this.dataSource,
         entity: this.model,
         filters: filters
+      });
+    };
+
+    Page.prototype.createStatsView = function() {
+      return new Stats({
+        model: this.dataSource,
+        entity: this.model
       });
     };
 

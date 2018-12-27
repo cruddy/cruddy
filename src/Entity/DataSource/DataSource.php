@@ -196,6 +196,7 @@ class DataSource
         $total = $query->toBase()->getCountForPagination();
         $perPage = $this->resolvePerPage($input);
         $page = (int)$this->resolvePage($total, $perPage, $input);
+        $stats = $this->entity->indexStats(clone $query);
 
         $items = $query
             ->with($this->relationships())
@@ -203,7 +204,7 @@ class DataSource
             ->when(Arr::get($input, 'order', $this->orderBy), $this->order())
             ->get();
 
-        return new DataSet($this->data($items), $total, $page, $perPage);
+        return new DataSet($this->data($items), $total, $page, $perPage, $stats);
     }
 
     /**

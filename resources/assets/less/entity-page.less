@@ -28,3 +28,31 @@
 .entity-search-box {
     margin-top: @content-header-padding;
 }
+
+.filter-list {
+    margin-bottom: 15px;
+}
+
+.stats-list {
+    display: table;
+    width: 100%;
+
+    .stat-item {
+        display: table-row;
+    }
+
+    .title, .value {
+        display: table-cell;
+        padding: 5px;
+    }
+
+    .title {
+        width: 100px;
+        font-weight: bold;
+        text-align: right;
+
+        &:after {
+            content: ': ';
+        }
+    }
+}

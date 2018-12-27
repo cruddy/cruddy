@@ -32,6 +32,7 @@ module.exports = function(grunt) {
                     '<%= app %>/alert.coffee',
                     '<%= app %>/uploadQueue.coffee',
                     '<%= app %>/fileStorage.coffee',
+                    '<%= app %>/stats.coffee',
 
                     // Layout
                     '<%= app %>/layout/element.coffee',

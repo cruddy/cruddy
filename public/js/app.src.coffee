@@ -239,6 +239,7 @@ class DataSource extends Backbone.Model
     getFrom: -> @resp?.from
     getTo: -> @resp?.to
     getLastPage: -> @resp?.lastPage
+    getStats: -> @resp?.stats
 
 class SearchDataSource extends Backbone.Model
     defaults:
@@ -855,6 +856,22 @@ class Cruddy.FileStorage
     getUploadQueue: -> @_queue
 
     @instance: (id) -> new @ id
+class Stats extends Backbone.View
+    className: "stats-list"
+
+    initialize: (options) ->
+        @entity = options.entity
+        @listenTo @model, "data", => @render()
+
+        this
+
+    render: ->
+        @$el.html ""
+
+        for key, value of @model.getStats()
+            @$el.append """<div class="stat-item"><span class="title">#{ key }</span><span class="value">#{ value }</span></div>"""
+
+        this
 Cruddy.Layout = {}
 
 class Cruddy.Layout.Element extends Cruddy.View
@@ -1556,11 +1573,14 @@ class Cruddy.Entity.Page extends Cruddy.View
         @dataView = @createDataView()
         @paginationView = @createPaginationView()
         @filterListView = @createFilterListView()
+        @statsView = @createStatsView()
 
         @$component("search_input_view").append @searchInputView.render().$el   if @searchInputView
         @$component("filter_list_view").append @filterListView.render().el      if @filterListView
         @$component("data_view").append @dataView.render().el                   if @dataView
         @$component("pagination_view").append @paginationView.render().el       if @paginationView
+
+        @$component("filter_list_view").append @statsView.render().el if @statsView
 
         return this
 
@@ -1577,6 +1597,11 @@ class Cruddy.Entity.Page extends Cruddy.View
             model: @dataSource
             entity: @model
             filters: filters
+
+    createStatsView: ->
+        return new Stats
+            model: @dataSource
+            entity: @model
 
     createSearchInputView: -> new Cruddy.Inputs.Search
         model: @dataSource

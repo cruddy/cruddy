@@ -4,6 +4,7 @@ namespace Kalnoy\Cruddy\Entity\DataSource;
 
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Arr;
 
 class DataSet implements Arrayable
 {
@@ -27,6 +28,8 @@ class DataSet implements Arrayable
      */
     protected $total;
 
+    protected $stats;
+
     /**
      * DataSet constructor.
      *
@@ -35,12 +38,12 @@ class DataSet implements Arrayable
      * @param $page
      * @param $perPage
      */
-    public function __construct(array $items, $total, $page, $perPage
-    ) {
+    public function __construct(array $items, $total, $page, $perPage, $stats) {
         $this->items = $items;
         $this->page = $page;
         $this->perPage = $perPage;
         $this->total = $total;
+        $this->stats = $stats;
     }
 
     /**
@@ -114,6 +117,7 @@ class DataSet implements Arrayable
             'from' => (int)$this->getFrom(),
             'to' => (int)$this->getTo(),
             'lastPage' => (int)$this->getLastPage(),
+            'stats' => Arr::wrap($this->stats),
         ];
     }
 }

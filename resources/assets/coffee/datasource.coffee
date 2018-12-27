@@ -75,3 +75,4 @@ class DataSource extends Backbone.Model
     getFrom: -> @resp?.from
     getTo: -> @resp?.to
     getLastPage: -> @resp?.lastPage
+    getStats: -> @resp?.stats

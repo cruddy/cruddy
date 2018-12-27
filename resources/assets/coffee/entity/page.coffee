@@ -155,11 +155,14 @@ class Cruddy.Entity.Page extends Cruddy.View
         @dataView = @createDataView()
         @paginationView = @createPaginationView()
         @filterListView = @createFilterListView()
+        @statsView = @createStatsView()
 
         @$component("search_input_view").append @searchInputView.render().$el   if @searchInputView
         @$component("filter_list_view").append @filterListView.render().el      if @filterListView
         @$component("data_view").append @dataView.render().el                   if @dataView
         @$component("pagination_view").append @paginationView.render().el       if @paginationView
+
+        @$component("filter_list_view").append @statsView.render().el if @statsView
 
         return this
 
@@ -176,6 +179,11 @@ class Cruddy.Entity.Page extends Cruddy.View
             model: @dataSource
             entity: @model
             filters: filters
+
+    createStatsView: ->
+        return new Stats
+            model: @dataSource
+            entity: @model
 
     createSearchInputView: -> new Cruddy.Inputs.Search
         model: @dataSource

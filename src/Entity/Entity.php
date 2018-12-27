@@ -509,6 +509,16 @@ abstract class Entity
     }
 
     /**
+     * @param $query
+     *
+     * @return array
+     */
+    public function indexStats($query)
+    {
+        return [];
+    }
+
+    /**
      * Translate line.
      *
      * @param string $key

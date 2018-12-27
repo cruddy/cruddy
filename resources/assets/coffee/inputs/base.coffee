@@ -27,7 +27,7 @@ class Cruddy.Inputs.Base extends Cruddy.View
 
     # Set current value.
     setValue: (value, options = {}) ->
-        options.input = this
+        options.input = this unless options.hasOwnProperty('input')
 
         @model.set @key, value, options
 
@@ -35,4 +35,4 @@ class Cruddy.Inputs.Base extends Cruddy.View
 
     emptyValue: -> null
 
-    empty: -> @setValue @emptyValue()
+    empty: -> @setValue @emptyValue(), input: null

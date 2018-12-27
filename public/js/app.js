@@ -2933,7 +2933,9 @@
       if (options == null) {
         options = {};
       }
-      options.input = this;
+      if (!options.hasOwnProperty('input')) {
+        options.input = this;
+      }
       this.model.set(this.key, value, options);
       return this;
     };
@@ -2943,7 +2945,9 @@
     };
 
     Base.prototype.empty = function() {
-      return this.setValue(this.emptyValue());
+      return this.setValue(this.emptyValue(), {
+        input: null
+      });
     };
 
     return Base;
@@ -6028,6 +6032,24 @@
     };
 
     return Entity;
+
+  })(Cruddy.Filters.Base);
+
+  Cruddy.Filters.Input = (function(_super) {
+    __extends(Input, _super);
+
+    function Input() {
+      return Input.__super__.constructor.apply(this, arguments);
+    }
+
+    Input.prototype.createFilterInput = function(model) {
+      return new Cruddy.Inputs.Text({
+        model: model,
+        key: this.id
+      });
+    };
+
+    return Input;
 
   })(Cruddy.Filters.Base);
 

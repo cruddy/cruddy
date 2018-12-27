@@ -14,5 +14,6 @@ class FiltersFactory extends BaseFactory
         'bool' => Filters\Boolean::class,
         'boolean' => Filters\Boolean::class,
         'entity' => Filters\Entity::class,
+        'text' => Filters\Input::class,
     ];
 }

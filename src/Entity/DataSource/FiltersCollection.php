@@ -12,6 +12,7 @@ use Kalnoy\Cruddy\Service\BaseCollection;
  * @method Filters\Boolean bool(string $id)
  * @method Filters\Boolean boolean(string $id)
  * @method Filters\Entity entity(string $id, string $refEntityId = null)
+ * @method Filters\Input text(string $id)
  *
  * @package Kalnoy\Cruddy\Entity\DataSource
  */

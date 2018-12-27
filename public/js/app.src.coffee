@@ -2134,7 +2134,7 @@ class Cruddy.Inputs.Base extends Cruddy.View
 
     # Set current value.
     setValue: (value, options = {}) ->
-        options.input = this
+        options.input = this unless options.hasOwnProperty('input')
 
         @model.set @key, value, options
 
@@ -2142,7 +2142,7 @@ class Cruddy.Inputs.Base extends Cruddy.View
 
     emptyValue: -> null
 
-    empty: -> @setValue @emptyValue()
+    empty: -> @setValue @emptyValue(), input: null
 # Renders formatted text and doesn't have any editing features.
 class Cruddy.Inputs.Static extends Cruddy.Inputs.Base
     tagName: "p"
@@ -4191,6 +4191,10 @@ class Cruddy.Filters.Entity extends Cruddy.Filters.Base
         value = value.split ","
 
         return _.map value, (value) -> { id: value }
+class Cruddy.Filters.Input extends Cruddy.Filters.Base
+    createFilterInput: (model) -> new Cruddy.Inputs.Text
+        model: model
+        key: @id
 # Backend application file
 
 class App extends Backbone.Model

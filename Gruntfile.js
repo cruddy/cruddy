@@ -104,6 +104,7 @@ module.exports = function(grunt) {
                     '<%= app %>/filters/enum.coffee',
                     '<%= app %>/filters/boolean.coffee',
                     '<%= app %>/filters/entity.coffee',
+                    '<%= app %>/filters/input.coffee',
 
                     '<%= app %>/app.coffee',
                     '<%= app %>/router.coffee',

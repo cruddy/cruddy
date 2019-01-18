@@ -3953,10 +3953,10 @@ class Cruddy.Fields.RelatedCollection extends Backbone.Collection
             field: @field
 
     serialize: ->
-        models = @filter (model) -> model.canBeSaved()
+        #models = @filter (model) -> model.canBeSaved()
 
         data = {}
-        data[item.cid] = item.serialize() for item in models
+        data[item.cid] = item.serialize() for item in @models
 
         return data
 class Cruddy.Fields.Embedded extends Cruddy.Fields.BaseRelation

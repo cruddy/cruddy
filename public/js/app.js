@@ -5552,13 +5552,11 @@
     };
 
     RelatedCollection.prototype.serialize = function() {
-      var data, item, models, _i, _len;
-      models = this.filter(function(model) {
-        return model.canBeSaved();
-      });
+      var data, item, _i, _len, _ref;
       data = {};
-      for (_i = 0, _len = models.length; _i < _len; _i++) {
-        item = models[_i];
+      _ref = this.models;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        item = _ref[_i];
         data[item.cid] = item.serialize();
       }
       return data;

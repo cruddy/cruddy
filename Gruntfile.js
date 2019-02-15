@@ -133,7 +133,8 @@ module.exports = function(grunt) {
                     // Bootstrap components
                     '<%= bootstrap %>/js/tab.js',
                     '<%= bootstrap %>/js/dropdown.js',
-                    '<%= bootstrap %>/js/tooltip.js'
+                    '<%= bootstrap %>/js/tooltip.js',
+                    '<%= bootstrap %>/js/collapse.js'
                 ],
 
                 dest: 'public/js/vendor.js'

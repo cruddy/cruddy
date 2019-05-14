@@ -58,8 +58,11 @@ abstract class BaseInlineRelation extends BaseRelation
     protected function validateInner($data)
     {
         $key = $this->getInnerModelId($data);
+        $form = $this->baseInnerForm($key);
 
-        return $this->baseInnerForm($key)->validate($data, $key);
+        if (!$this->getRefEntity()->isPermitted($form->getType())) return [];
+
+        return $form->validate($data, $key);
     }
 
     /**
@@ -87,7 +90,7 @@ abstract class BaseInlineRelation extends BaseRelation
 
         $data = array_map(function ($input) {
             $key = $this->getInnerModelId($input);
-            
+
             return $this
                 ->baseInnerForm($key)
                 ->getFields()
@@ -125,9 +128,9 @@ abstract class BaseInlineRelation extends BaseRelation
         if ($items) {
             $this->loadRelations($items);
         }
-        
+
         $form = $this->getRefEntity()->formForUpdate();
-        
+
         if ($items instanceof Collection) {
             return $items->map(function ($model) use ($form) {
                 return $form->getData($model);
@@ -145,7 +148,7 @@ abstract class BaseInlineRelation extends BaseRelation
     public function relations($scope)
     {
         $relations = parent::relations($scope);
-        
+
         $entity = $this->getRefEntity();
 
         $scope = $scope ? $scope.'.'.$entity->getId() : $entity->getId();

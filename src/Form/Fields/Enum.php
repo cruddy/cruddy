@@ -66,7 +66,7 @@ class Enum extends BaseInput
     {
         $value = $this->parse($value);
 
-        return $this->isMultiple() ? $value : reset($value);
+        return $this->isMultiple() ? $value : ($value ? reset($value) : null);
     }
 
     /**

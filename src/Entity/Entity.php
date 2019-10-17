@@ -463,7 +463,7 @@ abstract class Entity
 
         $event = "entity.{$event}: {$this->id}";
 
-        return static::$dispatcher->fire($event, $payload, $halt);
+        return static::$dispatcher->dispatch($event, $payload, $halt);
     }
 
     /**

@@ -156,6 +156,8 @@ class EntityController extends Controller
     {
         $form->validateAndSave($input);
 
+        $actionResult = null;
+
         if ($action) {
             $actionResult = $this->executeActionOnModel($form->getBaseForm()->getEntity(),
                                                         $action,

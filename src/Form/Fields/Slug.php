@@ -2,6 +2,7 @@
 
 namespace Kalnoy\Cruddy\Form\Fields;
 
+use Illuminate\Support\Str;
 use Kalnoy\Cruddy\Form\BaseForm;
 use Kalnoy\Cruddy\Form\Fields\BaseField;
 
@@ -57,7 +58,7 @@ class Slug extends BaseField
      */
     public function processValueBeforeValidating($value)
     {
-        return empty($value) ? null : str_slug($value, $this->getSeparator());
+        return empty($value) ? null : Str::slug($value, $this->getSeparator());
     }
 
     /**

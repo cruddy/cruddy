@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Fluent;
+use Illuminate\Support\Str;
 use Kalnoy\Cruddy\Contracts;
 use Kalnoy\Cruddy\Entity\DataSource\ColumnsCollection;
 use Kalnoy\Cruddy\Entity\DataSource\DataSource;
@@ -679,9 +680,7 @@ abstract class Entity
 
         if ($result !== null) return $result;
 
-        $func = "str_{$plurality}";
-
-        return Helpers::labelFromId($func($this->id));
+        return Helpers::labelFromId(Str::$plurality($this->id));
     }
 
     /**

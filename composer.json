@@ -16,7 +16,7 @@
 
     "require": {
         "php": ">=7.0.0",
-        "laravel/framework": "5.5 - 5.8",
+        "laravel/framework": "5.5 - 5.8 || ^6.0",
         "intervention/image": "~2.0",
         "kalnoy/illuminate-menu": "~1.3"
     },

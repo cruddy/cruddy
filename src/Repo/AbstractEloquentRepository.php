@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
+use Illuminate\Support\Arr;
 use Kalnoy\Cruddy\Contracts\Repository;
 use Kalnoy\Cruddy\Contracts\SearchProcessor;
 use Kalnoy\Cruddy\ModelNotFoundException;
@@ -133,9 +134,9 @@ abstract class AbstractEloquentRepository implements Repository
         $query = $builder->getQuery();
         $total = $query->getCountForPagination();
 
-        $perPage = array_get($options, 'per_page', $this->getPerPage());
+        $perPage = Arr::get($options, 'per_page', $this->getPerPage());
         $lastPage = (int)ceil($total / $perPage);
-        $page = max(1, min($lastPage, (int)array_get($options, 'page', 1)));
+        $page = max(1, min($lastPage, (int)Arr::get($options, 'page', 1)));
 
         $query->forPage($page, $perPage);
 

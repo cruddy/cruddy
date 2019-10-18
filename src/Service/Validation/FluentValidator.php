@@ -2,6 +2,7 @@
 
 namespace Kalnoy\Cruddy\Service\Validation;
 
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Fluent;
 use Kalnoy\Cruddy\Contracts\Validator as ValidatorContract;
@@ -176,7 +177,7 @@ class FluentValidator extends Fluent implements ValidatorContract {
 
         return preg_replace_callback('/\{([a-z_][a-z0-9_\.]*)\}/i', function ($matches) use ($input)
         {
-            return \array_get($input, $matches[1], 'NULL');
+            return Arr::get($input, $matches[1], 'NULL');
 
         }, $rule);
     }

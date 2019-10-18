@@ -2,6 +2,7 @@
 
 namespace Kalnoy\Cruddy\Service\Files;
 
+use Illuminate\Support\Arr;
 use Intervention\Image\Image as InterventionImage;
 use Intervention\Image\ImageManager;
 use Intervention\Image\Size;
@@ -62,8 +63,8 @@ class ImageStorage extends FileStorage
             return false;
         }
 
-        $width = array_get($options, 'width') ?: null;
-        $height = array_get($options, 'height') ?: null;
+        $width = Arr::get($options, 'width') ?: null;
+        $height = Arr::get($options, 'height') ?: null;
 
         if ( ! $width && ! $height) {
             return $stream;

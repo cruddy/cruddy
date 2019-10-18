@@ -43,7 +43,7 @@ class Lang
      */
     public function translate($key, $default = null)
     {
-        $line = $this->translator->trans($key);
+        $line = $this->translator->get($key);
 
         return $line === $key ? $default : $line;
     }
@@ -57,7 +57,7 @@ class Lang
      */
     public function tryTranslate($key)
     {
-        return $this->translator->trans($key);
+        return $this->translator->get($key);
     }
 
     /**
@@ -86,7 +86,7 @@ class Lang
         $keys = array_keys(include __DIR__.'/../resources/lang/en/js.php');
 
         $strings = array_map(function ($key) {
-            return $this->translator->trans("cruddy::js.{$key}");
+            return $this->translator->get("cruddy::js.{$key}");
         }, $keys);
 
         return array_combine($keys, $strings);

@@ -45,7 +45,7 @@ class Entity extends BaseFilter
         $relation = $this->newRelationQuery();
 
         if ($relation instanceof BelongsTo) {
-            $query->whereIn($relation->getQualifiedForeignKey(), $value);
+            $query->whereIn($relation->getQualifiedForeignKeyName(), $value);
         }
     }
 

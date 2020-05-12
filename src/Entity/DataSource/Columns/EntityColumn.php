@@ -83,7 +83,7 @@ class EntityColumn extends BaseColumn
     {
         $html = $this->getRefEntity()->toHTML($model);
 
-        $params['entity'] = $this->getRefEntityId();
+        $params['cruddy_entity'] = $this->getRefEntityId();
         $params['id'] = $model->getKey();
 
         return '<a href="'.route('cruddy.index', $params).'">'.$html.'</a>';

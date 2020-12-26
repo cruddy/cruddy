@@ -84,7 +84,9 @@ class HasOne extends BaseInlineRelation
             $relation->whereIn($relation->getRelated()->getKeyName(), $idList);
         }
 
-        $relation->delete();
+        $relation->get()->each(function ($model) {
+            $model->delete();
+        });
     }
 
 }

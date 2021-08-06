@@ -46,7 +46,7 @@ trait EnumAttr
      */
     protected function parse($value)
     {
-        if (empty($value)) return [];
+        if (is_null($value) || $value === '') return [];
 
         if (is_string($value)) {
             return explode(',', $value);

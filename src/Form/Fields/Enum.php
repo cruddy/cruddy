@@ -116,7 +116,7 @@ class Enum extends BaseInput
         $rules = parent::getRules();
 
         if ($this->isMultiple()) {
-            $rules['array'] = true;
+            $rules['array'] = [];
         }
 
         $rules['in'] = array_keys($this->getItems());

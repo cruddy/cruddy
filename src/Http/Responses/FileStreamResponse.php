@@ -35,7 +35,7 @@ class FileStreamResponse extends Response
     /**
      * @inheritdoc
      */
-    public function prepare(Request $request)
+    public function prepare(Request $request): static
     {
         if ($this->prepared) {
             return $this;

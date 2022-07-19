@@ -63,7 +63,7 @@ class FileStreamResponse extends Response
     /**
      * @inheritdoc
      */
-    public function sendContent()
+    public function sendContent(): static
     {
         if ( ! $this->isSuccessful()) {
             return parent::sendContent();

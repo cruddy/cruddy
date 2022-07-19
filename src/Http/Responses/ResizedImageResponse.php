@@ -28,7 +28,7 @@ class ResizedImageResponse extends FileStreamResponse
     /**
      * @inheritdoc
      */
-    public function prepare(Request $request)
+    public function prepare(Request $request): static
     {
         if ($this->prepared) {
             return $this;
@@ -60,7 +60,7 @@ class ResizedImageResponse extends FileStreamResponse
     /**
      * @inheritdoc
      */
-    public function sendContent()
+    public function sendContent(): static
     {
         echo $this->content;
 

@@ -2,6 +2,7 @@
 
 namespace Kalnoy\Cruddy\Form\Fields;
 
+use Illuminate\Database\Eloquent\Model;
 use Kalnoy\Cruddy\Common\EnumAttr;
 use Kalnoy\Cruddy\Form\BaseForm;
 use Kalnoy\Cruddy\Helpers;
@@ -124,4 +125,10 @@ class Enum extends BaseInput
         return array_merge(parent::getRules(), $rules);
     }
 
+    protected function getDefaultGetter()
+    {
+        return static function (Model $model, $attr) {
+            return ($value = $model->getAttributeValue($attr)) instanceof \UnitEnum ? $value->name : $value;
+        };
+    }
 }

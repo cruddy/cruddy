@@ -38,6 +38,8 @@ class Enum extends Attribute
             return null;
         }
 
+        if ($value instanceof \UnitEnum) $value = $value->name;
+
         $items = $this->getItems();
 
         return implode(', ', array_map(function ($key) use ($items) {

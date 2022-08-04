@@ -128,7 +128,15 @@ class Enum extends BaseInput
     protected function getDefaultGetter()
     {
         return static function (Model $model, $attr) {
-            return ($value = $model->getAttributeValue($attr)) instanceof \UnitEnum ? $value->name : $value;
+            $value = $model->getAttributeValue($attr);
+
+            if ($value instanceof \BackedEnum) {
+                return $value->value;
+            } elseif ($value instanceof \UnitEnum) {
+                return $value->name;
+            } else {
+                return $value;
+            }
         };
     }
 }

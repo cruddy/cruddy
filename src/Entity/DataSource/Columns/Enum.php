@@ -38,7 +38,11 @@ class Enum extends Attribute
             return null;
         }
 
-        if ($value instanceof \UnitEnum) $value = $value->name;
+        if ($value instanceof \BackedEnum) {
+            $value = $value->value;
+        } elseif ($value instanceof \UnitEnum) {
+            $value = $value->name;
+        }
 
         $items = $this->getItems();
 
